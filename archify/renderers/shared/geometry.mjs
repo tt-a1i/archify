@@ -654,7 +654,7 @@ export function cleanCrossingProblems({
       index,
       points,
       visiblePath: visiblePathFor?.(path, relation),
-      analysisSegments: mergeForwardCollinearWaypoints
+      analysisSegments: visiblePathFor ? [] : mergeForwardCollinearWaypoints
         ? forwardCollinearAnalysisSegments(points)
         : authoredAnalysisSegments(points),
     };
@@ -668,7 +668,7 @@ export function cleanCrossingProblems({
       if ([left.relation.from, left.relation.to].some((id) => id === right.relation.from || id === right.relation.to)
           && !includeSharedEndpoints(left.relation, right.relation)) continue;
 
-      let hit = null;
+      let hit = left.visiblePath && right.visiblePath ? visibleCrossingFor(left.visiblePath, right.visiblePath) : null;
       for (const leftSegment of left.analysisSegments) {
         if (hit) break;
         for (const rightSegment of right.analysisSegments) {
@@ -688,7 +688,6 @@ export function cleanCrossingProblems({
           }
         }
       }
-      if (!hit && left.visiblePath && right.visiblePath) hit = visibleCrossingFor(left.visiblePath, right.visiblePath);
       if (!hit) continue;
       if (crossingResolved(left.relation, right.relation, hit)) continue;
 
@@ -1856,8 +1855,8 @@ export function roundedPath(points, radius) {
 export function roundedPathSegments(points, radius) {
   const segments = [];
   let start = points[0];
-  walkRoundedPath(points, radius, (end, control) => {
-    segments.push({ start, end, control });
+  walkRoundedPath(points, radius, (end, control, sourceSegment, nextSourceSegment) => {
+    segments.push({ start, end, control, sourceSegment, nextSourceSegment });
     start = end;
   });
   return segments;
@@ -1872,15 +1871,15 @@ function walkRoundedPath(points, radius, append) {
     const nextLen = Math.hypot(nx - cx, ny - cy);
     const r = Math.min(radius, prevLen / 2, nextLen / 2);
     if (r < 1) {
-      append(points[i]);
+      append(points[i], undefined, i - 1);
       continue;
     }
     const before = [cx - ((cx - px) / prevLen) * r, cy - ((cy - py) / prevLen) * r];
     const after = [cx + ((nx - cx) / nextLen) * r, cy + ((ny - cy) / nextLen) * r];
-    append(before);
-    append(after, points[i]);
+    append(before, undefined, i - 1);
+    append(after, points[i], i - 1, i);
   }
-  if (points.length > 1) append(points.at(-1));
+  if (points.length > 1) append(points.at(-1), undefined, points.length - 2);
 }
 
 // Shared by edges/flows/transitions: all carry the same optional

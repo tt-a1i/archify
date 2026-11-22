@@ -4,7 +4,8 @@ import { prepareCrossingPath, visibleCrossings } from '../shared/route-crossings
 import { horizontalLabelClearance } from './routing.mjs';
 
 export function measuredCrossingPairs(routes) {
-  const paths = routes.map(({ d }) => analyzeSvgPath(d).subpaths.map(({ commands }) => prepareCrossingPath(commands)));
+  const paths = routes.map(({ d, relation }) => analyzeSvgPath(d).subpaths
+    .map(({ commands }) => prepareCrossingPath(commands, relation?.via)));
   return routes.flatMap(({ relation }, index) => routes.slice(index + 1).flatMap(({ relation: other }, offset) =>
     paths[index].some(a => paths[index + offset + 1].some(b => visibleCrossings(a, b, 1).length))
       ? [[relation, other]] : []));

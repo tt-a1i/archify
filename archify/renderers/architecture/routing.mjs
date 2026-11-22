@@ -418,9 +418,10 @@ export function createRouter(components, connections = [], {
   function routeConflictsWithResolved(conn, points, resolvedRoutes) {
     const unrelated = unrelatedResolvedRoutes(conn, resolvedRoutes);
     for (const entry of unrelated) {
+      if (countSharedEndpointCrossings && crossingPoints(points, entry, 1, conn)) return true;
       for (let left = 0; left < points.length - 1; left += 1) {
         for (let right = 0; right < entry.points.length - 1; right += 1) {
-          if (properSegmentIntersection(
+          if (!countSharedEndpointCrossings && properSegmentIntersection(
             points[left],
             points[left + 1],
             entry.points[right],
@@ -1109,14 +1110,14 @@ export function createRouter(components, connections = [], {
   }
 
   const crossingPaths = new WeakMap();
-  function crossingPath(points) {
-    if (!crossingPaths.has(points)) crossingPaths.set(points, prepareCrossingPath(roundedPathSegments(points, 8)));
+  function crossingPath(points, conn) {
+    if (!crossingPaths.has(points)) crossingPaths.set(points, prepareCrossingPath(roundedPathSegments(points, 8), conn?.via));
     return crossingPaths.get(points);
   }
 
-  function crossingPoints(points, other, limit = Infinity) {
+  function crossingPoints(points, other, limit = Infinity, conn) {
     if (countSharedEndpointCrossings) {
-      return visibleCrossings(crossingPath(points), crossingPath(other.points), limit).length;
+      return visibleCrossings(crossingPath(points, conn), crossingPath(other.points, other.conn), limit).length;
     }
     let count = 0;
     for (let index = 1; index < points.length; index += 1) {
@@ -1132,7 +1133,7 @@ export function createRouter(components, connections = [], {
     return resolvedRoutes.reduce((count, other) => {
       if (!countSharedEndpointCrossings && relationshipsShareEndpoint(conn, other.conn)
           && (!distinctAutomaticPorts || hasAuthoredRouteGeometry(other.conn) || other.conn.labelAt || conn.labelAt)) return count;
-      return count + crossingPoints(points, other, 1);
+      return count + crossingPoints(points, other, 1, conn);
     }, 0);
   }
 
@@ -1854,7 +1855,8 @@ export function createRouter(components, connections = [], {
             for (const rightEndpoint of group.slice(index + 1)) {
               const { entry: left, side } = leftEndpoint;
               const { entry: right } = rightEndpoint;
-              if (left === right || left.points.length < 3 || right.points.length < 3) continue;
+              if (left === right || left.points.length < 3 || right.points.length < 3
+                  || (countSharedEndpointCrossings && !crossingPoints(left.points, right, 1, left.conn))) continue;
               const leftPort = endpointPoint(leftEndpoint, 0);
               const leftElbow = endpointPoint(leftEndpoint, 1);
               const rightPort = endpointPoint(rightEndpoint, 0);
@@ -2068,6 +2070,86 @@ export function createRouter(components, connections = [], {
           entry.points = chosen.routed.points;
           cachePath(conn, chosen.routed, chosen.sides);
           reservedLabels = [...labels, ...(chosen.rect ? [{ conn, rect: chosen.rect }] : [])];
+        }
+
+        // Both facing shafts can use their spare corner clearance when neither
+        // one can reach the target while the other stays in its original slot.
+        const movable = resolvedRoutes.filter(({ conn, points }) => points.length === 2 && !typeOwned.has(conn)
+          && conn.from !== conn.to && !hasAuthoredRouteGeometry(conn) && !hasAuthoredLabelPlacement(conn)
+          && [conn.fromSide, conn.toSide].every(side => !side || side === 'auto'));
+        const sidesOf = conn => selectedSides.get(conn);
+        const limits = (entry, axis) => {
+          const { fromSide, toSide } = sidesOf(entry.conn);
+          const expected = axis ? ['left', 'right'] : ['top', 'bottom'];
+          if (!expected.includes(fromSide) || !expected.includes(toSide) || fromSide === toSide) return null;
+          const edges = [entry.conn.from, entry.conn.to].map(id => {
+            const box = components.get(id);
+            const [start, extent] = axis ? [box.y, box.height] : [box.x, box.width];
+            const inset = Math.min(16, extent / 2);
+            return [start + inset, start + extent - inset];
+          });
+          return [Math.max(edges[0][0], edges[1][0]), Math.min(edges[0][1], edges[1][1])];
+        };
+        for (const [index, first] of movable.entries()) {
+          for (const second of movable.slice(index + 1)) {
+            if (!probes || !compositions) return;
+            if (!reciprocalPair(first.conn, second.conn)) continue;
+            const gap = parallelGap(first.conn, second.conn);
+            const [run] = closeParallelRuns(first.points, second.points, gap);
+            if (!run || !run.separation) continue;
+            const axis = run.across;
+            const pair = run.separation < 0 ? [first, second] : [second, first];
+            const [low, high] = pair.map(entry => limits(entry, axis));
+            if (!low || !high) continue;
+            const min = Math.max(low[0], high[0] - gap);
+            const max = Math.min(low[1], high[1] - gap);
+            if (min > max) continue;
+            const [a, b] = pair.map(entry => entry.points[0][axis]);
+            const clamp = lane => Math.min(max, Math.max(min, lane));
+            const members = new Set(pair.map(entry => entry.conn));
+            const others = resolvedRoutes.filter(entry => !members.has(entry.conn));
+            const labels = reservedLabels.filter(label => !members.has(label.conn));
+            for (const lane of new Set([clamp((a + b - gap) / 2), clamp(a), clamp(b - gap), min, max])) {
+              if (!probes || !compositions) return;
+              probes -= 1;
+              const candidates = pair.map(({ conn, points }, offset) => ({ conn, points: points.map(point => {
+                const moved = [...point];
+                moved[axis] = lane + offset * gap;
+                return moved;
+              }) }));
+              if (!endpointSlotsClear(candidates, others, sidesOf)) continue;
+              if (!candidates.every((entry, i) => {
+                const { conn, points } = entry;
+                const peers = [...others, candidates[1 - i]];
+                const previous = measure(pair[i], [...others, pair[1 - i]]);
+                const next = measure(entry, peers);
+                return points.every(withinScene) && next.frame <= previous.frame + 0.0001
+                  && next.parallel <= previous.parallel + 0.0001 && next.debt < previous.debt
+                  && routeIsClear(conn, entry, connectionGeometry(conn, sidesOf(conn)), peers, [])
+                  && others.every(other => crossingPoints(points, other) <= crossingPoints(pair[i].points, other));
+              })) continue;
+              const nextLabels = [...labels];
+              const routes = [...others, ...candidates];
+              const alternatives = new Map(candidates.map(({ conn, points }) => {
+                const rect = labelRectFor?.(conn, points, {
+                  routes: routes.map(route => route.points), labels: nextLabels.map(label => label.rect),
+                });
+                const hint = labelClears(rect, conn, routes, nextLabels) ? rect : null;
+                if (hint) nextLabels.push({ conn, rect: hint });
+                return [conn, { points, d: roundedPath(points, 8), ...(hint ? { labelAt: [hint.lx, hint.ly] } : {}) }];
+              }));
+              compositions -= 1;
+              if (acceptSimplification && !acceptSimplification(conn => pathCache.get(conn),
+                conn => alternatives.get(conn) ?? pathCache.get(conn))) continue;
+              for (const entry of pair) {
+                const routed = alternatives.get(entry.conn);
+                entry.points = routed.points;
+                cachePath(entry.conn, routed, sidesOf(entry.conn));
+              }
+              reservedLabels = nextLabels;
+              break;
+            }
+          }
         }
       }
       allowGridSearch = false;

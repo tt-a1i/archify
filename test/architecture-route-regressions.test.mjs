@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { automaticComponentPositions } from '../archify/renderers/architecture/automatic-placement.mjs';
+import { placeAutomaticLabels } from '../archify/renderers/shared/automatic-labels.mjs';
 import { arrowheadTriangle, maskCoversArrowhead } from '../archify/renderers/shared/arrowhead.mjs';
 import { measuredCrossingPairs } from '../archify/renderers/architecture/automatic-placement-candidates.mjs';
 import { connectionLabelBoxAt, createArchitectureRouter, parallelRunMeasures } from '../archify/renderers/architecture/routing.mjs';
@@ -326,7 +327,7 @@ for (const name of ['fixed-canvas-overflow', 'fixed-canvas-false-membership', 'f
   });
 }
 
-for (const name of ['label-masks-neighbor-arrowhead', 'label-relocation-masks-return-arrowhead']) {
+for (const name of ['label-masks-neighbor-arrowhead', 'label-relocation-masks-return-arrowhead', 'pin-skips-arrowhead-clearance']) {
   test(`automatic labels keep every arrowhead visible in ${name}`, () => {
     const { status, receipt } = validate(fileURLToPath(fixtureUrl(name)), 'standard', '--layout-json');
     assert.equal(status, 0, JSON.stringify(receipt.diagnostics));
@@ -411,4 +412,30 @@ test('automatic enclosure recovery can keep a partial improvement and fix anothe
   const { status, receipt } = validate(input, 'showcase', '--layout-json');
   assert.equal(status, 0, JSON.stringify(receipt.diagnostics));
   assert.deepEqual(receipt.boundaries.map(frame => frame.wraps), diagram.boundaries.map(frame => frame.wraps));
+});
+
+
+test('opposing direct lanes use both cards’ available corner clearance', () => {
+  const routes = measuredLayout('reciprocal-lane-gap');
+  const [a, b] = [...routes.values()].map(({ points }) => points);
+  assert.equal(a.length, 2);
+  assert.equal(b.length, 2);
+  assert.deepEqual(a.map(([, y]) => y), [64, 64]);
+  assert.deepEqual(b.map(([, y]) => y), [92, 92]);
+});
+
+test('an automatic label beside a return keeps a visible ownership margin', () => {
+  const routes = [
+    { relationIndex: 0, points: [[20, 146], [220, 146]] },
+    { relationIndex: 1, points: [[220, 120], [20, 120]] },
+  ];
+  const between = { relation: {}, relationIndex: 0, label: 'First response',
+    x: 80, y: 126, width: 80, height: 14, lx: 120, ly: 136 };
+  const [label] = placeAutomaticLabels({
+    routes, labels: [between], components: [], titles: [], viewBox: [240, 220],
+    repairOwnership: true, ownershipMargin: 4,
+  });
+  const distance = ({ points: [start, end] }) => segmentRectClearance({ start, end }, label);
+  assert.ok(distance(routes[1]) >= distance(routes[0]) + 4);
+  assert.notDeepEqual(label, between);
 });

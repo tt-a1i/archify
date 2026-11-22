@@ -7,7 +7,7 @@ import { maskCoversArrowhead } from './arrowhead.mjs';
 export function placeAutomaticLabels({
   labels, routes, components, titles, viewBox, placementBottom = viewBox[1], fallbackRing = true, keepFallbackNearRoute = false,
   gridSweep = false, maxOwnRouteDistance = Infinity, protectedEndpoints = new Map(), onlyProtectedEndpoints = false,
-  arrowheads = [], clearanceBorders = [],
+  arrowheads = [], clearanceBorders = [], ownershipMargin = 0, repairOwnership = false,
 }) {
   const placed = [...labels];
   const obstacles = [...components, ...titles];
@@ -51,14 +51,17 @@ export function placeAutomaticLabels({
   const mustKeepOwner = new Set(labels.filter(label => touchesBorder(label) || arrowheads.some(({ relationIndex, marker }) =>
     relationIndex !== label.relationIndex && maskCoversArrowhead(label, marker))).map(label => label.relationIndex));
   function keepsOwner(rect) {
-    if (!mustKeepOwner.has(rect.relationIndex)) return true;
+    if (!ownershipMargin && !mustKeepOwner.has(rect.relationIndex)) return true;
     let own = Infinity;
     for (const segment of segments) if (segment.relationIndex === rect.relationIndex) {
       own = Math.min(own, segmentRectClearanceWithin(segment, rect, own));
     }
-    return Number.isFinite(own) && segmentsNear(rect, own).every(segment => (
-      segment.relationIndex === rect.relationIndex || segmentRectClearanceWithin(segment, rect, own) > own
-    ));
+    const limit = own + ownershipMargin;
+    return Number.isFinite(limit) && segmentsNear(rect, limit).every(segment => {
+      if (segment.relationIndex === rect.relationIndex) return true;
+      const gap = segmentRectClearanceWithin(segment, rect, limit);
+      return ownershipMargin ? gap + 0.0001 >= limit : gap > own;
+    });
   }
   const clear = (rect, index) => (
     inside(rect) && rect.y + rect.height <= placementBottom
@@ -170,7 +173,8 @@ export function placeAutomaticLabels({
 
   const pinned = label => ['labelAt', 'labelDx', 'labelDy', 'labelSegment']
     .some(key => label.relation[key] !== undefined);
-  const needsPlacement = (label, index) => coversEndpoint(label) || touchesBorder(label) || (!onlyProtectedEndpoints && (!inside(label)
+  const needsPlacement = (label, index) => coversEndpoint(label) || touchesBorder(label)
+    || (repairOwnership && !keepsOwner(label)) || (!onlyProtectedEndpoints && (!inside(label)
     || components.some(component => rectsOverlap(label, component, -2))
     || titles.some(title => rectsOverlap(label, title))
     || overlapsLabel(label, index) || masksRoute(label)));
@@ -220,6 +224,19 @@ export function placeAutomaticLabels({
             [a[0] + label.width / 2 + 14, y + 3],
           ];
         });
+      }
+      if (ownershipMargin) {
+        // Try a tighter attachment before placing a mask directly on its
+        // shaft. In a narrow corridor these are still held to the neighbor
+        // clearance, owner margin and marker checks below.
+        if (a[0] === b[0] && Math.abs(a[1] - b[1]) >= label.height + 16) {
+          for (const fraction of [0.5, 0.625, 0.375, 0.75, 0.25]) {
+            const y = a[1] + (b[1] - a[1]) * fraction + 3;
+            candidates.push([a[0] - label.width / 2 - 2, y], [a[0] + label.width / 2 + 2, y]);
+          }
+        }
+        const middle = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2 + 3];
+        if (Math.hypot(a[0] - b[0], a[1] - b[1]) >= 28) candidates.push(middle);
       }
       const replacement = candidates.map(([lx, ly]) => rectAt(label, lx, ly))
         .find(rect => clear(rect, index));

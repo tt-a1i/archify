@@ -122,19 +122,19 @@ function automaticComponentSize(c) {
 
 const auto = arch.layout?.mode === 'auto';
 const whollyInferred = auto && !arch.meta?.viewBox && arch.components.every(component => !component.pos);
+const automaticLabelOwnershipMargin = 4;
 const requiresNestedBoundaryMembership = arch.meta?.engineering_profile === 'deployment-ownership';
 const fitInferredBoundaryNesting = auto && requiresNestedBoundaryMembership && !arch.meta?.viewBox
   && arch.components.every(c => !c.pos);
 const sizedComponents = asArray(arch.components).map(c => [
   c, c.size ?? (auto ? automaticComponentSize(c) : [layout.defaultW, layout.defaultH]),
 ]);
-const automaticPositions = auto
-  ? automaticComponentPositions({ ...arch, components: sizedComponents.map(([c, size]) => ({ ...c, size })) })
-  : null;
+const placementInput = auto ? { ...arch, components: sizedComponents.map(([c, size]) => ({ ...c, size })) } : null;
+const automaticPositions = placementInput ? automaticComponentPositions(placementInput) : null;
 
 // ---- Measure components from resolved coordinates ----------------------------
-function measureComponent(c, [w, h]) {
-  const [x, y] = automaticPositions ? automaticPositions.get(c.id) : resolveComponentPos(c, grid);
+function measureComponent(c, [w, h], positions = automaticPositions) {
+  const [x, y] = positions ? positions.get(c.id) : resolveComponentPos(c, grid);
   return { ...c, x, y, width: w, height: h, cx: x + w / 2, cy: y + h / 2 };
 }
 
@@ -550,7 +550,14 @@ function endpointLabelZones({ relation, points }) {
   ].filter(Boolean);
 }
 
-function resolveConnectionComposition(boxes, routeFor, measuredBoundaries = boundsFor(boxes)) {
+function routeArrowheads(routes) {
+  return routes.map(({ relation, relationIndex, points }) => ({
+    relationIndex, marker: arrowheadTriangle(points.at(-1), points.at(-2),
+      relation.width || (relation.variant === 'emphasis' ? 1.8 : 1.5)),
+  }));
+}
+
+function resolveConnectionComposition(boxes, routeFor, measuredBoundaries = boundsFor(boxes), protectFixedLabels = false) {
   const routes = connections.flatMap((relation, relationIndex) => {
     if (!boxes.has(relation.from) || !boxes.has(relation.to)) return [];
     const routed = routeFor(relation);
@@ -572,10 +579,7 @@ function resolveConnectionComposition(boxes, routeFor, measuredBoundaries = boun
   const protectedEndpoints = new Map(whollyInferred ? routes
     .filter(({ relation }) => relation.label && hasAutomaticRouteGeometry(relation))
     .map(route => [route.relationIndex, endpointLabelZones(route)]) : []);
-  const arrowheads = whollyInferred ? routes.map(({ relation, relationIndex, points }) => ({
-    relationIndex, marker: arrowheadTriangle(points.at(-1), points.at(-2),
-      relation.width || (relation.variant === 'emphasis' ? 1.8 : 1.5)),
-  })) : [];
+  const arrowheads = auto && (!arch.meta?.viewBox || protectFixedLabels) ? routeArrowheads(routes) : [];
   const showcase = arch.meta?.quality_profile === 'showcase';
   const hitEndpoint = !showcase && labels.some(label => protectedEndpoints.get(label.relationIndex)
     ?.some(zone => rectsOverlap(label, zone)) || arrowheads.some(({ marker }) => maskCoversArrowhead(label, marker)));
@@ -585,6 +589,7 @@ function resolveConnectionComposition(boxes, routeFor, measuredBoundaries = boun
     routes,
     protectedEndpoints,
     arrowheads,
+    ownershipMargin: protectFixedLabels || (auto && !whollyInferred && !arch.meta?.viewBox) ? automaticLabelOwnershipMargin : 0,
     onlyProtectedEndpoints: !showcase,
     components: [...boxes.values()],
     titles: boundaries.map(boundary => boundary.title),
@@ -597,7 +602,7 @@ function resolveConnectionComposition(boxes, routeFor, measuredBoundaries = boun
   return { routes, labels: placed, titles, viewBox, boxes, protectedEndpoints, arrowheads };
 }
 
-function labelProblems({ routes, labels, titles, viewBox, boxes, protectedEndpoints, arrowheads }) {
+function labelProblems({ routes, labels, titles, viewBox, boxes, protectedEndpoints, arrowheads }, ownershipMargin = 0) {
   const problems = new Map();
   // Use the same measurements as the composition gate. Compare distances
   // per label and relationship so an existing defect cannot mask a new one.
@@ -618,10 +623,12 @@ function labelProblems({ routes, labels, titles, viewBox, boxes, protectedEndpoi
     }
     const owner = byIndex.get(relationIndex);
     const own = distance(owner.points, label, Infinity);
+    const pinned = ['labelAt', 'labelDx', 'labelDy', 'labelSegment'].some(key => label.relation[key] !== undefined);
+    const required = own + (pinned ? 0 : ownershipMargin);
     for (const other of routes) {
       if (other === owner) continue;
-      const gap = distance(other.points, label, own);
-      if (gap + 0.0001 < own) problems.set(`ownership/${relationIndex}/${other.relationIndex}`, own - gap);
+      const gap = distance(other.points, label, required);
+      if (gap + 0.0001 < required) problems.set(`ownership/${relationIndex}/${other.relationIndex}`, required - gap);
     }
     for (const box of boxes.values()) {
       if (rectsOverlap(label, box, -2)) problems.set(`component/${relationIndex}/${box.id}`, 1);
@@ -693,7 +700,7 @@ function corridorMeasures({ routes, titles }) {
 }
 
 function chooseAutomaticPlacement() {
-  if (!auto || components.size > 40 || connections.length > 64 || rawBoundaries.length > 24
+  if (!auto || arch.meta?.viewBox || components.size > 40 || connections.length > 64 || rawBoundaries.length > 24
       || [...components.values()].some(box => box.pos)
       || connections.some(conn => !canRoute(conn) || !hasAutomaticRouteGeometry(conn)
         || ['fromSide', 'toSide'].some(key => conn[key] && conn[key] !== 'auto')
@@ -840,15 +847,17 @@ function chooseAutomaticPlacement() {
   return best.scene;
 }
 
-function clearFrameLabelBorders(scene) {
-  if (!whollyInferred || !scene.labels.length || !scene.titles.boundaries.length) return scene;
+function finishAutomaticLabels(scene) {
+  if (!whollyInferred || !scene.labels.length) return scene;
   const clearanceBorders = forRouting(scene.titles.boundaries).flatMap(frameBorderSegments);
-  if (!scene.labels.some(label => clearanceBorders.some(border => segmentRectClearanceWithin(border, label, 2) < 2 - 0.0001))) {
-    return scene;
-  }
+  const repairOwnership = arch.meta?.quality_profile === 'showcase';
+  if (!repairOwnership && !scene.labels.some(label =>
+    clearanceBorders.some(border => segmentRectClearanceWithin(border, label, 2) < 2 - 0.0001))) return scene;
   const labels = placeAutomaticLabels({
     ...scene,
     clearanceBorders,
+    ownershipMargin: automaticLabelOwnershipMargin,
+    repairOwnership,
     keepFallbackNearRoute: true,
     onlyProtectedEndpoints: true,
     components: [...scene.boxes.values()],
@@ -858,10 +867,84 @@ function clearFrameLabelBorders(scene) {
       : scene.viewBox[1],
   });
   const next = { ...scene, labels };
-  return preservesLabels(labelProblems(scene), labelProblems(next)) ? next : scene;
+  const before = labelProblems(scene, automaticLabelOwnershipMargin);
+  return preservesLabels(before, labelProblems(next, automaticLabelOwnershipMargin)) ? next : scene;
 }
 
-const composition = clearFrameLabelBorders(chooseAutomaticPlacement() ?? resolveConnectionComposition(components, pathFor, rawBoundaries));
+function fixedCanvasComposition(initial) {
+  if (!automaticPositions || !arch.meta?.viewBox) return initial;
+  function errors(scene, candidate) {
+    try {
+      withIsolatedDiagnosticRecording(() => validateArchitecture(scene, candidate));
+      return 0;
+    } catch (error) {
+      if (!error.archifyDiagnostics?.length) throw error;
+      return error.archifyDiagnostics.filter(diagnostic => diagnostic.severity === 'error').length;
+    }
+  }
+
+  function protectLabels(scene, candidate) {
+    const arrowheads = routeArrowheads(scene.routes);
+    if (!scene.labels.some(label => arrowheads.some(({ marker }) => maskCoversArrowhead(label, marker)))) return scene;
+    const before = labelProblems({ ...scene, arrowheads });
+    const next = resolveConnectionComposition(scene.boxes, candidate.pathFor, boundsFor(scene.boxes), true);
+    const after = labelProblems(next);
+    const markers = problems => [...problems.keys()].filter(key => key.startsWith('marker/')).length;
+    return markers(after) < markers(before) && preservesLabels(before, after) && !errors(next, candidate) ? next : scene;
+  }
+
+  // First validate the fully composed compatibility layout, including title
+  // expansion, routes and final label masks. Packing estimates cannot certify it.
+  let best = initial;
+  let bestRouter = router;
+  let errorCount = errors(initial, router);
+  if (!errorCount) return protectLabels(initial, router);
+  if (!arch.components.some(component => !component.pos)) return initial;
+  const seen = new Set();
+  const positionKey = boxes => JSON.stringify([...boxes.values()].map(({ x, y }) => [x, y]));
+  seen.add(positionKey(components));
+  function consider(boxes) {
+    const key = positionKey(boxes);
+    if (seen.has(key)) return;
+    seen.add(key);
+    const bounds = boundsFor(boxes);
+    const candidate = routePlacement(boxes, bounds);
+    if (!candidate) return;
+    const scene = resolveConnectionComposition(boxes, candidate.pathFor, bounds);
+    const count = errors(scene, candidate);
+    if (count >= errorCount) return;
+    best = scene;
+    bestRouter = candidate;
+    errorCount = count;
+  }
+  for (const fixedCanvasRecovery of ['insets', 'packing']) {
+    if (!errorCount || !remainingPlacementRoutes) break;
+    const positions = automaticComponentPositions(placementInput, undefined, { fixedCanvasRecovery });
+    consider(new Map(sizedComponents.map(([component, size]) =>
+      [component.id, measureComponent(component, size, positions)])));
+  }
+  while (errorCount && remainingPlacementRoutes && components.size <= 40 && rawBoundaries.length <= 24) {
+    const start = best;
+    const enclosures = frameEnclosures(best.boxes, best.titles.boundaries);
+    const proposals = [...frameEnclosureCandidates(best.boxes, enclosures)]
+      .filter(moved => [...moved.values()].every(box => !box.pos || (box.x === box.pos[0] && box.y === box.pos[1])))
+      .map(moved => ({ moved, count: frameEnclosures(moved, boundsFor(moved)).length }))
+      .sort((a, b) => a.count - b.count);
+    for (const { moved } of proposals.slice(0, Math.min(4, remainingPlacementRoutes))) {
+      if (!errorCount) break;
+      consider(moved);
+    }
+    if (start === best) break;
+  }
+  if (best !== initial) {
+    router = bestRouter;
+    for (const [id, box] of best.boxes) components.set(id, box);
+  }
+  return errorCount ? best : protectLabels(best, bestRouter);
+}
+
+const composition = finishAutomaticLabels(chooseAutomaticPlacement()
+  ?? fixedCanvasComposition(resolveConnectionComposition(components, pathFor, rawBoundaries)));
 const {
   titles: { boundaries }, labels: connectionLabels, viewBox,
 } = composition;
@@ -1311,26 +1394,8 @@ function validateArchitecture({
     relationCollection: 'connections',
     profile: arch.meta?.quality_profile,
     includeSharedEndpoints: () => true,
-    visiblePathFor: ({ points }, conn) => ({
-      ...prepareCrossingPath(roundedPathSegments(points, 8)),
-      authoredWaypoints: asArray(conn.via),
-    }),
-    visibleCrossingFor: (left, right) => {
-      if (!left.authoredWaypoints.length && !right.authoredWaypoints.length) return visibleCrossings(left, right, 1)[0];
-      // Keep the renderer's authored-touch contract at an explicit straight-through waypoint.
-      // The artifact checker independently reports intersections in the rendered SVG.
-      const touchesWaypoint = ({ segments, authoredWaypoints }, index, [x, y]) => {
-        const matches = ([a, b]) => Math.abs(a - x) <= 1e-7 && Math.abs(b - y) <= 1e-7;
-        if (!authoredWaypoints.some(matches)) return false;
-        const { start, end, control } = segments[index];
-        // Rounding an explicit collinear vertex emits a straight quadratic
-        // with the authored point as its control.
-        return control ? matches(control) : matches(start) || matches(end);
-      };
-      return visibleCrossings(left, right).find(({ leftSegment, rightSegment, point }) => (
-        !touchesWaypoint(left, leftSegment, point) && !touchesWaypoint(right, rightSegment, point)
-      ));
-    },
+    visiblePathFor: ({ points }, conn) => prepareCrossingPath(roundedPathSegments(points, 8), conn.via),
+    visibleCrossingFor: (left, right) => visibleCrossings(left, right, 1)[0],
     // Automatic architecture routes render with an opaque crossover halo.
     // That makes a proper X visually unambiguous while explicit authored
     // crossings remain a blocking composition error.

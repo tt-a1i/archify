@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Forward-collinear waypoint compatibility",
+    "output": "waypoint.html",
+    "quality_profile": "showcase",
+    "viewBox": [
+      600,
+      320
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "components": [
+    {
+      "id": "a",
+      "type": "backend",
+      "label": "A",
+      "pos": [
+        50,
+        100
+      ],
+      "size": [
+        80,
+        60
+      ]
+    },
+    {
+      "id": "b",
+      "type": "backend",
+      "label": "B",
+      "pos": [
+        450,
+        100
+      ],
+      "size": [
+        80,
+        60
+      ]
+    },
+    {
+      "id": "c",
+      "type": "backend",
+      "label": "C",
+      "pos": [
+        260,
+        0
+      ],
+      "size": [
+        80,
+        60
+      ]
+    },
+    {
+      "id": "d",
+      "type": "backend",
+      "label": "D",
+      "pos": [
+        260,
+        200
+      ],
+      "size": [
+        80,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "horizontal",
+      "from": "a",
+      "to": "b",
+      "via": [
+        [
+          300,
+          130
+        ]
+      ]
+    },
+    {
+      "id": "vertical",
+      "from": "c",
+      "to": "d"
+    }
+  ]
+}

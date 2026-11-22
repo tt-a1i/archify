@@ -8,7 +8,7 @@ import { arrowheadTriangle, maskCoversArrowhead } from '../renderers/shared/arro
 import { textUnits } from '../renderers/shared/utils.mjs';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
-import { collectAmbiguousCorridors, collectArrowheadCollisions, collectBorderRuns, collectLabelCanvasOverflow, collectLabelRouteClearance, collectRouteRhythmIssues, describeLabelCanvasOverflow, formatRect, forwardCollinearAnalysisSegments, minimumLabelRouteClearance, normalizeRoutePoints, routeBudgetMetrics } from '../renderers/shared/geometry.mjs';
+import { collectAmbiguousCorridors, collectArrowheadCollisions, collectBorderRuns, collectLabelCanvasOverflow, collectLabelRouteClearance, collectRouteRhythmIssues, describeLabelCanvasOverflow, formatRect, forwardCollinearAnalysisSegments, minimumLabelRouteClearance, normalizeRoutePoints, roundedPath, routeBudgetMetrics } from '../renderers/shared/geometry.mjs';
 import {
   DESKTOP_READABILITY_VIEWPORT,
   DESKTOP_READER_DIAGRAM_WIDTH,
@@ -790,10 +790,13 @@ function collectArrows(fragment, useActualPoints = false, architecture = false) 
     let routeSubpaths = line ? continuousRoutePoints(segments)
       : parsed.subpaths.flatMap(part => continuousRoutePoints(part.straightSegments));
     // Legacy single-path metadata remains supported. It cannot bridge actual moveto boundaries.
-    if (!useActualPoints && (line || parsed.subpaths.length === 1)) {
-      const authoredPoints = parseRoutePoints(attrs['data-composition-points']);
-      if (authoredPoints) routeSubpaths = [authoredPoints];
-    }
+    const authoredPoints = !useActualPoints && (line || parsed.subpaths.length === 1)
+      ? parseRoutePoints(attrs['data-composition-points']) : null;
+    if (authoredPoints) routeSubpaths = [authoredPoints];
+    // A retained straight waypoint is encoded as a collinear rounded control
+    // in older exports. Verify the metadata against the actual visible path.
+    const authoredWaypoints = architecture && !line && authoredPoints && attrs.d === roundedPath(authoredPoints, 8)
+      ? authoredPoints.slice(1, -1) : [];
     arrows.push({
       kind: name,
       index: index += 1,
@@ -818,7 +821,7 @@ function collectArrows(fragment, useActualPoints = false, architecture = false) 
       role: attrs['data-edge-role'],
       segments,
       ...(architecture ? { visiblePaths: line ? [prepareCrossingPath(segments)]
-        : parsed.subpaths.map(part => prepareCrossingPath(part.commands)) } : {}),
+        : parsed.subpaths.map(part => prepareCrossingPath(part.commands, authoredWaypoints)) } : {}),
       borderSegments,
       routePoints: routeSubpaths.length === 1 ? routeSubpaths[0] : [],
       routeSubpaths,
