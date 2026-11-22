@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createArchitectureRouter, createRouter } from '../archify/renderers/architecture/routing.mjs';
+import { connectionLabelBoxAt, createArchitectureRouter, createRouter } from '../archify/renderers/architecture/routing.mjs';
 import { properSegmentIntersection, routeBudgetMetrics, segmentIntersectsRect } from '../archify/renderers/shared/geometry.mjs';
 
 function fixture() {
@@ -241,4 +241,43 @@ test('automatic routing leaves grid searches for a return path around unrelated 
       `state response passes through ${id}`);
   }
   assert.equal(routingMetrics().gridBudgetExhaustedCount, 0);
+});
+
+test('three labelled reciprocal lanes stay straight regardless of connection order', () => {
+  const boxes = new Map([
+    ['control', 48, 166], ['runtime', 329, 172], ['worker', 625, 153],
+  ].map(([id, x, width]) => [id, { id, x, y: 48, width, height: 60, cx: x + width / 2, cy: 78 }]));
+  const connections = [
+    { id: 'input', from: 'runtime', to: 'control', label: 'Open input' },
+    { id: 'submit', from: 'control', to: 'runtime', label: 'Submit request' },
+    { id: 'start', from: 'runtime', to: 'worker', label: 'Start work' },
+    { id: 'report', from: 'worker', to: 'runtime', label: 'Report result' },
+    { id: 'output', from: 'runtime', to: 'control', label: 'Forward result' },
+  ];
+  for (const order of [[0, 1, 2, 3, 4], [4, 3, 2, 1, 0], [2, 3, 4, 0, 1], [4, 0, 1, 2, 3]]) {
+    const ordered = order.map(index => connections[index]);
+    const router = createArchitectureRouter(boxes, ordered, { automaticPlacement: true });
+    const routes = connections.map(conn => router.pathFor(conn));
+    assert.ok(routes.every(({ points }) => points.length === 2 && points[0][1] === points[1][1]),
+      `all five routes use straight horizontal lanes for input order ${order}`);
+    const parallel = [0, 1, 4].map(index => ({ conn: connections[index], ...routes[index] }))
+      .sort((a, b) => a.points[0][1] - b.points[0][1]);
+    for (const [index, { conn, points, labelAt }] of parallel.entries()) {
+      assert.ok(labelAt, `${conn.id} has a verified label placement`);
+      const mask = connectionLabelBoxAt(conn, labelAt);
+      assert.equal(segmentIntersectsRect({ start: points[0], end: points[1] }, mask), index === 1,
+        'only the middle mask sits on its own line');
+      for (const other of routes.filter(route => route.points !== points)) {
+        assert.equal(segmentIntersectsRect({ start: other.points[0], end: other.points[1] }, mask, 4), false,
+          `${conn.id} label clears other routes`);
+      }
+    }
+  }
+
+  for (const geometry of [{ labelAt: [270, 54] }, { fromSide: 'left' }, { via: [[271, 64]] }]) {
+    const pinned = [{ ...connections[0], ...geometry }, ...connections.slice(1)];
+    const router = createArchitectureRouter(boxes, pinned, { automaticPlacement: true });
+    assert.ok(pinned.every(conn => router.pathFor(conn).labelAt === undefined),
+      'an authored route, side or label prevents joint label placement');
+  }
 });

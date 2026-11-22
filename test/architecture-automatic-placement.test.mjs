@@ -97,6 +97,38 @@ test('automatic architecture placement gives converging branches unobstructed ap
   }
 });
 
+test('automatic architecture placement gives two reciprocal peers separate hub exits', () => {
+  const components = [
+    { id: 'hub', size: [172, 60] },
+    { id: 'coordinator', size: [166, 60] },
+    { id: 'runner', size: [159, 60] },
+  ];
+  const connections = [
+    { from: 'hub', to: 'coordinator', label: 'Write input' },
+    { from: 'coordinator', to: 'hub', label: 'Send plan' },
+    { from: 'hub', to: 'runner', label: 'Start work', variant: 'emphasis' },
+    { from: 'runner', to: 'hub', label: 'Report completion' },
+    { from: 'hub', to: 'coordinator', label: 'Forward report' },
+  ];
+  const positions = automaticComponentPositions({ components, connections });
+  const [hub, coordinator, runner] = boxes(components, positions);
+  assert.ok(coordinator.x + coordinator.width < hub.x);
+  assert.ok(hub.x + hub.width < runner.x, 'the emphasized path still reads from left to right');
+
+  const measured = new Map([hub, coordinator, runner].map((box, index) => {
+    const { id } = components[index];
+    return [id, { ...box, id, cx: box.x + box.width / 2, cy: box.y + box.height / 2 }];
+  }));
+  const { pathFor } = createArchitectureRouter(measured, connections, { automaticPlacement: true });
+  const straight = connections.filter((edge) => {
+    const { points } = pathFor(edge);
+    return points.length === 2 && points[0][1] === points[1][1];
+  });
+  assert.ok(straight.length >= 4);
+  assert.ok(connections.slice(2, 4).every((edge) => straight.includes(edge)),
+    'dispatch and return can be followed straight across the gap');
+});
+
 test('automatic architecture placement can turn a chain to fit an authored canvas', () => {
   const arch = {
     meta: { viewBox: [320, 320] },

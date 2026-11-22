@@ -244,10 +244,50 @@ function directRouteInterference(items, edges) {
   return score;
 }
 
-function chooseIslandLayout(items, edges, incoming, outgoing, vertical, allowAlternate) {
-  const smallUnframed = allowAlternate && items.length >= 4 && items.length <= 24 && edges.length <= 36
+function layOutReciprocalPeers(items, edges, incoming, outgoing, allowedWidth) {
+  if (items.some((item) => item.hasSelfConnection)) return;
+  const hub = items.find((item) => incoming.get(item).length + outgoing.get(item).length === 2);
+  if (!hub) return;
+  const peers = items.filter((item) => item !== hub);
+  const links = peers.map((peer) => edges.filter(({ from, to }) =>
+    (from === hub && to === peer) || (from === peer && to === hub)));
+  if (links[0].length + links[1].length !== edges.length) return;
+  // A standard card has room for three horizontal ports on one side.
+  if (links.some((pair) => pair.length > 3 || !pair.some(({ from }) => from === hub)
+    || !pair.some(({ to }) => to === hub))) return;
+
+  // The ranked layout already picked the main path by edge priority.
+  // Keep that peer facing the same way and give the off-row peer the free side.
+  const cy = (item) => item.y + item.height / 2;
+  const [first, second] = peers;
+  if (Math.sign(first.x - hub.x) !== Math.sign(second.x - hub.x)) return;
+  const primary = peers.find((peer) => cy(peer) === cy(hub));
+  if (!primary) return;
+  const secondary = primary === first ? second : first;
+  const [left, right] = primary.x > hub.x ? [secondary, primary] : [primary, secondary];
+  const gaps = new Map(peers.map((peer, i) => [peer, Math.max(horizontalGap,
+    ...links[i].filter((edge) => edge.label).map((edge) => connectionLabelBoxAt(edge, [0, 0]).width + 28))]));
+  const width = left.width + gaps.get(left) + hub.width + gaps.get(right) + right.width;
+  if (width > allowedWidth) return;
+  left.x = 0;
+  hub.x = left.width + gaps.get(left);
+  right.x = width - right.width;
+  const height = Math.max(...items.map((item) => item.height));
+  for (const item of items) item.y = (height - item.height) / 2;
+  return { items, width, height, top: 0 };
+}
+
+function chooseIslandLayout(items, edges, incoming, outgoing, vertical, allowAlternate, allowedWidth) {
+  const small = items.length >= 4 && items.length <= 24 && edges.length <= 36;
+  const threeNodeCandidate = !vertical && items.length === 3 && edges.length >= 4 && edges.length <= 6;
+  const allowsAlternatives = allowAlternate && (small || threeNodeCandidate)
     && items.every((item) => !item.children && !item.parent.members);
+  const smallUnframed = small && allowsAlternatives;
   const layout = layOutIsland(items, edges, incoming, outgoing, vertical, { centerDependency: smallUnframed });
+  if (allowsAlternatives && threeNodeCandidate) {
+    const reciprocal = layOutReciprocalPeers(items, edges, incoming, outgoing, allowedWidth);
+    if (reciprocal) return reciprocal;
+  }
   // Try bounded alternatives for small unframed drafts. Explicit geometry
   // and frame membership can influence routes in ways this estimate does not see.
   if (!smallUnframed) return layout;
@@ -281,7 +321,7 @@ function layOutSiblings(items, edges, vertical, allowParallel, allowedWidth) {
       for (const item of group) [item.width, item.height] = [item.height, item.width];
     }
     const layout = (allowParallel && !direction && layOutParallelPaths(group, edges, neighbors, islandVertical))
-      || chooseIslandLayout(group, edges, incoming, outgoing, islandVertical, allowParallel);
+      || chooseIslandLayout(group, edges, incoming, outgoing, islandVertical, allowParallel, allowedWidth);
     for (const item of group) {
       item.y -= layout.top;
       if (direction?.reverse) item.x = layout.width - item.x - item.width;
@@ -390,7 +430,11 @@ function distributeEdges(byId, connections) {
     const originalTo = byId.get(edge?.to);
     let from = originalFrom;
     let to = originalTo;
-    if (!from || !to || from === to) continue;
+    if (!from || !to) continue;
+    if (from === to) {
+      from.hasSelfConnection = true;
+      continue;
+    }
     const ancestors = new Map();
     for (let item = from; item.parent; item = item.parent) ancestors.set(item.parent, item);
     while (!ancestors.has(to.parent)) to = to.parent;

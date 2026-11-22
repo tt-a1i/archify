@@ -214,7 +214,7 @@ export function createRouter(components, connections = [], {
       : { ...component, x: component.x - gap, y: component.y - gap, width: component.width + gap * 2, height: component.height + gap * 2 }));
   }
 
-  function routeClearsComponents(conn, points, clearance = 2) {
+  function routeClearsComponents(conn, points, clearance = 2, labels = reservedLabels) {
     const endpointIds = new Set([conn.from, conn.to]);
     for (const component of components.values()) {
       if (endpointIds.has(component.id)) continue;
@@ -224,7 +224,7 @@ export function createRouter(components, connections = [], {
         }
       }
     }
-    return routeClearsReservedLabels(conn, points);
+    return routeClearsReservedLabels(conn, points, labels);
   }
 
   function routeClearsEndpointComponents(points, from, to) {
@@ -957,11 +957,11 @@ export function createRouter(components, connections = [], {
     });
   }
 
-  function routeIsClear(conn, routed, geometry, resolvedRoutes) {
+  function routeIsClear(conn, routed, geometry, resolvedRoutes, labels = reservedLabels) {
     return !geometry.crowded && routed.points.length >= 2
       && routeHonorsEndpointSides(routed.points, geometry.fromSide, geometry.toSide)
       && routeClearsEndpointComponents(routed.points, geometry.from, geometry.to)
-      && routeClearsComponents(conn, routed.points)
+      && routeClearsComponents(conn, routed.points, 2, labels)
       && routeMeetsCompositionFloors(routed.points)
       && !routeOverlapsResolved(conn, routed.points, resolvedRoutes);
   }
@@ -1121,10 +1121,10 @@ export function createRouter(components, connections = [], {
         }
         return true;
       };
-      const labelClears = (rect, owner, entries, labels) => {
+      const labelClears = (rect, owner, entries, labels, inBounds = withinScene) => {
         if (!rect) return !owner.label;
-        if (!withinScene([rect.x, rect.y])
-            || !withinScene([rect.x + rect.width, rect.y + rect.height])
+        if (!inBounds([rect.x, rect.y])
+            || !inBounds([rect.x + rect.width, rect.y + rect.height])
             || labels.some((other) => rectsOverlap(rect, other.rect, 2))) return false;
         return entries.every((entry) => entry.conn === owner || entry.points.slice(1).every((end, index) =>
           !segmentIntersectsRect({ start: entry.points[index], end }, rect, LABEL_CLEARANCE)));
@@ -1253,6 +1253,81 @@ export function createRouter(components, connections = [], {
         }) || []).some((candidate) => JSON.stringify(candidate) === interior);
       };
       const typeOwned = new Set(resolvedRoutes.filter(followsPreferredCorridor).map((entry) => entry.conn));
+      function straightenParallelCorridors() {
+        // Plan dense reciprocal lanes together. A reservation above the
+        // middle lane otherwise blocks an outer lane before it is tried.
+        const groups = new Map();
+        for (const entry of resolvedRoutes) {
+          const key = JSON.stringify([entry.conn.from, entry.conn.to].sort());
+          if (!groups.has(key)) groups.set(key, []);
+          groups.get(key).push(entry);
+        }
+        // The outside masks can use up to 4px of intrinsic canvas padding
+        // while keeping both endpoints of every route inside the scene.
+        const labelInBounds = ([x, y]) => x >= Math.max(0, bounds.left) && x <= bounds.right
+          && y >= Math.max(0, bounds.top - LABEL_CLEARANCE)
+          && y <= bounds.bottom + Math.min(readabilityBottomMargin, LABEL_CLEARANCE);
+        for (const group of groups.values()) {
+          if (group.length < 3 || group.every(({ conn }) => conn.from === group[0].conn.from)
+              || group.some(({ conn }) => typeOwned.has(conn) || hasAuthoredRouteGeometry(conn)
+                || hasAuthoredLabelPlacement(conn) || [conn.fromSide, conn.toSide].some(side => side && side !== 'auto'))) continue;
+          const lanes = group.map(({ conn }) => {
+            const sides = inferredConnectionSides(conn);
+            const ports = automaticPorts.get(conn);
+            return { conn, sides, points: [ports?.from, ports?.to] };
+          });
+          if (lanes.some(({ sides, points: [start, end] }) => !start || !end || start[1] !== end[1]
+              || !((sides.fromSide === 'right' && sides.toSide === 'left')
+                || (sides.fromSide === 'left' && sides.toSide === 'right')))) continue;
+          lanes.sort((a, b) => a.points[0][1] - b.points[0][1]);
+          // An interior mask is only needed when the usual beside-line
+          // placement cannot clear both neighboring tracks.
+          const maskWithClearance = 14 + 2 * LABEL_CLEARANCE;
+          if (!lanes.slice(1, -1).some(({ conn, points }, index) => conn.label && Math.max(
+            points[0][1] - lanes[index].points[0][1],
+            lanes[index + 2].points[0][1] - points[0][1],
+          ) < maskWithClearance)) continue;
+          const members = new Set(group.map(({ conn }) => conn));
+          const others = resolvedRoutes.filter(({ conn }) => !members.has(conn));
+          const labels = reservedLabels.filter(({ conn }) => !members.has(conn));
+          const byConnection = new Map(lanes.map((lane) => [lane.conn, lane]));
+          const sidesOf = (conn) => byConnection.get(conn)?.sides || selectedSides.get(conn);
+          if (!endpointSlotsClear(lanes, others, sidesOf)) continue;
+          const routes = [...others, ...lanes];
+          const accepted = lanes.every((lane, index) => {
+            const { conn, points, sides } = lane;
+            const [start, end] = points;
+            const from = components.get(conn.from);
+            const to = components.get(conn.to);
+            const neighbors = routes.filter((entry) => entry !== lane);
+            if (!points.every(withinScene) || !portHasCornerClearance(from, sides.fromSide, start)
+                || !portHasCornerClearance(to, sides.toSide, end)
+                || !routeIsClear(conn, lane, { ...sides, from, to }, neighbors, labels)
+                || crossingCount(conn, points, neighbors) > 0) return false;
+            if (!conn.label) return true;
+            const baseline = start[1] + (index === 0 ? -10 : index === lanes.length - 1 ? 16 : 3);
+            const rect = {
+              relation: conn,
+              label: conn.label,
+              ...connectionLabelBoxAt(conn, [(start[0] + end[0]) / 2, baseline]),
+            };
+            if ([...components.values()].some((component) => rectsOverlap(rect, component, 2))
+                || !labelClears(rect, conn, routes, labels, labelInBounds)) return false;
+            lane.labelAt = [rect.lx, rect.ly];
+            labels.push({ conn, rect });
+            return true;
+          });
+          if (!accepted) continue;
+          for (const entry of group) {
+            const { conn, points, sides, labelAt } = byConnection.get(entry.conn);
+            entry.points = points;
+            cachePath(conn, { points, d: roundedPath(points, 8), ...(labelAt ? { labelAt } : {}) }, sides);
+            jointlyImproved.add(conn);
+          }
+          reservedLabels = labels;
+          planningMetrics.readabilityImprovedCount += group.length;
+        }
+      }
       function relocatedLabelsFor(conn, routed, others) {
         // A provisional label may occupy an otherwise clear corridor. Move at
         // most one automatic label, on its existing route, and accept the pair
@@ -1346,8 +1421,8 @@ export function createRouter(components, connections = [], {
       function straightenFacingRoutes() {
         // A bent route between nodes that overlap across the gap separating
         // them can run straight through facing sides inside that overlap.
-        // Authored sides must already face; every other route, slot and label
-        // stays fixed, and the straight lane must pass the same checks.
+        // Authored sides must already face. Keep the other paths and slots
+        // fixed while testing whether the labels fit with the straight lane.
         for (const entry of resolvedRoutes) {
           const { conn } = entry;
           if (entry.points.length < 4 || jointlyImproved.has(conn) || typeOwned.has(conn)
@@ -1477,6 +1552,7 @@ export function createRouter(components, connections = [], {
       }
       allowGridSearch = false;
       try {
+        if (repairAutomaticPorts) straightenParallelCorridors();
         improveReciprocalPairs();
         improveComplexRoutes();
         straightenFacingRoutes();

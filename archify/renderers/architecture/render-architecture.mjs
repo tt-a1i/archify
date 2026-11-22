@@ -230,7 +230,8 @@ const architectureLegendEntries = [
 const resolvedLabelPoints = new Map();
 function connectionLabelBox(conn) {
   if (!conn.label) return null;
-  return connectionLabelBoxAt(conn, resolvedLabelPoints.get(conn) || labelPoint(conn, pathFor(conn).points));
+  const routed = pathFor(conn);
+  return connectionLabelBoxAt(conn, resolvedLabelPoints.get(conn) || routed.labelAt || labelPoint(conn, routed.points));
 }
 
 function connectionLabelRects() {
@@ -1107,8 +1108,8 @@ function buildLayoutReport() {
       .filter((conn) => components.has(conn.from) && components.has(conn.to))
       .map((conn) => {
         const routed = pathFor(conn);
-        const labelAt = conn.label ? resolvedLabelPoints.get(conn) || labelPoint(conn, routed.points) : null;
-        return connectionPath(conn, routed, labelAt);
+        const box = connectionLabelBox(conn);
+        return connectionPath(conn, routed, box ? [box.lx, box.ly] : null);
       }),
     labels,
   };
