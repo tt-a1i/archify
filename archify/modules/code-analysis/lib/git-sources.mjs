@@ -22,7 +22,10 @@ export async function git(cwd, args, { input = null, noLazyFetch = false } = {})
     return await new Promise((resolve, reject) => {
       let timedOut = false;
       const env = { ...process.env, GIT_TERMINAL_PROMPT: '0', GIT_OPTIONAL_LOCKS: '0' };
-      if (noLazyFetch) env.GIT_NO_LAZY_FETCH = '1';
+      if (noLazyFetch) {
+        env.GIT_NO_LAZY_FETCH = '1';
+        env.GIT_ALLOW_PROTOCOL = '';
+      }
       for (const key of ['GIT_DIR', 'GIT_COMMON_DIR', 'GIT_WORK_TREE', 'GIT_INDEX_FILE', 'GIT_PREFIX', 'GIT_OBJECT_DIRECTORY', 'GIT_ALTERNATE_OBJECT_DIRECTORIES']) delete env[key];
       const child = execFile('git', ['--no-replace-objects', '--literal-pathspecs', '-c', 'credential.interactive=false', '-C', cwd, ...args], { encoding: 'buffer', maxBuffer: MAX_BYTES, windowsHide: true, env }, (error, stdout) => {
         clearTimeout(timeout);
@@ -40,11 +43,11 @@ export async function git(cwd, args, { input = null, noLazyFetch = false } = {})
   } catch (error) { fail(error.killed ? 'pr/git-timeout' : 'pr/git-failed', error.killed ? 'Git source preparation timed out.' : 'Git could not prepare the requested source objects.', { evidence: { operation: args[0], exitCode: error.code || null }, supportedFixes: ['check local Git and repository access; retry the requested PR'] }); }
 }
 
-export async function materializeTree({ cache, sha, scope, target, blobSource = null }) {
+export async function materializeTree({ cache, sha, scope, target, blobSource = null, offline = false }) {
   if (!SHA.test(sha)) fail('pr/commit-invalid', 'A source snapshot needs an exact commit SHA.');
   scope = normalizeScope(scope);
   fs.mkdirSync(target, { recursive: true });
-  const listing = await git(cache, ['ls-tree', '-rz', '--full-tree', sha, ...(scope === '.' ? [] : ['--', `${scope}/`])]);
+  const listing = await git(cache, ['ls-tree', '-rz', '--full-tree', sha, ...(scope === '.' ? [] : ['--', `${scope}/`])], { noLazyFetch: offline });
   const records = [], skipped = [], names = new Set();
   for (const record of listing.toString('utf8').split('\0').filter(Boolean)) {
     const match = /^(\d+) (\w+) ([a-f0-9]{40})\t([\s\S]+)$/.exec(record);
@@ -71,11 +74,17 @@ export async function materializeTree({ cache, sha, scope, target, blobSource = 
     const missing = checks.toString('ascii').trim().split('\n').filter(line => line.endsWith(' missing')).map(line => line.split(' ')[0]);
     if (missing.length) await git(cache, ['fetch', '--no-tags', '--no-write-fetch-head', '--stdin', blobSource], { input: missing.join('\n') + '\n' });
   }
-  const blobs = records.length ? await git(cache, ['cat-file', '--batch'], { input: records.map(record => record.oid).join('\n') + '\n', noLazyFetch: !!blobSource }) : Buffer.alloc(0);
+  const blobs = records.length ? await git(cache, ['cat-file', '--batch'], { input: records.map(record => record.oid).join('\n') + '\n', noLazyFetch: offline || !!blobSource }) : Buffer.alloc(0);
   let offset = 0;
   for (const record of records) {
     const end = blobs.indexOf(10, offset);
     const match = /^([a-f0-9]{40}) blob (\d+)$/.exec(blobs.subarray(offset, end).toString('ascii'));
+    if (offline && blobs.subarray(offset, end).toString('ascii') === record.oid + ' missing') {
+      fail('pr/local-object-missing', 'A required blob is missing from the local Git object database.', {
+        subject: { file: record.path }, evidence: { commit: sha, object: record.oid },
+        supportedFixes: ['fetch the missing objects separately, then retry the same pinned comparison'],
+      });
+    }
     if (!match || match[1] !== record.oid) fail('pr/blob-invalid', 'Git source bytes did not match the requested object.');
     const size = Number(match[2]); offset = end + 1;
     const bytes = blobs.subarray(offset, offset + size);

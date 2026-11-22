@@ -26,7 +26,7 @@ import { analysisStartCommand } from '../lib/task-command.mjs';
 import { standaloneShell } from '../overlay/standalone.mjs';
 import { withInstallLock } from '../lib/install-lock.mjs';
 import { clientAsset } from '../overlay/client-assets.mjs';
-import { preparePullRequest } from '../lib/pull-request.mjs';
+import { preparePullRequest, resolveLocalPullRequest, resolvePullRequest } from '../lib/pull-request.mjs';
 
 const execute = promisify(execFile);
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -37,9 +37,12 @@ const TASK_BODY_LIMIT = 16 * 1024;
 
 // Runs one analysis in a child process and resolves with its receipt.
 // Failures come back as the worker's structured diagnostics.
-export function runWorker(options) {
+export function runWorker(options, { offline = false } = {}) {
   return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [worker], { stdio: ['pipe', 'pipe', 'pipe'] });
+    const child = spawn(process.execPath, [worker], {
+      stdio: ['pipe', 'pipe', 'pipe'],
+      ...(offline ? { env: { ...process.env, GIT_NO_LAZY_FETCH: '1', GIT_ALLOW_PROTOCOL: '', CARGO_NET_OFFLINE: 'true', RUSTUP_AUTO_INSTALL: '0' } } : {}),
+    });
     let stdout = '', stderr = '';
     child.stdout.setEncoding('utf8').on('data', (chunk) => { stdout += chunk; });
     child.stderr.setEncoding('utf8').on('data', (chunk) => { stderr += chunk; });
@@ -58,7 +61,7 @@ export function runWorker(options) {
 // Parser and schema dependencies live in the module's own package. Archify itself needs no install, and
 // the skill is often used from a plain copy of the folder, so the first `serve`
 // installs them on demand instead of asking for a separate setup step.
-export async function ensureDependencies(root = moduleRoot) {
+export async function ensureDependencies(root = moduleRoot, { offline = false } = {}) {
   root = fs.realpathSync(root);
   const missingPackages = () => ['typescript', 'ajv', 'ajv-draft-04', 'ajv-formats', 'java-parser', '@xmldom/xmldom'].filter(name => !fs.existsSync(path.join(root, 'node_modules', name, 'package.json')));
   // Installed, read-only copies need no lock file. An active installer must
@@ -67,6 +70,9 @@ export async function ensureDependencies(root = moduleRoot) {
   return withInstallLock(root, async () => {
     const missing = missingPackages();
     if (!missing.length) return false;
+    if (offline) fail('pr/offline-dependencies-missing', 'Install the Code Analysis dependencies before running a pinned local review.', {
+      evidence: { missing }, supportedFixes: ['run npm ci in archify/modules/code-analysis, then retry offline'],
+    });
     const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
     const lock = fs.existsSync(path.join(root, 'package-lock.json'));
     console.error(`Code Analysis: installing ${missing.join(' and ')} into ${path.relative(process.cwd(), root) || '.'} (first run only)…`);
@@ -83,7 +89,7 @@ export async function ensureDependencies(root = moduleRoot) {
 
 export const USAGE = `Usage:
   archify code-analysis serve <repo-root> --out <dir> [--ir <architecture.json>] [--locale en|zh-CN]
-                              [--pr <GitHub-URL-or-number>] [--repository OWNER/REPO] [--scope path] [--language ts|py|java|go|rust|c|cpp] [--map overlay-map.json] [--config file.json]
+                              [--pr <GitHub-URL-or-number> [--repository OWNER/REPO] | --base <commit> --head <commit>] [--scope path] [--language ts|py|java|go|rust|c|cpp] [--map overlay-map.json] [--config file.json]
                               [--baseline baseline.json] [--quality standard|showcase]
 
 Without --ir, opens a standalone workbench with Atlas and analyzes on page load.
@@ -103,13 +109,18 @@ export function parseArgs(argv) {
   const options = {};
   for (let i = 0; i < rest.length; i += 2) {
     const key = rest[i];
-    if (!['--ir', '--out', '--language', '--config', '--map', '--quality', '--baseline', '--locale', '--pr', '--repository', '--scope'].includes(key) || !rest[i + 1] || rest[i + 1].startsWith('--')) throw usageError(`Invalid option: ${key}\n${USAGE}`);
+    if (!['--ir', '--out', '--language', '--config', '--map', '--quality', '--baseline', '--locale', '--pr', '--repository', '--scope', '--base', '--head'].includes(key) || !rest[i + 1] || rest[i + 1].startsWith('--')) throw usageError(`Invalid option: ${key}\n${USAGE}`);
+    if (['--base', '--head'].includes(key) && options[key]) throw usageError('Pass each pinned commit option once.');
     options[key] = rest[i + 1];
   }
   if (!options['--out']) throw usageError(`serve requires --out\n${USAGE}`);
   if (options['--map'] && !options['--ir']) throw usageError('--map requires --ir: mapping belongs to an authored architecture diagram.');
   if (options['--locale'] && !['en', 'zh-CN'].includes(options['--locale'])) throw usageError('--locale must be en or zh-CN.');
-  if (!options['--pr'] && (options['--repository'] || options['--scope'])) throw usageError('--repository and --scope require --pr.');
+  const base = options['--base'], head = options['--head'];
+  if (Boolean(base) !== Boolean(head)) throw usageError('--base and --head must be provided together.');
+  if (base && options['--pr']) throw usageError('Choose either --pr or --base with --head.');
+  if (!options['--pr'] && options['--repository']) throw usageError('--repository requires --pr.');
+  if (!options['--pr'] && !base && options['--scope']) throw usageError('--scope requires --pr or --base with --head.');
   return { repo, options };
 }
 
@@ -120,8 +131,10 @@ export async function prepareAnalysisSession(argv) {
   const input = irBytes ? JSON.parse(irBytes.toString('utf8')) : null;
   const locale = analysisLocale(options['--locale'] || input?.meta?.locale);
   const doc = input ? { ...input, meta: { ...input.meta, locale } } : null;
-  const pullRequest = options['--pr'] ? await (await import('../lib/pull-request.mjs')).resolvePullRequest(root, options['--pr'], options['--repository'], options['--scope']) : null;
-  await ensureDependencies();
+  const pullRequest = options['--base']
+    ? await resolveLocalPullRequest(root, options['--base'], options['--head'], options['--scope'])
+    : options['--pr'] ? await resolvePullRequest(root, options['--pr'], options['--repository'], options['--scope']) : null;
+  await ensureDependencies(moduleRoot, { offline: Boolean(pullRequest?.local) });
   fs.mkdirSync(out, { recursive: true });
 
   // 1. Archify delivers the diagram. Repository evidence is checked when the IR pins a repository.
@@ -164,6 +177,7 @@ export async function prepareAnalysisSession(argv) {
     config: options['--config'] ? path.resolve(options['--config']) : null,
     map: options['--map'] ? path.resolve(options['--map']) : null,
     baseline: baselineFile, pr: options['--pr'], repository: options['--repository'], scope: options['--scope'],
+    base: options['--base'], head: options['--head'],
   }), shell: process.platform === 'win32' ? 'cmd.exe' : 'POSIX sh' };
   return { root, ir, out, options, irBytes, doc, locale, delivered, baselineFile, resume, pullRequest };
 }
@@ -172,6 +186,7 @@ export async function runSessionAnalysis({ root, ir, doc, locale, delivered, out
   const analysisDir = path.join(out, 'analysis');
   const next = path.join(out, `analysis.next-${randomBytes(6).toString('hex')}`);
   let capture = null;
+  const offline = Boolean(pullRequest?.local);
   try {
     let language = options['--language'] || null, config = options['--config'] ? path.resolve(options['--config']) : null;
     if (pullRequest) {
@@ -190,7 +205,7 @@ export async function runSessionAnalysis({ root, ir, doc, locale, delivered, out
         }
       }
       await runWorker({ root: capture.roots.base, out: path.join(next, 'base'), locale, language, config,
-        source: capture.source('base'), openAnalysis: true });
+        source: capture.source('base'), openAnalysis: true, captureDriftInputs: Boolean(offline && ir && language === 'ts') }, { offline });
     }
     await runWorker({
       root: capture?.roots.head || root, ir, irSnapshot: doc, html: delivered, locale, out: next, resume, openAnalysis: !ir || openAnalysis,
@@ -198,7 +213,7 @@ export async function runSessionAnalysis({ root, ir, doc, locale, delivered, out
       pullRequest: capture ? { pr: capture.pr, scope: capture.scope, changedFiles: capture.changedFiles, manifests: capture.manifests, sourceRoot: capture.roots.head, baseSourceRoot: capture.roots.base, sourceGitRoot: capture.sourceGitRoot } : null,
       map: options['--map'] ? path.resolve(options['--map']) : null, baseline: fs.existsSync(baselineFile) ? baselineFile : null,
       previous: capture ? path.join(next, 'base/findings.json') : path.join(analysisDir, 'findings.json'),
-    });
+    }, { offline });
   } catch (error) {
     fs.rmSync(next, { recursive: true, force: true });
     if (capture) fs.rmSync(capture.directory, { recursive: true, force: true });
