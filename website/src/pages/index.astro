@@ -7,6 +7,7 @@ import Navigation from '../components/Navigation.astro';
 import Brand from '../components/Brand';
 import SponsorsStrip from '../components/SponsorsStrip.astro';
 import ProductFacts from '../components/ProductFacts.astro';
+import { sourceRef } from '../data/product-facts';
 import { defaultProofLabels } from '../data/default-proof-labels.mjs';
 import head from '../data/index-head.html?raw';
 import css from '../styles/index.css?raw';
@@ -252,12 +253,55 @@ const { lang = 'en' } = Astro.props;
     </div>
   </section>
 
+  <!-- REPOSITORY INSIGHT — Architecture Diagnosis, Story video and PR walkthroughs -->
+  <section id="insight">
+    <div class="container">
+      <header class="section-head section-head-row fade-up">
+        <div>
+          <p class="section-label"><span>03</span><span data-i18n="label-insight">Inside your code</span></p>
+          <h2 class="section-heading" data-i18n="insight-h2">Point it at a repo. <em>See where it hurts.</em></h2>
+        </div>
+        <p class="section-body" data-i18n="insight-body">Architecture Diagnosis is built into the Skill. It maps how your code really depends on itself, then lets you walk anyone through it as a story or a pull request.</p>
+      </header>
+      <div class="insight-layout">
+        <figure class="insight-plate fade-up">
+          <img class="insight-main" src="assets/code-analysis-views/atlas.png" alt="Atlas star map of the Archify package: modules around a ring, file dependencies drawn across it, findings and module coupling in the side panel" loading="lazy" decoding="async" width="1600" height="1000">
+          <img class="insight-inset" src="assets/code-analysis-views/atlas-3d.png" alt="Atlas 3D model of the same run: the most-depended-on module as the trunk, other modules branching at their dependency layer" loading="lazy" decoding="async" width="1600" height="1000">
+          <figcaption data-i18n="insight-caption">Atlas star map and 3D model · one offline HTML file</figcaption>
+        </figure>
+        <ol class="insight-list">
+          <li class="insight-item">
+            <p class="insight-k" data-i18n="insight-1-k">Architecture Diagnosis</p>
+            <h3 data-i18n="insight-1-h">Cycles, coupling and hotspots, linked to the source.</h3>
+            <p data-i18n="insight-1-p">Each finding opens the code behind it and comes with a fix task you can hand back to your agent. Next to an architecture diagram, every component shows its issue count. JS/TS, Python, Java, Go, Rust, C and C++.</p>
+            <p class="insight-prompt"><span aria-hidden="true">›</span><code data-i18n="insight-1-prompt">Use archify Code Analysis on this repository: show module coupling, dependency cycles and hotspots.</code></p>
+          </li>
+          <li class="insight-item">
+            <p class="insight-k" data-i18n="insight-2-k">Story video</p>
+            <h3 data-i18n="insight-2-h">Turn any diagram into a guided 1080p video.</h3>
+            <p data-i18n="insight-2-p">Your agent writes the scenes; the page gains a timeline and captions, and Export records WebM or MP4 at 60 fps.</p>
+          </li>
+          <li class="insight-item">
+            <p class="insight-k" data-i18n="insight-3-k">PR walkthrough</p>
+            <h3 data-i18n="insight-3-h">Show reviewers what a change touches.</h3>
+            <p data-i18n="insight-3-p">Changes are marked on the diagram itself and can be attached to a GitHub PR or GitLab MR. The optional archify-pr Skill only offers this for material diffs.</p>
+          </li>
+        </ol>
+      </div>
+      <a class="type-more insight-more" href={`https://github.com/tt-a1i/archify/blob/${sourceRef}/archify/modules/code-analysis/docs/USAGE.md`} target="_blank" rel="noopener">
+        <span data-i18n="insight-more">Read the Code Analysis guide</span>
+        <span class="type-more-sub" data-i18n="insight-more-sub">Languages · toolchains · offline and live modes</span>
+        <span class="type-more-arrow" aria-hidden="true">↗</span>
+      </a>
+    </div>
+  </section>
+
   <!-- TRUST — the four finalize gates beside a replay of a real run (output and receipt values are verbatim) -->
   <section id="trust">
     <div class="container">
       <header class="section-head section-head-row fade-up">
         <div>
-          <p class="section-label"><span>03</span><span data-i18n="label-trust">Verified delivery</span></p>
+          <p class="section-label"><span>04</span><span data-i18n="label-trust">Verified delivery</span></p>
           <h2 class="section-heading" data-i18n="trust-h2">Checked before <em>it reaches you.</em></h2>
         </div>
         <p class="section-body" data-i18n="trust-body">Finalize validates and delivers the artifact, then checks the file it delivered. A failed render never replaces the last good one.</p>
@@ -293,7 +337,7 @@ const { lang = 'en' } = Astro.props;
     <div class="container">
       <header class="section-head section-head-row fade-up">
         <div>
-          <p class="section-label"><span>04</span><span data-i18n="label-qs">Quick start</span></p>
+          <p class="section-label"><span>05</span><span data-i18n="label-qs">Quick start</span></p>
           <h2 class="section-heading" data-i18n="qs-h2">Three steps. <em>One command.</em></h2>
         </div>
         <p class="section-body" data-i18n="qs-body">One checked Skill for Claude Code, Codex, Cursor, OpenCode, and GitHub Copilot. Pick your agent for the exact command.</p>

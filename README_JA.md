@@ -130,6 +130,33 @@ Archify で 1 ページにまとめて答えて：API の P99 が 80 ms から 6
 
 Archify は [`mco-org/mco`](https://github.com/mco-org/mco) の `9f1a1cf` を解析し、この検証済みマップを生成しました。**[開く ↗](https://archify.si/cases/mco-runtime.architecture.html?theme=dark&present=1)** · [到達範囲をトレース ↗](https://archify.si/cases/mco-runtime.architecture.html?theme=dark#focus=router&reach=downstream) · [型付きソース](docs/cases/mco-runtime.architecture.json)
 
+### リポジトリを診断する
+
+<sub>CODE ANALYSIS · Skill に組み込み済み、追加インストール不要</sub>
+
+| 依存関係の星図 | 同じ解析の 3D モデル |
+|---|---|
+| [![Atlas 星図：モジュールを円周に並べ、ファイル間の依存を内側に描き、サイドパネルに検出結果と結合度を表示](docs/assets/code-analysis-views/atlas.png)](archify/modules/code-analysis/docs/USAGE.md) | [![Atlas 3D：最も依存されるモジュールを幹に、他のモジュールが依存の層の高さで枝分かれする](docs/assets/code-analysis-views/atlas-3d.png)](archify/modules/code-analysis/docs/USAGE.md) |
+
+**アーキテクチャ診断**はリポジトリを読み、コードが実際にどうつながっているかを示します。循環依存、結合の強すぎるモジュール、複雑度のホットスポット、レイヤールール違反を、それぞれ根拠のソースへのリンクと、Agent にそのまま渡せる修正タスク付きで一覧にします。アーキテクチャ図と組み合わせると、各コンポーネントに問題の件数が表示されます。JS/TS、Python、Java、Go、Rust、C、C++ に対応し、結果はオフラインで開ける 1 つの HTML ファイルです。
+
+```text
+Use archify Code Analysis on this repository: show module coupling, dependency cycles and hotspots.
+```
+
+[Code Analysis ガイド](archify/modules/code-analysis/docs/USAGE.md)
+
+### ストーリーや PR として見せる
+
+<sub>STORY · PR ウォークスルー</sub>
+
+- **Story 動画。** Agent に頼むと、どの図にもガイド付きのストーリーを追加できます。ページにはタイムラインと字幕付きの Story モードが加わり、**Export → Story video** で 1080p・60 fps の動画（WebM または MP4）に書き出せます。複数の図を 1 つのステージページや動画にまとめることもできます。[Story の書き方](archify/references/story-authoring.md)
+- **PR ウォークスルー。** Agent に PR やブランチの説明を頼むと、Archify が変更点を図の上に直接マークし、ライト／ダークの図を GitHub PR や GitLab MR に添付できます。任意の `archify-pr` Skill は、PR の準備中に実質的な変更があるときだけ提案します。[PR レビュー](archify/references/pr-review.md)
+
+```text
+Use archify to add a guided story to this diagram and export it as a video.
+```
+
 ### 拡張しやすい。自分のものにする方法はいくつもある。
 
 <sub>COMMUNITY STORIES · ユーザーが共有してくれた事例の一部</sub>
@@ -423,6 +450,7 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 | 1〜2 個のセマンティックロールを比較 | <kbd>L</kbd> または `LENS` |
 | ライブの全体レーダーを開く | <kbd>M</kbd> または `MAP` |
 | プレゼンテーションステージに入る | <kbd>F</kbd> |
+| ガイド付きストーリーを再生、または動画に書き出す（ストーリー付きの図） | モーション操作 → `Story` · Export → `Story video` |
 | ビジュアルスタイルを選択（`S` で循環）/ テーマ切り替え / Export を開く | <kbd>S</kbd> / <kbd>T</kbd> / <kbd>E</kbd> |
 | ズーム / リセット | <kbd>+</kbd> / <kbd>-</kbd> / <kbd>0</kbd> |
 

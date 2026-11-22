@@ -154,6 +154,15 @@ For an existing source-backed example, see the [MCO runtime architecture](https:
 
 [Follow the MCO source case: who decodes output and who writes files →](cases/mco-runtime.html)
 
+### Check the dependencies with Architecture Diagnosis
+
+A diagram shows the architecture you described; Architecture Diagnosis shows how the code actually depends on itself. It is built into the Skill. After a repository-backed architecture diagram passes its checks, the agent's summary ends with what Diagnosis can do, and it runs only if you say yes. You can also ask directly:
+
+> Use archify Code Analysis on this repository: show module coupling, dependency cycles and hotspots.
+
+The result is one offline HTML file: a dependency star map, a rotatable 3D model and ranked findings (cycles, coupling, complexity hotspots, layer-rule breaks), each linked to its source with a fix task you can hand back to the agent. Paired with your architecture diagram, every component shows its issue count, and imports the diagram does not show are flagged. JS/TS, Python, Java, Go, Rust, C and C++ are supported; Go, Rust and C/C++ need their own toolchains. Findings come from static analysis of one pinned revision, not from runtime traces. See the [Code Analysis guide](https://github.com/tt-a1i/archify/blob/main/archify/modules/code-analysis/docs/USAGE.md).
+
+
 <span id="explainer" class="section-anchor" aria-hidden="true"></span>
 
 ## One diagram, or a one-page explainer?
@@ -175,7 +184,7 @@ Make focused revisions through your agent: explain a missing return, rename a co
 
 Open the HTML and review both its meaning and readability. Automated checks and a human visual inspection answer different questions. Do not treat one as a substitute for the other.
 
-Share the HTML when readers need its interactions. Use an image export when a document or slide needs a static view. Archify documents PNG, JPEG, WebP, SVG, and WebM exports; availability depends on the format, browser, and local tooling. Inspect the actual artifact's export menu before committing to a delivery format. An exported image does not preserve the HTML's interactive controls.
+Share the HTML when readers need its interactions. Use an image export when a document or slide needs a static view. Archify documents PNG, JPEG, WebP, SVG, and WebM exports, and a diagram with an attached story adds a 1080p Story video (WebM or MP4); availability depends on the format, browser, and local tooling. Inspect the actual artifact's export menu before committing to a delivery format. An exported image does not preserve the HTML's interactive controls.
 
 Before sharing a repository-derived artifact, check its labels, cards, embedded source, and links for information that should not leave your team. A standalone file is portable, not automatically public-safe. The coding agent's own data handling remains separate from Archify's artifact format.
 

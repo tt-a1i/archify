@@ -14,6 +14,10 @@ export const faqFacts = [
     answer: ['A code repository is optional. Start fast from plain language, a travel or budget plan, existing Mermaid text, or repository evidence. Your agent picks from ten native types or creates a one-page answer and can even extend the standalone HTML afterward (for example adding map links or check-ins); Archify does not promise lossless automatic parsing of every Mermaid construct.', '代码库完全不是必需条件。你可以直接从一句自然语言、旅行行程、理财/年假规划、已有 Mermaid 文本或源码仓库开始。Agent 会自动选型为十种图型或一页式解答，还能对交付的独立 HTML 继续扩展交互功能（如地图跳转或打卡记录）；Archify 不承诺自动无损解析全部 Mermaid 语法。'],
   },
   {
+    question: ['Can Archify analyze an existing codebase?', 'Archify 能分析现有代码仓库吗？'],
+    answer: ['Yes. Architecture Diagnosis (Code Analysis) is built into the Skill with no extra install. Ask your agent to run Archify Code Analysis on a repository, or accept the offer that follows a repository-backed architecture diagram, and you get one offline HTML file with a dependency star map, a rotatable 3D model and ranked findings such as dependency cycles, coupling, complexity hotspots and layer-rule breaks, each linked to its source with a fix task for your agent. JS/TS, Python, Java, Go, Rust, C and C++ are supported. Findings come from static analysis of one revision, not runtime traces.', '可以。架构诊断（Code Analysis）内置在 Skill 里，无需额外安装。让 Agent 用 Archify 的 Code Analysis 分析仓库，或在生成基于仓库的架构图后接受它的提议，就会得到一个可离线打开的 HTML 文件：依赖星图、可旋转的 3D 模型，以及按严重程度排序的发现（循环依赖、耦合、复杂度热点、违反分层规则），每条都链接到源码并附有交给 Agent 的修复任务。支持 JS/TS、Python、Java、Go、Rust、C 和 C++。这些发现来自对某一提交的静态分析，不是运行时追踪。'],
+  },
+  {
     question: ['Which agents can use it?', '哪些 Agent 可以使用？'],
     answer: ['The installation examples cover Claude Code, Codex, Cursor, OpenCode, and GitHub Copilot. They use the same Archify Skill. Agent access to files, a local Node.js runtime, and any tools needed for the requested export remain part of your environment.', '安装示例覆盖 Claude Code、Codex、Cursor、OpenCode 和 GitHub Copilot，它们使用同一份 Archify Skill。Agent 的文件权限、本地 Node.js 运行时，以及所选导出功能需要的工具，由你的使用环境提供。'],
   },
