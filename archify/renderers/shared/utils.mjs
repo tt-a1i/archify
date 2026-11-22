@@ -129,9 +129,13 @@ ${card.items.map((item) => `          <li>${esc(item)}</li>`).join('\n')}
 
 const SVG_SLOT_RE = /      <!-- ARCHIFY:SVG_SLOT_START -->[\s\S]*?      <!-- ARCHIFY:SVG_SLOT_END -->/;
 const CARDS_SLOT_RE = /    <!-- ARCHIFY:CARDS_SLOT_START -->[\s\S]*?    <!-- ARCHIFY:CARDS_SLOT_END -->/;
+const FEEDBACK_SECTION_RE = /^ *<!-- ARCHIFY:FEEDBACK_START -->\r?\n([\s\S]*?)^ *<!-- ARCHIFY:FEEDBACK_END -->\r?\n/gm;
+const DIAGNOSIS_SECTION_RE = /^ *<!-- ARCHIFY:DIAGNOSIS_START -->\r?\n([\s\S]*?)^ *<!-- ARCHIFY:DIAGNOSIS_END -->\r?\n/gm;
 const SUBTITLE_SLOT_RE = /^([ \t]*)<p class="subtitle">\[Subtitle description\]<\/p>[ \t]*(\r?\n)?/m;
 const SOURCE_EVIDENCE_PLACEHOLDER = '    <!-- ARCHIFY:SOURCE_EVIDENCE_DATA -->';
 const I18N_PLACEHOLDER = '    <!-- ARCHIFY:I18N_DATA -->';
+const EXPLANATIONS_PLACEHOLDER = '    <!-- ARCHIFY:EXPLANATIONS_DATA -->';
+const PAYLOADS_PLACEHOLDER = '    <!-- ARCHIFY:PAYLOADS_DATA -->';
 
 function serializeScriptJson(value) {
   return JSON.stringify(value)
@@ -154,7 +158,11 @@ export function applyTemplate(template, {
   cards,
   locale,
   visualPreset = 'classic',
+  diagramButton = false,
+  feedbackLinks = true,
   sourceEvidence = null,
+  explanations = null,
+  payloads = null,
 }) {
   if (!SVG_SLOT_RE.test(template)) {
     throw new Error('applyTemplate: template missing ARCHIFY:SVG_SLOT sentinel');
@@ -176,16 +184,32 @@ export function applyTemplate(template, {
   if (sourceEvidence && !template.includes(SOURCE_EVIDENCE_PLACEHOLDER)) {
     throw new Error(`applyTemplate: repository evidence requires placeholder ${JSON.stringify(SOURCE_EVIDENCE_PLACEHOLDER)}`);
   }
+  // Authored explanations are prose for the Semantic Passport only. They ride
+  // in a JSON block outside the SVG so canonical exports never carry them, and
+  // silently dropping authored prose would mislead, so the slot is mandatory
+  // only when a document actually authors one.
+  const hasExplanations = explanations && Object.keys(explanations).length > 0;
+  if (hasExplanations && !template.includes(EXPLANATIONS_PLACEHOLDER)) {
+    throw new Error(`applyTemplate: node explanations require placeholder ${JSON.stringify(EXPLANATIONS_PLACEHOLDER)}`);
+  }
+  // Message/flow payloads follow the same reader-only contract: one JSON block
+  // outside the SVG, emitted only when a document authors at least one payload.
+  const hasPayloads = payloads && Object.keys(payloads).length > 0;
+  if (hasPayloads && !template.includes(PAYLOADS_PLACEHOLDER)) {
+    throw new Error(`applyTemplate: relationship payloads require placeholder ${JSON.stringify(PAYLOADS_PLACEHOLDER)}`);
+  }
   // Function replacers: a literal `$&`, `$'`, `$\`` or `$$` in titles, labels,
   // or rendered SVG must not be interpreted as a replacement pattern.
   const sourceEvidenceJson = serializeScriptJson(sourceEvidence);
+  const explanationsJson = serializeScriptJson(hasExplanations ? explanations : null);
+  const payloadsJson = serializeScriptJson(hasPayloads ? payloads : null);
   const resolvedLocale = resolveLocale(locale);
   const i18nJson = serializeScriptJson({ locale: resolvedLocale, messages: viewerCatalog(resolvedLocale) });
   const renderedSubtitle = typeof subtitle === 'string' && subtitle.trim()
     ? `<p class="subtitle">${esc(subtitle)}</p>`
     : '';
   const i18nData = `    <script id="archify-i18n-data" type="application/json">${i18nJson}</script>`;
-  return localizeTemplate(template, resolvedLocale)
+  return localizeTemplate(template.replace(DIAGNOSIS_SECTION_RE, (_match, section) => diagramButton ? section : '').replace(FEEDBACK_SECTION_RE, (_match, section) => feedbackLinks ? section : ''), resolvedLocale)
     .replace(I18N_PLACEHOLDER, () => i18nData)
     .replace(TEMPLATE_PLACEHOLDERS[0], () => `<html lang="${esc(resolvedLocale)}" data-theme="dark" data-preset="${esc(visualPreset)}">`)
     .replace(TEMPLATE_PLACEHOLDERS[1], () => `<title>${esc(translateMessage(resolvedLocale, 'page.title', { title }))}</title>`)
@@ -197,6 +221,12 @@ export function applyTemplate(template, {
     .replace(CARDS_SLOT_RE, () => cards)
     .replace(SOURCE_EVIDENCE_PLACEHOLDER, () => sourceEvidence
       ? `    <script id="archify-source-evidence-data" type="application/json">${sourceEvidenceJson}</script>`
+      : '')
+    .replace(EXPLANATIONS_PLACEHOLDER, () => hasExplanations
+      ? `    <script id="archify-explanations-data" type="application/json">${explanationsJson}</script>`
+      : '')
+    .replace(PAYLOADS_PLACEHOLDER, () => hasPayloads
+      ? `    <script id="archify-payloads-data" type="application/json">${payloadsJson}</script>`
       : '');
 }
 

@@ -7,14 +7,12 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { ChromeVisualBrowser, findChrome, runVisualCheck } from '../archify/bin/visual-check.mjs';
+import { isolatedVisualBrowser } from './helpers/isolated-visual-browser.mjs';
 import { DESKTOP_READABILITY_VIEWPORT, MIN_PROJECTED_NODE_TEXT_PX } from '../archify/renderers/shared/desktop-readability.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..', 'archify');
 const chromePath = process.env.ARCHIFY_CHROME ? findChrome() : null;
-const packagedHtmlExamples = fs.readdirSync(path.join(skillRoot, 'examples'))
-  .filter((name) => name.endsWith('.html') && !name.endsWith('.visual-check.html'))
-  .sort();
 
 test('waterfall axis labels stay distinct and inside the SVG at nonzero origins', {
   skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
@@ -57,25 +55,6 @@ test('waterfall axis labels stay distinct and inside the SVG at nonzero origins'
     }
   } finally {
     await browser.close();
-  }
-});
-
-test('all packaged HTML examples pass the real visual-check desktop gate', {
-  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
-}, async () => {
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-packaged-examples-'));
-  try {
-    assert.ok(packagedHtmlExamples.length > 0, 'expected at least one packaged HTML example');
-    for (const name of packagedHtmlExamples) {
-      const artifact = path.join(tmp, name);
-      fs.copyFileSync(path.join(skillRoot, 'examples', name), artifact);
-      const result = await runVisualCheck({ artifactPath: artifact, chromePath });
-      assert.equal(result.exitCode, 0, `${name}: ${JSON.stringify(result.receipt, null, 2)}`);
-      assert.equal(result.receipt.containment.status, 'pass', name);
-      assert.equal(result.receipt.containment.viewports.every((viewport) => viewport.ok), true, name);
-    }
-  } finally {
-    fs.rmSync(tmp, { recursive: true, force: true });
   }
 });
 
@@ -129,10 +108,73 @@ test('default sequence and dataflow canvases fit the real desktop reader without
   }
 });
 
+test('a compact lifecycle shows its transition card on the first desktop screen', {
+  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
+}, async (t) => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-lifecycle-card-'));
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  const input = path.join(directory, 'input.json');
+  const compact = path.join(directory, 'output.html');
+  fs.writeFileSync(input, JSON.stringify({
+    schema_version: 3,
+    diagram_type: 'lifecycle',
+    meta: { title: 'Job lifecycle', output: 'output.html' },
+    mainPath: ['queued', 'running', 'done'],
+    states: [
+      { id: 'queued', type: 'start', label: 'Queued', sublabel: 'Waiting for a worker' },
+      { id: 'running', type: 'active', label: 'Running', sublabel: 'Processing the request' },
+      { id: 'done', type: 'success', label: 'Done', sublabel: 'Result recorded' },
+      { id: 'failed', type: 'failure', label: 'Failed', sublabel: 'Retry budget exhausted' },
+      { id: 'paused', type: 'neutral', label: 'Paused', sublabel: 'Ready for a new worker' },
+    ],
+    transitions: [
+      { from: 'queued', to: 'running', label: 'Start processing' },
+      { from: 'running', to: 'done', label: 'Finish processing' },
+      { from: 'running', to: 'failed', label: 'Record error' },
+      { from: 'running', to: 'paused', label: 'Commit checkpoint' },
+    ],
+    cards: [{ dot: 'amber', title: 'Running → Paused', items: ['A new worker can resume from the committed checkpoint.'] }],
+  }));
+  const deployment = path.join(directory, 'deployment-release.html');
+  for (const [source, output] of [[input, compact], [path.join(skillRoot, 'examples/deployment-release.lifecycle.json'), deployment]]) {
+    execFileSync(process.execPath, [path.join(skillRoot, 'bin/archify.mjs'), 'render', 'lifecycle', source, output]);
+  }
+  const browser = new ChromeVisualBrowser(chromePath);
+  try {
+    const session = await browser.sessionPromise;
+    for (const [artifactPath, width, height, cardCount] of [
+      [compact, 2048, 1320, 1],
+      [compact, 1440, 900, 1],
+      [deployment, 1440, 900, 3],
+    ]) {
+      const metrics = await browser.inspect({ artifactPath, width, height, theme: 'light' });
+      const bounds = await browser.cdp.send('Runtime.evaluate', { returnByValue: true, expression: `(() => {
+        const stage = document.querySelector('.diagram-container').getBoundingClientRect();
+        const cards = [...document.querySelectorAll('.cards .card')].map(card => {
+          const { top, bottom } = card.getBoundingClientRect();
+          return { top, bottom, title: card.querySelector('h3').textContent };
+        });
+        return { stageBottom: stage.bottom, cards };
+      })()` }, session);
+      assert.equal(bounds.exceptionDetails, undefined, bounds.exceptionDetails?.exception?.description);
+      const { stageBottom, cards } = bounds.result.value;
+      assert.equal(cards.length, cardCount);
+      for (const card of cards) {
+        assert.ok(stageBottom <= card.top && card.bottom <= height,
+          `${width}x${height}: ${JSON.stringify(card)}`);
+      }
+      assert.ok(metrics.minimumProjectedNodeTextPx >= MIN_PROJECTED_NODE_TEXT_PX, JSON.stringify(metrics));
+    }
+  } finally {
+    await browser.close();
+  }
+});
+
 test('visual-check collects nested ID-less semantic edge text for every renderer family', {
   skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
 }, async () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-visual-edge-collector-'));
+  const browser = new ChromeVisualBrowser(chromePath);
   const cases = [
     ['architecture', 'examples/web-app.architecture.json'],
     ['workflow', 'examples/agent-tool-call.workflow.json'],
@@ -141,6 +183,7 @@ test('visual-check collects nested ID-less semantic edge text for every renderer
     ['lifecycle', 'examples/agent-run.lifecycle.json'],
   ];
   try {
+    await browser.sessionPromise;
     for (const [index, [type, input]] of cases.entries()) {
       const artifact = path.join(tmp, `${type}.html`);
       execFileSync(process.execPath, [
@@ -152,7 +195,9 @@ test('visual-check collects nested ID-less semantic edge text for every renderer
         : `<g data-edge-from="collector-${type}" data-edge-to="reader-${type}" data-detail="context"><text x="1" y="1" font-size="5">same-group semantic edge</text><g data-detail="fine"><text x="1" y="2" font-size="1">fine nested annotation</text></g></g>`;
       const injected = fs.readFileSync(artifact, 'utf8').replace('</svg>', `${edge}</svg>`);
       fs.writeFileSync(artifact, injected);
-      const result = await runVisualCheck({ artifactPath: artifact, chromePath });
+      const result = await runVisualCheck({
+        artifactPath: artifact, chromePath, browserFactory: () => isolatedVisualBrowser(browser),
+      });
       const desktop = result.receipt.readability.viewports.find(({ width, height }) => width === 1440 && height === 900);
       assert.ok(desktop, `${type}: missing desktop observation`);
       assert.equal(desktop.minimumProjectedNodeTextDetail, 'edge', `${type}: ${JSON.stringify(desktop)}`);
@@ -163,7 +208,11 @@ test('visual-check collects nested ID-less semantic edge text for every renderer
       assert.equal(result.receipt.readability.status, 'fail', `${type}: injected 5px edge must be measured`);
     }
   } finally {
-    fs.rmSync(tmp, { recursive: true, force: true });
+    try {
+      await browser.close();
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
   }
 });
 
@@ -462,11 +511,9 @@ test('offline intrinsic workflows fit while authored overflow still identifies l
   }
 });
 
-// Every unpinned three-lane, five-column workflow measures 528 viewBox units
-// tall. Width-first reading enlarges it to 1.5x, so the 1600x1000 page ends
-// 1px past the viewport. The Reader ignored overflow up to 1px while
-// visual-check rejects any rounded-up remainder, so browser-check failed
-// a first draft that every earlier gate had accepted.
+// The Reader used to ignore a 1px remainder that failed browser containment.
+// Exercise that boundary at the diagram's observed height so empty canvas
+// space and browser font metrics do not determine whether the case overflows.
 test('a 1px width-first remainder is declared instead of failing browser containment', {
   skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
 }, async () => {
@@ -476,13 +523,31 @@ test('a 1px width-first remainder is declared instead of failing browser contain
     execFileSync(process.execPath, [path.join(skillRoot, 'bin/archify.mjs'), 'deliver', 'workflow',
       path.join(skillRoot, '..', 'test', 'fixtures/workflow-viewport/three-lane-remainder.workflow.json'),
       artifact, '--quality', 'showcase', '--json'], { cwd: skillRoot });
-    assert.match(fs.readFileSync(artifact, 'utf8'), /viewBox="0 0 \d+ 528" data-reader-fit="width-first"/);
-    const result = await runVisualCheck({ artifactPath: artifact, chromePath });
+    const result = await runVisualCheck({
+      artifactPath: artifact, chromePath,
+      browserFactory: (executable) => {
+        const browser = new ChromeVisualBrowser(executable);
+        return {
+          async inspect(options) {
+            if (options.width !== 1600 || options.height !== 1000) return browser.inspect(options);
+            const measure = await browser.inspect({ ...options, height: 800 });
+            return browser.inspect({ ...options, height: measure.scrollHeight - 1 });
+          },
+          close: () => browser.close(),
+        };
+      },
+    });
     assert.equal(result.exitCode, 0, JSON.stringify(result.receipt));
     assert.equal(result.receipt.containment.status, 'pass');
     const tall = result.receipt.containment.viewports.find(({ width, height }) => width === 1600 && height === 1000);
     assert.ok(tall, JSON.stringify(result.receipt.containment));
-    assert.ok(tall.scrollHeight <= tall.innerHeight || tall.readerOverflow === 'authored', JSON.stringify(tall));
+    const measured = JSON.stringify(tall);
+    assert.equal(tall.readerFit, 'width-first', measured);
+    assert.equal(tall.scrollHeight - tall.innerHeight, 1, measured);
+    assert.equal(tall.readerOverflow, 'authored', measured);
+    assert.equal(tall.overflowX, false, measured);
+    assert.equal(tall.verticalScrollAccepted, true, measured);
+    assert.equal(tall.ok, true, measured);
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }

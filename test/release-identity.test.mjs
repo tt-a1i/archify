@@ -74,6 +74,7 @@ function writeValidDevelopmentFixture(root, overrides = {}) {
     }),
     'docs/skill-updates/archify/stable.json': stableUpdateManifest('2.12.0'),
     'archify/SKILL.md': '---\nmetadata:\n  version: "2.13"\n---\n',
+    'archify-pr/SKILL.md': '---\nmetadata:\n  version: "2.13"\n---\n',
     'archify/assets/template.html': '<meta name="generator" content="archify 2.13.0-dev.0">',
     'CHANGELOG.md': [
       '# Changelog',
@@ -92,6 +93,7 @@ function writeValidDevelopmentFixture(root, overrides = {}) {
     'README_EN.md': english,
     'README_ZH.md': chinese,
     'README_JA.md': japanese,
+    'README_KO.md': `**현재 개발 버전:** \`v${version}\` (안정 릴리스가 아닙니다).\n`,
     'scripts/start-template.html': 'development · 开发版 · [[ARCHIFY_VERSION]]',
     'scripts/guide-template.html': 'development · 开发版 · [[ARCHIFY_VERSION]]',
     'scripts/gallery-template.html': 'development · 开发版 · [[ARCHIFY_VERSION]]',
@@ -137,6 +139,7 @@ function writeValidStableFixture(root, overrides = {}) {
     }),
     'docs/skill-updates/archify/stable.json': stableUpdateManifest(version),
     'archify/SKILL.md': '---\nmetadata:\n  version: "2.13"\n---\n',
+    'archify-pr/SKILL.md': '---\nmetadata:\n  version: "2.13"\n---\n',
     'archify/assets/template.html': '<meta name="generator" content="archify 2.13.0">',
     'CHANGELOG.md': [
       '# Changelog',
@@ -151,6 +154,7 @@ function writeValidStableFixture(root, overrides = {}) {
     'README_EN.md': english,
     'README_ZH.md': chinese,
     'README_JA.md': japanese,
+    'README_KO.md': `**현재 안정 버전:** \`v${version}\`\n`,
     'scripts/start-template.html': 'stable · 稳定版 · [[ARCHIFY_VERSION]]',
     'scripts/guide-template.html': 'stable · 稳定版 · [[ARCHIFY_VERSION]]',
     'scripts/gallery-template.html': 'stable · 稳定版 · [[ARCHIFY_VERSION]]',
@@ -225,6 +229,34 @@ test('the embedded update identity must match the package release exactly', () =
     const result = runCheck(fixture);
     assert.notEqual(result.status, 0);
     assert.match(result.stderr, /archify\/skill-release\.json must identify archify 2\.13\.0-dev\.0 as development/);
+  } finally {
+    fs.rmSync(fixture, { recursive: true, force: true });
+  }
+});
+
+test('the companion PR Skill metadata follows the same package minor identity', () => {
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-release-identity-'));
+  try {
+    writeValidDevelopmentFixture(fixture, {
+      'archify-pr/SKILL.md': '---\nmetadata:\n  version: "2.12"\n---\n',
+    });
+
+    const result = runCheck(fixture);
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /archify-pr\/SKILL\.md metadata version 2\.12 must map to package 2\.13\.0-dev\.0 as 2\.13/);
+  } finally {
+    fs.rmSync(fixture, { recursive: true, force: true });
+  }
+});
+
+test('a reduced checkout without the companion PR Skill still validates core identity', () => {
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-release-identity-'));
+  try {
+    writeValidStableFixture(fixture);
+    fs.rmSync(path.join(fixture, 'archify-pr'), { recursive: true, force: true });
+
+    const result = runCheck(fixture);
+    assert.equal(result.status, 0, result.stderr);
   } finally {
     fs.rmSync(fixture, { recursive: true, force: true });
   }
@@ -442,6 +474,28 @@ test('the Japanese README must carry its own development marker, not the English
     const result = runCheck(fixture);
     assert.notEqual(result.status, 0);
     assert.match(result.stderr, /README_JA\.md must advertise development identity v2\.13\.0-dev\.0/);
+  } finally {
+    fs.rmSync(fixture, { recursive: true, force: true });
+  }
+});
+
+test('the Korean README checks its own exact development identity without requiring a badge', () => {
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-release-identity-'));
+  try {
+    writeValidDevelopmentFixture(fixture);
+    const valid = runCheck(fixture);
+    assert.equal(valid.status, 0, valid.stderr);
+    for (const marker of [
+      '**현재 개발 버전:** `v2.12.0-dev.0`',
+      '**현재 안정 버전:** `v2.13.0-dev.0`',
+      'Current development version: `v2.13.0-dev.0`',
+    ]) {
+      writeFile(fixture, 'README_KO.md', marker);
+      const stale = runCheck(fixture);
+      assert.notEqual(stale.status, 0, marker);
+      assert.match(stale.stderr, /README_KO\.md must advertise development identity v2\.13\.0-dev\.0/);
+      assert.doesNotMatch(stale.stderr, /escaped badge/);
+    }
   } finally {
     fs.rmSync(fixture, { recursive: true, force: true });
   }

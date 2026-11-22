@@ -44,6 +44,10 @@ const { lang = 'en' } = Astro.props;
         <button class="type-tab" type="button" role="tab" data-type="dataflow" data-en="Data flow" data-zh="数据流">Data flow</button>
         <button class="type-tab" type="button" role="tab" data-type="lifecycle" data-en="Lifecycle" data-zh="生命周期">Lifecycle</button>
         <button class="type-tab" type="button" role="tab" data-type="erd" data-en="Entity-relationship" data-zh="实体关系图">Entity-relationship</button>
+        <button class="type-tab" type="button" role="tab" data-type="class" data-en="Class" data-zh="类图">Class</button>
+        <button class="type-tab" type="button" role="tab" data-type="tree" data-en="Tree" data-zh="树图">Tree</button>
+        <button class="type-tab" type="button" role="tab" data-type="timeline" data-en="Timeline" data-zh="时间线">Timeline</button>
+        <button class="type-tab" type="button" role="tab" data-type="waterfall" data-en="Waterfall" data-zh="瀑布图">Waterfall</button>
       </div>
     </section>
 
@@ -105,6 +109,7 @@ const { lang = 'en' } = Astro.props;
 
     <footer class="page-footer">
       <span data-en={`Archify v${version} · ${productChannel} · self-contained HTML · typed JSON source`} data-zh={`Archify v${version} · ${productChannel === 'development' ? '开发版' : '稳定版'} · 独立 HTML · 类型化 JSON 源`}>Archify v{version} · {productChannel} · self-contained HTML · typed JSON source</span>
+      <a href="index.html#support" data-en="Support" data-zh="支持项目">Support</a>
       <a href="https://github.com/tt-a1i/archify" data-en="View source on GitHub ↗" data-zh="在 GitHub 查看源码 ↗">View source on GitHub ↗</a>
     </footer>
     <aside class="agent-guide-link" aria-label={lang === 'zh' ? 'Agent 画图指南' : 'Agent diagramming guide'}>

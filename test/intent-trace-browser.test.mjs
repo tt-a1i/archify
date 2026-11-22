@@ -52,10 +52,9 @@ test('Intent Trace preserves input handoffs, transient geometry and cleanup', {
     return result.result?.value;
   }
   await send('Page.addScriptToEvaluateOnNewDocument', { source: `
-    window.intentErrors=[]; window.intentEnds=[];
+    window.intentErrors=[];
     addEventListener('error',e=>intentErrors.push(e.message));
     addEventListener('unhandledrejection',e=>intentErrors.push(String(e.reason)));
-    addEventListener('animationend',e=>{if(e.target.matches('.intent-trace-flow'))intentEnds.push({name:e.animationName,trusted:e.isTrusted});},true);
     try {localStorage.removeItem('archify-motion');} catch (_) {}
     window.intentWait=predicate=>new Promise((resolve,reject)=>{
       const start=performance.now();
@@ -134,6 +133,8 @@ test('Intent Trace preserves input handoffs, transient geometry and cleanup', {
     const api = await run(`(()=>{
       const p=Archify.intentTrace;const shown=p.show('api',{announce:true}),text=document.getElementById('intent-trace-status').textContent;
       const overlay=document.querySelector('[data-intent-trace-overlay]');
+      const staticMotion=[...overlay.querySelectorAll('.intent-trace-flow')].every(n=>getComputedStyle(n).animationName==='none');
+      if(!staticMotion)throw Error('Non-trace page animated its inspection overlay');
       const repeated=p.show('api',{announce:true}),same=overlay===document.querySelector('[data-intent-trace-overlay]');
       const missing=p.show('missing'),retained=document.getElementById('intent-trace-status').textContent===text;
       const empty=p.show(''),cleared=p.clear(),twice=p.clear();
@@ -286,18 +287,35 @@ test('Intent Trace preserves input handoffs, transient geometry and cleanup', {
     }
   });
 
-  await t.test('real CSS completion, Motion ownership, reduced motion and themes preserve previews', async () => {
+  await t.test('real CSS looping, Motion stop/restart, reduced motion and themes preserve previews', async () => {
     await load('trace');
     await run(`Archify.motionGovernor.resume()`);
     assert.equal(await run(`document.documentElement.getAttribute('data-ambient-motion')`), 'running');
     await move('api'); await run(`intentWait(()=>Archify.motionGovernor.owner()==='intent')`);
     assert.equal(await run(`Array.from(document.querySelectorAll('.ambient-edge-flow')).every(e=>e.getAnimations().length===0)`), true);
-    await run(`intentWait(()=>intentEnds.some(e=>e.trusted&&e.name==='archify-intent-trace-flow'))`);
-    assert.equal((await snapshot('animation-complete')).active, 'api');
+    const loopState=await run(`(async()=>{
+      const flows=[...document.querySelectorAll('.intent-trace-flow')];
+      if(!flows.length)throw Error('No active trace flows');
+      const animations=flows.flatMap(n=>n.getAnimations());
+      await intentWait(()=>animations.length>0&&animations.every(a=>a.playState==='running'&&!Number.isFinite(a.effect.getTiming().iterations)&&a.effect.getComputedTiming().currentIteration>=1));
+      return {active:Archify.intentTrace.active(),iterations:animations.map(a=>a.effect.getComputedTiming().currentIteration),opacity:flows.map(n=>Number(getComputedStyle(n).opacity))};
+    })()`);
+    assert.equal(loopState.active,'api');assert.ok(loopState.iterations.every(n=>n>=1));assert.ok(loopState.opacity.every(n=>n===0.94));
+    records.push({scenario:'active-loop-clock',...loopState});
+    await snapshot('animation-looping');
+    await run('Archify.motionGovernor.pause()');
+    await run(`intentWait(()=>[...document.querySelectorAll('.intent-trace-flow')].every(n=>n.getAnimations().length===0))`);
+    assert.equal(await run(`Archify.intentTrace.active()`),'api','Still mode retains the static target');
+    assert.equal(await run(`getComputedStyle(document.querySelector('.intent-trace-flow')).animationName`),'none');
+    await snapshot('active-stopped');
+    await run('Archify.motionGovernor.resume()');
+    await run(`intentWait(()=>[...document.querySelectorAll('.intent-trace-flow')].some(n=>n.getAnimations().some(a=>a.playState==='running'&&!Number.isFinite(a.effect.getTiming().iterations))))`);
+    await snapshot('active-restarted');
     const direction = await run(`getComputedStyle(document.querySelector('.intent-trace-flow[data-direction="in"]')).animationDirection`);
     assert.equal(direction, 'normal');
     await move(); await run(`intentWait(()=>Archify.motionGovernor.owner()==='')`);
-    await snapshot('owner-cleared');
+    const noTarget=await snapshot('owner-cleared');
+    assert.equal(noTarget.active,null);assert.equal(noTarget.overlays,0,'no target leaves no trace animation behind');
     assert.equal(await run(`document.querySelector('.ambient-edge-flow').getAnimations().some(a=>a.playState==='running')`), true);
     for (const theme of ['dark', 'light']) {
       await load('trace', { theme, reduced: true });

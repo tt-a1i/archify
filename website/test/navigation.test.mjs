@@ -41,7 +41,7 @@ test('all built pages expose one shared top navigation and the correct current p
     if (page === 'index') {
       const install = nodes(nav).find(node => hasClass(node, 'nav-cta'));
       const destination = new URL(resolvedHref(install));
-      assert.equal(destination.href, hrefFor('start') + '#install', 'homepage installation opens the agent-aware setup');
+      assert.equal(destination.href, `${origin}${lang === 'zh' ? `zh${extension}` : ''}#quickstart`, 'homepage installation opens the quick start');
     }
     const row = nodes(nav).find(node => hasClass(node, 'nav-links'));
     assert.equal(nodes(row).filter(node => node.tagName === 'a').length, 5, page);

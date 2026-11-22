@@ -135,6 +135,7 @@ test('finalize reuses delivery validation, runs one build, and keeps full stage 
   const outDir = path.join(directory, 'evidence');
   const source = '{"meta":{"quality_profile":"showcase"}}';
   fs.writeFileSync(input, source);
+  fs.writeFileSync(path.join(directory, 'server.js'), 'export const port = 3000;');
   const calls = [];
   const runCommand = ({ stage, args }) => {
     calls.push({ stage, args });
@@ -159,7 +160,9 @@ test('finalize reuses delivery validation, runs one build, and keeps full stage 
     input,
     output,
     outDir,
+    repoRoot: directory,
     runCommand,
+    checkMissingAnalysisDependencies: () => [],
   });
 
   assert.equal(finalized.exitCode, 0);
@@ -170,6 +173,16 @@ test('finalize reuses delivery validation, runs one build, and keeps full stage 
   });
   assert.equal(finalized.summary.evidence.browserCheckReceipt, path.join(outDir, 'diagram.browser-check.json'));
   assert.equal(finalized.summary.visualReview, 'not-requested');
+  assert.equal(finalized.summary.repositoryReferences.status, 'not-declared');
+  assert.equal(finalized.summary.repositoryReferences.count, 0);
+  assert.equal(finalized.summary.codeAnalysisOffer.action, 'offer-code-analysis');
+  assert.equal(finalized.summary.codeAnalysisOffer.dependencies, 'installed');
+  assert.equal(finalized.summary.codeAnalysisOffer.diagramButton, false);
+  assert.equal(finalized.summary.codeAnalysisOffer.quality, 'showcase');
+  assert.deepEqual(finalized.summary.codeAnalysisOffer.start.argv, [
+    process.execPath, '/fake/archify.mjs', 'start', directory, '--ir', input, '--quality', 'showcase',
+  ]);
+  assert.equal('linkedDiagrams' in finalized.summary.codeAnalysisOffer, false);
   assert.equal('stages' in finalized.summary, false);
   assert.equal(JSON.stringify(finalized.summary).includes('large-stage-array'), false);
   assert.equal(finalized.receipt.stages['browser-check'].receipt.containment.viewports.length, VISUAL_CHECK_VIEWPORTS.length);
@@ -184,7 +197,108 @@ test('finalize reuses delivery validation, runs one build, and keeps full stage 
   assert.equal(persisted.stages.validate.receipt.validation.checkCount, 9);
   const persistedSummary = JSON.parse(fs.readFileSync(summaryPath, 'utf8'));
   assert.equal(persistedSummary.ok, true);
+  assert.deepEqual(persisted.codeAnalysisOffer, finalized.summary.codeAnalysisOffer);
+  assert.deepEqual(persistedSummary.codeAnalysisOffer, finalized.summary.codeAnalysisOffer);
   assert.equal('stages' in persistedSummary, false);
+});
+
+test('finalize offers Architecture Diagnosis only for supported repository-backed Architecture and never starts it', async t => {
+  const directory = workspace(t);
+  const input = path.join(directory, 'diagram.json');
+  const output = path.join(directory, 'diagram.html');
+  const outDir = path.join(directory, 'evidence');
+  let dependencyChecks = 0;
+  const checkMissingAnalysisDependencies = () => {
+    dependencyChecks += 1;
+    return ['typescript'];
+  };
+  const finalizeWith = async ({ type, repoRoot, navigation, quality = 'showcase', checkDependencies = checkMissingAnalysisDependencies }) => {
+    const source = JSON.stringify({ meta: { quality_profile: 'showcase' }, ...navigation });
+    fs.writeFileSync(input, source);
+    const stages = [];
+    const runCommand = ({ stage }) => {
+      stages.push(stage);
+      const delivery = passingDelivery({ input, output, source, type, quality });
+      if (stage === 'deliver') return result(delivery);
+      if (stage === 'check') return result(passingCheck({ output, artifact: delivery.artifact, deliveryReceiptId: delivery.receiptId, quality }));
+      fs.mkdirSync(outDir, { recursive: true });
+      fs.writeFileSync(path.join(outDir, 'diagram.browser-check.json'), 'browser evidence');
+      return result(passingBrowserCheck({ output, artifact: delivery.artifact, deliveryReceiptId: delivery.receiptId, outDir }));
+    };
+    const finalized = await runFinalize({
+      cliPath: '/fake/archify.mjs', type, input, output, outDir, repoRoot, quality, runCommand,
+      checkMissingAnalysisDependencies: checkDependencies,
+    });
+    assert.equal(finalized.exitCode, 0);
+    assert.deepEqual(stages, ['deliver', 'check', 'browser-check']);
+    return finalized.summary;
+  };
+
+  const withoutRepository = await finalizeWith({ type: 'architecture' });
+  assert.equal('codeAnalysisOffer' in withoutRepository, false);
+
+  const workflow = await finalizeWith({ type: 'workflow', repoRoot: directory });
+  assert.equal(workflow.repositoryReferences.status, 'not-declared');
+  assert.equal('codeAnalysisOffer' in workflow, false);
+  assert.equal(dependencyChecks, 0);
+
+  fs.writeFileSync(path.join(directory, 'site.php'), '<?php echo "fixture";');
+  const unsupported = await finalizeWith({ type: 'architecture', repoRoot: directory });
+  assert.equal(unsupported.repositoryReferences.status, 'not-declared');
+  assert.equal('codeAnalysisOffer' in unsupported, false);
+  assert.equal(dependencyChecks, 0);
+
+  fs.mkdirSync(path.join(directory, 'dist'));
+  fs.writeFileSync(path.join(directory, 'dist', 'generated.js'), 'export const generated = true;');
+  const excluded = await finalizeWith({ type: 'architecture', repoRoot: directory });
+  assert.equal('codeAnalysisOffer' in excluded, false);
+  assert.equal(dependencyChecks, 0);
+
+  fs.mkdirSync(path.join(directory, 'src'));
+  fs.writeFileSync(path.join(directory, 'src', 'server.js'), 'export const port = 3000;');
+  fs.writeFileSync(path.join(directory, 'src', 'worker.py'), 'pass');
+  const architecture = await finalizeWith({ type: 'architecture', repoRoot: directory, quality: 'standard' });
+  assert.equal(dependencyChecks, 1);
+  assert.equal(architecture.codeAnalysisOffer.dependencies, 'missing');
+  assert.equal(architecture.codeAnalysisOffer.quality, 'standard');
+  assert.deepEqual(architecture.codeAnalysisOffer.start.argv, [
+    process.execPath, '/fake/archify.mjs', 'start', directory, '--ir', input, '--quality', 'standard',
+  ]);
+  assert.equal('prepare' in architecture.codeAnalysisOffer, false);
+  assert.equal('alignWithDiagram' in architecture.codeAnalysisOffer, false);
+
+  for (const [label, navigation] of [
+    ['component href', { components: [{ id: 'child', href: 'child.html' }] }],
+    ['drilldown list', { components: [{ id: 'child', drilldowns: [{ href: 'child.html', label: 'Child' }] }] }],
+    ['parent link', { meta: {
+      quality_profile: 'showcase', parentHref: 'parent.html',
+      repository: { url: 'https://github.com/example/fixture', revision: 'a'.repeat(40) },
+    } }],
+  ]) {
+    const linked = await finalizeWith({ type: 'architecture', repoRoot: directory, navigation });
+    assert.equal(linked.codeAnalysisOffer.linkedDiagrams, true, label);
+    assert.equal(linked.codeAnalysisOffer.diagramButton, label === 'parent link', label);
+  }
+
+  await t.test('finalize keeps a successful delivery when the Diagnosis dependency check throws', async () => {
+    let attempted = false;
+    const summary = await finalizeWith({
+      type: 'architecture',
+      repoRoot: directory,
+      checkDependencies: async () => {
+        attempted = true;
+        throw new Error('Code Analysis module unavailable');
+      },
+    });
+    assert.equal(attempted, true);
+    assert.equal(summary.ok, true);
+    assert.deepEqual(summary.gates, { validate: 'pass', deliver: 'pass', check: 'pass', 'browser-check': 'pass' });
+    assert.equal('codeAnalysisOffer' in summary, false);
+    const receipt = JSON.parse(fs.readFileSync(summary.evidence.receipt, 'utf8'));
+    assert.equal(receipt.ok, true);
+    assert.equal('codeAnalysisOffer' in receipt, false);
+    assert.equal(fs.readFileSync(output, 'utf8'), '<!doctype html><title>verified</title>');
+  });
 });
 
 test('finalize stops at the failed gate and persists actionable failure evidence', async t => {
@@ -195,9 +309,10 @@ test('finalize stops at the failed gate and persists actionable failure evidence
   const calls = [];
   const finalized = await runFinalize({
     cliPath: '/fake/archify.mjs',
-    type: 'workflow',
+    type: 'architecture',
     input,
     output,
+    repoRoot: directory,
     runCommand: ({ stage }) => {
       calls.push(stage);
       return result({
@@ -222,6 +337,7 @@ test('finalize stops at the failed gate and persists actionable failure evidence
   assert.equal(finalized.summary.gates.deliver, 'not-run');
   assert.equal(finalized.summary.gates.check, 'not-run');
   assert.equal(finalized.summary.gates['browser-check'], 'not-run');
+  assert.equal('codeAnalysisOffer' in finalized.summary, false);
   assert.deepEqual(finalized.summary.diagnostics, [{
     code: 'composition/route-crossing',
     severity: 'error',
@@ -343,6 +459,21 @@ test('compact success turns route evidence into node-move hints that keep relati
   assert.equal('hints' in compactFinalizeReceipt({ ok: true, stages: { check: { receipt: { composition: {
     metrics: { resolvedCrossovers: 1 }, routeReview: { crossings: [], detours: [] },
   } } } } }).visualReviewRecommendation, false);
+});
+
+test('compact success identifies both directions of a crossing between the same nodes', () => {
+  const crossing = {
+    left: { id: 'pty-input', from: 'runtime', to: 'orchestrator' },
+    right: { id: 'team-send', from: 'orchestrator', to: 'runtime' },
+    sharedNode: 'runtime',
+  };
+  const { hints } = compactFinalizeReceipt({ ok: true, type: 'architecture', stages: { check: { receipt: { composition: {
+    metrics: { resolvedCrossovers: 1 }, routeReview: { crossings: [crossing], detours: [] },
+  } } } } }).visualReviewRecommendation;
+  assert.equal(hints.length, 1);
+  assert.match(hints[0], /runtime → orchestrator and orchestrator → runtime cross next to runtime/);
+  assert.match(hints[0], /trace both routes near runtime/);
+  assert.doesNotMatch(hints[0], /move node/);
 });
 
 test('compact failure receipts retain diverse actionable subjects without embedding full stage evidence', () => {
@@ -1346,4 +1477,241 @@ test('compact review and repair guidance follow the mode and the failing diagnos
   }).nextAction.constraint;
   assert.doesNotMatch(failure('composition/desktop-readability'), /architecture-layout-repair/);
   assert.match(failure('composition/proper-crossing'), /architecture-layout-repair/);
+});
+
+function rangeDraft() {
+  return `${JSON.stringify({ meta: {}, components: [{ id: 'a', pos: [40, 40],
+    sources: [{ path: 'a.js', line: 1, end_line: 99 }] }], connections: [] }, null, 2)}\n`;
+}
+
+function rangeDiagnostic(overrides = {}) {
+  return { code: 'repository-evidence/line-out-of-range', severity: 'error', message: 'past EOF',
+    subject: { path: '/components/0/sources/0' },
+    evidence: { sourcePath: 'a.js', line: 1, endLine: 99, lineCount: 3 }, ...overrides };
+}
+
+test('finalize narrows only the source end_line and completes every gate once on repaired bytes', async t => {
+  const directory = workspace(t);
+  const input = path.join(directory, 'candidate.json');
+  const output = path.join(directory, 'diagram.html');
+  const original = rangeDraft();
+  fs.writeFileSync(input, original);
+  const stages = [];
+  let delivery;
+  const finalized = await runFinalize({ cliPath: '/fake/archify.mjs', type: 'architecture', input, output,
+    runCommand: ({ stage }) => {
+      stages.push(stage);
+      if (stages.length === 1) return result({ ok: false, command: 'deliver', stage: 'input', diagnostics: [rangeDiagnostic()] }, 1);
+      const candidate = JSON.parse(fs.readFileSync(input, 'utf8'));
+      const expected = JSON.parse(original);
+      expected.components[0].sources[0].end_line = 3;
+      assert.deepEqual(candidate, expected, 'all authored content except end_line is preserved');
+      if (stage === 'deliver') return result(delivery = passingDelivery({ input, output, source: fs.readFileSync(input, 'utf8') }));
+      if (stage === 'check') return result(passingCheck({ output, artifact: delivery.artifact, deliveryReceiptId: delivery.receiptId }));
+      return result(passingBrowserCheck({ output, artifact: delivery.artifact, deliveryReceiptId: delivery.receiptId, outDir: directory }));
+    } });
+  assert.equal(finalized.exitCode, 0);
+  assert.deepEqual(stages, ['deliver', 'deliver', 'check', 'browser-check']);
+  assert.equal(finalized.summary.autoRepair.outcome, 'applied');
+  assert.deepEqual(finalized.summary.autoRepair.sourceRanges, [{ path: '/components/0/sources/0', endLine: [99, 3] }]);
+  assert.deepEqual(finalized.receipt.specification, { path: input, ...artifactIdentity(fs.readFileSync(input)) });
+});
+
+test('finalize preserves noncanonical source candidates byte for byte without retrying', async t => {
+  const canonical = rangeDraft();
+  const withRevision = revision => `${JSON.stringify({ ...JSON.parse(canonical), meta: { revision } }, null, 2)}\n`;
+  const variants = [
+    ['compact', JSON.stringify(JSON.parse(canonical))],
+    ['CRLF', canonical.replaceAll('\n', '\r\n')],
+    ['BOM', `\uFEFF${canonical}`],
+    ['precision-sensitive integer', withRevision(9007199254740992).replace('9007199254740992', '9007199254740993')],
+    ['exponent spelling', withRevision(1000).replace('1000', '1e3')],
+  ];
+  for (const [format, original] of variants) {
+    const directory = workspace(t);
+    const input = path.join(directory, 'candidate.json');
+    const output = path.join(directory, 'diagram.html');
+    fs.writeFileSync(input, original);
+    let deliveries = 0;
+    const finalized = await runFinalize({ cliPath: '/fake/archify.mjs', type: 'architecture', input, output,
+      runCommand: () => {
+        deliveries++;
+        return result({ ok: false, command: 'deliver', stage: 'input', diagnostics: [rangeDiagnostic()] }, 1);
+      } });
+    assert.equal(finalized.exitCode, 1, format);
+    assert.equal(deliveries, 1, format);
+    assert.equal(finalized.summary.autoRepair, undefined, format);
+    assert.deepEqual(fs.readFileSync(input), Buffer.from(original), format);
+  }
+});
+
+test('finalize leaves invalid, empty, missing, mismatched and mixed source diagnostics for the author', async t => {
+  const good = rangeDiagnostic();
+  const cases = [
+    [],
+    [rangeDiagnostic({ evidence: { ...good.evidence, line: 5, lineCount: 3 } })],
+    [rangeDiagnostic({ evidence: { ...good.evidence, lineCount: 0 } })],
+    [rangeDiagnostic({ evidence: { sourcePath: 'a.js', line: 1, lineCount: 3 } })],
+    [rangeDiagnostic({ evidence: { ...good.evidence, line: 0 } })],
+    [rangeDiagnostic({ evidence: { ...good.evidence, sourcePath: 'other.js' } })],
+    [rangeDiagnostic({ subject: { path: '/components/0/sources/4' } })],
+    [rangeDiagnostic({ code: 'repository-evidence/file-missing' })],
+    [good, { code: 'composition/label-collision', severity: 'error' }],
+  ];
+  for (const diagnostics of cases) {
+    const directory = workspace(t);
+    const input = path.join(directory, 'candidate.json');
+    const output = path.join(directory, 'diagram.html');
+    const original = rangeDraft();
+    fs.writeFileSync(input, original);
+    let deliveries = 0;
+    const finalized = await runFinalize({ cliPath: '/fake/archify.mjs', type: 'architecture', input, output,
+      runCommand: () => { deliveries++; return result({ ok: false, command: 'deliver', stage: 'input', diagnostics }, 1); } });
+    assert.equal(deliveries, 1);
+    assert.equal(finalized.summary.autoRepair, undefined);
+    assert.equal(fs.readFileSync(input, 'utf8'), original);
+  }
+});
+
+for (const terminal of ['retry-validate', 'check', 'browser-check', 'command-exception', 'browser-exception', 'pending-provenance', 'external-candidate', 'foreign-sidecar', 'receipt-publication']) {
+  test(`finalize source-range repair recovers at ${terminal} failure`, async t => {
+    const directory = workspace(t);
+    const input = path.join(directory, 'candidate.json');
+    const output = path.join(directory, 'diagram.html');
+    const receiptPath = path.join(directory, 'custom.json');
+    const original = rangeDraft();
+    const external = '{"external":true}';
+    fs.writeFileSync(input, original);
+    let deliveries = 0;
+    let delivery;
+    const failed = { code: 'test/later-failure', severity: 'error', message: 'later failure' };
+    const options = { cliPath: '/fake/archify.mjs', type: 'architecture', input, output, receiptPath,
+      ...(terminal === 'browser-exception' ? { runBrowserCheck: () => { throw new Error('browser callback failed'); }, resolveChrome: () => null } : {}),
+      ...(['pending-provenance', 'external-candidate', 'foreign-sidecar'].includes(terminal) ? { inspectDelivery: () => {
+        if (terminal === 'external-candidate') fs.writeFileSync(input, external);
+        if (terminal === 'foreign-sidecar') writeCurrentDelivery(output, { ...delivery, receiptId: '22222222-2222-4222-8222-222222222222' });
+        return { ok: false, diagnostics: [failed] };
+      } } : {}),
+      runCommand: ({ stage }) => {
+        if (stage === 'deliver') {
+          if (++deliveries === 1) return result({ ok: false, command: 'deliver', stage: 'input', diagnostics: [rangeDiagnostic()] }, 1);
+          if (terminal === 'retry-validate') return result({ ok: false, command: 'deliver', stage: 'input', diagnostics: [rangeDiagnostic()] }, 1);
+          if (terminal === 'command-exception') throw new Error('command runner failed');
+          delivery = passingDelivery({ input, output, source: fs.readFileSync(input, 'utf8') });
+          if (terminal === 'receipt-publication') {
+            const foreign = path.join(directory, 'foreign.json');
+            fs.writeFileSync(foreign, external);
+            fs.renameSync(foreign, receiptPath);
+          }
+          return result(delivery);
+        }
+        if (stage === terminal) return result({ ok: false, diagnostics: [failed] }, 1);
+        if (stage === 'check') return result(passingCheck({ output, artifact: delivery.artifact, deliveryReceiptId: delivery.receiptId }));
+        return result(passingBrowserCheck({ output, artifact: delivery.artifact, deliveryReceiptId: delivery.receiptId, outDir: directory }));
+      } };
+    if (['command-exception', 'browser-exception', 'receipt-publication'].includes(terminal)) {
+      await assert.rejects(runFinalize(options), terminal === 'receipt-publication' ? error => error.finalizeCode === 'finalize/receipt-publication' : /failed/);
+    } else {
+      const finalized = await runFinalize(options);
+      assert.equal(finalized.exitCode, 1);
+      assert.equal(finalized.summary.autoRepair.outcome, terminal === 'external-candidate' ? 'restore-failed' : 'reverted');
+      assert.equal(finalized.receipt.diagnostics[0].code, terminal === 'retry-validate' ? rangeDiagnostic().code : failed.code);
+    }
+    assert.equal(deliveries, 2, 'only one repair retry');
+    assert.equal(fs.readFileSync(input, 'utf8'), terminal === 'external-candidate' ? external : original);
+    const sidecar = output.replace(/\.html?$/i, '.delivery.json');
+    if (terminal === 'foreign-sidecar') assert.equal(JSON.parse(fs.readFileSync(sidecar, 'utf8')).receiptId, '22222222-2222-4222-8222-222222222222');
+    else assert.equal(fs.existsSync(sidecar), false, 'rolled-back retries cannot claim current delivery');
+    if (terminal === 'receipt-publication') assert.equal(fs.readFileSync(receiptPath, 'utf8'), external);
+  });
+}
+
+for (const replacement of ['in-place bytes', 'new identity']) {
+  test(`finalize never applies source-range diagnostics after external ${replacement} change`, async t => {
+    const directory = workspace(t);
+    const input = path.join(directory, 'candidate.json');
+    const output = path.join(directory, 'diagram.html');
+    const original = rangeDraft();
+    const edited = replacement === 'new identity' ? original : '{"external":true}';
+    fs.writeFileSync(input, original);
+    let deliveries = 0;
+    const finalized = await runFinalize({ cliPath: '/fake/archify.mjs', type: 'architecture', input, output,
+      runCommand: () => {
+        deliveries++;
+        if (replacement === 'new identity') {
+          const foreign = path.join(directory, 'foreign.json');
+          fs.writeFileSync(foreign, edited);
+          fs.renameSync(foreign, input);
+        } else fs.writeFileSync(input, edited);
+        return result({ ok: false, command: 'deliver', stage: 'input', diagnostics: [rangeDiagnostic()] }, 1);
+      } });
+    assert.equal(deliveries, 1);
+    assert.equal(finalized.summary.autoRepair, undefined);
+    assert.equal(fs.readFileSync(input, 'utf8'), edited);
+  });
+}
+
+test('finalize restores a source repair published with a cleanup warning and exposes its recovery outcome', async t => {
+  const directory = workspace(t);
+  const input = path.join(directory, 'candidate.json');
+  const output = path.join(directory, 'diagram.html');
+  const original = rangeDraft();
+  fs.writeFileSync(input, original);
+  const rmdir = fs.rmdirSync;
+  let injected = false;
+  let deliveries = 0;
+  fs.rmdirSync = function (...args) {
+    const stack = new Error().stack;
+    if (!injected && stack.includes('replaceCandidate') && stack.includes('cleanupRecoveryDirectory')) {
+      injected = true;
+      throw Object.assign(new Error('injected cleanup failure'), { code: 'EACCES' });
+    }
+    return rmdir.apply(this, args);
+  };
+  try {
+    await assert.rejects(runFinalize({ cliPath: '/fake/archify.mjs', type: 'architecture', input, output,
+      runCommand: () => { deliveries++; return result({ ok: false, command: 'deliver', stage: 'input', diagnostics: [rangeDiagnostic()] }, 1); } }),
+    error => error.finalizeCode === 'finalize/candidate-publication'
+      && error.finalizeEvidence.autoRepair.outcome === 'reverted'
+      && error.finalizeEvidence.autoRepair.publicationWarning.status === 'committed-with-warning');
+  } finally { fs.rmdirSync = rmdir; }
+  assert.ok(injected);
+  assert.equal(deliveries, 1, 'cleanup failure is terminal before retry');
+  assert.equal(fs.readFileSync(input, 'utf8'), original);
+});
+
+test('finalize preserves a same-inode sidecar edit during repair rollback', async t => {
+  const directory = workspace(t);
+  const input = path.join(directory, 'candidate.json');
+  const output = path.join(directory, 'diagram.html');
+  const sidecar = output.replace(/\.html?$/i, '.delivery.json');
+  fs.writeFileSync(input, rangeDraft());
+  const physicalSidecar = path.join(fs.realpathSync(directory), path.basename(sidecar));
+  const rename = fs.renameSync;
+  let injected = false;
+  let deliveries = 0;
+  let delivery;
+  const foreignId = '22222222-2222-4222-8222-222222222222';
+  fs.renameSync = function (source, target) {
+    if (!injected && (source === sidecar || source === physicalSidecar) && new Error().stack.includes('invalidateRepairedDelivery')) {
+      injected = true;
+      writeCurrentDelivery(output, { ...delivery, receiptId: foreignId });
+    }
+    return rename.call(this, source, target);
+  };
+  let finalized;
+  try {
+    finalized = await runFinalize({ cliPath: '/fake/archify.mjs', type: 'architecture', input, output,
+      runCommand: ({ stage }) => {
+        if (stage === 'deliver') {
+          if (++deliveries === 1) return result({ ok: false, command: 'deliver', stage: 'input', diagnostics: [rangeDiagnostic()] }, 1);
+          return result(delivery = passingDelivery({ input, output, source: fs.readFileSync(input, 'utf8') }));
+        }
+        return result({ ok: false, diagnostics: [{ code: 'test/later-failure' }] }, 1);
+      } });
+  } finally { fs.renameSync = rename; }
+  assert.ok(injected);
+  assert.equal(finalized.exitCode, 1);
+  assert.equal(finalized.summary.autoRepair.outcome, 'restore-failed');
+  assert.equal(JSON.parse(fs.readFileSync(sidecar, 'utf8')).receiptId, foreignId);
 });

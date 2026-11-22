@@ -7,8 +7,8 @@ import {createHash} from 'node:crypto';
 import {ChromeVisualBrowser,findChrome,runBrowserCheck} from '../archify/bin/visual-check.mjs';
 import {unpackPageBundle} from '../archify/explainer/page-bundle.mjs';
 import {inspectPublicHtml,inspectExplainerBrowser,inspectNativePreviewLayout,inspectNativeViewer,explainerObservation,explainerObservationDiagnostics} from '../archify/explainer/browser-check.mjs';
-// Explicit developer diagnostics only; ordinary explainer tests never launch Chrome.
-const chrome=process.env.ARCHIFY_EXPLAINER_BROWSER_TESTS==='1' ? findChrome() : null;
+// The maintained browser runner supplies ARCHIFY_CHROME; ordinary Node runs stay headless.
+const chrome=process.env.ARCHIFY_CHROME || process.env.ARCHIFY_EXPLAINER_BROWSER_TESTS==='1' ? findChrome() : null;
 const dir=fs.mkdtempSync(path.join(os.tmpdir(),'archify-explainer-browser-tests-'));
 function artifact(name,html){const file=path.join(dir,name+'.html');fs.writeFileSync(file,html);return file;}
 const style='<style>body{font:16px/1.5 sans-serif;margin:20px;color:#171717;background:white}button{font:inherit}:focus-visible{outline:2px solid blue}@media(prefers-color-scheme:dark){body{background:#171717;color:white}}</style>';
@@ -32,8 +32,155 @@ test('formal renderer retains keyboard navigation, static reading and print mode
 });
 test.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
 
+test('source cards keep their evidence and return link reachable in short viewports',{skip:!chrome},async()=>{
+ const {renderExplainer}=await import('../archify/explainer/render.mjs');
+ const doc=formalDocument();doc.answer.summary='Read the [source](source:example).';
+ const excerpt=Array.from({length:14},(_,i)=>`Evidence line ${i+1}: ${'complete text '.repeat(12)}`).join('\n');
+ const source={id:'example',title:'Pinned source excerpt',path:'src/example.js',lines:[10,23],revision:'abc1234',url:'https://example.com/source',text:excerpt};
+ const file=artifact('source-card-viewport',renderExplainer(doc,{preparedSources:{sources:{example:source}},sourceText:JSON.stringify(doc)}));
+ const browser=new ChromeVisualBrowser(chrome);
+ const visible=()=>pageValue(browser,`(()=>{const card=document.querySelector('.source-card'),box=card.getBoundingClientRect();return !card.hidden&&box.top>=0&&box.bottom<=innerHeight+1&&box.left>=0&&box.right<=innerWidth+1;})()`);
+ try {
+  await inspectPublicHtml(browser,{artifactPath:file,width:390,keyboard:false});
+  for(const [width,height] of [[390,480],[1440,480],[390,240],[390,900]]) {
+   await browser.cdp.send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false},await browser.sessionPromise);
+   await pageValue(browser,'document.fonts.ready.then(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))))');
+   await pageValue(browser,`(()=>{const a=document.querySelector('.cite a');a.scrollIntoView({block:'center'});a.focus();})()`);
+   assert.equal(await visible(),true,`source card remains inside ${width} x ${height}`);
+   assert.equal(await pageValue(browser,'document.querySelector(".source-card pre code").textContent.includes("Evidence line 14:")'),true,'the last excerpt line is retained');
+   await keyboardActivate(browser,'.cite a','Tab');
+   assert.equal(await pageValue(browser,'document.activeElement===document.querySelector(".source-card a")'),true,'the source link remains keyboard reachable');
+   assert.equal(await visible(),true,'focusing a card link does not push the card out of view');
+   if(height===240) {
+    assert.ok(await pageValue(browser,'document.querySelector(".source-card").scrollTop')>0,'the short card scrolls to reveal its source link');
+    for(const type of ['keyDown','keyUp'])await browser.cdp.send('Input.dispatchKeyEvent',{type,key:'Home',code:'Home',windowsVirtualKeyCode:36},await browser.sessionPromise);
+    assert.equal(await pageValue(browser,'new Promise(resolve=>{const card=document.querySelector(".source-card"),end=performance.now()+2000;function check(){if(card.scrollTop===0)return resolve(true);if(performance.now()>end)return resolve(false);requestAnimationFrame(check);}check();})'),true,'Home returns to the first evidence lines inside the short card');
+   }
+   await keyboardActivate(browser,'.source-card a','Escape');
+   assert.equal(await pageValue(browser,'document.querySelector(".source-card").hidden&&document.activeElement===document.querySelector(".cite a")'),true,'Escape returns to the citation');
+   await pageValue(browser,'document.activeElement.blur()');
+   if(height===240) {
+    await pageValue(browser,'document.querySelector(".cite a").focus()');
+    assert.equal(await pageValue(browser,'document.querySelector(".source-card").scrollTop'),0,'reopening starts with the source heading and first lines');
+    await keyboardActivate(browser,'.cite a','Escape');
+    await pageValue(browser,'document.activeElement.blur()');
+   }
+  }
+ }finally{await browser.close();}
+});
+
+test('authored answer and panel spans remain exact through measured layout and reader relayout',{skip:!chrome},async()=>{
+ const {renderExplainer}=await import('../archify/explainer/render.mjs');
+ const doc=formalDocument();doc.meta.locale='zh-CN';doc.answer.span=12;
+ const literal='Keep this complete command: '+ 'x'.repeat(100);
+ doc.panels=Array.from({length:12},(_,index)=>({id:`fixed-${index+1}`,title:'Width',span:index+1,blocks:[index===5?{id:'fixed-code',type:'snippet',text:literal}:{id:`text-${index+1}`,type:'prose',text:'X'}]}));
+ doc.panels.push({id:'after-full',title:'Last',span:6,blocks:[{id:'last-text',type:'prose',text:'X'}]});
+ const file=artifact('fixed-spans',renderExplainer(doc,{sourceText:JSON.stringify(doc)})),browser=new ChromeVisualBrowser(chrome);
+ const measure=()=>pageValue(browser,`(()=>{const board=document.querySelector('.board'),gap=parseFloat(getComputedStyle(board).columnGap),column=(board.clientWidth-gap*11)/12;return [...board.querySelectorAll('[data-span-fixed]')].map(panel=>({id:panel.id,span:Number(panel.dataset.spanFixed),width:panel.getBoundingClientRect().width,expected:column*Number(panel.dataset.spanFixed)+gap*(Number(panel.dataset.spanFixed)-1),text:panel.querySelector('.panel-body').textContent}));})()`);
+ const exact=async()=>{const rows=await measure();assert.deepEqual(rows.map(row=>row.id),['answer',...doc.panels.map(panel=>panel.id)],'authored panels retain source order');assert.deepEqual(rows.filter(row=>Math.abs(row.width-row.expected)>1),[],'a fixed width is not a minimum or a full-row fallback');assert.ok(rows[6].text.includes(literal),'a narrow authored code panel retains its complete text');};
+ const settled=()=>pageValue(browser,'document.fonts.ready.then(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))))');
+ try {
+  await inspectPublicHtml(browser,{artifactPath:file,width:1440,theme:'light',keyboard:false});await exact();
+  await keyboardActivate(browser,'[data-style-toggle]');await keyboardActivate(browser,'[data-style-choice="editorial"]');await settled();await exact();
+  await keyboardActivate(browser,'[data-theme-choice="dark"]');await settled();await exact();
+  for(const width of [900,390,1440]){
+   await browser.cdp.send('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:false},await browser.sessionPromise);await settled();
+   if(width===390){const rows=await measure();assert.ok(rows.every(row=>Math.abs(row.width-rows[0].width)<1),'phone panels still stack at the full available width');}
+   else await exact();
+  }
+  assert.equal(await pageValue(browser,"document.querySelector('#fixed-6 pre code').textContent"),literal);
+ }finally{await browser.close();}
+});
+
+test('retry layout and referenced node explanations remain readable and keyboard accessible after a prose edit',{skip:!chrome},async()=>{
+ const {renderExplainer}=await import('../archify/explainer/render.mjs');
+ const {compileExplainerDiagram,prepareExplainerDiagrams}=await import('../archify/explainer/diagrams.mjs');
+ const rows=['enter | Enter','check | Check?','verify | Verify?','record | Record','done | Done','revise | Revise',
+  'enter > check','check > verify | yes','verify > record | yes','record > done',
+  'check > revise | no','verify > revise | no','record > revise | error','revise > enter | retry | dashed'];
+ const doc=formalDocument();doc.meta.id='shared-explanation';
+ doc.panels.push({id:'retry-panel',title:'How does a retry work?',blocks:[{id:'retry',type:'diagram',diagramType:'workflow',
+  spec:compileExplainerDiagram('workflow',rows,{id:'retry',title:'Review and retry'}),nodeBlocks:{check:'claim'}}]});
+ const preparedDiagrams=await prepareExplainerDiagrams(doc,{baseDir:dir,quality:'showcase'});
+ const browser=new ChromeVisualBrowser(chrome);
+ try {
+  for (const text of ['One original explanation.','An edited explanation with literal `<script>` text.']) {
+   doc.panels[0].blocks[0].text=text;
+   const file=artifact(text.startsWith('One')?'content-original':'content-edited',renderExplainer(doc,{preparedDiagrams,sourceText:JSON.stringify(doc)}));
+   await browser.resetPage();const measured=await inspectPublicHtml(browser,{artifactPath:file,width:1440,keyboard:false});
+   assert.deepEqual(measured.consoleErrors,[]);assert.deepEqual(measured.overflowElements,[]);
+   const shown=await pageValue(browser,`(function(){const node=document.querySelector('#retry [data-node-id="check"]');node.focus();const card=document.querySelector('.source-card');return {focused:document.activeElement===node,visible:!card.hidden,text:card.querySelector('.source-content').textContent,target:card.querySelector('a').getAttribute('href'),nodes:document.querySelectorAll('#retry [data-node-id]').length,edges:new Set([...document.querySelectorAll('#retry [data-edge-id]')].map(e=>e.dataset.edgeId)).size,uniqueIds:new Set([...document.querySelectorAll('[id]')].map(e=>e.id)).size===document.querySelectorAll('[id]').length};})()`);
+   assert.equal(shown.focused,true);assert.equal(shown.visible,true);assert.equal(shown.text,text.replaceAll('`',''));
+   assert.equal(shown.target,'#claim');assert.equal(shown.nodes,6);assert.equal(shown.edges,8);assert.equal(shown.uniqueIds,true);
+   const tree=await browser.cdp.send('Accessibility.getFullAXTree',{},await browser.sessionPromise);
+   const accessible=tree.nodes.find(node=>node.role?.value==='button'&&node.name?.value==='Check?');
+   assert.equal(accessible?.description?.value,text.replaceAll('`',''),'assistive readers get the same current paragraph');
+  }
+  await pageValue(browser,'document.querySelector(\'#retry [data-node-id="check"]\').focus();document.querySelector(".source-card").hidden=true');
+  await keyboardActivate(browser,'#retry [data-node-id="check"]','Tab');
+  const nextFocus = await pageValue(browser,'document.activeElement.dataset.qaKey');
+  assert.ok(nextFocus, 'the invoking node has a normal next keyboard destination');
+  await keyboardActivate(browser,'#retry [data-node-id="check"]','Tab');
+  assert.equal(await pageValue(browser,'new Promise(resolve=>setTimeout(()=>{const card=document.querySelector(".source-card");resolve(!card.hidden&&document.activeElement===card.querySelector("a"));},220))'),true,'Tab reaches a paragraph link that remains visible after the hide delay');
+  await keyboardActivate(browser,'.source-card a','Tab',true);
+  assert.equal(await pageValue(browser,'document.activeElement===document.querySelector(\'#retry [data-node-id="check"]\')'),true,'Shift+Tab returns to the invoking node');
+  await keyboardActivate(browser,'#retry [data-node-id="check"]','Tab');
+  await keyboardActivate(browser,'.source-card a','Tab');
+  assert.equal(await pageValue(browser,'document.activeElement.dataset.qaKey'),nextFocus,'Tab leaves the card in the normal document order after its invoking node');
+  await keyboardActivate(browser,'#retry [data-node-id="check"]','Tab');
+  await keyboardActivate(browser,'.source-card a','Escape');
+  assert.equal(await pageValue(browser,'document.querySelector(".source-card").hidden&&document.activeElement===document.querySelector(\'#retry [data-node-id="check"]\')'),true,'Escape closes the card and returns focus');
+  await keyboardActivate(browser,'#retry [data-node-id="check"]','Tab');
+  assert.equal(await pageValue(browser,'document.activeElement.dataset.qaKey'),nextFocus,'after dismissal, Tab proceeds without reopening the card');
+  await keyboardActivate(browser,'#retry [data-node-id="check"]','Tab');
+  await keyboardActivate(browser,'.source-card a');
+  assert.equal(await pageValue(browser,'location.hash'), '#claim', 'the focused paragraph link navigates with Enter');
+  for(const key of ['Enter',' ']) {
+   await keyboardActivate(browser,'#retry [data-node-id="check"]',key);
+   let focused;for(let attempt=0;attempt<40;attempt++){focused=await inspectNativeViewer(browser);if(focused.available&&focused.nodes.includes('check'))break;await new Promise(resolve=>setTimeout(resolve,50));}
+   assert.deepEqual(focused.nodes,['check'],'keyboard activation keeps the existing native Viewer action');
+   await keyboardActivate(browser,'[data-close-diagram]');
+   assert.equal(await pageValue(browser,'document.activeElement===document.querySelector(\'#retry [data-node-id="check"]\')'),true,'closing the Viewer returns to its invoking node');
+  }
+ }finally{await browser.close();}
+});
+
+test('Explainer toolbar and menus remain inside narrow viewports',{skip:!chrome},async()=>{
+ const {renderExplainer}=await import('../archify/explainer/render.mjs');
+ const browser=new ChromeVisualBrowser(chrome);
+ try {
+  for(const locale of ['en','zh-CN']) {
+   const document=formalDocument();document.meta.locale=locale;
+   const file=artifact('toolbar-'+locale,renderExplainer(document));
+   for(const width of [320,390,1440])for(const style of ['clean','editorial','product','swiss']) {
+    await browser.resetPage();await inspectPublicHtml(browser,{artifactPath:file,width,height:900,keyboard:false});
+    await keyboardActivate(browser,'.style-menu [aria-haspopup]');
+    await keyboardActivate(browser,`[data-style-choice="${style}"]`);
+    const selected=await pageValue(browser,`({style:document.documentElement.dataset.style,label:document.querySelector('[data-style-label]').textContent,choice:document.querySelector('[data-style-choice="${style}"]').textContent})`);
+    assert.equal(selected.style,style);assert.equal(selected.label,selected.choice);
+    assert.equal(await pageValue(browser,"document.activeElement===document.querySelector('.style-menu [aria-haspopup]')"),true);
+    const containment=await pageValue(browser,`({width:innerWidth,scroll:document.documentElement.scrollWidth,controls:[...document.querySelectorAll('.tools button')].filter(e=>e.getBoundingClientRect().width).map(e=>{const r=e.getBoundingClientRect();return {left:r.left,right:r.right}})})`);
+    assert.equal(containment.scroll,width,JSON.stringify({locale,width,style,containment}));
+    assert.ok(containment.controls.every(r=>r.left>=0&&r.right<=width),JSON.stringify(containment));
+    for(const menu of ['.style-menu','.export-menu']) {
+     await keyboardActivate(browser,menu+' [aria-haspopup]');
+     const popup=await pageValue(browser,`(()=>{const e=document.querySelector(${JSON.stringify(menu+' .menu-options')});const r=e.getBoundingClientRect();return {left:r.left,right:r.right,visible:getComputedStyle(e).display!=='none',scroll:document.documentElement.scrollWidth}})()`);
+     assert.equal(popup.visible,true);assert.ok(popup.left>=0&&popup.right<=width,JSON.stringify({locale,width,style,menu,popup}));assert.equal(popup.scroll,width);
+     assert.equal(await pageValue(browser,`document.querySelector(${JSON.stringify(menu+' .menu-options')}).contains(document.activeElement)`),true,'Keyboard opening must focus a menu item');
+     await keyboardPress(browser,'Escape');
+     const closed=await pageValue(browser,`(()=>{const toggle=document.querySelector(${JSON.stringify(menu+' [aria-haspopup]')});return {hidden:document.querySelector(${JSON.stringify(menu+' .menu-options')}).hidden,expanded:toggle.getAttribute('aria-expanded'),focused:document.activeElement===toggle}})()`);
+     assert.deepEqual(closed,{hidden:true,expanded:'false',focused:true},JSON.stringify({locale,width,style,menu,closed}));
+    }
+    await browser.cdp.send('Emulation.setEmulatedMedia',{media:'print'},await browser.sessionPromise);
+    assert.equal(await pageValue(browser,"getComputedStyle(document.querySelector('.tools')).display"),'none');
+   }
+  }
+ } finally { await browser.close(); }
+});
+
 async function pageValue(browser,expression){const result=await browser.cdp.send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true},await browser.sessionPromise);if(result.exceptionDetails)throw new Error(result.exceptionDetails.exception?.description||result.exceptionDetails.text);return result.result.value;}
-async function keyboardActivate(browser,selector,key='Enter') {assert.equal(await pageValue(browser,`(function(){const e=document.querySelector(${JSON.stringify(selector)});if(!e)return false;e.scrollIntoView({block:'center'});e.focus();return document.activeElement===e;})()`),true,selector);for(const type of ['keyDown','keyUp'])await browser.cdp.send('Input.dispatchKeyEvent',{type,key,code:key,windowsVirtualKeyCode:key==='Escape'?27:13,...(key==='Enter'&&type==='keyDown'?{text:'\r',unmodifiedText:'\r'}:{})},await browser.sessionPromise);await pageValue(browser,'new Promise(resolve=>setTimeout(resolve,0))');}
+async function keyboardActivate(browser,selector,key='Enter',shift=false) {assert.equal(await pageValue(browser,`(function(){const e=document.querySelector(${JSON.stringify(selector)});if(!e)return false;e.scrollIntoView({block:'center'});e.focus();return document.activeElement===e;})()`),true,selector);await keyboardPress(browser,key,shift);}
+async function keyboardPress(browser,key,shift=false) {for(const type of ['keyDown','keyUp'])await browser.cdp.send('Input.dispatchKeyEvent',{type,key,code:key===' '?'Space':key,windowsVirtualKeyCode:key==='Escape'?27:key===' '?32:key==='Tab'?9:13,modifiers:shift?8:0,...(key==='Enter'&&type==='keyDown'?{text:'\r',unmodifiedText:'\r'}:{})},await browser.sessionPromise);await pageValue(browser,'new Promise(resolve=>setTimeout(resolve,0))');}
 test('native step opens the complete Viewer and focuses exact nodes and edges with readable graph text',{skip:!chrome},async()=>{
  const {renderExplainer}=await import('../archify/explainer/render.mjs');const {compileExplainerDiagram,prepareExplainerDiagrams}=await import('../archify/explainer/diagrams.mjs');
  const spec=compileExplainerDiagram('sequence',['actor api | API | backend','actor redis | Redis | database','api | redis | Read cache','redis | api | Return cache'],{title:'Cache lookup',id:'native',quality:'showcase'});
@@ -43,11 +190,59 @@ test('native step opens the complete Viewer and focuses exact nodes and edges wi
  const browser=new ChromeVisualBrowser(chrome);try {const metrics=await inspectExplainerBrowser(browser,{artifactPath:file,width:1440,height:900,theme:'light'});assert.deepEqual(metrics.interactionFailures,[]);assert.equal(metrics.nativeText.length,1);assert.ok(metrics.nativeText[0].ratio>=.75,JSON.stringify(metrics.nativeText));assert.equal(metrics.print.ok,true);assert.ok(metrics.noJavaScript.every(e=>e.ok));
   await browser.resetPage();await inspectPublicHtml(browser,{artifactPath:file,width:1440,keyboard:false});
   const focusStep=async(index,nodes,edges)=>{await keyboardActivate(browser,`[data-block-type=steps] [data-diagram-hash="focus=${nodes[0]}"]`);let actual;for(let attempt=0;attempt<40;attempt++){actual=await inspectNativeViewer(browser);if(actual.available&&JSON.stringify(actual.nodes)===JSON.stringify(nodes)&&actual.edges.length===edges.length&&edges.every(id=>actual.edges.includes(id)))break;await new Promise(resolve=>setTimeout(resolve,50));}assert.deepEqual(actual.nodes,nodes,JSON.stringify(actual));assert.deepEqual(actual.edges,edges,JSON.stringify(actual));return actual;};
+  const closeStep=async()=>{
+   // dialog.close() queues close; the reader restores opener focus in that
+   // event. Finish it before the next helper focuses its requested step.
+   await pageValue(browser,`(()=>{const dialog=document.querySelector('#diagram-dialog');window.__nativeCloseResult=new Promise(resolve=>{const state=closed=>({closed,open:dialog.open,activeElement:document.activeElement?.outerHTML?.slice(0,400)});const finish=()=>{clearTimeout(timeout);resolve(state(true));};const timeout=setTimeout(()=>{dialog.removeEventListener('close',finish);resolve(state(false));},5000);dialog.addEventListener('close',finish,{once:true});});})()`);
+   await keyboardActivate(browser,'[data-close-diagram]');
+   const closed=await pageValue(browser,'(async()=>{const result=await window.__nativeCloseResult;delete window.__nativeCloseResult;return result;})()');
+   assert.equal(closed.closed,true,JSON.stringify(closed));assert.equal(closed.open,false,JSON.stringify(closed));
+  };
   // Closing the modal makes the next step reachable. Reopening uses the same
   // iframe with a different target, and the third opening changes it back. Actual child DOM selection is the proof, not the host's last ack.
-  const first=await focusStep(1,['api'],['api-to-redis-1']);await keyboardActivate(browser,'[data-close-diagram]');const second=await focusStep(2,['redis'],['redis-to-api-1']);assert.equal(second.targetId,first.targetId,'The second step must update the existing native iframe');await keyboardActivate(browser,'[data-close-diagram]');const reopened=await focusStep(1,['api'],['api-to-redis-1']);assert.equal(reopened.targetId,first.targetId);await keyboardActivate(browser,'[data-close-diagram]');
+  const first=await focusStep(1,['api'],['api-to-redis-1']);await closeStep();const second=await focusStep(2,['redis'],['redis-to-api-1']);assert.equal(second.targetId,first.targetId,'The second step must update the existing native iframe');await closeStep();const reopened=await focusStep(1,['api'],['api-to-redis-1']);assert.equal(reopened.targetId,first.targetId);await closeStep();
   const corrupted=artifact('native-small-text',fs.readFileSync(file,'utf8').replace('</style>','\n.diagram-preview svg{width:100%!important;min-width:0!important}.diagram-preview{width:200px!important}\n</style>'));
   const broken=await inspectExplainerBrowser(browser,{artifactPath:corrupted,width:1440,height:900,theme:'light'});assert.ok(broken.interactionFailures.some(e=>e.name==='diagram-text'),'Actual reduced graph text must fail the 75% gate');
+ }finally{await browser.close();}
+});
+
+test('a hosted Viewer keeps preset controls and blueprint decoration without standalone badges',{skip:!chrome},async()=>{
+ const {renderExplainer}=await import('../archify/explainer/render.mjs');const {compileExplainerDiagram,prepareExplainerDiagrams}=await import('../archify/explainer/diagrams.mjs');
+ const spec=compileExplainerDiagram('sequence',['role backend | Cache engine','actor api | API | backend','actor redis | Redis | database','api | redis | Read cache'],{title:'Cache lookup',id:'native',quality:'showcase'});
+ const doc=formalDocument();delete doc.meta.locale;doc.meta.id='hosted-browser';doc.meta.style='editorial';doc.meta.quality_profile='showcase';doc.panels.push({id:'how',title:'Where does the request go?',blocks:[{id:'native',type:'diagram',diagramType:'sequence',spec},{id:'step',type:'steps',items:[{id:'read-step',text:'Read cache',target:{diagram:'native',node:'api',edges:['api-to-redis-1']}}]}]});
+ const preparedDiagrams=await prepareExplainerDiagrams(doc,{baseDir:dir,sourcePath:path.join(dir,'source.json'),quality:'showcase'});
+ const file=artifact('hosted',renderExplainer(doc,{sourceText:JSON.stringify(doc),preparedDiagrams,preparedSources:{sources:{example:{title:'Example'}}}}));
+ const browser=new ChromeVisualBrowser(chrome);try {
+  await inspectPublicHtml(browser,{artifactPath:file,width:1440,keyboard:false});
+  await keyboardActivate(browser,'[data-block-type=steps] [data-diagram-hash="focus=api"]');
+  // The host applies the page's preset once the Viewer reports ready.
+  let viewer;for(let attempt=0;attempt<40;attempt++){viewer=await inspectNativeViewer(browser);if(viewer.available&&viewer.preset==='editorial')break;await new Promise(resolve=>setTimeout(resolve,50));}
+  assert.equal(viewer.preset,'editorial',JSON.stringify(viewer));
+  assert.deepEqual(viewer.badges,['none','none'],'The header badge and the plate stay off in a hosted Viewer');
+  // Enter the hosted frame as a reader would. Chrome 158 keeps child focus
+  // on body when DevTools calls .focus() before the host enters that frame.
+  await keyboardActivate(browser,'[data-close-diagram]','Tab');
+  assert.equal(await pageValue(browser,`document.activeElement.matches('#diagram-dialog iframe')`),true,'Tab enters the native Viewer from the dialog close button');
+  const attached=await browser.cdp.send('Target.attachToTarget',{targetId:viewer.targetId,flatten:true});
+  try {
+   const lens=await browser.cdp.send('Runtime.evaluate',{expression:`(()=>{document.querySelector('#btn-semantic-lens').click();return {title:document.querySelector('#semantic-lens-title').textContent,instruction:document.querySelector('.semantic-lens-instruction').textContent,backendKind:document.querySelector('.semantic-lens-kind[data-kind="backend"]')?.textContent||''};})()`,returnByValue:true},attached.sessionId);
+   assert.equal(lens.result.value.title,'比较分组');
+   assert.equal(lens.result.value.instruction,'选择一个分组以高亮对应元素。');
+   assert.match(lens.result.value.backendKind,/Cache engine/);
+   await browser.cdp.send('Runtime.evaluate',{expression:`document.querySelector('#semantic-lens-close').click()`,returnByValue:true},attached.sessionId);
+   for(const preset of ['signal-flow','blueprint','editorial','classic']) {
+    for(const selector of ['#btn-preset',`[data-preset-value="${preset}"]`]) {
+     const focused=await browser.cdp.send('Runtime.evaluate',{expression:`(()=>{const e=document.querySelector(${JSON.stringify(selector)});e.focus();return {focused:document.activeElement===e,selector:${JSON.stringify(selector)},active:document.activeElement?.outerHTML?.slice(0,400),documentFocused:document.hasFocus(),menuOpen:document.querySelector('#preset-menu').classList.contains('open'),visible:Boolean(e.getClientRects().length),preset:document.documentElement.dataset.preset};})()`,returnByValue:true},attached.sessionId);
+     assert.equal(focused.result.value.focused,true,JSON.stringify(focused.result.value));
+     for(const type of ['keyDown','keyUp'])await browser.cdp.send('Input.dispatchKeyEvent',{type,key:'Enter',code:'Enter',windowsVirtualKeyCode:13,...(type==='keyDown'?{text:'\r',unmodifiedText:'\r'}:{})},attached.sessionId);
+    }
+    const result=await browser.cdp.send('Runtime.evaluate',{expression:`({preset:document.documentElement.dataset.preset,selected:document.querySelector('[data-preset-value="${preset}"]').getAttribute('aria-checked'),header:getComputedStyle(document.querySelector('.header-row'),'::after').display,decoration:getComputedStyle(document.querySelector('.diagram-container'),'::after').display,background:getComputedStyle(document.querySelector('.diagram-container'),'::after').backgroundImage})`,returnByValue:true},attached.sessionId);
+    const actual=result.result.value;
+    assert.equal(actual.preset,preset);assert.equal(actual.selected,'true');assert.equal(actual.header,'none');
+    if(preset==='editorial')assert.equal(actual.decoration,'none');
+    if(preset==='blueprint'){assert.notEqual(actual.decoration,'none');assert.match(actual.background,/linear-gradient/);}
+   }
+  }finally{await browser.cdp.send('Target.detachFromTarget',{sessionId:attached.sessionId});}
  }finally{await browser.close();}
 });
 
@@ -74,11 +269,32 @@ test('wide frozen native previews keep every node visible at 1280 and reclaim th
   const colors=()=>pageValue(browser,`(function(){const background=e=>{for(let p=e;p;p=p.parentElement){const color=getComputedStyle(p).backgroundColor;if(color!=='rgba(0, 0, 0, 0)'&&color!=='transparent')return color;}return 'transparent';};return {body:getComputedStyle(document.body).backgroundColor,previews:Array.from(document.querySelectorAll('.diagram-preview')).map(e=>({background:background(e),edge:getComputedStyle(e.querySelector('text.t-edge-default')).fill}))};})()`);
   const darkColors=await colors();assert.equal(dark.fontReadiness.status,'loaded');assert.deepEqual(dark.consoleErrors,[]);
   await browser.resetPage();const printed=await inspectPublicHtml(browser,{artifactPath:file,width:1440,theme:'dark',themeControl:'system',javascript:false,media:'print',keyboard:false});const printColors=await colors();assert.equal(printed.fontReadiness.status,'loaded');assert.deepEqual(printed.consoleErrors,[]);assert.notEqual(printColors.body,darkColors.body);assert.equal(printColors.body,'rgb(255, 255, 255)');assert.ok(printColors.previews.every(p=>p.background==='rgb(255, 255, 255)'),JSON.stringify(printColors));assert.ok(darkColors.previews.every((p,i)=>p.background!==printColors.previews[i].background&&p.edge!==printColors.previews[i].edge),JSON.stringify({darkColors,printColors}));
-  const oversized=structuredClone(doc);oversized.meta.id='oversized-native';oversized.panels.at(-1).blocks=oversized.panels.at(-1).blocks.slice(0,1);oversized.panels.at(-1).blocks[0].spec.components.at(-1).pos=[1200,40];
-  const oversizedPrepared=await prepareExplainerDiagrams(oversized,{baseDir:dir,sourcePath:path.join(dir,'oversized.json'),quality:'showcase'}),hugeFile=artifact('oversized-native',renderExplainer(oversized,{sourceText:JSON.stringify(oversized),preparedDiagrams:oversizedPrepared,preparedSources:{sources:{example:{title:'Example'}}}}));
-  const huge=await inspectExplainerBrowser(browser,{artifactPath:hugeFile,width:1440,height:900,theme:'light'});assert.equal(huge.nativeText[0].fit,'insufficient');assert.equal(parseFloat(huge.nativeText[0].minWidth),0);assert.ok(huge.nativeText[0].scrollWidth<=huge.nativeText[0].clientWidth+1);assert.ok(huge.interactionFailures.some(e=>e.name==='diagram-fit'&&e.measurement.requiredWidth>e.measurement.clientWidth),'An actually overwide graph must fail with measured fit evidence');assert.ok(huge.interactionFailures.some(e=>e.name==='diagram-text'));
-  await browser.resetPage();await inspectPublicHtml(browser,{artifactPath:hugeFile,width:1280,theme:'light',keyboard:false});
-  assert.deepEqual(await pageValue(browser,"Array.from(document.querySelectorAll('.panel')).filter(p=>p.scrollHeight>p.offsetHeight+1).map(p=>p.id)"),[],'a fit notice shown after planning must not clip its panel');
+  const threshold=structuredClone(doc);threshold.meta.id='threshold-native';threshold.panels.at(-1).blocks=threshold.panels.at(-1).blocks.slice(0,1);
+  // At 1440 the text floor rises faster than the panel widens.
+  threshold.panels.at(-1).blocks[0].spec.components.at(-1).pos=[1475,40];
+  const thresholdPrepared=await prepareExplainerDiagrams(threshold,{baseDir:dir,sourcePath:path.join(dir,'threshold.json'),quality:'showcase'}),thresholdFile=artifact('threshold-native',renderExplainer(threshold,{sourceText:JSON.stringify(threshold),preparedDiagrams:thresholdPrepared,preparedSources:{sources:{example:{title:'Example'}}}}));
+  const measured=await inspectExplainerBrowser(browser,{artifactPath:thresholdFile,width:1440,height:900,theme:'light'});
+  assert.ok(measured.interactionFailures.some(e=>e.name==='diagram-fit'&&e.measurement.requiredWidth>e.measurement.clientWidth),'An actually overwide graph must fail with measured fit evidence');
+  assert.ok(measured.interactionFailures.some(e=>e.name==='diagram-text'));
+  const assertThreshold=async(expected)=>{
+   const [entry]=await inspectNativePreviewLayout(browser);
+   assert.equal(entry.fit,expected,JSON.stringify(entry));
+   assert.equal(parseFloat(entry.minWidth),0);
+   assert.ok(entry.scrollWidth<=entry.clientWidth+1,JSON.stringify(entry));
+   assert.deepEqual(entry.nodes.map(n=>n.id).sort(),['api','browser','postgres']);
+   assert.deepEqual(entry.outsidePreview,[],JSON.stringify(entry));
+   const warning=expected==='insufficient';
+   assert.equal(entry.minimum<entry.minimumText,warning,JSON.stringify(entry));
+   assert.equal(await pageValue(browser,"document.querySelector('.diagram-fit-status').hidden"),!warning);
+   assert.deepEqual(await pageValue(browser,"Array.from(document.querySelectorAll('.panel')).filter(p=>p.scrollHeight>p.offsetHeight+1).map(p=>p.id)"),[],'a fit notice shown after planning must not clip its panel');
+  };
+  await browser.resetPage();await inspectPublicHtml(browser,{artifactPath:thresholdFile,width:1280,theme:'light',keyboard:false});
+  await assertThreshold('fit');
+  for(const [width,expected] of [[1440,'insufficient'],[1280,'fit']]){
+   await browser.cdp.send('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:false},await browser.sessionPromise);
+   await pageValue(browser,'new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');
+   await assertThreshold(expected);
+  }
   const corrupted=artifact('responsive-retained-floor',html.replace('</style>','\n.diagram-preview>svg{min-width:1321px!important}\n</style>'));await browser.resetPage();await inspectPublicHtml(browser,{artifactPath:corrupted,width:1280,theme:'light',keyboard:false});assert.ok((await inspectNativePreviewLayout(browser)).some(e=>e.outsidePreview.length>0),'A retained desktop floor must be detected through actual clipped node bounds');
   const embedded=Object.fromEntries(Object.entries(unpackPageBundle(await pageValue(browser,"JSON.parse(document.querySelector('#archify-explainer-prepared').textContent)")).preparedDiagrams.diagrams).map(([id,c])=>[id,{html:c.html,sha256:c.sha256,bytes:c.bytes}]));
   for(const [id,c]of Object.entries(embedded)){assert.equal(hash(c.html),frozen[id].sha256);assert.equal(Buffer.byteLength(c.html),frozen[id].bytes);assert.equal(c.sha256,frozen[id].sha256);assert.equal(c.bytes,frozen[id].bytes);}
@@ -105,6 +321,79 @@ test('public system-theme mode starts with fresh storage and stable DOM identiti
   const missing=system.keyboardTraversal.missing.find(e=>e.tag==='DIV');assert.ok(missing.stableComponent);assert.equal(missing.text,'Same label');assert.equal(missing.href,null);assert.equal(queried.keyboardTraversal.missing.find(e=>e.tag==='DIV').stableComponent,missing.stableComponent);assert.ok(system.keyboardIssues.every(e=>e.stableComponent));assert.ok(system.occluded.every(e=>e.stableComponent));assert.ok(system.smallText.every(e=>e.stableComponent));
   const duplicates=await pageValue(browser,"Array.from(document.querySelectorAll('button')).filter(e=>e.textContent==='Same label').map(e=>e.dataset.qaPath)");assert.equal(new Set(duplicates).size,2,'Two buttons with the same label have different generic DOM paths');
   await browser.resetPage();const disabled=await inspectPublicHtml(browser,{artifactPath:file,width:1440,theme:'dark',themeControl:'system',javascript:false,keyboard:false});assert.equal(await pageValue(browser,'Boolean(window.artifactRan)'),false);assert.equal(disabled.fontReadiness.status,'loaded');assert.equal(disabled.measurementMethod.clipCoverage,'not-measured-script-disabled');assert.equal(disabled.measurementMethod.documentExtentMeasured,true);assert.equal(disabled.background,'rgb(23, 23, 23)');
+ }finally{await browser.close();}
+});
+test('copy controls report confirmed writes and retain manual-copy text on clipboard failure',{skip:!chrome},async()=>{
+ const {renderExplainer}=await import('../archify/explainer/render.mjs');
+ const browser=new ChromeVisualBrowser(chrome),observations=[];
+ const literal='const message = "literal <&> 中文";\nconsole.log(message);\n',question='Why this result? <&> 中文';
+ try {
+  for(const locale of ['en','zh-CN']) {
+   const doc=formalDocument();doc.meta.locale=locale;
+   doc.meta.title='Why does `flush()` **wait**?[](source:example)';
+   doc.panels[0].title='Why `why` panel?[](source:example)';
+   doc.panels[0].blocks.push({id:'copy-example',type:'snippet',title:'Complete example',language:'js',text:literal});
+   const file=artifact(`clipboard-${locale}`,renderExplainer(doc,{sourceText:JSON.stringify(doc),preparedSources:{sources:{example:{title:'Example'}}}}));
+   for(const mode of ['success','missing','rejected','throws']) {
+    await browser.resetPage();await inspectPublicHtml(browser,{artifactPath:file,width:390,keyboard:false});
+    await pageValue(browser,`(()=>{window.copyErrors=[];addEventListener('error',e=>{copyErrors.push(e.message);e.preventDefault();});window.written=[];const mode=${JSON.stringify(mode)};Object.defineProperty(navigator,'clipboard',{configurable:true,value:mode==='missing'?undefined:{writeText(value){written.push(value);if(mode==='throws')throw new Error('Controlled synchronous failure');if(mode==='rejected')return Promise.reject(new Error('Controlled rejection'));return new Promise(resolve=>window.finishCopy=resolve);}}});})()`);
+    await keyboardActivate(browser,'[data-copy]');
+    const pendingSnippet=await pageValue(browser,'document.querySelector("[data-copy]").textContent');
+    if(mode==='success')await pageValue(browser,'finishCopy()');
+    const snippet=await pageValue(browser,`({label:document.querySelector('[data-copy]').textContent,toast:document.querySelector('#toast').textContent,written:[...written]})`);
+    await keyboardActivate(browser,'#why .ask-button');
+    const askWhere=await pageValue(browser,`document.querySelector('.ask-where').textContent`);
+    await pageValue(browser,`document.querySelector('.ask-dialog textarea').value=${JSON.stringify(question)};document.querySelector('#toast').textContent='';`);
+    await keyboardActivate(browser,'.ask-dialog [type=submit]');
+    const pendingDialog=await pageValue(browser,'document.querySelector(".ask-dialog").open');
+    if(mode==='success')await pageValue(browser,'finishCopy()');
+    const ask=await pageValue(browser,`(()=>{const area=document.querySelector('.ask-dialog textarea');return {open:document.querySelector('.ask-dialog').open,text:area.value,selection:[area.selectionStart,area.selectionEnd],focused:document.activeElement===area,note:document.querySelector('.ask-note').textContent,noteRole:document.querySelector('.ask-note').getAttribute('role'),toast:document.querySelector('#toast').textContent,written:[...written],errors:copyErrors};})()`);
+    let reopened,retry,editedRetry,chipRetry;
+    if(mode!=='success'){
+     await keyboardActivate(browser,'.ask-dialog [type=submit]');
+     retry=await pageValue(browser,`({open:document.querySelector('.ask-dialog').open,text:document.querySelector('.ask-dialog textarea').value,written:[...written]})`);
+     await pageValue(browser,`(()=>{const area=document.querySelector('.ask-dialog textarea');area.value=area.value.replace(${JSON.stringify(question)},'Updated follow-up');})()`);
+     await keyboardActivate(browser,'.ask-dialog [type=submit]');
+     editedRetry=await pageValue(browser,`({open:document.querySelector('.ask-dialog').open,text:document.querySelector('.ask-dialog textarea').value,written:[...written]})`);
+     await keyboardActivate(browser,'.ask-dialog [data-chip]');
+     const chipText=await pageValue(browser,`document.querySelector('.ask-dialog textarea').value`);
+     await keyboardActivate(browser,'.ask-dialog [type=submit]');
+     chipRetry={chipText,...await pageValue(browser,`({open:document.querySelector('.ask-dialog').open,text:document.querySelector('.ask-dialog textarea').value,written:[...written]})`)};
+     await keyboardActivate(browser,'.ask-dialog footer [data-ask-cancel]');
+     await keyboardActivate(browser,'#why .ask-button');
+     reopened=await pageValue(browser,`({note:document.querySelector('.ask-note').textContent,expected:JSON.parse(document.getElementById('explainer-reader-words').textContent).askNote,text:document.querySelector('.ask-dialog textarea').value})`);
+    }
+    observations.push({locale,mode,pendingSnippet,pendingDialog,snippet,askWhere,ask,retry,editedRetry,chipRetry,reopened});
+   }
+  }
+  for(const entry of observations) {
+   const {locale,mode,snippet,ask}=entry,copy=locale==='en'?'Copy':'复制',copied=locale==='en'?'Copied':'已复制',failed=locale==='en'?'Copy failed':'复制失败';
+   const pageHeader=locale==='en'?'Page: ':'页面：',patchLine=locale==='en'?'Revise only this panel with Archify panel replacement (patch explainer), keeping its ID.':'请用 Archify 的面板替换（patch explainer）只更新这个面板，保留它的 ID。';
+   const success=observations.find(item=>item.locale===locale&&item.mode==='success');
+   assert.deepEqual(ask.errors,[],JSON.stringify(entry));
+   assert.equal(entry.askWhere,locale==='en'?'Panel 1 · Why why panel?':'面板 1 · Why why panel?');
+   if(mode==='success') {
+    assert.equal(entry.pendingSnippet,copy,'success must wait for the clipboard promise');assert.equal(entry.pendingDialog,true,'a pending write keeps the question available');
+    assert.equal(snippet.label,copied);assert.deepEqual(snippet.written,[literal]);assert.equal(ask.open,false);
+    assert.ok(ask.written[1].includes(question));assert.ok(ask.written[1].includes('why'));assert.ok(ask.toast.startsWith(copied));
+    assert.ok(ask.written[1].includes('flush() wait?'),`plain page title has no superscript number: ${ask.written[1]}`);
+    assert.ok(!ask.written[1].includes('wait?1'),`citation number must not leak into page title: ${ask.written[1]}`);
+   } else {
+    assert.equal(snippet.label,copy,JSON.stringify(entry));assert.ok(snippet.toast.startsWith(failed),JSON.stringify(entry));
+    assert.equal(ask.open,true,JSON.stringify(entry));assert.equal(ask.text,success.ask.written[1],'manual copy retains the complete successful payload');
+    assert.deepEqual(ask.selection,[0,ask.text.length]);assert.equal(ask.focused,true);assert.ok(ask.note.startsWith(failed));assert.equal(ask.noteRole,'status');
+    assert.equal(entry.retry.open,true);assert.equal(entry.retry.text,ask.text,'a retry keeps the manual-copy text instead of nesting it');
+    assert.equal(entry.editedRetry.text.split(pageHeader).length-1,1,'editing after copy failure must not nest Page headers');
+    assert.equal(entry.editedRetry.text.split(patchLine).length-1,1,'editing after copy failure must not duplicate patch instruction');
+    assert.ok(entry.editedRetry.text.includes('Updated follow-up'));
+    assert.ok(!entry.chipRetry.chipText.includes(pageHeader),'clicking a chip strips the manual envelope cleanly');
+    assert.equal(entry.chipRetry.text.split(pageHeader).length-1,1,'submitting a chip retry must not nest Page headers');
+    assert.equal(entry.chipRetry.text.split(patchLine).length-1,1,'submitting a chip retry must not duplicate patch instruction');
+    if(mode!=='missing')assert.ok(entry.retry.written.length>ask.written.length,'a retry writes to the clipboard again');
+    if(mode!=='missing')assert.equal(entry.retry.written.at(-1),ask.text,'a retry copies the original message unchanged');
+    assert.equal(entry.reopened.note,entry.reopened.expected,'a new question restores its normal instruction');assert.equal(entry.reopened.text,'');
+   }
+  }
  }finally{await browser.close();}
 });
 test('text names light their diagram nodes and walk-throughs step through steps and messages',{skip:!chrome},async()=>{
@@ -161,4 +450,258 @@ test('text names light their diagram nodes and walk-throughs step through steps 
   const image=await pageValue(browser,`window.ArchifyExplainer.pageImage().then(blob=>({type:blob.type,size:blob.size}))`);
   assert.equal(image.type,'image/png');assert.ok(image.size>20000,'the long image carries the rendered page');
  }finally{await browser.close();}
+});
+
+test('structural change marks outline their nodes and edges in the change colour, and dash and fade removed ones',{skip:!chrome},async()=>{
+ const {renderExplainer}=await import('../archify/explainer/render.mjs');const {compileExplainerDiagram,prepareExplainerDiagrams}=await import('../archify/explainer/diagrams.mjs');
+ const spec=compileExplainerDiagram('architecture',['web | Web app | frontend','checkout | Checkout | backend','cache | Order cache | database','queue | Legacy queue | messagebus','web > checkout | Places order','checkout > cache | Reads first','checkout > queue | Old hand-off'],{title:'Checkout path',id:'release'});
+ const doc=formalDocument();doc.meta.id='change-marks-browser';doc.panels.push({id:'changed',title:'What changed?',blocks:[{id:'release',type:'diagram',diagramType:'architecture',spec,changes:[{target:'checkout',change:'modified'},{target:'cache',change:'added'},{target:'queue',change:'removed'},{target:'checkout-to-cache-1',change:'added'},{target:'checkout-to-queue-1',change:'removed'}]}]});
+ const preparedDiagrams=await prepareExplainerDiagrams(doc,{baseDir:dir,sourcePath:path.join(dir,'change-marks.json')});
+ const file=artifact('change-marks',renderExplainer(doc,{sourceText:JSON.stringify(doc),preparedDiagrams,preparedSources:{sources:{example:{title:'Example'}}}}));
+ const browser=new ChromeVisualBrowser(chrome);const seen={};try {
+  for(const theme of ['light','dark']) {
+   if(browser.resetPage)await browser.resetPage();
+   await inspectPublicHtml(browser,{artifactPath:file,width:1440,theme,keyboard:false});
+   const marks=await pageValue(browser,`(function(){
+    const preview=document.querySelector('#release .diagram-preview'),probe=document.createElement('span');preview.append(probe);
+    const colour=name=>{probe.style.color='var(--'+name+')';return getComputedStyle(probe).color;},colours={added:colour('good'),modified:colour('caution'),removed:colour('bad')};probe.remove();
+    const shapes='rect,path,circle,ellipse,polygon,polyline,line';
+    const look=selector=>{const target=preview.querySelector(selector),shape=target.matches(shapes)?target:target.querySelector(':scope>:is('+shapes+'):not(.c-mask)'),mask=target.querySelector(':scope>.c-mask'),style=getComputedStyle(shape);
+     return {stroke:style.stroke,width:style.strokeWidth,dash:style.strokeDasharray,opacity:getComputedStyle(target).opacity,mask:mask?getComputedStyle(mask).strokeWidth:null};};
+    return {colours,checkout:look('g[data-node-id="checkout"]'),cache:look('g[data-node-id="cache"]'),queue:look('g[data-node-id="queue"]'),web:look('g[data-node-id="web"]'),
+     read:look('path[data-edge-id="checkout-to-cache-1"]'),handoff:look('path[data-edge-id="checkout-to-queue-1"]'),order:look('path[data-edge-id="web-to-checkout-1"]')};
+   })()`);
+   const {colours}=marks;seen[theme]=colours;
+   for(const [target,change,native] of [['checkout','modified','web'],['cache','added','web'],['queue','removed','web'],['read','added','order'],['handoff','removed','order']]) {
+    assert.equal(marks[target].stroke,colours[change],`${theme}: ${target} is outlined in the ${change} colour`);
+    assert.ok(parseFloat(marks[target].width)>parseFloat(marks[native].width),`${theme}: ${target} is outlined more heavily than unmarked ${native}`);
+    assert.equal(marks[target].dash!=='none',change==='removed',`${theme}: only a removed ${target} is dashed`);
+    assert.equal(Number(marks[target].opacity)<1,change==='removed',`${theme}: only a removed ${target} fades`);
+   }
+   for(const target of ['checkout','cache','queue'])assert.equal(marks[target].mask,marks.web.mask,`${theme}: the ${target} mask keeps its native stroke`);
+   for(const target of ['web','order']) {
+    assert.equal(marks[target].opacity,'1',`${theme}: unmarked ${target} stays opaque`);
+    assert.ok(!Object.values(colours).includes(marks[target].stroke),`${theme}: unmarked ${target} keeps its native colour`);
+   }
+  }
+  assert.notDeepEqual(seen.light,seen.dark,'each theme supplies its own change colours');
+ }finally{await browser.close();}
+});
+
+test('phone native previews keep readable text with local keyboard scrolling and reset for desktop and print',{skip:!chrome},async()=>{
+ const {renderExplainer}=await import('../archify/explainer/render.mjs');
+ const {compileExplainerDiagram,prepareExplainerDiagrams}=await import('../archify/explainer/diagrams.mjs');
+ const doc=formalDocument();
+ const rows=['actor a | Caller A','actor b | Caller B','actor group | Group','actor work | Function','a | group | Start request','group | work | Run function','b | group | Join request','work | group | Result | return','group | a | Result | return','group | b | Same result | return'];
+ doc.panels.push({id:'calls',title:'How do calls share work?',blocks:[{id:'calls-flow',type:'diagram',diagramType:'sequence',spec:compileExplainerDiagram('sequence',rows,{id:'calls-flow',title:'Shared work'})}]});
+ const preparedDiagrams=await prepareExplainerDiagrams(doc,{baseDir:dir,quality:'showcase'});
+ const file=artifact('phone-scroll',renderExplainer(doc,{preparedDiagrams,sourceText:JSON.stringify(doc)}));
+ const browser=new ChromeVisualBrowser(chrome);
+ try{
+  await inspectPublicHtml(browser,{artifactPath:file,width:390,theme:'light',keyboard:false});
+  let [preview]=await inspectNativePreviewLayout(browser);
+  assert.ok(preview.minimum>=9.95,JSON.stringify(preview));
+  assert.ok(preview.scrollWidth>preview.clientWidth,'Overwide diagrams scroll locally instead of shrinking labels');
+  assert.equal(await pageValue(browser,'document.querySelector(".diagram-preview").tabIndex'),0);
+  const before=await pageValue(browser,'document.querySelector(".diagram-preview").scrollLeft');
+  await pageValue(browser,'document.querySelector(".diagram-preview").focus()');
+  for(const type of ['keyDown','keyUp'])await browser.cdp.send('Input.dispatchKeyEvent',{type,key:'ArrowRight',code:'ArrowRight',windowsVirtualKeyCode:39},await browser.sessionPromise);
+  const moved=await pageValue(browser,'new Promise(resolve=>{const start=performance.now();function check(){const left=document.querySelector(".diagram-preview").scrollLeft;if(left>0||performance.now()-start>2000)resolve(left);else requestAnimationFrame(check);}check();})');
+  assert.ok(moved>before,'ArrowRight moves the focused preview');
+  const exported=await pageValue(browser,`(async()=>{
+    const preview=document.querySelector('.diagram-preview');
+    preview.scrollLeft=preview.scrollWidth;const left=preview.scrollLeft;
+    const originalHeight=Math.ceil(document.querySelector('.shell').getBoundingClientRect().height+48)*2;
+    const create=URL.createObjectURL,click=HTMLAnchorElement.prototype.click;
+    let finish;const blobReady=new Promise(resolve=>{finish=resolve;});
+    URL.createObjectURL=function(blob){finish(blob);return create.call(this,blob);};
+    HTMLAnchorElement.prototype.click=function(){if(!this.download)return click.call(this);};
+    let timeout;
+    try{
+      document.querySelector('[data-export-image="png"]').click();
+      const blob=await Promise.race([blobReady,new Promise((_,reject)=>{timeout=setTimeout(()=>reject(new Error('Export did not produce an image')),5000);})]);
+      const data=new DataView(await blob.arrayBuffer());
+      return {type:blob.type,width:data.getUint32(16),height:data.getUint32(20),originalHeight,left,afterLeft:preview.scrollLeft,roots:document.querySelectorAll('html').length};
+    }finally{clearTimeout(timeout);URL.createObjectURL=create;HTMLAnchorElement.prototype.click=click;}
+  })()`);
+  assert.equal(exported.type,'image/png');assert.equal(exported.width,780);
+  assert.ok(exported.height<exported.originalHeight,'Export measures the shorter complete overview instead of retaining the enlarged scroll height');
+  assert.equal(exported.left,exported.afterLeft);assert.equal(exported.roots,1);
+
+  assert.equal(await pageValue(browser,'document.querySelector(".panel.diagram-panel").getBoundingClientRect().right<=innerWidth'),true);
+  await browser.cdp.send('Emulation.setDeviceMetricsOverride',{width:1440,height:900,deviceScaleFactor:1,mobile:false},await browser.sessionPromise);
+  await pageValue(browser,'new Promise(resolve=>{const start=performance.now();function check(){const e=document.querySelector(".diagram-preview");if((e.dataset.diagramFit==="fit"&&e.scrollWidth<=e.clientWidth+1)||performance.now()-start>2000)resolve();else requestAnimationFrame(check);}check();})');
+  [preview]=await inspectNativePreviewLayout(browser);assert.equal(preview.fit,'fit');assert.ok(preview.scrollWidth<=preview.clientWidth+1);assert.equal(parseFloat(preview.minWidth),0);
+  assert.equal(await pageValue(browser,'document.querySelector(".diagram-preview").hasAttribute("tabindex")'),false);
+  await browser.cdp.send('Emulation.setDeviceMetricsOverride',{width:390,height:900,deviceScaleFactor:1,mobile:false},await browser.sessionPromise);
+  await pageValue(browser,'new Promise(resolve=>{const start=performance.now();function check(){const e=document.querySelector(".diagram-preview");if(e.scrollWidth>e.clientWidth||performance.now()-start>2000)resolve();else requestAnimationFrame(check);}check();})');
+  [preview]=await inspectNativePreviewLayout(browser);assert.ok(preview.minimum>=9.95);assert.ok(preview.scrollWidth>preview.clientWidth);
+  await browser.cdp.send('Emulation.setEmulatedMedia',{media:'print'},await browser.sessionPromise);
+  const printed=await pageValue(browser,'(()=>{const p=document.querySelector(".diagram-preview"),s=p.querySelector("svg");return {svg:s.getBoundingClientRect().width,box:p.clientWidth};})()');
+  assert.ok(printed.svg<=printed.box+1,'Print contains the complete diagram instead of clipping the mobile scroll surface');
+ }finally{await browser.close();}
+});
+
+// Mark the ends of actual content in the bitmap. Geometry alone missed a clipped
+// footer during the expanded-export experiment; these colors must survive rasterization.
+async function exportContentPixels(browser){
+ return pageValue(browser,`(async()=>{
+  const style=document.createElement('style');style.textContent=
+   '.table-scroll tbody tr:first-child>th::before{content:"";display:inline-block;width:8px;height:8px;background:rgb(3,211,229)}'+
+   '.table-scroll tbody tr:last-child>td:last-child::after{content:"";display:inline-block;width:8px;height:8px;float:right;background:rgb(250,13,191)}'+
+   '.snippet .export-test-code-end{background:rgb(227,101,7)}'+
+   '.export-test-removed-end{background:rgb(3,211,229)}.export-test-added-end{background:rgb(250,13,191)}'+
+   'footer::after{content:"";display:block;width:8px;height:8px;background:rgb(19,239,73)}';document.head.append(style);
+  const markedContent=[];
+  for(const [selector,className] of [['.snippet pre code','export-test-code-end'],['.diff-line.removed code','export-test-removed-end'],['.diff-line.added code','export-test-added-end']]){
+   const code=document.querySelector(selector);if(!code)continue;markedContent.push([code,[...code.childNodes]]);
+   const text=code.textContent,end=document.createElement('span');end.className=className;end.textContent=text.slice(-16);code.replaceChildren(document.createTextNode(text.slice(0,-16)),end);
+  }
+  const scrolls=[...document.querySelectorAll('.table-scroll,.diff-scroll,pre')];scrolls.forEach(e=>e.scrollLeft=e.scrollWidth);
+  const state=()=>({width:innerWidth,roots:document.querySelectorAll('html').length,frames:document.querySelectorAll('iframe').length,scrolls:scrolls.map(e=>({left:e.scrollLeft,width:e.clientWidth,scrollWidth:e.scrollWidth,text:e.textContent}))});
+  const before=state(),blob=await window.ArchifyExplainer.pageImage(),bitmap=await createImageBitmap(blob),canvas=document.createElement('canvas');
+  try{
+   canvas.width=bitmap.width;canvas.height=bitmap.height;const context=canvas.getContext('2d');context.drawImage(bitmap,0,0);
+   const pixels=context.getImageData(0,0,canvas.width,canvas.height).data,marks={first:0,last:0,code:0,footer:0};
+   for(let i=0;i<pixels.length;i+=4){const r=pixels[i],g=pixels[i+1],b=pixels[i+2];if(r===3&&g===211&&b===229)marks.first++;if(r===250&&g===13&&b===191)marks.last++;if(r===227&&g===101&&b===7)marks.code++;if(r===19&&g===239&&b===73)marks.footer++;}
+   return {type:blob.type,width:bitmap.width,height:bitmap.height,marks,before,after:state()};
+  }finally{bitmap.close();style.remove();for(const [code,children] of markedContent)code.replaceChildren(...children);}
+ })()`);
+}
+function tableExportDocument(columns){
+ const doc=formalDocument();doc.meta.id='complete-table-export';doc.sources=[];
+ doc.answer={summary:'Every result belongs in the exported image.',scope:'Synthetic export fixture'};
+ doc.panels=[{id:'results',title:'Complete results',blocks:[{id:'matrix',type:'comparison',labelColumn:'Measure',columns:Array.from({length:columns},(_,i)=>'Batch '+(i+1)),rows:[{id:'delta',label:'Delta',cells:Array.from({length:columns},(_,i)=>({text:i===columns-1?'-995':String(i+20)}))}]}]},
+  ...Array.from({length:6},(_,i)=>({id:'after-'+i,title:'Following section '+(i+1),blocks:[{id:'text-'+i,type:'prose',text:'This content and the final footer belong after the full comparison.'}]}))];
+ return doc;
+}
+test('image export retains the final table column and footer across responsive widths',{skip:!chrome},async()=>{
+ const {renderExplainer}=await import('../archify/explainer/render.mjs');
+ const doc=tableExportDocument(12),file=artifact('complete-table-export',renderExplainer(doc,{sourceText:JSON.stringify(doc)}));
+ const browser=new ChromeVisualBrowser(chrome);
+ try{
+  for(const style of ['clean','editorial']){
+   await browser.resetPage();await inspectPublicHtml(browser,{artifactPath:file,width:390,theme:'light',keyboard:false});
+   await pageValue(browser,`document.querySelector('[data-style-choice="${style}"]').click()`);
+   const result=await exportContentPixels(browser);
+   assert.ok(result.before.scrolls[0].scrollWidth>result.before.scrolls[0].width,'The fixture must overflow before export');
+   assert.ok(result.marks.first>16,'The first table cell survives a live scroll to the end: '+JSON.stringify({width:result.width,height:result.height,marks:result.marks}));
+   assert.ok(result.marks.last>16,'The last column must be present in the actual PNG');
+   assert.ok(result.marks.footer>16,'The footer must survive responsive export reflow');
+   assert.deepEqual(result.after,result.before,'Export leaves live geometry, scroll positions and document ownership intact');
+  }
+ }finally{await browser.close();}
+});
+test('image export excludes floating source evidence and preserves the live reading state',{skip:!chrome},async()=>{
+ const {renderExplainer}=await import('../archify/explainer/render.mjs');
+ const doc=formalDocument();doc.answer.summary='Read the conclusion and its [source](source:example).';
+ doc.panels=Array.from({length:3},(_,i)=>({id:'part-'+i,title:'Part '+(i+1),span:6,blocks:[{id:'code-'+i,type:'snippet',text:'A short complete command.'}]}));
+ const source={id:'example',title:'Source evidence',path:'src/example.js',lines:[1,14],url:'https://example.com/source',text:Array.from({length:14},(_,i)=>`Line ${i+1}: `+'long source text '.repeat(30)).join('\n')};
+ const file=artifact('export-source-card',renderExplainer(doc,{preparedSources:{sources:{example:source}},sourceText:JSON.stringify(doc)})),browser=new ChromeVisualBrowser(chrome);
+ const exportPixels=()=>pageValue(browser,`(async()=>{const blob=await window.ArchifyExplainer.pageImage(),bitmap=await createImageBitmap(blob),canvas=document.createElement('canvas');try{canvas.width=bitmap.width;canvas.height=bitmap.height;const ctx=canvas.getContext('2d');ctx.drawImage(bitmap,0,0);const bytes=ctx.getImageData(0,0,canvas.width,canvas.height).data;let popup=0;for(let i=0;i<bytes.length;i+=4)if(bytes[i]===251&&bytes[i+1]===4&&bytes[i+2]===127)popup++;return {width:bitmap.width,height:bitmap.height,popup};}finally{bitmap.close();}})()`);
+ const liveState=()=>pageValue(browser,'(()=>{const c=document.querySelector(".source-card"),pre=c.querySelector("pre");return {hidden:c.hidden,text:c.textContent,top:c.scrollTop,codeLeft:pre.scrollLeft,focus:document.activeElement===document.querySelector(".cite a"),panels:[...document.querySelectorAll(".panel")].map(p=>({id:p.id,box:p.getBoundingClientRect().toJSON()}))};})()');
+ try {
+  for(const width of [1440,390]) {
+   await browser.resetPage();await inspectPublicHtml(browser,{artifactPath:file,width,theme:'light',keyboard:false});
+   await pageValue(browser,'(()=>{const s=document.createElement("style");s.textContent=".source-card{background:rgb(251,4,127)!important}";document.head.append(s);})()');
+   const closed=await exportPixels();
+   await pageValue(browser,'document.querySelector(".cite a").focus()');
+   assert.equal(await pageValue(browser,'(()=>{const c=document.querySelector(".source-card"),p=c.querySelector("pre");return !c.hidden&&p.scrollWidth>p.clientWidth;})()'),true,'open evidence contains overflowing code outside the page shell');
+   const before=await liveState(),opened=await exportPixels();
+   assert.equal(opened.popup,0,'the floating source card must not cover the exported explanation');
+   assert.deepEqual(opened,closed,'opening source evidence must not change exported page dimensions or content markers');
+   assert.deepEqual(await liveState(),before,'export preserves the open live card, source text, focus and panel geometry');
+  }
+ }finally{await browser.close();}
+});
+
+test('image export wraps long snippets while preserving live code',{skip:!chrome},async()=>{
+ const {renderExplainer}=await import('../archify/explainer/render.mjs');
+ const doc=formalDocument();doc.meta.id='complete-code-export';doc.sources=[];
+ const code='printf "%s\\n" "'+ 'complete-result-'.repeat(40)+'"';
+ doc.panels=[{id:'command',title:'Read the complete command',blocks:[{id:'literal',type:'snippet',language:'sh',text:code}]}];
+ const file=artifact('complete-code-export',renderExplainer(doc,{sourceText:JSON.stringify(doc)}));
+ const browser=new ChromeVisualBrowser(chrome);
+ try{
+  for(const width of [390,1440]){
+  await browser.resetPage();await inspectPublicHtml(browser,{artifactPath:file,width,theme:'dark',keyboard:false});
+  const result=await exportContentPixels(browser);
+  assert.equal(result.width,width*2,'Code wrapping retains the requested viewport width');
+  assert.ok(result.before.scrolls[0].scrollWidth>result.before.scrolls[0].width);
+  assert.ok(result.marks.code>16,'The final code characters are present in the PNG');
+  assert.ok(result.marks.footer>16,'Wrapping height includes the footer');
+  assert.equal(result.after.scrolls[0].text,code);
+  assert.deepEqual(result.after,result.before);
+  }
+ }finally{await browser.close();}
+});
+test('image export bounds wide bitmaps and retains the final cells',{skip:!chrome},async()=>{
+ const {renderExplainer}=await import('../archify/explainer/render.mjs');
+ const doc=tableExportDocument(160),file=artifact('bounded-table-export',renderExplainer(doc,{sourceText:JSON.stringify(doc)}));
+ const browser=new ChromeVisualBrowser(chrome);
+ try{
+  await inspectPublicHtml(browser,{artifactPath:file,width:390,theme:'light',keyboard:false});
+  const result=await exportContentPixels(browser);
+  assert.ok(result.before.scrolls[0].scrollWidth>16000,'The fixture exercises the width limit');
+  assert.ok(result.width<=16000&&result.height<=16000,'Both bitmap dimensions stay within the existing export limit');
+  assert.ok(result.marks.first>4&&result.marks.last>4,'Both ends survive the bounded bitmap: '+JSON.stringify({width:result.width,height:result.height,marks:result.marks}));
+  assert.ok(result.marks.footer>4);
+  assert.deepEqual(result.after,result.before);
+ }finally{await browser.close();}
+});
+
+test('image export retains long diff rows and original line numbers',{skip:!chrome},async()=>{
+ const {renderExplainer}=await import('../archify/explainer/render.mjs');
+ const doc=formalDocument();doc.meta.id='complete-diff-export';doc.sources=[];
+ const diff=['@@ -1,3 +1,3 @@',' function message() {','-  const message = "'+'alpha  beta  '.repeat(40)+'OLD-END";','+  const message = "'+'甲方  乙方  '.repeat(40)+'NEW-END";',' }'].join('\n');
+ doc.panels=[{id:'change',title:'Read both complete strings',blocks:[{id:'literal-diff',type:'diff',caption:'Synthetic long-line change',text:diff}]},{id:'after',title:'After the change',blocks:[{id:'following',type:'prose',text:'This paragraph follows the complete diff.'}]}];
+ const file=artifact('complete-diff-export',renderExplainer(doc,{sourceText:JSON.stringify(doc)})),browser=new ChromeVisualBrowser(chrome);
+ try{
+  for(const width of [390,1440]){
+   await browser.resetPage();await inspectPublicHtml(browser,{artifactPath:file,width,theme:'dark',keyboard:false});
+   const result=await exportContentPixels(browser);
+   assert.ok(result.before.scrolls[0].scrollWidth>result.before.scrolls[0].width,'The live diff must overflow');
+   assert.ok(result.marks.first>16&&result.marks.last>16,'Both removed and added line endings remain in the actual image');
+   assert.ok(result.marks.footer>16,'The final footer remains visible');
+   assert.deepEqual(result.after,result.before,'Live text, dimensions, scroll positions and ownership remain unchanged');
+   const rows=await pageValue(browser,`[...document.querySelectorAll('.diff-code tbody tr')].map(row=>({old:row.dataset.oldLine||null,new:row.dataset.newLine||null,text:row.querySelector('code').textContent}))`);
+   assert.equal(rows.map(row=>row.text).join('\n'),diff,'Repeated spaces, prefixes and literal text are preserved');
+   assert.deepEqual(rows.map(row=>[row.old,row.new]),[[null,null],['1','1'],['2',null],[null,'2'],['3','3']]);
+  }
+ }finally{await browser.close();}
+});
+
+test('wide answer panel without reasons spans cleanly while reasons sit side-by-side at 1440px',{skip:!chrome},async()=>{
+ const {renderExplainer}=await import('../archify/explainer/render.mjs');
+ const base=formalDocument();base.answer.span=12;
+ const withReasons=artifact('answer-with-reasons',renderExplainer(structuredClone(base),{sourceText:JSON.stringify(base)}));
+ const withoutReasonsDoc=structuredClone(base);delete withoutReasonsDoc.answer.reasons;
+ const withoutReasons=artifact('answer-without-reasons',renderExplainer(withoutReasonsDoc,{sourceText:JSON.stringify(withoutReasonsDoc)}));
+ const browser=new ChromeVisualBrowser(chrome);
+ try{
+  await inspectPublicHtml(browser,{artifactPath:withReasons,width:1440,theme:'light',keyboard:false});
+  const sideBySide=await pageValue(browser,'(()=>{const b=document.querySelector(".answer-panel .panel-body").getBoundingClientRect(),v=document.querySelector(".answer-panel .verdict").getBoundingClientRect(),r=document.querySelector(".answer-panel .reasons").getBoundingClientRect();return {bodyWidth:b.width,verdictRight:v.right,reasonsLeft:r.left,reasonsTop:r.top,verdictBottom:v.bottom};})()');
+  assert.ok(sideBySide.reasonsLeft>=sideBySide.verdictRight-1 && sideBySide.reasonsTop<sideBySide.verdictBottom,'Answer with reasons splits into 2 columns');
+  await browser.resetPage();
+  await inspectPublicHtml(browser,{artifactPath:withoutReasons,width:1440,theme:'light',keyboard:false});
+  const singleCol=await pageValue(browser,'(()=>{const b=document.querySelector(".answer-panel .panel-body"),bs=getComputedStyle(b),inner=b.getBoundingClientRect().width-parseFloat(bs.paddingLeft)-parseFloat(bs.paddingRight),v=document.querySelector(".answer-panel .verdict").getBoundingClientRect().width;return {inner,verdictWidth:v};})()');
+  assert.ok(singleCol.verdictWidth>singleCol.inner*0.85,`Expected single-column verdict to fill panel body (${singleCol.verdictWidth}/${singleCol.inner})`);
+ }finally{await browser.close();}
+});
+
+test('browser diagnostics include snippet context and specific repair guidance for readability and diagram-fit',()=>{
+ const base={width:1440,height:900,theme:'light',resolvedTheme:'light',innerWidth:1440,innerHeight:900,scrollWidth:1440,overflowElements:[],keyboardIssues:[],keyboardTraversal:{ok:true,missing:[]},consoleErrors:[],references:[],duplicateIds:[],occluded:[],noJavaScript:[],print:{ok:true},smallText:[{component:'diag',text:'Compact edge label',fontSize:8.314},{component:'diag',text:'Boundary label',fontSize:9.999}],interactionFailures:[{name:'diagram-fit',component:'diag',reason:'Insufficient fit',measurement:{requiredWidth:1200,clientWidth:800}}]};
+ const diags=explainerObservationDiagnostics({artifact:artifact('diag-dummy','<!doctype html><html></html>'),allObservations:[base]});
+ const readDiag=diags.find(d=>d.code==='explainer/browser-readability');
+ const boundaryDiag=diags.find(d=>d.code==='explainer/browser-readability'&&d.message.includes('Boundary label'));
+ const fitDiag=diags.find(d=>d.code==='explainer/browser-diagram-fit');
+ assert.ok(readDiag);
+ assert.match(readDiag.message,/"Compact edge label" is 8\.31px, below 10px\./);
+ assert.notEqual(readDiag.supportedFixes[0],'Repair the reported component and re-render the source.');
+ assert.match(readDiag.supportedFixes[0],/@steps|10px/);
+ assert.ok(boundaryDiag);
+ assert.match(boundaryDiag.message,/"Boundary label" is 9\.999px, below 10px\./);
+ assert.ok(fitDiag);
+ assert.notEqual(fitDiag.supportedFixes[0],'Repair the reported component and re-render the source.');
+ assert.match(fitDiag.supportedFixes[0],/phase lanes|wider panel span/);
 });

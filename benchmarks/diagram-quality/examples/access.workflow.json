@@ -1,0 +1,16 @@
+{
+  "schema_version": 1, "diagram_type": "workflow",
+  "meta": {"title": "权限申请 · 离线渲染样本", "output": "access.html"},
+  "lanes": [{"id":"request","label":"Intake"},{"id":"grant","label":"Approved"},{"id":"reject","label":"Denied"}],
+  "nodes": [
+    {"id":"n1","lane":"request","col":0,"type":"external","label":"Request"},
+    {"id":"n2","lane":"request","col":1,"type":"security","label":"Review"},
+    {"id":"n3","lane":"grant","col":2,"type":"backend","label":"Grant"},
+    {"id":"n4","lane":"reject","col":3,"type":"external","label":"Reject"}
+  ],
+  "edges": [
+    {"from":"n1","to":"n2","label":"submit"},
+    {"from":"n2","to":"n3","label":"approved","route":"drop","fromSide":"bottom","toSide":"top"},
+    {"from":"n2","to":"n4","label":"denied","route":"outside-right","fromSide":"right","toSide":"right"}
+  ]
+}

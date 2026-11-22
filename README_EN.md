@@ -33,7 +33,7 @@
   <a href="https://skills.sh/tt-a1i/archify/archify"><img src="https://img.shields.io/badge/installs-130K%2B-0EA5E9?style=flat-square" alt="130K+ installs on skills.sh" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-22c55e?style=flat-square" alt="Apache License 2.0" /></a>
   <a href="#installation-options"><img src="https://img.shields.io/badge/works_with-Claude_Code_%7C_Codex_%7C_Cursor_%7C_OpenCode-7C3AED?style=flat-square" alt="Works with Claude Code, Codex, Cursor, and OpenCode" /></a>
-  <a href="CHANGELOG.md#320--2026-10-18"><img src="https://img.shields.io/badge/version-3.2.0-0891b2?style=flat-square" alt="Stable version 3.2.0" /></a>
+  <a href="CHANGELOG.md#330--2026-11-23"><img src="https://img.shields.io/badge/version-3.3.0-0891b2?style=flat-square" alt="Stable version 3.3.0" /></a>
 </p>
 
 <p align="center">
@@ -42,6 +42,7 @@
   <a href="#community"><img src="https://img.shields.io/badge/WeChat-07C160?style=for-the-badge&amp;logo=wechat&amp;logoColor=white" alt="Archify WeChat group" /></a>
   <a href="#community"><img src="https://img.shields.io/badge/QQ-1688D8?style=for-the-badge&amp;logo=qq&amp;logoColor=white" alt="Archify QQ group" /></a>
   <a href="https://x.com/t20000622yy"><img src="https://img.shields.io/badge/Creator_on_X-181717?style=for-the-badge&amp;logo=x&amp;logoColor=white" alt="Follow the creator on X" /></a>
+  <a href="#support-archify"><img src="https://img.shields.io/badge/Support-E2500E?style=for-the-badge" alt="Support Archify" /></a>
 </p>
 
 <p align="center"><a href="#sponsors"><strong>❤️ Partners & sponsors: Kimi Work · Supercode · OpenLux</strong></a></p>
@@ -59,6 +60,8 @@ https://github.com/user-attachments/assets/78570807-ba1d-4737-953f-55504a378a87
 ### Install, then describe your idea
 
 Works with Cursor, Claude Code, Codex CLI, and OpenCode. See installation options below for additional integrations.
+
+**With an AI agent.** Paste this:
 
 ```text
 Install Archify for me by reading https://raw.githubusercontent.com/tt-a1i/archify/main/llms.txt
@@ -93,6 +96,8 @@ Use Archify to answer as one page: our API's P99 went from 80 ms to 600 ms
 while the mean barely moved. What is the likely cause, and how should we investigate?
 ```
 
+By default your agent also makes a page unasked when an answer is a complex flow, a diagnosis, a comparison or a test report. The reply still gives a short conclusion you can read in chat, and its last line links to the page, such as “Open the test report”. Short answers, text-only requests and failed pages get no page or link. To get pages only when you ask, tell your agent so, or add `[archify explainer: on-demand]` to its global rules file (such as `~/.codex/AGENTS.md` or `~/.claude/CLAUDE.md`). `[archify explainer: always-on]` adds a compact page to every answer that reaches a conclusion; deleting the line restores the default.
+
 Live examples: [First HTTPS visit](https://archify.si/cases/explainer/tls-first-visit.html) · [P99 latency (Chinese)](https://archify.si/cases/explainer/p99-tail-latency.html) · [How Archify finalize keeps the last good file, read from this repository (Chinese)](https://archify.si/cases/explainer/finalize-delivery.html) · [First rental checklist (Chinese)](https://archify.si/cases/explainer/first-rental.html)
 
 <a id="sponsors"></a>
@@ -123,6 +128,10 @@ Live examples: [First HTTPS visit](https://archify.si/cases/explainer/tls-first-
 <td>Thank you to AICodeMirror for sponsoring Archify! AICodeMirror provides API relay services for Claude, Codex, and Gemini, with enterprise-grade concurrency, invoice issuance, and 24/7 technical support. Codex pricing starts at 7% of standard rates, with additional top-up discounts.<br/><br/>Exclusive offer for Archify users: Register through our referral link to receive 20% off your first top-up.<br/><br/><a href="https://www.aicodemirror.ai/register?invitecode=WC26FL">Try AICodeMirror →</a></td>
 </tr>
 <tr>
+<td align="center" width="240"><a href="https://zturbo.top"><img src="docs/assets/sponsors/zturbo-logo.png" alt="ZTURBO" width="200" /></a><br/><strong><a href="https://zturbo.top">ZTURBO</a></strong></td>
+<td>Fast, stable connectivity for developers and AI users.<br/>New users can try the service for free and receive an exclusive bonus on their first top-up. Supports Windows, macOS, iOS, and Android; long-term plans work out to less than ¥1 per day.<br/><br/>Free trial · First top-up bonus · Multi-device connectivity<br/><br/><a href="https://zturbo.top">Try ZTURBO →</a></td>
+</tr>
+<tr>
 <td align="center" width="240"><a href="https://www.infistar.cc/register?aff=9N89LEMV&amp;ref_source=link"><img src="docs/assets/sponsors/infistar-logo.svg" alt="Infistar.cc" width="140" /></a><br/><strong><a href="https://www.infistar.cc/register?aff=9N89LEMV&amp;ref_source=link">Infistar.cc</a></strong></td>
 <td>Infistar provides access to Claude, GPT, Gemini and DeepSeek with one API key for text, image and video creation. Model API pricing starts at 1% of official rates.<br/><br/>Archify users receive CNY 5 in trial credit when signing up through this link.<br/><br/><a href="https://www.infistar.cc/register?aff=9N89LEMV&amp;ref_source=link">Try Infistar →</a></td>
 </tr>
@@ -146,6 +155,33 @@ The [Proof Lab](https://archify.si/gallery.html) contains all 11 checked-in scen
 [![MCO runtime architecture generated from the public mco-org/mco repository](docs/assets/mco-runtime-share-card.png)](https://archify.si/cases/mco-runtime.architecture.html?theme=dark&present=1)
 
 Archify traced [`mco-org/mco`](https://github.com/mco-org/mco) at `9f1a1cf` and produced this checked map. **[Open it ↗](https://archify.si/cases/mco-runtime.architecture.html?theme=dark&present=1)** · [trace reach ↗](https://archify.si/cases/mco-runtime.architecture.html?theme=dark#focus=router&reach=downstream) · [typed source](docs/cases/mco-runtime.architecture.json)
+
+### Diagnose a repository
+
+<sub>CODE ANALYSIS · Built into the Skill, no extra install</sub>
+
+| Dependency star map | 3D model of the same run |
+|---|---|
+| [![Atlas star map: modules around a ring, file dependencies drawn across it, findings and coupling in the side panel](docs/assets/code-analysis-views/atlas.png)](archify/modules/code-analysis/docs/USAGE.md) | [![Atlas 3D: the most-depended-on module as the trunk, other modules branching at the height of their dependency layer](docs/assets/code-analysis-views/atlas-3d.png)](archify/modules/code-analysis/docs/USAGE.md) |
+
+**Architecture Diagnosis** reads a repository and shows how it actually hangs together: dependency cycles, tightly coupled modules, complexity hotspots and layer-rule breaks, each linked to the source behind it, with a fix task you can hand back to your agent. Pair it with an architecture diagram and every component shows its issue count. JS/TS, Python, Java, Go, Rust, C and C++ are supported; the result is one offline HTML file.
+
+```text
+Use archify Code Analysis on this repository: show module coupling, dependency cycles and hotspots.
+```
+
+[Code Analysis guide](archify/modules/code-analysis/docs/USAGE.md)
+
+### Walk through it as a story, or a pull request
+
+<sub>STORY · PR WALKTHROUGH</sub>
+
+- **Story video.** Ask your agent to add a guided story to any diagram. The page gains a Story mode with a timeline and captions, and **Export → Story video** records it at 1080p, 60 fps (WebM or MP4). Several diagrams can also be choreographed into one stage page or video. [Story authoring](archify/references/story-authoring.md)
+- **PR walkthrough.** Ask your agent to explain a pull request or branch: Archify marks what changed directly on the diagram and can attach light and dark diagrams to a GitHub PR or GitLab MR. The optional `archify-pr` Skill offers this while you prepare a PR, and only for material diffs. [PR review](archify/references/pr-review.md)
+
+```text
+Use archify to add a guided story to this diagram and export it as a video.
+```
 
 ### Easy to extend. More ways to make it yours.
 
@@ -210,22 +246,36 @@ Open [`examples/web-app.html`](examples/web-app.html) locally to try the complet
 
 ## Quick start
 
-**Current stable version:** `v3.2.0`. See [Changelog](CHANGELOG.md#320--2026-10-18).
+**Current stable version:** `v3.3.0`. See [Changelog](CHANGELOG.md#330--2026-11-23).
 
 ### 1. Install
+
+**With an AI agent**
+
+Paste this to your agent:
 
 ```text
 Install Archify for me by reading https://raw.githubusercontent.com/tt-a1i/archify/main/llms.txt
 ```
 
-<details>
-<summary>More installation options and update-check details</summary>
+Or install without prompts. Pass one agent, or repeat `--agent` for every switcher target (`cursor`, `codex`, `claude-code`, `opencode`, `github-copilot`). `--copy` copies the skill instead of symlinking:
 
-For an explicit, non-interactive Cursor install:
+Cursor only:
 
 ```bash
 npx -y skills@latest add https://archify.si --skill archify --agent cursor --global --copy --yes
 ```
+
+Or, only if you want all five agents:
+
+```bash
+npx -y skills@latest add https://archify.si --skill archify --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes
+```
+
+Optional PR companion (repository-source installs only; the default install stays `archify`): after installing `archify`, `npx -y skills@latest add tt-a1i/archify --skill archify-pr --agent cursor --global --copy --yes` adds PR change walkthroughs. It stays silent for docs, lockfiles, formatting and other small changes and offers a diagram only for material diffs; add `[archify pr: on-demand]` to your agent's global rules file to disable even those offers.
+
+<details>
+<summary>More installation options and update-check details</summary>
 
 To try without installing:
 
@@ -235,7 +285,7 @@ npx skills use tt-a1i/archify@archify --agent codex
 
 [DSH community opt-in](integrations/deepseek-harness/README.md): `dsh plugin --profile web add @tt-a1i/archify-dsh@1.1.0`
 
-The [agent switcher](https://archify.si/start.html?agent=cursor&type=architecture) covers `cursor`, `codex`, `claude-code`, and `opencode`.
+The [agent switcher](https://archify.si/start.html?agent=cursor&type=architecture) covers `cursor`, `codex`, `claude-code`, `opencode`, and `github-copilot`.
 
 Archify may GET the fixed stable manifest solely to show an optional reminder; it never downloads or installs updates. Successful checks wait about 24 hours (±20%); active use retries failures after 6, then 24 hours. The server sees normal HTTP metadata (IP and time), but receives no version, Agent, project data, prompts, account/device ID, or ETag. You decide whether and when to update. Set `ARCHIFY_UPDATE_CHECK_DISABLED=1` to disable networking and reminder-state writes.
 
@@ -261,6 +311,12 @@ For source evidence, open a repository and ask:
 Analyze this repository, then use archify to create a high-level runtime architecture diagram.
 Show 8–12 core components, one primary path, external dependencies, and trust boundaries.
 Put supporting detail in cards instead of adding more edges.
+```
+
+Archify’s built-in **Architecture Diagnosis** maps repository dependencies as a radial star map and a rotatable 3D model. It also shows issue counts on each component of your architecture diagram, with links to the source behind findings such as dependency cycles and dependencies missing from the diagram. After delivering a repository-backed architecture diagram, Archify ends its summary with what Diagnosis can do, and the diagram has a Code Analysis button that explains it. Diagnosis starts only if you say yes. It runs from the installed Skill with no extra install step. See the [Code Analysis guide](archify/modules/code-analysis/docs/USAGE.md).
+
+```text
+Use archify Code Analysis on this repository: show module coupling, dependency cycles and hotspots.
 ```
 
 ### 3. Refine in chat
@@ -413,7 +469,7 @@ Settings:
 }
 ```
 
-`meta.locale` localizes page title, Legend, states/errors, a11y, HTML/SVG `lang`—never authored content. `en`, `zh-CN`, `zh-TW`, `es`, `ko`, and `ar` are bundled and need only `meta.locale`; `meta.translations` (canonical message key → translated string) overrides individual keys and keeps the rest of the language. Other languages supply their catalog there (see `archify/examples/locales/`), or the renderer falls back to English and discloses it. Static omits `animation`; `classic` defaults.
+`meta.locale` localizes page title, Legend, states/errors, a11y, HTML/SVG `lang`—never authored content. `en`, `zh-CN`, `zh-TW`, `es`, `ko`, `ar`, and `ru` are bundled and need only `meta.locale`; `meta.translations` (canonical message key → translated string) overrides individual keys and keeps the rest of the language. Other languages supply their catalog there (see `archify/examples/locales/`), or the renderer falls back to English and discloses it. Static omits `animation`; `classic` defaults.
 
 </details>
 
@@ -428,6 +484,7 @@ Settings:
 | Compare one or two semantic roles | <kbd>L</kbd> or `LENS` |
 | Open the live overview radar | <kbd>M</kbd> or `MAP` |
 | Enter Presentation Stage | <kbd>F</kbd> |
+| Play a guided story or export it as video (diagrams with a story) | Motion control → `Story` · Export → `Story video` |
 | Choose visual style (`S` cycles) / toggle theme / open Export | <kbd>S</kbd> / <kbd>T</kbd> / <kbd>E</kbd> |
 | Zoom or reset | <kbd>+</kbd> / <kbd>-</kbd> / <kbd>0</kbd> |
 
@@ -468,7 +525,7 @@ Connect with other users and developers, share ideas, request features, report b
 
 <table>
 <tr>
-  <td align="center"><strong><img src="docs/assets/community/wechat.svg" alt="" width="18" /> WeChat</strong><br/><img src="docs/assets/community/wechat-qr.png" alt="Archify Official WeChat group QR code" width="300" height="318" /></td>
+  <td align="center"><strong><img src="docs/assets/community/wechat.svg" alt="" width="18" /> WeChat</strong><br/><img src="docs/assets/community/wechat-qr.png" alt="Archify Official WeChat group QR code" width="300" height="300" /></td>
   <td align="center"><strong><img src="docs/assets/community/qq.svg" alt="" width="18" /> QQ</strong><br/><img src="docs/assets/community/qq-qr.png" alt="Archify Official QQ group QR code" width="300" height="300" /></td>
 </tr>
 </table>
@@ -516,6 +573,8 @@ Scan the QR code below with Alipay, or save it and open it in Alipay to scan.
 </details>
 
 Using Archify, sharing it, reporting bugs, and contributing improvements are also ways to help.
+
+[Code Analysis: setup and usage](archify/modules/code-analysis/docs/USAGE.md).
 
 ## Contributors
 

@@ -5,7 +5,7 @@ import { throwDiagnosticError, withDiagnosticRecordingSuppressed } from './diagn
 import { sameEntry } from './path-semantics.mjs';
 import { parseRepositoryRemote, redactRepositoryRemote, repositorySourceHref, repositoryTreeHref } from './repository-location.mjs';
 
-const FULL_SHA_RE = /^[a-f0-9]{40}$/i;
+export const FULL_SHA_RE = /^[a-f0-9]{40}$/i;
 const CONTROL_CHARACTER_RE = /[\u0000-\u001f\u007f]/;
 const MAX_SOURCE_BYTES = 16 * 1024 * 1024;
 
@@ -20,7 +20,7 @@ function evidenceFailure(code, message, { subject = {}, evidence = {}, supported
   }]);
 }
 
-function runGit(repoRoot, args) {
+export function runGit(repoRoot, args) {
   // 固定 SHA 的来源必须读取原始对象，不能使用本地 replacement refs 的替换内容。
   const result = spawnSync('git', ['--no-replace-objects', '-C', repoRoot, ...args], {
     encoding: 'utf8',
@@ -97,7 +97,11 @@ function gitValue(repoRoot, args, failure) {
 }
 
 function verifiedSourcePath(value, where) {
-  const sourcePath = String(value || '');
+  const authoredPath = String(value || '');
+  if (authoredPath === '.' || authoredPath === './') return '.';
+  // Match code-analysis directory anchors while keeping internal dot/parent
+  // segments forbidden. These are syntax aliases, not filesystem traversal.
+  const sourcePath = authoredPath.replace(/^\.\//, '').replace(/\/$/, '');
   // path-contract-allow: git-path -- Git tree entries use repository-relative POSIX syntax.
   if (!sourcePath || sourcePath.startsWith('/') || sourcePath.includes('\\') || CONTROL_CHARACTER_RE.test(sourcePath)) {
     evidenceFailure('repository-evidence/path-invalid', `${where} must be a repo-relative POSIX path.`, {
@@ -117,10 +121,53 @@ function verifiedSourcePath(value, where) {
   return segments.join('/');
 }
 
+const sourceObject = (revision, sourcePath) => `${revision}:${sourcePath === '.' ? '' : sourcePath}`;
+
 function sourceLineCount(content) {
   if (!content.length) return 0;
   const lines = content.split(/\r\n|\n|\r/);
   return lines.length - (/(?:\r\n|\n|\r)$/.test(content) ? 1 : 0);
+}
+
+// PR table and story anchors use the same pinned Git blobs and line counting
+// as diagram evidence. Batch reads keep repeated navigation anchors cheap.
+export function verifyRepositorySourceAnchors(repoRoot, anchors) {
+  const checked = anchors.map((anchor) => {
+    try {
+      return { ...anchor, path: withDiagnosticRecordingSuppressed(() => verifiedSourcePath(anchor.path, anchor.subject.path)) };
+    } catch {
+      evidenceFailure('pr-pack/invalid-source-anchor', `${anchor.subject.path} must use a repository-relative POSIX path.`, {
+        subject: anchor.subject, evidence: { sourcePath: anchor.path },
+        supportedFixes: ['use a repository-relative path with forward slashes'],
+      });
+    }
+  });
+  const needsContent = new Map();
+  for (const anchor of checked) {
+    const object = `${anchor.revision}:${anchor.path}`;
+    needsContent.set(object, needsContent.get(object) || anchor.line !== undefined);
+  }
+  const blobs = prefetchBlobs(repoRoot, needsContent);
+  for (const anchor of checked) {
+    const object = `${anchor.revision}:${anchor.path}`;
+    const blob = blobs?.get(object);
+    const type = blob ? blob.type : runGit(repoRoot, ['cat-file', '-t', object]).stdout.trim();
+    let reason = type !== 'blob' ? 'does not identify a readable file' : null;
+    let lineCount;
+    if (!reason && anchor.line !== undefined) {
+      const content = blob && Object.hasOwn(blob, 'content') ? { status: 0, stdout: blob.content } : runGit(repoRoot, ['show', object]);
+      if (content.status !== 0) reason = 'could not be read';
+      else {
+        lineCount = sourceLineCount(content.stdout);
+        if (anchor.line > lineCount) reason = `requests line ${anchor.line}, but the file has ${lineCount} lines`;
+      }
+    }
+    if (reason) evidenceFailure('pr-pack/invalid-source-anchor', `${anchor.subject.path} ${reason} at revision ${anchor.revision}.`, {
+      subject: anchor.subject,
+      evidence: { sourcePath: anchor.path, revision: anchor.revision, ...(anchor.line !== undefined ? { line: anchor.line } : {}), ...(lineCount !== undefined ? { lineCount } : {}) },
+      supportedFixes: ['reread the file at the pinned revision and use an existing path and line'],
+    });
+  }
 }
 
 // Every diagram type carries its nodes under a different property name, and
@@ -240,12 +287,42 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
   }
 
   const revision = repository.revision.toLowerCase();
-  const commit = runGit(realRoot, ['cat-file', '-e', `${revision}^{commit}`]);
+  const commit = runGit(realRoot, ['cat-file', '-t', revision]);
   if (commit.status !== 0) {
     evidenceFailure('repository-evidence/revision-unavailable', `Evidence revision ${revision} is not available in the local repository.`, {
       subject: { repoRoot: realRoot },
       evidence: { revision },
       supportedFixes: ['fetch the pinned commit or pin an available full commit SHA'],
+    });
+  }
+  // Removed nodes describe code that no longer exists at `revision`; their
+  // citations are checked against the declared merge-base instead.
+  let baseRevision = null;
+  if (repository.base_revision !== undefined) {
+    if (!FULL_SHA_RE.test(repository.base_revision || '')) {
+      evidenceFailure('repository-evidence/base-revision-invalid', '/meta/repository/base_revision must be a full 40-character commit SHA.', {
+        subject: { path: '/meta/repository/base_revision' },
+        evidence: { baseRevision: repository.base_revision },
+        supportedFixes: ['pin the merge-base as one full 40-character commit SHA'],
+      });
+    }
+    baseRevision = repository.base_revision.toLowerCase();
+    const baseCommit = runGit(realRoot, ['cat-file', '-e', `${baseRevision}^{commit}`]);
+    if (baseCommit.status !== 0) {
+      evidenceFailure('repository-evidence/base-revision-unavailable', `Evidence base revision ${baseRevision} is not available in the local repository.`, {
+        subject: { repoRoot: realRoot },
+        evidence: { baseRevision },
+        supportedFixes: ['fetch the merge-base commit or pin an available full commit SHA'],
+      });
+    }
+  }
+  const nodeRevision = (node) => (node?.change === 'removed' && baseRevision ? baseRevision : revision);
+
+  if (commit.stdout.trim() !== 'commit') {
+    evidenceFailure('repository-evidence/revision-not-commit', `Evidence revision ${revision} must identify a commit object.`, {
+      subject: { repoRoot: realRoot },
+      evidence: { revision, objectType: commit.stdout.trim() },
+      supportedFixes: ['pin the full peeled commit SHA instead of a tag, tree or blob object ID'],
     });
   }
 
@@ -263,7 +340,7 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
       } catch {
         continue;
       }
-      const object = `${revision}:${sourcePath}`;
+      const object = sourceObject(nodeRevision(node), sourcePath);
       citedObjects.set(object, citedObjects.get(object) || Boolean(authored.line));
     }
   }
@@ -280,6 +357,7 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
       ? { diagramType, collection, nodeId: node.id, componentId: node.id }
       : { diagramType, collection, nodeId: node.id };
     const verified = [];
+    const revision = nodeRevision(node);
     for (const [sourceIndex, authored] of node.sources.entries()) {
       const at = `/${collection}/${nodeIndex}/sources/${sourceIndex}`;
       const where = `${at}/path`;
@@ -303,34 +381,41 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
             supportedFixes: ['use an end_line greater than or equal to line'],
           });
         }
-        const object = `${revision}:${source.path}`;
+        const object = sourceObject(revision, source.path);
         const prefetched = prefetchedBlobs ? prefetchedBlobs.get(object) : undefined;
-        const objectIsBlob = prefetched
-          ? !prefetched.missing && prefetched.type === 'blob'
+        const objectType = prefetched
+          ? prefetched.missing ? null : prefetched.type
           : (() => {
             const type = runGit(realRoot, ['cat-file', '-t', object]);
-            return type.status === 0 && type.stdout.trim() === 'blob';
+            return type.status === 0 ? type.stdout.trim() : null;
           })();
-        if (!objectIsBlob) {
+        if (objectType === 'tree' && source.line) {
+          evidenceFailure('repository-evidence/directory-line', `${where} identifies a directory; only files have source lines.`, {
+            subject: { path: at, ...nodeSubject },
+            evidence: { sourcePath: source.path, revision },
+            supportedFixes: ['remove line and end_line for a directory reference, or cite a file inside the directory'],
+          });
+        }
+        if (objectType !== 'blob' && objectType !== 'tree') {
           // A promisor blob can exist in the pinned tree without being stored
           // locally. Do not tell the caller to change a correct source path.
           const tree = runGit(realRoot, ['ls-tree', '-z', revision, '--', source.path]);
-          const knownBlob = tree.status === 0 && tree.stdout.split('\0').some((entry) => {
+          const knownObject = tree.status === 0 && tree.stdout.split('\0').some((entry) => {
             const separator = entry.indexOf('\t');
             return entry.slice(separator + 1) === source.path
-              && /^\d+ blob [a-f0-9]+$/.test(entry.slice(0, separator));
+              && /^\d+ (?:blob|tree) [a-f0-9]+$/.test(entry.slice(0, separator));
           });
-          if (knownBlob) {
+          if (knownObject) {
             evidenceFailure('repository-evidence/object-unavailable', `${where} exists at revision ${revision}, but its content is unavailable in the local repository.`, {
               subject: { path: where, ...nodeSubject },
               evidence: { sourcePath: source.path, revision },
               supportedFixes: ['explicitly fetch the pinned source objects into the local checkout, then retry verification'],
             });
           }
-          evidenceFailure('repository-evidence/file-missing', `${where} does not identify a file at revision ${revision}.`, {
+          evidenceFailure('repository-evidence/file-missing', `${where} does not identify a file or directory at revision ${revision}.`, {
             subject: { path: where, ...nodeSubject },
             evidence: { sourcePath: source.path, revision },
-            supportedFixes: ['use a file path that exists at the pinned revision'],
+            supportedFixes: ['use a file or directory path that exists at the pinned revision'],
           });
         }
         if (source.line) {
@@ -347,12 +432,21 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
           if (requestedLine > lineCount) {
             evidenceFailure('repository-evidence/line-out-of-range', `${at} requests line ${requestedLine}, but ${source.path} has ${lineCount} lines at revision ${revision}.`, {
               subject: { path: at, ...nodeSubject },
-              evidence: { sourcePath: source.path, requestedLine, lineCount, revision },
-              supportedFixes: ['use a line range that exists at the pinned revision'],
+              evidence: { sourcePath: source.path, line: source.line, ...(source.endLine ? { endLine: source.endLine } : {}), requestedLine, lineCount, revision },
+              supportedFixes: [source.endLine && source.line <= lineCount
+                ? `set end_line to ${lineCount}, the last line of ${source.path}`
+                : `reread ${source.path} (${lineCount} lines) and cite the lines that show the fact`],
             });
           }
         }
-        verified.push({ ...source, ...(linkMode === 'web' ? { href: repositorySourceHref(location.provider, location.url, revision, source) } : {}) });
+        // A directory proves only the pinned tree path exists. Do not expand
+        // its descendants or imply that every file under it was inspected.
+        if (objectType === 'tree') source.kind = 'directory';
+        verified.push({
+          ...source,
+          ...(revision !== repository.revision.toLowerCase() ? { revision } : {}),
+          ...(linkMode === 'web' ? { href: repositorySourceHref(location.provider, location.url, revision, source) } : {}),
+        });
         referenceCount += 1;
       } catch (error) {
         // Independent citations can be repaired together. Keep the first
@@ -385,6 +479,7 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
       url: location.url,
       revision,
       shortRevision: revision.slice(0, 7),
+      ...(baseRevision ? { baseRevision, shortBaseRevision: baseRevision.slice(0, 7) } : {}),
       label: location.provider === 'github' ? location.path : location.url.replace(/^(?:https?:\/\/|ssh:\/\/git@|git@)/, ''),
       ...(linkMode === 'web' ? { href: repositoryTreeHref(location.provider, location.url, revision) } : { linkMode }),
     },

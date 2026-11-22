@@ -107,6 +107,35 @@ test('clear horizontal label and explicit route points stay unchanged', t => {
   assert.deepEqual(report.connections[0].labelAt, [320, 90]);
 });
 
+for (const direction of ['horizontal', 'vertical']) {
+  test(`standard automatic layout clears a dashed frame exit label in a ${direction} layout`, t => {
+    const diagram = {
+      schema_version: 1, diagram_type: 'architecture',
+      meta: { title: 'Inspection Report', output: 'diagram.html', quality_profile: 'standard' },
+      layout: { mode: 'auto' },
+      components: [
+        { id: 'client', type: 'frontend', label: 'Client' },
+        { id: 'runtime', type: 'backend', label: 'Runtime' },
+        { id: 'report', type: 'database', label: 'Report' },
+      ],
+      boundaries: [{ kind: 'region', label: 'Inspection Service', wraps: ['runtime'] }],
+      connections: [
+        { from: 'client', to: 'runtime' },
+        { from: 'runtime', to: 'report', variant: 'dashed', label: 'Write the inspection report' },
+      ],
+    };
+    if (direction === 'vertical') {
+      diagram.components.push({ id: 'worker', type: 'backend', label: 'Worker' });
+      for (const component of diagram.components) component.size = [340, 60];
+      diagram.boundaries[0].wraps.push('worker');
+      diagram.connections.push({ from: 'runtime', to: 'worker' });
+    }
+    const { result, report } = inspect(t, diagram);
+    assert.equal(result.status, 0, result.stdout);
+    assert.equal(report.labels[0].text, diagram.connections[1].label);
+  });
+}
+
 test('bounded fallback finds a clear position without hiding or shrinking the label', t => {
   const diagram = vertical();
   diagram.components[1].pos = [120, 160];

@@ -46,12 +46,17 @@
         "animation": {
           "$ref": "common.schema.json#/$defs/animation"
         },
+        "feedback_links": {
+          "type": "boolean",
+          "description": "false hides the page footer with feedback and GitHub star links."
+        },
         "visual_preset": {
           "$ref": "common.schema.json#/$defs/visualPreset"
         },
         "quality_profile": {
           "$ref": "common.schema.json#/$defs/qualityProfile"
         },
+        "parentHref": { "$ref": "common.schema.json#/$defs/parentHref" },
         "repository": {
           "$ref": "common.schema.json#/$defs/repository"
         },
@@ -126,6 +131,8 @@
           "row"
         ],
         "properties": {
+          "change": { "$ref": "common.schema.json#/$defs/changeStatus" },
+          "emphasis": { "$ref": "common.schema.json#/$defs/emphasis" },
           "id": {
             "$ref": "common.schema.json#/$defs/id"
           },
@@ -136,6 +143,7 @@
             "type": "string",
             "minLength": 1
           },
+          "explanation": { "type": "string", "minLength": 1, "maxLength": 1200 },
           "sublabel": {
             "type": "string"
           },
@@ -146,6 +154,8 @@
           "brand": {
             "$ref": "common.schema.json#/$defs/brandMark"
           },
+          "drilldowns": { "$ref": "common.schema.json#/$defs/drilldowns" },
+          "href": { "$ref": "common.schema.json#/$defs/nodeHrefSugar" },
           "sources": {
             "$ref": "common.schema.json#/$defs/sourceReferences"
           },
@@ -182,6 +192,9 @@
           "label"
         ],
         "properties": {
+          "change": { "$ref": "common.schema.json#/$defs/changeStatus" },
+          "emphasis": { "$ref": "common.schema.json#/$defs/emphasis" },
+          "payload": { "$ref": "common.schema.json#/$defs/payload" },
           "id": {
             "$ref": "common.schema.json#/$defs/id"
           },

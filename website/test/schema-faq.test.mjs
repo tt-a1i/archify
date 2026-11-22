@@ -42,7 +42,7 @@ test('every page graph binds the software entity, public source, and license wit
 });
 
 test('homepages expose the visible FAQ answers as FAQPage entries from one shared source', () => {
-  assert.equal(faqFacts.length, 6);
+  assert.equal(faqFacts.length, 7);
   for (const lang of ['en', 'zh']) {
     const schema = pageMetadata('index', lang, '1.2.3').schema;
     const faq = nodeOf(schema, 'FAQPage');

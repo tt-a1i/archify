@@ -94,7 +94,7 @@ test('tuning: boundary, stage and domain membership losses remain visible', () =
 });
 
 test('tuning: label, frame, node, legend and stylesheet changes request visual comparison', () => {
-  const original = fs.readFileSync(path.join(repoRoot, 'archify/examples/web-app-rendered.html'), 'utf8');
+  const original = fs.readFileSync(path.join(repoRoot, 'examples/web-app-rendered.html'), 'utf8');
   const replacements = [
     ['AWS Region: us-west-2', 'AWS Region: ap-east-1'],
     ['data-legend-width="87"', 'data-legend-width="187"'],

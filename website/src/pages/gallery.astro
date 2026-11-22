@@ -46,6 +46,10 @@ const { lang = 'en' } = Astro.props;
           <button class="filter-button" type="button" data-filter="dataflow" aria-pressed="false" data-en="Data flow" data-zh="数据流">Data flow</button>
           <button class="filter-button" type="button" data-filter="lifecycle" aria-pressed="false" data-en="Lifecycle" data-zh="生命周期">Lifecycle</button>
           <button class="filter-button" type="button" data-filter="erd" aria-pressed="false" data-en="Entity-relationship" data-zh="实体关系图">Entity-relationship</button>
+          <button class="filter-button" type="button" data-filter="class" aria-pressed="false" data-en="Class" data-zh="类图">Class</button>
+          <button class="filter-button" type="button" data-filter="tree" aria-pressed="false" data-en="Tree" data-zh="树图">Tree</button>
+          <button class="filter-button" type="button" data-filter="timeline" aria-pressed="false" data-en="Timeline" data-zh="时间线">Timeline</button>
+          <button class="filter-button" type="button" data-filter="waterfall" aria-pressed="false" data-en="Waterfall" data-zh="瀑布图">Waterfall</button>
         </div>
         <div class="controls-actions">
           <button class="filter-button" id="preview-theme" type="button">Preview: dark</button>
@@ -57,8 +61,8 @@ const { lang = 'en' } = Astro.props;
     <section class="gallery-section" id="gallery">
       <div class="shell">
         <div class="section-intro">
-          <h2 data-en="Six lenses. Twelve real stories." data-zh="六种视角，十二个真实故事。">Six lenses. Twelve real stories.</h2>
-          <p data-en="Every scenario has focus, reach, and path exploration, shareable links, dark/light rendering, self-contained export, and a machine-readable quality receipt." data-zh="每个场景都支持聚焦、上下游与路径探索、可分享链接、深浅主题、自包含导出和机器可读质量凭证。">Every scenario has focus, reach, and path exploration, shareable links, dark/light rendering, self-contained export, and a machine-readable quality receipt.</p>
+          <h2 data-en="Ten lenses. Sixteen real stories." data-zh="十种视角，十六个真实故事。">Ten lenses. Sixteen real stories.</h2>
+          <p data-en="Every scenario supports focus, shareable links, dark/light rendering, self-contained export, and a machine-readable quality receipt. Reach and path exploration follow authored relationships where present." data-zh="每个场景都支持聚焦、可分享链接、深浅主题、自包含导出和机器可读质量凭证；存在已编写关系时，才可进行上下游与路径探索。">Every scenario supports focus, shareable links, dark/light rendering, self-contained export, and a machine-readable quality receipt. Reach and path exploration follow authored relationships where present.</p>
         </div>
         <div class="gallery-grid" id="gallery-grid">
           {cards.map((entry, index) => <GalleryCard entry={entry} index={index} />)}
@@ -106,25 +110,25 @@ const { lang = 'en' } = Astro.props;
               <a class="life-plate" href="cases/life/leave-plan.workflow.html?present=1" target="_blank" rel="noopener" aria-labelledby="life-q-leave-plan"><img src="assets/life/leave-plan.workflow.webp" alt="" loading="lazy" decoding="async" width="2160" height="1350"></a>
               <div class="life-meta"><span class="life-lang">中文</span><span class="life-kind" data-en="Workflow" data-zh="工作流">Workflow</span></div>
               <h3 class="life-q" id="life-q-leave-plan" data-en="How should I spread my leave across the year?" data-zh="一年的假怎么排最划算？">How should I spread my leave across the year?</h3>
-              <div class="life-links"><a class="card-link primary" href="cases/life/leave-plan.workflow.html?present=1" target="_blank" rel="noopener" data-en="Open artifact" data-zh="打开成品">Open artifact</a><a class="card-link" href="cases/life/leave-plan.workflow.json" target="_blank" rel="noopener">JSON</a><a class="card-link create-link" href="start.html?type=workflow&amp;input=description&amp;source=gallery" data-en="Create this type" data-zh="按此类型开始">Create this type</a></div>
+              <div class="life-links"><a class="card-link primary" href="cases/life/leave-plan.workflow.html?present=1" target="_blank" rel="noopener" data-en="Open artifact" data-zh="打开成品">Open artifact</a><a class="card-link" href="cases/life/leave-plan.workflow.json" target="_blank" rel="noopener">JSON</a></div>
             </article>
             <article class="life-card">
               <a class="life-plate" href="cases/life/job-search.lifecycle.html?present=1" target="_blank" rel="noopener" aria-labelledby="life-q-job-search"><img src="assets/life/job-search.lifecycle.webp" alt="" loading="lazy" decoding="async" width="2160" height="1350"></a>
               <div class="life-meta"><span class="life-lang">EN</span><span class="life-kind" data-en="Lifecycle" data-zh="生命周期">Lifecycle</span></div>
               <h3 class="life-q" id="life-q-job-search" data-en="Where does each job application stand?" data-zh="每份求职申请走到哪一步了？">Where does each job application stand?</h3>
-              <div class="life-links"><a class="card-link primary" href="cases/life/job-search.lifecycle.html?present=1" target="_blank" rel="noopener" data-en="Open artifact" data-zh="打开成品">Open artifact</a><a class="card-link" href="cases/life/job-search.lifecycle.json" target="_blank" rel="noopener">JSON</a><a class="card-link create-link" href="start.html?type=lifecycle&amp;input=description&amp;source=gallery" data-en="Create this type" data-zh="按此类型开始">Create this type</a></div>
+              <div class="life-links"><a class="card-link primary" href="cases/life/job-search.lifecycle.html?present=1" target="_blank" rel="noopener" data-en="Open artifact" data-zh="打开成品">Open artifact</a><a class="card-link" href="cases/life/job-search.lifecycle.json" target="_blank" rel="noopener">JSON</a></div>
             </article>
             <article class="life-card">
               <a class="life-plate" href="cases/life/monthly-money.dataflow.html?present=1" target="_blank" rel="noopener" aria-labelledby="life-q-monthly-money"><img src="assets/life/monthly-money.dataflow.webp" alt="" loading="lazy" decoding="async" width="2160" height="1350"></a>
               <div class="life-meta"><span class="life-lang">EN</span><span class="life-kind" data-en="Data flow" data-zh="数据流">Data flow</span></div>
               <h3 class="life-q" id="life-q-monthly-money" data-en="Where does my paycheck go each month?" data-zh="工资每个月都去哪了？">Where does my paycheck go each month?</h3>
-              <div class="life-links"><a class="card-link primary" href="cases/life/monthly-money.dataflow.html?present=1" target="_blank" rel="noopener" data-en="Open artifact" data-zh="打开成品">Open artifact</a><a class="card-link" href="cases/life/monthly-money.dataflow.json" target="_blank" rel="noopener">JSON</a><a class="card-link create-link" href="start.html?type=dataflow&amp;input=description&amp;source=gallery" data-en="Create this type" data-zh="按此类型开始">Create this type</a></div>
+              <div class="life-links"><a class="card-link primary" href="cases/life/monthly-money.dataflow.html?present=1" target="_blank" rel="noopener" data-en="Open artifact" data-zh="打开成品">Open artifact</a><a class="card-link" href="cases/life/monthly-money.dataflow.json" target="_blank" rel="noopener">JSON</a></div>
             </article>
             <article class="life-card">
               <a class="life-plate" href="cases/life/renting.sequence.html?present=1" target="_blank" rel="noopener" aria-labelledby="life-q-renting"><img src="assets/life/renting.sequence.webp" alt="" loading="lazy" decoding="async" width="2160" height="1350"></a>
               <div class="life-meta"><span class="life-lang">中文</span><span class="life-kind" data-en="Sequence" data-zh="时序图">Sequence</span></div>
               <h3 class="life-q" id="life-q-renting" data-en="Who says what when I rent a flat?" data-zh="租房时，谁跟谁说了什么？">Who says what when I rent a flat?</h3>
-              <div class="life-links"><a class="card-link primary" href="cases/life/renting.sequence.html?present=1" target="_blank" rel="noopener" data-en="Open artifact" data-zh="打开成品">Open artifact</a><a class="card-link" href="cases/life/renting.sequence.json" target="_blank" rel="noopener">JSON</a><a class="card-link create-link" href="start.html?type=sequence&amp;input=description&amp;source=gallery" data-en="Create this type" data-zh="按此类型开始">Create this type</a></div>
+              <div class="life-links"><a class="card-link primary" href="cases/life/renting.sequence.html?present=1" target="_blank" rel="noopener" data-en="Open artifact" data-zh="打开成品">Open artifact</a><a class="card-link" href="cases/life/renting.sequence.json" target="_blank" rel="noopener">JSON</a></div>
             </article>
           </div>
         </div>
@@ -160,6 +164,10 @@ render  dataflow       ✓
 render  lifecycle      ✓
 render  architecture   ✓
 render  erd            ✓
+render  class          ✓
+render  tree           ✓
+render  timeline       ✓
+render  waterfall      ✓
 
 receipt {gallery.checkCount} checks / {gallery.entryCount} artifacts / deterministic hashes</pre>
         </div>
@@ -171,6 +179,7 @@ receipt {gallery.checkCount} checks / {gallery.entryCount} artifacts / determini
     <div class="shell footer-inner">
       <span data-en="Generated from Archify's checked-in examples. No hand-authored capability claims." data-zh="由 Archify 仓库内示例自动生成，不手写可能过期的能力声明。">Generated from Archify's checked-in examples. No hand-authored capability claims.</span>
       <span data-en={`Archify v${version} · ${productChannel} · Apache-2.0`} data-zh={`Archify v${version} · ${productChannel === 'development' ? '开发版' : '稳定版'} · Apache-2.0`}>Archify v{version} · {productChannel} · Apache-2.0</span>
+      <a href="index.html#support" data-en="Support" data-zh="支持项目">Support</a>
     </div>
   </footer>
 

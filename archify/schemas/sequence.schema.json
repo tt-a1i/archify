@@ -45,12 +45,17 @@
         "animation": {
           "$ref": "common.schema.json#/$defs/animation"
         },
+        "feedback_links": {
+          "type": "boolean",
+          "description": "false hides the page footer with feedback and GitHub star links."
+        },
         "visual_preset": {
           "$ref": "common.schema.json#/$defs/visualPreset"
         },
         "quality_profile": {
           "$ref": "common.schema.json#/$defs/qualityProfile"
         },
+        "parentHref": { "$ref": "common.schema.json#/$defs/parentHref" },
         "column_fit": {
           "description": "Horizontal participant layout. Defaults to spread whether or not meta.viewBox is supplied. Explicit fixed preserves the historical 86px boxes and 108px column gap. Use spread when a wide viewBox would leave unused horizontal space or meaningful participant labels do not fit the fixed boxes; spread derives box width and column distance from the viewBox with at least a 16px gap between participant cards without changing participant order or message semantics.",
           "enum": ["fixed", "spread"]
@@ -109,6 +114,8 @@
           "label"
         ],
         "properties": {
+          "change": { "$ref": "common.schema.json#/$defs/changeStatus" },
+          "emphasis": { "$ref": "common.schema.json#/$defs/emphasis" },
           "id": {
             "$ref": "common.schema.json#/$defs/id"
           },
@@ -119,6 +126,7 @@
             "type": "string",
             "minLength": 1
           },
+          "explanation": { "type": "string", "minLength": 1, "maxLength": 1200 },
           "sublabel": {
             "type": "string"
           },
@@ -126,6 +134,8 @@
           "brand": {
             "$ref": "common.schema.json#/$defs/brandMark"
           },
+          "drilldowns": { "$ref": "common.schema.json#/$defs/drilldowns" },
+          "href": { "$ref": "common.schema.json#/$defs/nodeHrefSugar" },
           "sources": {
             "$ref": "common.schema.json#/$defs/sourceReferences"
           }
@@ -143,6 +153,8 @@
           "label"
         ],
         "properties": {
+          "change": { "$ref": "common.schema.json#/$defs/changeStatus" },
+          "emphasis": { "$ref": "common.schema.json#/$defs/emphasis" },
           "from": {
             "type": "number"
           },
@@ -169,6 +181,9 @@
           "label"
         ],
         "properties": {
+          "change": { "$ref": "common.schema.json#/$defs/changeStatus" },
+          "emphasis": { "$ref": "common.schema.json#/$defs/emphasis" },
+          "payload": { "$ref": "common.schema.json#/$defs/payload" },
           "id": {
             "$ref": "common.schema.json#/$defs/id"
           },

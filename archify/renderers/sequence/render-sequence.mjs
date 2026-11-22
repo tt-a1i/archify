@@ -1,13 +1,15 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { esc, renderDefinitions, renderSemanticSigil, textUnits } from '../shared/utils.mjs';
-import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagramWithBrandMarks, writeDiagram, svgAccessibleText, svgRootAttrs } from '../shared/cli.mjs';
+import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagramWithBrandMarks, renderDrilldownMark, resolveNodeDrilldowns, wrapSingleChildAnchor, writeDiagram, svgAccessibleText, svgRootAttrs } from '../shared/cli.mjs';
 import { throwDiagnosticProblems } from '../shared/diagnostics.mjs';
 import { legendFootprint, measureLegend, resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
 import { componentFill, arrowClassMap, rectsOverlap, cleanFlowProblems, cleanCrossingProblems, cleanAmbiguousCorridorProblems, cleanBorderRunProblems, cleanRouteRhythmProblems, cleanLabelRouteClearanceProblems, cleanLabelCanvasContainmentProblems, routePointsValue, asArray, isFinitePoint, edgeLabelAccent } from '../shared/geometry.mjs';
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
+import { layoutReportFromSvg } from '../shared/layout-report.mjs';
+import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeFrameAttrs, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeNodeAttrs, changeReviewFor, nodeChangeBadgePos, renderChangeBadge, renderChangeEdgePrefix, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
 import { DESKTOP_READER_DIAGRAM_WIDTH, MIN_PROJECTED_NODE_TEXT_PX, minimumReadableSourceTextPx } from '../shared/desktop-readability.mjs';
 
 const participantTextFit = {
@@ -36,9 +38,26 @@ const LEGEND_CATALOG = [
   label: i18nText(sequence.meta.locale, `legend.sequence.${entry.kind}`),
 }));
 
+// A segment frames the messages inside its time range; its 1-hop context is
+// the participants those messages connect.
+const segmentFrame = (segment) => ({
+  ...segment,
+  members: asArray(sequence.messages)
+    .filter((message) => message.y >= segment.from && message.y <= segment.to)
+    .flatMap((message) => [message.from, message.to]),
+});
+const changeReview = changeReviewFor({
+  nodes: asArray(sequence.participants),
+  edges: asArray(sequence.messages),
+  frames: asArray(sequence.segments).map(segmentFrame),
+});
+
 function legendEntries() {
   const presentKinds = new Set(asArray(sequence.messages).map((message) => message.variant || 'default'));
-  return resolveLegend(sequence.meta?.legend, LEGEND_CATALOG, presentKinds);
+  return [
+    ...resolveLegend(sequence.meta?.legend, LEGEND_CATALOG, presentKinds),
+    ...changeLegendEntries(changeReview, sequence.meta?.legend, sequence.meta.locale),
+  ];
 }
 
 // The legend sits below the timeline content: the last message and its note,
@@ -323,11 +342,12 @@ const messageUnitWidth = readableMessages ? 6.6 : 5.2;
 const layout = {
   topY: 72,
   participantW,
-  // Keep a separate top rail for the 11px semantic sigil and 16px brand mark.
+  // Center one/two-line text blocks while clearing the corner sigil/brand marks.
   // Literal labels retain their fitted font size and full authored wording.
   participantH: 60,
-  participantLabelY: 36,
-  participantSublabelY: 50,
+  participantLabelY: 29,
+  participantSingleLabelY: 34,
+  participantSublabelY: 43,
   lifelineTop: 142,
   lifelineBottom: viewBox[1] - 65,
   legendY: viewBox[1] - 54,
@@ -374,7 +394,7 @@ function messageGeometry(message) {
 function messageLabelBox(message, relationIndex = null) {
   const geometry = messageGeometry(message);
   if (!geometry) return null;
-  const width = Math.max(34, textUnits(message.label) * messageUnitWidth + 12);
+  const width = Math.max(34, textUnits(message.label) * messageUnitWidth + 12) + changeEdgeLabelExtraWidth(message);
   return {
     relation: message,
     relationIndex,
@@ -932,24 +952,40 @@ function validateSequence() {
 function renderParticipant(participant) {
   const fill = componentFill[participant.type] || 'c-external';
   const hasSub = participant.sublabel != null && participant.sublabel !== '';
+  const labelFontSize = fittedNodeFontSize(participant.label, brandLabelFitWidth(participant, layout.participantW), 11, 8);
+  // Fitting a smaller title moves its top down; lift the whole text block equally.
+  const fittedTextOffset = (11 - labelFontSize) / 2;
   const sub = hasSub
-    ? `\n          <text data-detail="context" x="${participant.cx}" y="${layout.topY + layout.participantSublabelY}" class="t-muted" font-size="${fittedNodeFontSize(participant.sublabel, layout.participantW, readableSublabelPreferred, readableSublabelMinimum)}" text-anchor="middle">${esc(participant.sublabel)}</text>`
+    ? `\n          <text data-detail="context" x="${participant.cx}" y="${layout.topY + layout.participantSublabelY - fittedTextOffset}" class="t-muted" font-size="${fittedNodeFontSize(participant.sublabel, layout.participantW, readableSublabelPreferred, readableSublabelMinimum)}" text-anchor="middle">${esc(participant.sublabel)}</text>`
     : '';
   const brand = renderBrandMark(participant, { x: participant.x + layout.participantW - 22, y: layout.topY + 6 });
-  const labelFontSize = fittedNodeFontSize(participant.label, brandLabelFitWidth(participant, layout.participantW), 11, 8);
+  // drilldowns / href 简写一并解析：单目标会包 <a> + 角标，多目标只写 Passport 属性
+  const drilldowns = resolveNodeDrilldowns(participant);
   const passport = {
     kind: participant.type,
     sublabel: participant.sublabel,
     context: i18nText(sequence.meta.locale, 'node.context.sequence'),
+    drilldowns,
+    href: participant.href,
     ...brandMetadataFor(participant),
   };
-  return `        <g ${focusNodeAttrs(participant.id, participant.label, passport, sequence.meta.locale)}>
+  const mark = drilldowns.length
+    ? `\n          ${renderDrilldownMark({ x: participant.x, y: layout.topY, width: layout.participantW, height: layout.participantH })}`
+    : '';
+  const changeBadge = renderChangeBadge(participant, nodeChangeBadgePos({
+    x: participant.x,
+    y: layout.topY,
+    width: layout.participantW,
+    height: layout.participantH,
+  }, { rx: 6, rightInset: brand ? 26 : 0 }));
+  const badge = changeBadge ? `\n          ${changeBadge}` : '';
+  return wrapSingleChildAnchor(`        <g ${focusNodeAttrs(participant.id, participant.label, passport, sequence.meta.locale)}${changeNodeAttrs(changeReview, participant)}>
           ${focusNodeTitle(participant.label, passport)}
           <rect x="${participant.x}" y="${layout.topY}" width="${layout.participantW}" height="${layout.participantH}" rx="6" class="c-mask"/>
           <rect x="${participant.x}" y="${layout.topY}" width="${layout.participantW}" height="${layout.participantH}" rx="6" class="${fill}"${animateAttr(sequence.meta, 'node', participant.index)} stroke-width="1.5"/>
           ${renderSemanticSigil(participant.type, { icon: participant.icon, x: participant.x + 6, y: layout.topY + 6 })}${brand ? `\n          ${brand}` : ''}
-          <text data-node-label=""${hasSub ? ' data-detail-anchor=""' : ''} x="${participant.cx}" y="${layout.topY + layout.participantLabelY}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(participant.label)}</text>${sub}
-        </g>`;
+          <text data-node-label=""${hasSub ? ' data-detail-anchor=""' : ''} x="${participant.cx}" y="${layout.topY + (hasSub ? layout.participantLabelY : layout.participantSingleLabelY) - fittedTextOffset}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(participant.label)}</text>${sub}${mark}${badge}
+        </g>`, drilldowns);
 }
 
 // Lifelines never enter the legend band. The legend is placed below all
@@ -964,14 +1000,20 @@ function renderLifeline(participant, end) {
 }
 
 function renderSegment(segment, index) {
-  return `        <rect data-graph-role="structural-frame" data-composition-frame-kind="segment" data-composition-frame-id="${index}" x="48" y="${segment.from}" width="${viewBox[0] - 96}" height="${segment.to - segment.from}" rx="10" class="c-lane" stroke-width="1"/>`;
+  return `        <rect data-graph-role="structural-frame" data-composition-frame-kind="segment" data-composition-frame-id="${index}"${changeFrameAttrs(changeReview, segmentFrame(segment))} x="48" y="${segment.from}" width="${viewBox[0] - 96}" height="${segment.to - segment.from}" rx="10" class="c-lane" stroke-width="1"/>`;
 }
 
 function renderSegmentLabel(segment, index) {
   const label = segmentLabelBox(segment);
-  return `        <g data-graph-role="segment-label" data-segment-id="${index}">
+  const badge = renderChangeBadge(segment, nodeChangeBadgePos({
+    x: 48,
+    y: segment.from,
+    width: viewBox[0] - 96,
+    height: segment.to - segment.from,
+  }, { rx: 10 }));
+  return `        <g data-graph-role="segment-label" data-segment-id="${index}"${changeFrameAttrs(changeReview, segmentFrame(segment))}>
           <rect x="${label.x}" y="${label.y}" width="${label.width}" height="${label.height}" rx="3" class="c-mask"/>
-          <text x="${label.x + 6}" y="${label.y + 13}" class="t-muted" font-size="9" font-weight="600">${esc(segment.label)}</text>
+          <text x="${label.x + 6}" y="${label.y + 13}" class="t-muted" font-size="9" font-weight="600">${esc(segment.label)}</text>${badge ? `\n          ${badge}` : ''}
         </g>`;
 }
 
@@ -988,13 +1030,13 @@ function messageLabel(message, x1, x2) {
   const box = messageLabelBox(message);
   const center = box ? box.x + box.width / 2 : (x1 + x2) / 2;
   const y = message.y - 10;
-  const labelW = box?.width || Math.max(34, textUnits(message.label) * messageUnitWidth + 12);
+  const labelW = box?.width || (Math.max(34, textUnits(message.label) * messageUnitWidth + 12) + changeEdgeLabelExtraWidth(message));
   // A colored line gets a label in the same color, as in the legend swatches.
   // Gray lines (default and return) keep the readable muted text color.
   const accent = ['emphasis', 'security', 'dashed'].includes(message.variant) ? edgeLabelAccent(message.variant) : 't-muted';
   return `        <g data-detail="context">
           <rect x="${center - labelW / 2}" y="${y - 10}" width="${labelW}" height="${layout.labelH}" rx="3" class="c-mask"/>
-          <text x="${center}" y="${y}" class="${accent}" font-size="${messageFontSize}" text-anchor="middle">${esc(message.label)}</text>
+          <text x="${center}" y="${y}" class="${accent}" font-size="${messageFontSize}" text-anchor="middle">${renderChangeEdgePrefix(message)}${esc(message.label)}</text>
         </g>`;
 }
 
@@ -1028,8 +1070,8 @@ function renderMessage(message, index) {
   const note = noteBox
     ? `\n        <text data-detail="context" x="${noteBox.x}" y="${noteBox.baseline}" class="t-muted" font-size="${NOTE_FONT_SIZE}">${noteContent}</text>`
     : '';
-  return `        <g ${focusEdgeAttrs(message.from, message.to, message.label, index, message.id)}>
-          <path data-composition-edge-from="${esc(message.from)}" data-composition-edge-to="${esc(message.to)}"${message.id ? ` data-composition-edge-id="${esc(message.id)}"` : ''} data-composition-points="${routePointsValue([[start, message.y], [end, message.y]])}" d="M ${start} ${message.y} L ${end} ${message.y}" class="${cls}"${animateAttr(sequence.meta, 'edge', index)} stroke-width="${strokeWidth}"${dash} marker-end="url(#${marker})"/>
+  return `        <g ${focusEdgeAttrs(message.from, message.to, message.label, index, message.id)}${changeEdgeAttrs(changeReview, message)}>
+          <path data-composition-edge-from="${esc(message.from)}" data-composition-edge-to="${esc(message.to)}"${message.id ? ` data-composition-edge-id="${esc(message.id)}"` : ''} data-composition-points="${routePointsValue([[start, message.y], [end, message.y]])}" d="M ${start} ${message.y} L ${end} ${message.y}" class="${cls}"${animateAttr(sequence.meta, 'edge', index)} stroke-width="${strokeWidth}"${dash} marker-end="url(#${changeMarkerFor(message, marker)})"/>
 ${messageLabel(message, start, end)}${noteBackdrop(message)}${note}
         </g>`;
 }
@@ -1053,7 +1095,8 @@ function renderLegend() {
     entries: legendEntries(),
     locale: sequence.meta.locale,
     layout: legendLayout(),
-    renderSwatch: (entry) => `<path d="M ${entry.x} ${entry.baseline - 3} L ${entry.x + 34} ${entry.baseline - 3}" class="${entry.className}" stroke-width="${entry.strokeWidth || 1.4}"${entry.dash ? ` stroke-dasharray="${entry.dash}"` : ''} marker-end="url(#${entry.marker})"/>`,
+    renderSwatch: (entry) => renderChangeLegendSwatch(entry)
+      || `<path d="M ${entry.x} ${entry.baseline - 3} L ${entry.x + 34} ${entry.baseline - 3}" class="${entry.className}" stroke-width="${entry.strokeWidth || 1.4}"${entry.dash ? ` stroke-dasharray="${entry.dash}"` : ''} marker-end="url(#${entry.marker})"/>`,
   });
 }
 
@@ -1065,7 +1108,7 @@ function renderSvg() {
   const readerFit = sequence.meta?.viewBox ? '' : ' data-reader-fit="width-first"';
   return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" data-sequence-column-fit="${columnFit}"${readerFit} ${svgRootAttrs(sequence.meta)} data-motion-choreography="sequence">
 ${svgAccessibleText(sequence.meta, 'sequence')}
-${renderDefinitions()}
+${renderDefinitions(changeMarkerDefinitions(changeReview))}
 
         <!-- Background Grid -->
         <rect width="100%" height="100%" fill="url(#grid)" />
@@ -1094,12 +1137,17 @@ ${renderLegend()}
 }
 
 validateSequence();
-writeDiagram({
-  outPath,
-  template,
-  diagramType: 'sequence',
-  meta: sequence.meta,
-  svg: renderSvg(),
-  cards: sequence.cards,
-  sourceEvidence,
-});
+if (process.argv.includes('--layout-json')) {
+  console.log(JSON.stringify(layoutReportFromSvg(renderSvg(), 'sequence'), null, 2));
+} else {
+  writeDiagram({
+    outPath,
+    template,
+    diagramType: 'sequence',
+    meta: sequence.meta,
+    svg: renderSvg(),
+    cards: sequence.cards,
+    sourceEvidence,
+    diagram: sequence,
+  });
+}

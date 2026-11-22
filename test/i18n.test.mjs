@@ -28,7 +28,7 @@ const templatePath = path.join(skillRoot, 'assets/template.html');
 const { tmp, run, deliverKoreanFixture, deliverJapaneseFixture, cliJson } = createLocaleFixture();
 
 test('zh-CN localizes renderer-owned output across all five modes without translating authored content', () => {
-  assert.deepEqual(SUPPORTED_LOCALES, ['en', 'zh-CN', 'zh-TW', 'es', 'ko', 'ar']);
+  assert.deepEqual(SUPPORTED_LOCALES, ['en', 'zh-CN', 'zh-TW', 'es', 'ko', 'ar', 'ru']);
   for (const type of Object.keys(EXAMPLES)) {
     const document = example(type);
     const authoredTitle = document.meta.title;
@@ -180,27 +180,27 @@ test('a well-formed but unregistered locale passes validation, falls back to Eng
   // Region and script variants are distinct tags: none collapses onto a
   // bundled catalog without explicit data.
   for (const locale of ['fr', 'zh-HK', 'zh-Hant', 'es-MX', 'ko-KR']) {
-    // Locale resolution and diagnostics are shared through loadDiagram.
-    // Check every tag through architecture, and every renderer with fr;
-    // repeating the cross-product does not exercise another fallback path.
-    const types = locale === 'fr' ? Object.keys(EXAMPLES) : ['architecture'];
-    for (const type of types) {
-      const document = example(type);
-      document.meta.locale = locale;
-      const validated = run(type, document, 'validate');
-      assert.equal(validated.status, 0, `${type}/${locale}: ${validated.stderr || validated.stdout}`);
-      assert.equal(JSON.parse(validated.stdout).ok, true, `${type}/${locale}`);
-      assert.match(
-        validated.stderr,
-        new RegExp(`meta\\.locale "${locale}" has no bundled catalog and no usable meta\\.translations`),
-        `${type}/${locale}: fallback was not disclosed`,
-      );
+    const document = example('architecture');
+    document.meta.locale = locale;
+    const validated = run('architecture', document, 'validate');
+    assert.equal(validated.status, 0, `${locale}: ${validated.stderr || validated.stdout}`);
+    assert.equal(JSON.parse(validated.stdout).ok, true, locale);
+    assert.match(
+      validated.stderr,
+      new RegExp(`meta\\.locale "${locale}" has no bundled catalog and no usable meta\\.translations`),
+      `${locale}: fallback was not disclosed`,
+    );
+  }
 
-      const rendered = run(type, document);
-      assert.equal(rendered.status, 0, `${type}/${locale}: ${rendered.stderr || rendered.stdout}`);
-      assert.match(rendered.html, /^<!DOCTYPE html>\n<html lang="en"/, `${type}/${locale}: did not fall back to en`);
-      assert.match(rendered.html, />Export diagram</, `${type}/${locale}`);
-    }
+  // All renderers use the same locale resolver. Check each renderer's
+  // English fallback with one of the tags covered by the validation cases.
+  for (const type of Object.keys(EXAMPLES)) {
+    const document = example(type);
+    document.meta.locale = 'fr';
+    const rendered = run(type, document);
+    assert.equal(rendered.status, 0, `${type}: ${rendered.stderr || rendered.stdout}`);
+    assert.match(rendered.html, /^<!DOCTYPE html>\n<html lang="en"/, `${type}: did not fall back to en`);
+    assert.match(rendered.html, />Export diagram</, type);
   }
 });
 
@@ -257,7 +257,7 @@ function embeddedMessages(html) {
   return JSON.parse(embedded[1]);
 }
 
-test('bundled es, ko, and ar render from meta.locale alone in all five modes, identical to supplying the full catalog', () => {
+test('bundled es, ko, and ar render from meta.locale alone in all five modes and match supplied catalogs', () => {
   const cases = {
     es: {
       catalog: ES_TRANSLATIONS, legend: 'Leyenda', focus: 'Enfocar', exportLabel: 'Exportar diagrama',
@@ -290,17 +290,20 @@ test('bundled es, ko, and ar render from meta.locale alone in all five modes, id
         assert.equal(message, expected.catalog[key], `${type}/${locale}: dynamic Viewer message ${key}`);
       }
 
-      const supplied = run(type, localeDocument(type, { locale, translations: expected.catalog }));
-      assert.equal(supplied.status, 0, `${type}/${locale}: ${supplied.stderr || supplied.stdout}`);
-      assert.equal(supplied.stderr, '', `${type}/${locale}: a complete supplied catalog should not warn`);
-      assert.equal(supplied.html, localeOnly.html, `${type}/${locale}: supplied catalog changed existing wording`);
-      // These were separate supplied-catalog renders of the same documents.
-      // Keep their authored-content and accessible-description assertions here.
       const authoredTitle = example(type).meta.title;
-      assert.ok(supplied.html.includes(`<title>${authoredTitle}${expected.titleSuffix}</title>`), `${type}/${locale}: authored title changed`);
-      assert.ok(supplied.html.includes(`<h1>${authoredTitle}</h1>`), `${type}/${locale}: authored heading changed`);
-      assert.match(supplied.html, expected.description);
-      assert.doesNotMatch(supplied.html, /\{\{i18n:/);
+      assert.ok(localeOnly.html.includes(`<title>${authoredTitle}${expected.titleSuffix}</title>`), `${type}/${locale}: authored title changed`);
+      assert.ok(localeOnly.html.includes(`<h1>${authoredTitle}</h1>`), `${type}/${locale}: authored heading changed`);
+      assert.match(localeOnly.html, expected.description);
+      assert.doesNotMatch(localeOnly.html, /\{\{i18n:/);
+
+      // The shared resolver merges complete catalogs for all renderers. Compare
+      // exact output once per locale; the partial-override test covers wiring per mode.
+      if (type === 'architecture') {
+        const supplied = run(type, localeDocument(type, { locale, translations: expected.catalog }));
+        assert.equal(supplied.status, 0, `${type}/${locale}: ${supplied.stderr || supplied.stdout}`);
+        assert.equal(supplied.stderr, '', `${type}/${locale}: a complete supplied catalog should not warn`);
+        assert.equal(supplied.html, localeOnly.html, `${type}/${locale}: supplied catalog changed existing wording`);
+      }
     }
   }
 });
@@ -520,6 +523,9 @@ test('enrolling a catalog is a data-only change and works from an unrelated work
     filter: (source) => !['node_modules', 'test'].includes(path.basename(source)) || path.dirname(source) !== skillRoot,
   });
   const french = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/locales/fr.json'), 'utf8'));
+  // Drop a known key so this fixture exercises partial-coverage disclosure
+  // independently of future changes to the example catalog.
+  delete french['viewer.rail.show'];
   fs.writeFileSync(path.join(packageRoot, 'locales/fr.json'), JSON.stringify(french));
   const manifestPath = path.join(packageRoot, 'locales/manifest.json');
   const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
@@ -586,7 +592,7 @@ test('the bundled Korean catalog is complete and preserves interpolation variabl
 // requested in tt-a1i's review on #457): reusable catalogs a caller can
 // supply via meta.translations. Historical key gaps fall back explicitly;
 // newly added diagram types must carry their own translations.
-for (const locale of ['fr', 'pt', 'ja', 'de', 'it', 'ru']) {
+for (const locale of ['fr', 'pt', 'ja', 'de', 'it']) {
   test(`the checked-in ${locale} example catalog validates reusable translations and discloses historical gaps`, () => {
     const translations = JSON.parse(fs.readFileSync(path.join(skillRoot, `examples/locales/${locale}.json`), 'utf8'));
     const report = validateTranslations(translations);

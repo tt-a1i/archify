@@ -26,8 +26,24 @@
       var downstreamCount = document.getElementById('focus-reach-downstream-count');
       var relationshipList = document.getElementById('relationship-lens-list');
       var copyBtn = document.getElementById('btn-focus-copy');
+      var explainBtn = document.getElementById('btn-focus-explain');
+      var explanationFace = document.getElementById('focus-explanation');
+      var explanationTitle = document.getElementById('focus-explanation-title');
+      var explanationBody = document.getElementById('focus-explanation-body');
+      var explanationBack = document.getElementById('focus-explanation-back');
+      var explanationBaseHeight = 0;
       var relationsBtn = document.getElementById('btn-focus-relations');
       var clearBtn = document.getElementById('btn-focus-clear');
+      var parentBackBar = document.getElementById('parent-back-bar');
+      var parentBackBtn = document.getElementById('btn-parent-back');
+      var drilldownsSection = document.getElementById('focus-drilldowns');
+      var drilldownsList = document.getElementById('focus-drilldowns-list');
+      var payloadSection = document.getElementById('focus-payload');
+      var payloadRole = document.getElementById('focus-payload-role');
+      var payloadType = document.getElementById('focus-payload-type');
+      var payloadSummary = document.getElementById('focus-payload-summary');
+      var payloadStatus = document.getElementById('focus-payload-status');
+      var payloadBody = document.getElementById('focus-payload-body');
       var moveBtn = document.getElementById('btn-focus-move');
       var activeIds = [];
       var hoveredRelationship = null;
@@ -374,7 +390,231 @@
         });
         evidence.hidden = false;
       }
+      function explanationFor(id) {
+        return Archify.explanations && typeof Archify.explanations.node === 'function' ? Archify.explanations.node(id) : null;
+      }
+      function payloadFor(edgeId) {
+        return Archify.payloads && typeof Archify.payloads.edge === 'function' ? Archify.payloads.edge(edgeId) : null;
+      }
+      /* Flatten a payload document into leaf fields keyed by a stable path.
+         Object keys are sorted so before/after line up regardless of authored
+         order; arrays keep their index so reordering shows as a change. */
+      function flattenPayload(value, path, out) {
+        if (value && typeof value === 'object') {
+          var keys = Array.isArray(value)
+            ? value.map(function (_, index) { return index; })
+            : Object.keys(value).sort();
+          if (!keys.length) { out.push({ path: path || '$', value: Array.isArray(value) ? '[]' : '{}' }); return out; }
+          keys.forEach(function (key) {
+            var segment = Array.isArray(value) ? '[' + key + ']' : (path ? '.' : '') + key;
+            flattenPayload(value[key], path + segment, out);
+          });
+          return out;
+        }
+        out.push({ path: path || '$', value: payloadLeafText(value) });
+        return out;
+      }
+      function payloadLeafText(value) {
+        if (value === null) return 'null';
+        if (value === undefined) return 'undefined';
+        if (typeof value === 'string') return JSON.stringify(value);
+        return String(value);
+      }
+      function diffPayloadFields(before, after) {
+        var left = {};
+        var right = {};
+        var order = [];
+        flattenPayload(before, '', []).forEach(function (field) { left[field.path] = field.value; order.push(field.path); });
+        flattenPayload(after, '', []).forEach(function (field) {
+          right[field.path] = field.value;
+          if (!Object.prototype.hasOwnProperty.call(left, field.path)) order.push(field.path);
+        });
+        return order.map(function (path) {
+          var hasLeft = Object.prototype.hasOwnProperty.call(left, path);
+          var hasRight = Object.prototype.hasOwnProperty.call(right, path);
+          if (hasLeft && !hasRight) return { path: path, state: 'removed', before: left[path] };
+          if (!hasLeft && hasRight) return { path: path, state: 'added', after: right[path] };
+          if (left[path] !== right[path]) return { path: path, state: 'modified', before: left[path], after: right[path] };
+          return { path: path, state: 'unchanged', after: right[path] };
+        });
+      }
+      function payloadFieldRow(field) {
+        var row = document.createElement('div');
+        row.className = 'semantic-passport-payload-field';
+        row.setAttribute('data-diff', field.state);
+        var sign = document.createElement('span');
+        sign.className = 'semantic-passport-payload-sign';
+        sign.setAttribute('aria-hidden', 'true');
+        sign.textContent = field.state === 'added' ? '+' : field.state === 'removed' ? '-' : field.state === 'modified' ? '~' : '';
+        var path = document.createElement('code');
+        path.className = 'semantic-passport-payload-path';
+        path.textContent = field.path;
+        var value = document.createElement('span');
+        value.className = 'semantic-passport-payload-value';
+        if (field.state === 'modified') {
+          var oldValue = document.createElement('del');
+          oldValue.textContent = field.before;
+          var newValue = document.createElement('ins');
+          newValue.textContent = field.after;
+          value.appendChild(oldValue);
+          value.appendChild(document.createTextNode(' \u2192 '));
+          value.appendChild(newValue);
+        } else {
+          value.textContent = field.state === 'removed' ? field.before : field.after;
+        }
+        row.setAttribute('aria-label', viewerText('viewer.passport.payload.field.' + field.state, {
+          path: field.path,
+          before: field.before == null ? '' : field.before,
+          after: field.after == null ? '' : field.after
+        }));
+        row.appendChild(sign);
+        row.appendChild(path);
+        row.appendChild(value);
+        return row;
+      }
+      function clearPayload() {
+        if (!payloadSection) return;
+        payloadSection.hidden = true;
+        payloadSection.removeAttribute('data-payload-mode');
+        payloadRole.hidden = true;
+        payloadRole.textContent = '';
+        payloadType.hidden = true;
+        payloadType.textContent = '';
+        payloadSummary.hidden = true;
+        payloadSummary.textContent = '';
+        payloadStatus.hidden = true;
+        payloadStatus.textContent = '';
+        payloadBody.textContent = '';
+      }
+      function renderPayload(record) {
+        clearPayload();
+        if (!payloadSection || !record || !record.id) return false;
+        var payload = payloadFor(record.id);
+        if (!payload) return false;
+        var hasBefore = Object.prototype.hasOwnProperty.call(payload, 'before');
+        var hasAfter = Object.prototype.hasOwnProperty.call(payload, 'after');
+        var hasSample = Object.prototype.hasOwnProperty.call(payload, 'sample');
+        var role = payload.role === 'response' || payload.role === 'request' || payload.role === 'flow' ? payload.role : null;
+        if (role) {
+          payloadRole.textContent = viewerText('viewer.passport.payload.role.' + role);
+          payloadRole.hidden = false;
+        }
+        if (typeof payload.contentType === 'string' && payload.contentType.trim()) {
+          payloadType.textContent = payload.contentType.trim();
+          payloadType.hidden = false;
+        }
+        if (typeof payload.summary === 'string' && payload.summary.trim()) {
+          payloadSummary.textContent = payload.summary.trim();
+          payloadSummary.hidden = false;
+        }
+        var mode;
+        if (hasBefore && hasAfter) {
+          mode = 'diff';
+          var fields = diffPayloadFields(payload.before, payload.after);
+          var counts = { added: 0, removed: 0, modified: 0, unchanged: 0 };
+          var unchanged = [];
+          fields.forEach(function (field) {
+            counts[field.state] += 1;
+            if (field.state === 'unchanged') unchanged.push(field);
+            else payloadBody.appendChild(payloadFieldRow(field));
+          });
+          if (unchanged.length) {
+            var fold = document.createElement('details');
+            fold.className = 'semantic-passport-payload-unchanged';
+            var foldLabel = document.createElement('summary');
+            foldLabel.textContent = viewerText('viewer.passport.payload.unchanged', { count: unchanged.length });
+            fold.appendChild(foldLabel);
+            unchanged.forEach(function (field) { fold.appendChild(payloadFieldRow(field)); });
+            payloadBody.appendChild(fold);
+          }
+          payloadStatus.textContent = viewerText('viewer.passport.payload.diff', counts);
+          payloadStatus.hidden = false;
+        } else if (hasAfter || hasSample || hasBefore) {
+          mode = hasSample ? 'sample' : hasAfter ? 'after' : 'before';
+          var document_ = hasSample ? payload.sample : hasAfter ? payload.after : payload.before;
+          flattenPayload(document_, '', []).forEach(function (field) {
+            payloadBody.appendChild(payloadFieldRow({ path: field.path, state: 'unchanged', after: field.value }));
+          });
+          payloadStatus.textContent = viewerText('viewer.passport.payload.' + mode);
+          payloadStatus.hidden = false;
+        } else {
+          mode = 'summary';
+        }
+        payloadSection.setAttribute('data-payload-mode', mode);
+        payloadSection.hidden = false;
+        placeRelationshipLens();
+        return true;
+      }
+      function compactPassportViewport() {
+        return window.innerWidth <= 720 && window.innerHeight <= 480;
+      }
+      function compactPassportHeight() {
+        var toolbar = document.querySelector('.toolbar');
+        var top = Math.max(8, toolbar ? toolbar.getBoundingClientRect().bottom + 8 : 8);
+        chip.style.setProperty('--passport-viewport-top', top + 'px');
+        return Math.max(0, window.innerHeight - top - 8);
+      }
+      function closeExplanation(options) {
+        options = options || {};
+        if (!explanationFace) return false;
+        var wasOpen = chip.getAttribute('data-explaining') === 'true';
+        chip.removeAttribute('data-explaining');
+        chip.style.height = '';
+        explanationBaseHeight = 0;
+        explanationFace.hidden = true;
+        if (wasOpen) placeRelationshipLens();
+        if (wasOpen && options.restoreFocus !== false && explainBtn && !explainBtn.hidden) {
+          try { explainBtn.focus({ preventScroll: true }); } catch (_) { try { explainBtn.focus(); } catch (_) {} }
+          if (compactPassportViewport()) {
+            var controlRect = explainBtn.getBoundingClientRect();
+            var panelRect = chip.getBoundingClientRect();
+            if (controlRect.bottom > panelRect.bottom) chip.scrollTop += controlRect.bottom - panelRect.bottom;
+            else if (controlRect.top < panelRect.top) chip.scrollTop -= panelRect.top - controlRect.top;
+          }
+        }
+        return wasOpen;
+      }
+      function fitExplanation() {
+        if (chip.getAttribute('data-explaining') !== 'true') return;
+        var rect = container.getBoundingClientRect();
+        var padding = window.innerWidth <= 720 ? 8 : 16;
+        var available = Math.max(0, Math.min(rect.bottom - padding, window.innerHeight - padding)
+          - Math.max(rect.top + padding, padding));
+        if (compactPassportViewport()) available = compactPassportHeight();
+        var needed = explanationFace.scrollHeight - explanationBody.clientHeight + explanationBody.scrollHeight + 2;
+        chip.style.height = Math.ceil(Math.min(available, Math.max(explanationBaseHeight, needed))) + 'px';
+      }
+      function openExplanation() {
+        if (!explanationFace || chip.hidden || activeIds.length !== 1) return false;
+        var text = explanationFor(activeIds[0]);
+        if (!text) return false;
+        var title = label.textContent;
+        explanationTitle.textContent = title;
+        while (explanationBody.firstChild) explanationBody.removeChild(explanationBody.firstChild);
+        text.split(/\n\s*\n/).forEach(function (paragraph) {
+          var trimmed = paragraph.trim();
+          if (!trimmed) return;
+          var p = document.createElement('p');
+          p.textContent = trimmed;
+          explanationBody.appendChild(p);
+        });
+        explanationBaseHeight = chip.offsetHeight;
+        explanationFace.hidden = false;
+        chip.setAttribute('data-explaining', 'true');
+        explanationBody.scrollTop = 0;
+        chip.scrollTop = 0;
+        fitExplanation();
+        placeRelationshipLens();
+        if (explanationBack) { try { explanationBack.focus({ preventScroll: true }); } catch (_) { try { explanationBack.focus(); } catch (_) {} } }
+        return true;
+      }
+      function toggleExplanation() {
+        return chip.getAttribute('data-explaining') === 'true' ? !closeExplanation() : openExplanation();
+      }
       function renderPassport(id, node) {
+        closeExplanation({ restoreFocus: false });
+        clearPayload();
+        if (explainBtn) explainBtn.hidden = !explanationFor(id);
         setPassportValue(detail, node.getAttribute('data-node-sublabel'));
         setPassportValue(kind, viewerKindLabel(node.getAttribute('data-node-kind') || 'node'));
         setPassportValue(context, node.getAttribute('data-node-context'));
@@ -382,8 +622,154 @@
         setPassportValue(document.getElementById('focus-brand'), node.getAttribute('data-node-brand'));
         semanticId.textContent = id;
         semanticId.hidden = false;
+        renderDrilldowns(node);
         renderSourceEvidence(id);
       }
+      /**
+       * 仅允许同目录文件名.html（可选 ?query / #fragment）。
+       * 与 schema relativeHtmlHref / isSiblingHtmlHref 对齐：拒绝协议、/、..，防跳出产物目录。
+       */
+      function isSafeRelativeHtmlHref(value) {
+        if (typeof value !== 'string') return false;
+        var href = value.trim();
+        if (!href || href.length > 512) return false;
+        return /^[A-Za-z0-9][A-Za-z0-9._-]*\.html(?:\?[A-Za-z0-9._~/=&%+!?$-]*)?(?:#[A-Za-z0-9._~/=&%+!?$-]*)?$/.test(href);
+      }
+      function currentPageHref() {
+        var parts = (location.pathname || '').split('/');
+        var filename = parts[parts.length - 1] || '';
+        return withReaderContext(filename);
+      }
+      /**
+       * 跳子图时带上 ?from=当前页，子图无 meta.parentHref 时仍可返回。
+       */
+      function withReaderContext(targetHref) {
+        if (!isSafeRelativeHtmlHref(targetHref)) return null;
+        var hashIndex = targetHref.indexOf('#');
+        var hash = hashIndex >= 0 ? targetHref.slice(hashIndex) : '';
+        var target = hashIndex >= 0 ? targetHref.slice(0, hashIndex) : targetHref;
+        var queryIndex = target.indexOf('?');
+        var filename = queryIndex >= 0 ? target.slice(0, queryIndex) : target;
+        var params = new URLSearchParams(queryIndex >= 0 ? target.slice(queryIndex + 1) : '');
+        var current = new URLSearchParams(location.search);
+        ['theme', 'embed', 'present'].forEach(function (key) {
+          if (!params.has(key) && current.has(key)) params.set(key, current.get(key));
+        });
+        var query = params.toString();
+        return filename + (query ? '?' + query : '') + hash;
+      }
+      function hrefWithFrom(targetHref) {
+        var next = withReaderContext(targetHref);
+        if (!next) return null;
+        var from = currentPageHref();
+        if (!from || !isSafeRelativeHtmlHref(from)) return next;
+        var hashIndex = next.indexOf('#');
+        var hash = hashIndex >= 0 ? next.slice(hashIndex) : '';
+        var target = hashIndex >= 0 ? next.slice(0, hashIndex) : next;
+        var queryIndex = target.indexOf('?');
+        var filename = queryIndex >= 0 ? target.slice(0, queryIndex) : target;
+        var params = new URLSearchParams(queryIndex >= 0 ? target.slice(queryIndex + 1) : '');
+        params.set('from', from);
+        return filename + '?' + params.toString() + hash;
+      }
+      function resolveParentHref() {
+        try {
+          var from = new URLSearchParams(location.search).get('from');
+          if (from && isSafeRelativeHtmlHref(from)) return from.trim();
+        } catch (_) {}
+        var authored = svg.getAttribute('data-parent-href');
+        if (authored && isSafeRelativeHtmlHref(authored)) return authored.trim();
+        return null;
+      }
+      function navigateToRelativeHtml(href) {
+        var next = hrefWithFrom(href);
+        if (!next) return false;
+        location.assign(next);
+        return true;
+      }
+      function navigateToParent() {
+        var parent = resolveParentHref();
+        if (!parent) return false;
+        location.assign(withReaderContext(parent));
+        return true;
+      }
+      function syncParentBackControls() {
+        var parent = resolveParentHref();
+        if (parentBackBar) parentBackBar.hidden = !parent;
+        if (parentBackBtn) {
+          if (parent) parentBackBtn.setAttribute('data-parent-href', parent);
+          else parentBackBtn.removeAttribute('data-parent-href');
+        }
+      }
+      /**
+       * 渲染时 <a href> 是裸文件名；打开页后再补 ?from=，子图无 parentHref 也能回。
+       * 只改 data-archify-drilldown，不动 Passport / 证据链接。
+       */
+      function rewriteDrilldownAnchors() {
+        Array.prototype.forEach.call(svg.querySelectorAll('a[data-archify-drilldown]'), function (anchor) {
+          var authored = anchor.getAttribute('href');
+          anchor.setAttribute('data-archify-authored-href', authored);
+          var next = hrefWithFrom(authored);
+          if (next) anchor.setAttribute('href', next);
+        });
+      }
+      function parseNodeDrilldowns(node) {
+        if (!node) return [];
+        var raw = node.getAttribute('data-node-drilldowns');
+        if (!raw) return [];
+        try {
+          var list = JSON.parse(raw);
+          if (!Array.isArray(list)) return [];
+          return list.filter(function (entry) {
+            return entry
+              && typeof entry === 'object'
+              && isSafeRelativeHtmlHref(entry.href)
+              && entry.label
+              && String(entry.label).trim();
+          }).map(function (entry) {
+            return {
+              href: String(entry.href).trim(),
+              label: String(entry.label).trim(),
+              diagram_type: entry.diagram_type ? String(entry.diagram_type).trim() : ''
+            };
+          });
+        } catch (_) {
+          return [];
+        }
+      }
+      function openPrimaryDrilldown(node) {
+        var targets = parseNodeDrilldowns(node);
+        if (!targets.length) return false;
+        return navigateToRelativeHtml(targets[0].href);
+      }
+
+      function renderDrilldowns(node) {
+        if (!drilldownsSection || !drilldownsList) return;
+        drilldownsList.textContent = '';
+        var targets = parseNodeDrilldowns(node);
+        if (!targets.length) {
+          drilldownsSection.hidden = true;
+          return;
+        }
+        targets.forEach(function (target, index) {
+          var link = document.createElement('a');
+          link.className = 'semantic-passport-drilldown';
+          link.href = hrefWithFrom(target.href) || target.href;
+          link.setAttribute('data-drilldown-index', String(index));
+          link.setAttribute('aria-label', viewerText('viewer.passport.drilldowns.open', { label: target.label }));
+          var title = document.createElement('span');
+          title.textContent = target.label;
+          link.appendChild(title);
+          if (target.diagram_type) {
+            var type = document.createElement('small');
+            type.textContent = target.diagram_type;
+            link.appendChild(type);
+          }
+          drilldownsList.appendChild(link);
+        });
+        drilldownsSection.hidden = false;
+      }
+
       function relationshipsFor(id, byId) {
         var seen = {};
         var relationships = [];
@@ -698,6 +1084,7 @@
           pinnedRelationship = null;
           pinnedRelationshipKey = null;
           svg.removeAttribute('data-relationship-pin-active');
+          clearPayload();
         }
         chip.removeAttribute('data-relationship-previewing');
         edges().forEach(function (edge) { edge.removeAttribute('data-relationship-preview'); });
@@ -812,6 +1199,7 @@
           label: record.label
         });
         revealPinnedRelationship(record);
+        renderPayload(record);
         if (options.updateUrl !== false && record.id) {
           try { history.replaceState(null, '', location.pathname + location.search + '#relation=' + encodeURIComponent(record.id)); } catch (_) {}
         }
@@ -842,6 +1230,7 @@
           target.setAttribute('data-relationship-from', record.from);
           target.setAttribute('data-relationship-to', record.to);
           if (record.id) target.setAttribute('data-relationship-id', record.id);
+          if (record.id && payloadFor(record.id)) target.setAttribute('data-relationship-payload', '');
           target.setAttribute('role', 'button');
           target.setAttribute('tabindex', index === 0 ? '0' : '-1');
           target.setAttribute('aria-pressed', 'false');
@@ -913,6 +1302,7 @@
           inspectRelationship(target.getAttribute('data-relationship-key'));
         });
         relationshipHitOverlay.addEventListener('keydown', function (event) {
+          if (event.isComposing || event.keyCode === 229) return;
           var target = event.target.closest('[data-relationship-hit-key]');
           if (!target) return;
           if (event.key === 'Escape' && pinnedRelationshipKey) {
@@ -1158,11 +1548,17 @@
           lensFrame = 0;
         }
         if (chip.hidden || activeIds.length !== 1) return;
+        if (compactPassportViewport()) compactPassportHeight();
+        else {
+          chip.style.removeProperty('--passport-viewport-top');
+          chip.scrollTop = 0;
+        }
         var node = svg.querySelector('[data-node-id="' + activeIds[0] + '"]');
         if (!node) return;
         var containerRect = container.getBoundingClientRect();
         var nodeRect = node.getBoundingClientRect();
         if (containerRect.bottom <= 0 || containerRect.top >= window.innerHeight) return;
+        fitExplanation();
         var padding = window.innerWidth <= 720 ? 8 : 16;
         var visibleTop = Math.max(padding, -containerRect.top + padding);
         var visibleBottom = Math.min(containerRect.height - padding, window.innerHeight - containerRect.top - padding);
@@ -1271,6 +1667,8 @@
           node.setAttribute('aria-pressed', 'false');
         });
         edges().forEach(function (edge) { edge.removeAttribute('data-focus-match'); });
+        closeExplanation({ restoreFocus: false });
+        if (explainBtn) explainBtn.hidden = true;
         chip.hidden = true;
         label.textContent = '';
         detail.textContent = '';
@@ -1415,6 +1813,18 @@
         if (container.getAttribute('data-just-panned') === 'true') return;
         var node = event.target.closest('[data-node-id]');
         if (node) {
+          // Ctrl/Cmd+单击：跳过 focus，直接打开 Passport 列表第一项子图
+          if ((event.ctrlKey || event.metaKey) && openPrimaryDrilldown(node)) {
+            event.preventDefault();
+            return;
+          }
+          // Alt+单击：即使节点包了原生 <a> 也不跳，只 focus（审稿：探路仍要能选中）
+          if (event.altKey) {
+            event.preventDefault();
+          } else if (event.target.closest('a[data-archify-drilldown]')) {
+            // 单目标：交给浏览器跟 <a>，不再 set(id) 以免抢导航
+            return;
+          }
           var id = node.getAttribute('data-node-id');
           set(id);
           if (activeIds.indexOf(id) !== -1 && Archify.view && typeof Archify.view.reveal === 'function') {
@@ -1423,6 +1833,16 @@
         }
         else if (activeIds.length) clear();
       });
+      // 双击同样默认打开排在最上面的子图（与 Ctrl+单击一致）
+      svg.addEventListener('dblclick', function (event) {
+        if (container.getAttribute('data-just-panned') === 'true') return;
+        var node = event.target.closest('[data-node-id]');
+        if (!node) return;
+        if (openPrimaryDrilldown(node)) {
+          event.preventDefault();
+        }
+      });
+
       svg.addEventListener('keydown', function (event) {
         var node = event.target.closest('[data-node-id]');
         if (!node || (event.key !== 'Enter' && event.key !== ' ')) return;
@@ -1446,6 +1866,13 @@
       moveBtn.addEventListener('keydown', moveLensWithKeyboard);
       clearBtn.addEventListener('click', function () { clear({ restoreFocus: true }); });
       copyBtn.addEventListener('click', copyFocusLink);
+      if (explainBtn) explainBtn.addEventListener('click', function (event) { event.stopPropagation(); toggleExplanation(); });
+      if (explanationBack) {
+        explanationBack.addEventListener('click', function (event) { event.stopPropagation(); closeExplanation(); });
+      }
+      if (parentBackBtn) parentBackBtn.addEventListener('click', navigateToParent);
+      rewriteDrilldownAnchors();
+      syncParentBackControls();
       upstreamBtn.addEventListener('click', function () { applyReachability('upstream'); });
       downstreamBtn.addEventListener('click', function () { applyReachability('downstream'); });
       relationsBtn.addEventListener('click', function () {
@@ -1528,9 +1955,10 @@
         var target = event.target;
         if (chip.hidden || !target || typeof target.closest !== 'function' || chip.contains(target)) return;
         if (container.getAttribute('data-just-panned') === 'true') return;
-        // Export consumes the active semantic snapshot; its controls are not
-        // an outside selection. Genuine outside activation still clears it.
-        if (target.closest('[data-node-id], [data-relationship-hit-key], .overview-map, #btn-export, #export-menu')) return;
+        // Export consumes the active semantic snapshot and the diagram nav
+        // operates on it; neither is an outside selection. Genuine outside
+        // activation still clears it.
+        if (target.closest('[data-node-id], [data-relationship-hit-key], .overview-map, .diagram-nav, #btn-export, #export-menu')) return;
         clear();
       }, true);
       window.addEventListener('scroll', requestLensPlacement, { passive: true });
@@ -1587,6 +2015,8 @@
         setMany: setMany,
         clear: clear,
         copyLink: copyFocusLink,
+        explain: toggleExplanation,
+        explaining: function () { return chip.getAttribute('data-explaining') === 'true'; },
         reach: applyReachability,
         clearReach: clearReachability,
         reachabilitySnapshot: reachabilitySnapshot,

@@ -26,12 +26,28 @@ test('explainer chart fences render static themed SVG without shipping the chart
 });
 
 test('explainer chart fences send native diagram types to shorthand and locate syntax errors', t => {
-  const flow = finalize(t, 'flowchart LR\n  A --> B');
-  assert.notEqual(flow.status, 0);
-  assert.ok(flow.receipt.diagnostics.some(d => d.code === 'explainer/chart' && /native workflow/.test(d.message) && d.subject.line === 10));
+  for (const [chart, native] of [
+    ['flowchart LR\n  A --> B', 'workflow'],
+    ['treeView-beta\n  a\n    b', 'tree'],
+    ['mindmap\n  a', 'tree'],
+  ]) {
+    const result = finalize(t, chart);
+    assert.notEqual(result.status, 0);
+    assert.ok(result.receipt.diagnostics.some(d => d.code === 'explainer/chart'
+      && d.message.includes(`native ${native}`) && d.subject.line === 10), chart);
+    assert.ok(result.receipt.diagnostics.some(d => d.supportedFixes?.some(fix => fix.includes(`@${native} id=...`))), chart);
+    assert.equal(result.html, null);
+  }
   const broken = finalize(t, 'pie title Share\n  "A" : abc');
   assert.ok(broken.receipt.diagnostics.some(d => d.code === 'explainer/chart' && d.subject.line === 11));
   assert.equal(broken.html, null);
+  for (const chart of ['pie\n  "a": 1\n\n  "b": x', 'pie\nshowData\n  "a": 1\n  "b": x']) {
+    const failure = finalize(t, chart);
+    assert.notEqual(failure.status, 0);
+    assert.ok(failure.receipt.diagnostics.some(d => d.code === 'explainer/chart'
+      && d.subject.line === 13 && /line 4\b/.test(d.message)));
+    assert.equal(failure.html, null);
+  }
 });
 
 test('explainer chart CJK axis titles stand upright and task lists become checklists', t => {
@@ -50,6 +66,33 @@ test('explainer charts label bar values and give pie slices their value and shar
   assert.match(pie.html, /Viewer · 0\.8 \(80%\)/);
   assert.match(pie.html, /字体 · 0\.2（20%）/);
   assert.doesNotMatch(pie.html, /\[0\.8\]/);
+});
+
+test('configured pie legends retain each value and share', async () => {
+  const { compileExplainerChart } = await import('../archify/explainer/charts.mjs');
+  const prefixes = [
+    '%% A comment before the chart\n',
+    '---\nconfig:\n  pie:\n    legendPosition: bottom\n---\n',
+    '%%{init: {"pie":{"legendPosition":"bottom"}}}%%\n',
+  ];
+  for (const prefix of prefixes) {
+    const result = compileExplainerChart(prefix + 'pie showData\n  "A & B" : 20\n  "字体" : 80');
+    assert.equal(result.error, undefined, prefix);
+    assert.match(result.svg, /A &amp; B · 20 \(20%\)/, 'configuration must not remove the numerical legend');
+    assert.match(result.svg, /字体 · 80（80%）/);
+    assert.doesNotMatch(result.svg, /\[20\]|\[80\]/, 'showData must not duplicate the values');
+  }
+});
+
+test('pie legend decoration preserves accepted category identity', async () => {
+  const { compileExplainerChart } = await import('../archify/explainer/charts.mjs');
+  // The pie parser keeps the first value for a repeated category. Decorating the label
+  // must not turn a later occurrence into a different slice or change the total.
+  const result = compileExplainerChart('pie\n  "A":1\n  "A":9\n  "B":1');
+  assert.equal(result.error, undefined);
+  assert.match(result.svg, /A · 1 \(50%\)/);
+  assert.match(result.svg, /B · 1 \(50%\)/);
+  assert.doesNotMatch(result.svg, /A · 9/);
 });
 
 test('a data chart reads its CSV next to the draft, freezes it, and names a missing column', t => {
@@ -76,4 +119,36 @@ test('a blank data cell is missing data, never drawn as zero', async () => {
     assert.match(result.error, /empty in data row 2/, file);
   }
   assert.match(chartFromData(Buffer.from('k,v\nA,60\nB,40\n'), 'a.csv', { kind: 'pie', x: 'k', y: ['v'] }).text, /"A" : 60\n {2}"B" : 40/);
+});
+
+
+test('pie diagnostics retain authored blank and showData lines', async () => {
+  const { compileExplainerChart } = await import('../archify/explainer/charts.mjs');
+  for (const newline of ['\n', '\r\n']) {
+    for (const lines of [
+      ['pie', '  "a" : 1', '', '  "b": x'],
+      ['pie', 'showData', '  "a": 1', '  "b": x'],
+      ['pie showData', '  "a": 1', '', '  "b": x'],
+      ['pie', '  "a": 1', '', '', '  "b": x'],
+      ['pie', '  "a":', '1', '  "b": x'],
+      ['pie', '  "a"', ': 1', '  "b": x'],
+    ]) {
+      const result = compileExplainerChart(lines.join(newline));
+      assert.equal(result.line, lines.length, JSON.stringify(lines));
+      assert.match(result.error, new RegExp(`line ${lines.length}\\b`));
+      assert.equal(result.svg, undefined);
+    }
+  }
+  const canonical = compileExplainerChart('pie\n  "A":60\n  "B":40').svg;
+  assert.equal(typeof canonical, 'string');
+  for (const input of [
+    'pie showData\n  "A":60\n  "B":40',
+    'pie\nshowData\n  "A":60\n  "B":40',
+    'pie\n  "A":60\n\n  "B":40',
+    'pie\n  "A":\n60\n  "B":40',
+    'pie\n  "A"\n:60\n  "B":40',
+  ]) {
+    assert.equal(compileExplainerChart(input).svg, canonical);
+    assert.equal(compileExplainerChart(input.replaceAll('\n', '\r\n')).svg, canonical);
+  }
 });

@@ -45,6 +45,31 @@ test('tracked scratch package runs public explainer without dependencies and mis
   assert.equal(smoke.status, 0, smoke.stdout + smoke.stderr);
   assert.match(smoke.stdout, /packaged explainer parser, native graph, delivery, strict check and panel patch passed without dependencies/);
 
+  // Inject native-tool failures to check recovery without changing layout rules.
+  const workflow = path.join(packaged, 'renderers/workflow');
+  fs.renameSync(path.join(workflow, 'render-workflow.mjs'), path.join(workflow, 'render-workflow.actual.mjs'));
+  fs.writeFileSync(path.join(workflow, 'render-workflow.mjs'), `
+import fs from 'node:fs';
+const spec = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+if (spec.nodes.some(node => node.col > 0)) {
+  const code = fs.readFileSync(new URL('./fault-mode.txt', import.meta.url), 'utf8');
+  console.log(JSON.stringify({ok:false,diagnostics:[{code:'notice/example',severity:'warning',message:'Injected notice'},
+    {code,severity:'error',message:'Injected native rejection'}]}));
+  process.exitCode = 1;
+} else await import('./render-workflow.actual.mjs');
+`);
+  const cycle = path.join(outside, 'cycle.md'), cycleOutput = path.join(outside, 'cycle.html');
+  fs.writeFileSync(cycle, '# Retry\n\nKeep every connection.\n\n## Flow\n\n@workflow\n| a | A |\n| b | B |\n| c | C |\n| a > b |\n| b > c |\n| c > a |\n');
+  const deliverCycle = () => spawnSync(process.execPath, [path.join(packaged, 'bin/archify.mjs'), 'deliver', 'explainer', cycle, cycleOutput, '--quality', 'standard', '--json'], {cwd:outside,env,encoding:'utf8',timeout:15_000,maxBuffer:4*1024*1024});
+  fs.writeFileSync(path.join(workflow, 'fault-mode.txt'), 'workflow/solver-budget-exhausted');
+  const recovered = deliverCycle();
+  assert.equal(recovered.status, 0, recovered.stdout + recovered.stderr);
+  const lastGood = fs.readFileSync(cycleOutput);
+  fs.writeFileSync(path.join(workflow, 'fault-mode.txt'), 'internal/unclassified');
+  const internal = deliverCycle();
+  assert.notEqual(internal.status, 0, 'internal errors must not be hidden by a successful alternative');
+  assert.deepEqual(fs.readFileSync(cycleOutput), lastGood);
+
   // A broken dependency must fail the actual delivery, not merely a file inventory check.
   const input = path.join(outside, 'draft.json');
   const output = path.join(outside, 'last-good.html');

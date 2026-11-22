@@ -696,3 +696,108 @@ test('Camera preserves transactions, rendered state and real caller handoffs', {
     }
   });
 });
+
+test('zooming out a tall diagram keeps its top inside the frame', {
+  skip: chrome ? false : 'Set ARCHIFY_CHROME to run real-browser camera checks.',
+}, async (t) => {
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-camera-1041-'));
+  t.after(() => fs.rmSync(scratch, { recursive: true, force: true }));
+  const browser = new ChromeVisualBrowser(chrome);
+  t.after(() => browser.close());
+  const session = await browser.sessionPromise;
+  const send = (method, params = {}) => browser.cdp.send(method, params, session);
+  async function run(expression) {
+    const result = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });
+    assert.equal(result.exceptionDetails, undefined, result.exceptionDetails?.exception?.description);
+    return result.result?.value;
+  }
+  // Tall sequence without meta.viewBox, mirroring issue #1041.
+  const legs = [
+    ['client', 'api', 'request'], ['api', 'db', 'query'],
+    ['db', 'api', 'rows'], ['api', 'client', 'reply'],
+  ];
+  const input = path.join(scratch, 'tall-sequence.json');
+  const artifact = path.join(scratch, 'tall-sequence.html');
+  fs.writeFileSync(input, JSON.stringify({
+    schema_version: 1,
+    diagram_type: 'sequence',
+    meta: { title: 'Tall sequence zoom-out', output: 'tall-sequence.html', quality_profile: 'showcase' },
+    participants: [
+      { id: 'client', type: 'external', label: 'Client' },
+      { id: 'api', type: 'backend', label: 'API' },
+      { id: 'db', type: 'database', label: 'DB' },
+    ],
+    messages: Array.from({ length: 12 }, (_, i) => {
+      const [from, to, label] = legs[i % 4];
+      return { from, to, y: 200 + i * 90, label, ...(i % 4 >= 2 ? { variant: 'return' } : {}) };
+    }),
+  }));
+  execFileSync(process.execPath, [path.join(skillRoot, 'renderers/sequence/render-sequence.mjs'), input, artifact]);
+  await send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
+  await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
+  const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
+  await send('Page.navigate', { url: pathToFileURL(artifact).href });
+  await loaded;
+  const stable = () => run(`(async () => {
+    await document.fonts.ready;
+    await Archify.layoutStability.whenStable();
+  })()`);
+  await stable();
+  const inspect = `(() => {
+    const c = document.querySelector('.diagram-container');
+    const s = c.querySelector(':scope > svg');
+    const box = c.getBoundingClientRect(), rect = s.getBoundingClientRect();
+    return { scale: Archify.view.state().scale,
+      containerTop: box.top, svgTop: rect.top,
+      flowHeight: c.style.height, inlineAlign: c.style.alignItems,
+      computedAlign: getComputedStyle(c).alignItems };
+  })()`;
+  const initial = await run(inspect);
+  assert.equal(initial.scale, 1);
+  for (const expected of [0.75, 0.5, 0.25]) {
+    await run(`document.querySelector('[data-view="out"]').click()`);
+    await stable();
+    const value = await run(inspect);
+    assert.equal(value.scale, expected);
+    assert.ok(value.svgTop >= value.containerTop - 1,
+      `the diagram top stays inside the frame at ${expected * 100}%: ${JSON.stringify(value)}`);
+    assert.notEqual(value.flowHeight, '', 'the compacted page flow still owns the container height');
+    assert.equal(value.inlineAlign, 'flex-start', 'compaction pins the SVG top while shrinking the box');
+  }
+  await run(`document.querySelector('[data-view="reset"]').click()`);
+  await stable();
+  const restored = await run(inspect);
+  assert.equal(restored.scale, 1);
+  assert.equal(restored.flowHeight, '', 'reset restores the ordinary flow height');
+  assert.equal(restored.inlineAlign, '', 'reset releases the alignment override');
+  assert.equal(restored.computedAlign, 'center', 'the centered reader layout is preserved at 100%');
+  assert.ok(Math.abs((restored.svgTop - restored.containerTop) - (initial.svgTop - initial.containerTop)) < 1,
+    'the SVG sits at the same place inside its container as before zooming');
+  const customized = path.join(scratch, 'tall-inline-alignment.html');
+  const originalHtml = fs.readFileSync(artifact, 'utf8');
+  assert.ok(originalHtml.includes('class="diagram-container"'));
+  fs.writeFileSync(customized, originalHtml.replace('class="diagram-container"', 'class="diagram-container" style="align-items: center !important"'));
+  const customizedLoaded = browser.cdp.waitFor('Page.loadEventFired', session);
+  await send('Page.navigate', { url: pathToFileURL(customized).href });
+  await customizedLoaded;
+  await stable();
+  const alignment = () => run(`(() => {const c=document.querySelector('.diagram-container');return {value:c.style.getPropertyValue('align-items'),priority:c.style.getPropertyPriority('align-items')};})()`);
+  const authoredAlignment = {value:'center',priority:'important'};
+  assert.deepEqual(await alignment(), authoredAlignment);
+  await run(`document.querySelector('[data-view="out"]').click()`);
+  await stable();
+  assert.deepEqual(await alignment(), {value:'flex-start',priority:''});
+  for (const mode of ['embed', 'present', 'print']) {
+    if (mode === 'print') await send('Emulation.setEmulatedMedia', {media:'print'});
+    else await run(`document.documentElement.setAttribute('data-${mode}','true')`);
+    await stable();
+    assert.deepEqual(await alignment(), authoredAlignment, mode+' restores authored inline alignment and priority');
+    if (mode === 'print') await send('Emulation.setEmulatedMedia', {media:''});
+    else await run(`document.documentElement.removeAttribute('data-${mode}')`);
+    await stable();
+    assert.deepEqual(await alignment(), {value:'flex-start',priority:''}, mode+' exit resumes compact flow');
+  }
+  await run(`document.querySelector('[data-view="reset"]').click()`);
+  await stable();
+  assert.deepEqual(await alignment(), authoredAlignment, 'reset restores authored inline alignment and priority');
+});

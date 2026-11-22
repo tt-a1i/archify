@@ -1,0 +1,22 @@
+TAP version 13
+# Subtest: Code Analysis exposes serve, check and task through the Archify CLI
+ok 1 - Code Analysis exposes serve, check and task through the Archify CLI
+  ---
+  duration_ms: 265.502125
+  type: 'test'
+  ...
+# Subtest: Code Analysis regression suite
+ok 2 - Code Analysis regression suite
+  ---
+  duration_ms: 66543.571584
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 66851.077708

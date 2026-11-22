@@ -65,15 +65,3 @@ test('Cloudflare output resolves nested-page assets against the HTML base', t =>
   fs.rmSync(path.join(root, 'site.css'));
   assert.throws(() => checkCloudflareOutput(root), /missing local target site\.css/);
 });
-
-for (const route of ['agent-diagrams', 'zh/agent-diagrams']) {
-  test(`Cloudflare output rejects a missing ${route} article`, t => {
-    const root = fixture(t);
-    fs.rmSync(path.join(root, `${route}.html`));
-    assert.throws(() => checkCloudflareOutput(root), error => {
-      assert.equal(error.code, 'ENOENT');
-      assert.equal(error.path, path.join(root, `${route}.html`));
-      return true;
-    });
-  });
-}

@@ -11,8 +11,8 @@
     "build": "node scripts/stage-public.mjs && astro build",
     "preview": "astro preview",
     "check": "astro check",
-    "test": "node --test test/*.test.mjs ../test/cloudflare-output.test.mjs",
-    "test:browser": "node --test --test-name-pattern=\"real Chrome\" ../test/site-language-continuity.test.mjs test/community-browser.test.mjs test/homepage-browser.test.mjs test/agent-diagrams-browser.test.mjs test/mco-source-case-browser.test.mjs test/compare-browser.test.mjs test/gallery-browser.test.mjs test/clipboard-browser.test.mjs test/guide-keyboard-browser.test.mjs"
+    "test": "node --test test/*.test.mjs",
+    "test:browser": "node --test --test-name-pattern=\"real Chrome\" ../test/site-language-continuity.test.mjs test/community-browser.test.mjs test/agent-diagrams-browser.test.mjs test/mco-source-case-browser.test.mjs test/compare-browser.test.mjs test/gallery-browser.test.mjs test/clipboard-browser.test.mjs test/guide-keyboard-browser.test.mjs"
   },
   "dependencies": {
     "@astrojs/react": "^6.0.6",
@@ -28,5 +28,6 @@
     "@types/react-dom": "^19.3.0",
     "parse5": "^8.0.1",
     "typescript": "~6.0.3"
-  }
+  },
+  "packageManager": "pnpm@12.21.0"
 }

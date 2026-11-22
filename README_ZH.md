@@ -33,7 +33,7 @@
   <a href="https://skills.sh/tt-a1i/archify/archify"><img src="https://img.shields.io/badge/installs-130K%2B-0EA5E9?style=flat-square" alt="130K+ installs on skills.sh" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-22c55e?style=flat-square" alt="Apache License 2.0" /></a>
   <a href="#安装方式"><img src="https://img.shields.io/badge/works_with-Claude_Code_%7C_Codex_%7C_Cursor_%7C_OpenCode-7C3AED?style=flat-square" alt="Works with Claude Code, Codex, Cursor, and OpenCode" /></a>
-  <a href="CHANGELOG.md#320--2026-10-18"><img src="https://img.shields.io/badge/version-3.2.0-0891b2?style=flat-square" alt="Stable version 3.2.0" /></a>
+  <a href="CHANGELOG.md#330--2026-11-23"><img src="https://img.shields.io/badge/version-3.3.0-0891b2?style=flat-square" alt="Stable version 3.3.0" /></a>
 </p>
 
 <p align="center">
@@ -42,6 +42,7 @@
   <a href="#社区交流"><img src="https://img.shields.io/badge/WeChat-07C160?style=for-the-badge&amp;logo=wechat&amp;logoColor=white" alt="Archify WeChat group" /></a>
   <a href="#社区交流"><img src="https://img.shields.io/badge/QQ-1688D8?style=for-the-badge&amp;logo=qq&amp;logoColor=white" alt="Archify QQ group" /></a>
   <a href="https://x.com/t20000622yy"><img src="https://img.shields.io/badge/Creator_on_X-181717?style=for-the-badge&amp;logo=x&amp;logoColor=white" alt="Follow the creator on X" /></a>
+  <a href="#支持-archify"><img src="https://img.shields.io/badge/Support-E2500E?style=for-the-badge" alt="Support Archify" /></a>
 </p>
 
 <p align="center"><a href="#sponsors"><strong>❤️ 合作与赞助伙伴：Kimi Work · Supercode · OpenLux</strong></a></p>
@@ -59,6 +60,8 @@ https://github.com/user-attachments/assets/88cff7dd-bdf3-4b97-950c-37cc079898b1
 ### 安装，然后说出你的想法
 
 支持 Cursor、Claude Code、Codex CLI 和 OpenCode；更多接入方式见下方安装选项。
+
+**让 AI Agent 安装。** 把下面这句原样发给 Agent：
 
 ```text
 Install Archify for me by reading https://raw.githubusercontent.com/tt-a1i/archify/main/llms.txt
@@ -93,6 +96,8 @@ API 优先读取 Redis，缓存未命中时查询 PostgreSQL 并回填缓存。
 可能是什么原因，应该怎么排查？
 ```
 
+默认情况下，遇到复杂流程、排查结果、方案对比或测试报告这类回答，agent 也会主动做一页。回复里照样先给能直接读懂的简短结论，最后一行是页面链接，比如“查看测试报告”。简短问答、只要文字的请求和生成失败的页面，都不会出现页面或链接。只想在要求时才做页面，直接告诉 agent，或者在它的全局规则文件（如 `~/.codex/AGENTS.md`、`~/.claude/CLAUDE.md`）里加一行 `[archify explainer: on-demand]`。`[archify explainer: always-on]` 会给每个得出结论的回答附一页精简页面；删掉这一行就回到默认行为。
+
 在线示例：[P99 延迟排查](https://archify.si/cases/explainer/p99-tail-latency.html) · [读 Archify 仓库：finalize 怎么保住旧产物](https://archify.si/cases/explainer/finalize-delivery.html) · [第一次租房要确认什么](https://archify.si/cases/explainer/first-rental.html) · [第一次打开 HTTPS 网站（英文）](https://archify.si/cases/explainer/tls-first-visit.html)
 
 <a id="sponsors"></a>
@@ -123,6 +128,10 @@ API 优先读取 Redis，缓存未命中时查询 PostgreSQL 并回填缓存。
 <td>感谢 AICodeMirror 赞助 Archify！AICodeMirror 提供 Claude / Codex / Gemini API 中转服务，支持企业级高并发、开票和 7×24 技术支持。Codex 通道低至基准价格 0.7 折，充值还有额外优惠。<br/><br/>Archify 专属福利：通过专属链接注册，可享首充 8 折。<br/><br/><a href="https://www.aicodemirror.ai/register?invitecode=WC26FL">立即体验 AICodeMirror →</a></td>
 </tr>
 <tr>
+<td align="center" width="240"><a href="https://zturbo.top"><img src="docs/assets/sponsors/zturbo-logo.png" alt="ZTURBO" width="200" /></a><br/><strong><a href="https://zturbo.top">ZTURBO</a></strong></td>
+<td>为开发者和 AI 用户提供高速、稳定的连接体验。<br/>新用户注册即可免费体验，首次充值还有专属加赠；支持 Windows、macOS、iOS 和 Android 多端使用，长期套餐折算每天不到 ¥1。<br/><br/>免费体验 · 首充加赠 · 多端畅连<br/><br/><a href="https://zturbo.top">立即体验 ZTURBO →</a></td>
+</tr>
+<tr>
 <td align="center" width="240"><a href="https://www.infistar.cc/register?aff=9N89LEMV&amp;ref_source=link"><img src="docs/assets/sponsors/infistar-logo.svg" alt="Infistar.cc 无限星河" width="140" /></a><br/><strong><a href="https://www.infistar.cc/register?aff=9N89LEMV&amp;ref_source=link">Infistar.cc 无限星河</a></strong></td>
 <td>Infistar 用一个 API Key 接入 Claude、GPT、Gemini 和 DeepSeek，支持文本、图像和视频创作。模型 API 价格低至官方的 1%。<br/><br/>Archify 用户通过此链接注册可获得 5 元人民币试用额度。<br/><br/><a href="https://www.infistar.cc/register?aff=9N89LEMV&amp;ref_source=link">试用 Infistar →</a></td>
 </tr>
@@ -146,6 +155,33 @@ API 优先读取 Redis，缓存未命中时查询 PostgreSQL 并回填缓存。
 [![根据公开仓库 mco-org/mco 生成的 MCO 运行时架构图](docs/assets/mco-runtime-share-card.png)](https://archify.si/cases/mco-runtime.architecture.html?theme=dark&present=1)
 
 Archify 追踪 [`mco-org/mco`](https://github.com/mco-org/mco) 的 `9f1a1cf` 版本并生成这张校验地图。**[打开成品 ↗](https://archify.si/cases/mco-runtime.architecture.html?theme=dark&present=1)** · [追踪下游 ↗](https://archify.si/cases/mco-runtime.architecture.html?theme=dark#focus=router&reach=downstream) · [Typed Source](docs/cases/mco-runtime.architecture.json)
+
+### 诊断一个代码仓库
+
+<sub>CODE ANALYSIS · Skill 自带，无需额外安装</sub>
+
+| 依赖星图 | 同一次分析的 3D 模型 |
+|---|---|
+| [![Atlas 星图：模块排成一圈，文件依赖横穿其中，侧栏列出问题与耦合度](docs/assets/code-analysis-views/atlas.png)](archify/modules/code-analysis/docs/USAGE.md) | [![Atlas 3D：被依赖最多的模块作为树干，其他模块按依赖层级向上分枝](docs/assets/code-analysis-views/atlas-3d.png)](archify/modules/code-analysis/docs/USAGE.md) |
+
+**架构诊断**会读取仓库，告诉你代码实际上是怎么连在一起的：循环依赖、耦合过紧的模块、复杂度热点、违反分层规则的地方。每条发现都能点开对应源码，还附有可以直接交回给 Agent 的修复任务。和架构图一起使用时，每个组件上会标出问题数。支持 JS/TS、Python、Java、Go、Rust、C 和 C++，结果是一个可离线打开的 HTML 文件。
+
+```text
+用 archify 的 Code Analysis 分析这个仓库：看模块耦合、循环依赖和复杂度热点。
+```
+
+[Code Analysis 使用指南](archify/modules/code-analysis/docs/USAGE.md)
+
+### 讲成一段故事，或讲清一个 PR
+
+<sub>STORY · PR 导览</sub>
+
+- **Story 视频。** 让 Agent 给任意一张图加上导览故事。页面会多出 Story 模式，带时间轴和字幕；**导出 → Story video** 可录成 1080p、60 fps 的视频（WebM 或 MP4）。也可以把多张图编排进同一个舞台页面或视频。[Story 编写说明](archify/references/story-authoring.md)
+- **PR 导览。** 让 Agent 讲解一个 PR 或分支：Archify 直接在图上标出改动，还能把深浅两版图附到 GitHub PR 或 GitLab MR。可选的 `archify-pr` Skill 会在你准备 PR 时主动询问，且只针对实质性改动。[PR 审阅说明](archify/references/pr-review.md)
+
+```text
+用 archify 给这张图加一段导览故事，并导出成视频。
+```
 
 ### 易于扩展，社区还在不断创造新用法
 
@@ -210,22 +246,36 @@ Export 菜单支持复制 PNG，并下载静态或动态格式：
 
 ## 快速开始
 
-**当前稳定版本：** `v3.2.0`。详见[版本历史](CHANGELOG.md#320--2026-10-18)。
+**当前稳定版本：** `v3.3.0`。详见[版本历史](CHANGELOG.md#330--2026-11-23)。
 
 ### 1. 安装
+
+**让 AI Agent 安装**
+
+把下面这句原样发给 Agent：
 
 ```text
 Install Archify for me by reading https://raw.githubusercontent.com/tt-a1i/archify/main/llms.txt
 ```
 
-<details>
-<summary>更多安装方式与更新检查说明</summary>
+也可以直接非交互安装。`--agent` 写一个，或为每个切换器目标各写一次（`cursor`、`codex`、`claude-code`、`opencode`、`github-copilot`）。`--copy` 会复制 Skill，而不是创建符号链接：
 
-显式、非交互地安装到 Cursor：
+只安装到 Cursor：
 
 ```bash
 npx -y skills@latest add https://archify.si --skill archify --agent cursor --global --copy --yes
 ```
+
+或者，仅在需要全部五个 Agent 时运行：
+
+```bash
+npx -y skills@latest add https://archify.si --skill archify --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes
+```
+
+可选 PR 同伴 Skill（仅从仓库源码安装；默认安装仍只有 `archify`）：安装 `archify` 后，运行 `npx -y skills@latest add tt-a1i/archify --skill archify-pr --agent cursor --global --copy --yes` 可增加 PR 变更导览。它对文档、锁文件、格式化等小改动保持静默，只对实质性 diff 询问是否加图；在 Agent 全局规则文件写入 `[archify pr: on-demand]` 可完全关闭轻提示。
+
+<details>
+<summary>更多安装方式与更新检查说明</summary>
 
 如果只想临时体验：
 
@@ -233,7 +283,7 @@ npx -y skills@latest add https://archify.si --skill archify --agent cursor --glo
 npx skills use tt-a1i/archify@archify --agent codex
 ```
 
-DeepSeek Harness（社区集成、显式启用）：运行 `dsh plugin --profile web add @tt-a1i/archify-dsh@1.1.0`；参见[兼容范围、限制与安全说明](integrations/deepseek-harness/README.md)。[Agent 切换器](https://archify.si/zh/start?agent=cursor&type=architecture)只为 `cursor`、`codex`、`claude-code` 和 `opencode` 生成命令。
+DeepSeek Harness（社区集成、显式启用）：运行 `dsh plugin --profile web add @tt-a1i/archify-dsh@1.1.0`；参见[兼容范围、限制与安全说明](integrations/deepseek-harness/README.md)。[Agent 切换器](https://archify.si/zh/start?agent=cursor&type=architecture)为 `cursor`、`codex`、`claude-code`、`opencode` 和 `github-copilot` 生成命令。
 
 安装后的 Skill 包含一个低频、失败静默的发布检查，它最多只显示可选更新提醒，绝不会自行下载或安装更新。一次成功检查后，下次网络请求通常约在 24 小时（±20%）后发出；检查失败后，活跃使用可能在首次 6 小时、后续 24 小时退避到期时重试。请求只访问 `https://archify.si/skill-updates/archify/stable.json`。服务端会自然获得 IP、请求时间和常规 HTTP 元数据；检查器不会发送本地版本、Agent、项目数据、用户输入、账户/设备标识，也不会保存或回传 ETag。是否更新以及何时更新始终由你决定。如需完全关闭检查（包括网络请求和提醒状态写入），请在 Agent 环境中设置 `ARCHIFY_UPDATE_CHECK_DISABLED=1`。
 
@@ -259,6 +309,12 @@ DeepSeek Harness（社区集成、显式启用）：运行 `dsh plugin --profile
 分析这个仓库，然后使用 archify 生成一张高层运行时架构图。
 只保留 8–12 个核心组件，突出一条主要路径，并标出外部依赖与信任边界。
 辅助信息放进说明卡片，不要继续增加连线。
+```
+
+Archify 自带**架构诊断**，可以把仓库的依赖关系画成环形星图和可旋转的 3D 模型，还能在架构图上标出每个组件的问题数。循环依赖、图中遗漏的依赖等发现都能点开查看源码。交付基于仓库源码的架构图后，Archify 会在总结末尾列出架构诊断能做什么，架构图右上角也有「架构诊断」按钮可以随时查看介绍。得到你的同意后才会启动。无需额外安装。详见 [Code Analysis 使用指南](archify/modules/code-analysis/docs/USAGE.md)。
+
+```text
+用 archify 的 Code Analysis 分析这个仓库：看模块耦合、循环依赖和复杂度热点。
 ```
 
 ### 3. 在对话中细调
@@ -414,7 +470,7 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 }
 ```
 
-不设置 `animation` 时结果完全静态；`classic` 始终是默认视觉预设。设计评审、发布说明和技术文档可以显式选择 `editorial`，获得暖纸张与深墨色的编辑风格，同时保持几何完全不变。将 `meta.locale` 设为任意合法语言标签，可选择 `<html lang>`、默认图例、无障碍文案和所有固定 Viewer UI。`en`、`zh-CN`、`zh-TW`、`es`、`ko` 与 `ar` 已内置，只需设置 `meta.locale`；`meta.translations`（规范消息键到译文字符串的映射）可逐键覆盖，其余文案保持所选语言。其他语言需在该字段中提供完整目录（参见 `archify/examples/locales/`），否则渲染器回退为英文并在 stderr 中说明。作者编写的标题、节点、关系和卡片不会被机器翻译。未带该字段的旧文件仍然有效，并默认使用英文。对于既未内置也未提供 `meta.translations` 的创作语言，应省略 `meta.locale`、保持 authored content 使用用户要求的语言，并主动告知用户固定 Viewer UI 与 `<html lang>` 回退为英文，因此该成品不属于完整本地化。
+不设置 `animation` 时结果完全静态；`classic` 始终是默认视觉预设。设计评审、发布说明和技术文档可以显式选择 `editorial`，获得暖纸张与深墨色的编辑风格，同时保持几何完全不变。将 `meta.locale` 设为任意合法语言标签，可选择 `<html lang>`、默认图例、无障碍文案和所有固定 Viewer UI。`en`、`zh-CN`、`zh-TW`、`es`、`ko`、`ar` 与 `ru` 已内置，只需设置 `meta.locale`；`meta.translations`（规范消息键到译文字符串的映射）可逐键覆盖，其余文案保持所选语言。其他语言需在该字段中提供完整目录（参见 `archify/examples/locales/`），否则渲染器回退为英文并在 stderr 中说明。作者编写的标题、节点、关系和卡片不会被机器翻译。未带该字段的旧文件仍然有效，并默认使用英文。对于既未内置也未提供 `meta.translations` 的创作语言，应省略 `meta.locale`、保持 authored content 使用用户要求的语言，并主动告知用户固定 Viewer UI 与 `<html lang>` 回退为英文，因此该成品不属于完整本地化。
 
 </details>
 
@@ -429,6 +485,7 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 | 对比一种或两种语义角色 | <kbd>L</kbd> 或“透镜” |
 | 打开实时全局雷达 | <kbd>M</kbd> 或“地图” |
 | 进入 Presentation Stage | <kbd>F</kbd> |
+| 播放导览故事或导出视频（带故事的图） | 动效控件 → `Story` · 导出 → `Story video` |
 | 选择视觉风格（<kbd>S</kbd> 循环）/ 切换主题 / 打开 Export | <kbd>S</kbd> / <kbd>T</kbd> / <kbd>E</kbd> |
 | 缩放或复位 | <kbd>+</kbd> / <kbd>-</kbd> / <kbd>0</kbd> |
 
@@ -472,7 +529,7 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 
 <table>
 <tr>
-  <td align="center"><strong><img src="docs/assets/community/wechat.svg" alt="" width="18" /> 微信群</strong><br/><img src="docs/assets/community/wechat-qr.png" alt="Archify Official 微信群二维码" width="300" height="318" /></td>
+  <td align="center"><strong><img src="docs/assets/community/wechat.svg" alt="" width="18" /> 微信群</strong><br/><img src="docs/assets/community/wechat-qr.png" alt="Archify Official 微信群二维码" width="300" height="300" /></td>
   <td align="center"><strong><img src="docs/assets/community/qq.svg" alt="" width="18" /> QQ 群</strong><br/><img src="docs/assets/community/qq-qr.png" alt="Archify Official QQ 群二维码" width="300" height="300" /></td>
 </tr>
 </table>

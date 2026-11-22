@@ -32,13 +32,21 @@
       }
 
       function diagramFilename() {
-        var title = (document.title || 'diagram')
-          .replace(/\s+Architecture(\s+Diagram)?$/i, '')
-          .replace(/\s+Diagram$/i, '')
-          .trim();
-        return title.replace(/[^a-z0-9_\-]+/gi, '-')
-                    .toLowerCase()
-                    .replace(/^-+|-+$/g, '') || 'diagram';
+        // Prefer the authored heading: the document title may carry a
+        // locale-specific page decoration ("Diagram", "Diagrama", ...).
+        // Without a heading, keep the complete document title; suffix-like
+        // words in either source are authored text and are not stripped.
+        var heading = document.querySelector('.header h1');
+        var title = (heading && heading.textContent || '').trim() ||
+          (document.title || '').trim();
+        // A mark is kept only while attached to a letter or number base;
+        // a detached mark (the variation selector after an emoji, say)
+        // would otherwise survive as an invisible filename.
+        var name = title.replace(/([\p{L}\p{N}])(\p{M}+)|\p{M}+/gu, '$1$2')
+                        .replace(/[^\p{L}\p{M}\p{N}_\-]+/gu, '-')
+                        .toLowerCase()
+                        .replace(/^-+|-+$/g, '');
+        return name || 'diagram';
       }
 
       function currentBg() {

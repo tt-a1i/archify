@@ -1,0 +1,345 @@
+# Java source analysis
+
+From the `archify/` package directory:
+
+```sh
+node bin/archify.mjs code-analysis check /path/to/java-repo --language java --out out/java
+```
+
+The diagram workflow accepts the same `--language java`. When the scan finds
+Java alongside another supported language, Java is eligible for
+[automatic selection](USAGE.md#first-look-at-an-unfamiliar-repository) if the
+root holds `pom.xml`, `build.gradle(.kts)` or `settings.gradle(.kts)`. If the
+build marker is only in a subdirectory, such as `backend/pom.xml` beside
+`frontend/package.json`, use `--language java` to analyze the Java files.
+The run reports omitted other-language files. `build/` directories and
+Java sources under
+`target/` are excluded by default; JS/TS and Python files under `target/` are
+still analyzed as before. `src/test/` files are extracted as tests and excluded
+from the dependency graph by the existing role policy.
+
+Upgrade note: a JS/TS or Python tree that also holds `.java` files (for
+example a React Native `android/` folder) and has no root Maven/Gradle build
+file is still analyzed in its earlier language without `--language`; its
+coverage now lists the Java files it left out. The default configuration
+changed, so the first comparison after upgrading reports `config-changed` and
+is not directly comparable.
+
+The adapter reads captured UTF-8 source, accepts a UTF-8 BOM, and retains the
+decoded text and source locations. Broken or unsupported files remain in
+`files` and `parse_errors` and contribute no dependencies or function metrics.
+The adapter does not run Java code, Maven/Gradle builds, annotation processors
+or an LLM, and does not require a JDK.
+
+## Optional JDK method binding
+
+To add compiler-selected targets for calls whose methods are in captured source,
+pass a config file containing:
+
+```json
+{ "java": { "semantic": true, "release": 8 } }
+```
+
+`java.semantic` is off by default. When enabled, Archify uses a local JDK 17+
+`java` executable (`ARCHIFY_JAVA` can name an explicit executable) to analyze
+temporary copies of the already captured Java source. `java.release` is
+optional; when omitted, the running JDK's default source level applies. An
+unsupported release or compiler error leaves the affected source group on its
+JS results. `languageScope.semantic` records the selected release, JDK version,
+analyzed file count, added/rejected targets and failed groups. No JDK or a
+failed compiler also leaves the extraction usable; no external jar is
+downloaded or read, no annotation processor runs, and project code is not executed.
+
+Each compiler group contains only captured sources permitted by the bounded
+Maven source-set and declared direct-dependency model. Before recording any
+target, Archify matches the compiler invocation to a JS call by its full
+source range, checks the target against an exact captured declaration range,
+and checks Maven visibility again. The compiler may identify an interface or
+abstract method declaration without a body; these targets appear in
+`methodDeclarations`, separate from complexity-measured `functions`. They
+identify the statically selected declaration, not a runtime implementation.
+Enabled captures use `java-static-lexical-v6` (adapter revision 14); disabled
+captures retain the v5 binding model. Existing plain static candidates that
+cross a captured Maven boundary without a direct route are rejected in v6,
+including when the compiler is unavailable. External jars, full effective
+POMs, Gradle configurations, generated code and complete classpaths remain
+outside this mode, so a failed source group retains conservative JS coverage.
+
+## Dependencies
+
+Declarations, rather than directory layout, map canonical type names to files.
+A dependency is recorded only when the analyzed source index identifies one
+unambiguous declaration in one file. Dependencies within a file do not produce
+file edges.
+
+Recorded reference forms:
+
+- Import declarations: single-type imports, and static imports whose owner
+  declares the member. Static members are static fields and methods, enum
+  constants, interface constants, and member types that are explicitly static
+  or implicitly static (member enums, records and interfaces, and every member
+  type of an interface).
+- Type positions: field, parameter, local, return and type-argument types,
+  `extends`/`implements`/`permits`, `throws`, `catch`, casts, `instanceof`,
+  array types and annotations.
+- Instance creation `new T(…)` (including the type of an anonymous class),
+  constructor references `T::new` and `T[]::new`, and class literals `T.class`.
+
+Resolution follows lexical type scope, declarations in the file, single-type
+imports and same-package types. Fully qualified names use the source index; a
+qualified name never starts at a subpackage of the current package, and one
+whose first segment names a type an on-demand import declares stays
+unresolved (inherited members of on-demand imported types are not checked;
+an independently resolved superclass can still supply a member type).
+The guards below leave uncertain bindings unresolved.
+
+Remaining unresolved, by design:
+
+- Duplicate declarations (for example main and test source sets), and member
+  types whose enclosing type is declared more than once, on every lookup path
+  including static imports.
+- Within one captured Maven or Gradle build module, main source cannot bind a
+  declaration found only in `src/test/java`; test source can still see main
+  source. Duplicate declarations remain ambiguous even when one is in the test
+  source set. This is a source-set boundary, not a complete classpath model.
+- Conflicting imports, type-parameter shadowing, names shadowed by a local
+  type anywhere in the file, and simple names introduced by a single static
+  import (the import itself is still recorded). Types declared in any block (methods, interface
+  methods, constructors, initializers, lambdas, switch-rule blocks) are local
+  and are not indexed.
+- References inside the body of a type whose supertypes do not all resolve,
+  transitively, to one analyzed declaration or a listed JDK type each
+  (external, duplicate or cyclic supertypes), since an inherited member type
+  could bind the name. This includes same-package references, which need no
+  import: in Spring PetClinic, `PetValidator implements Validator` (a Spring
+  interface), so its use of `Pet` in the same package is not recorded. A
+  missing edge there is not evidence of absent coupling.
+  When the analyzed ancestry is complete, a unique public or protected
+  member type of one ancestor resolves to its declaring file, even over an
+  external import of the same name. A class can also use such a member from
+  its explicit superclass in its `implements` clause. Private, package-only,
+  duplicate, qualified and otherwise uncertain inherited member names stay
+  `unknown`; so does a member type declared by an analyzed ancestor when
+  another ancestor is external. Enum bodies leave `EnumDesc` (a member type of
+  `java.lang.Enum`) unresolved. A type's own members are not in scope in its
+  extends/implements clauses, so declaration headers are outside this body
+  guard; a record's component list does see its members. The other scope
+  guards still apply.
+
+  The listed JDK types are `Comparable`, `Cloneable`, `AutoCloseable`,
+  `Iterable`, `Runnable`, `Throwable`, `Exception`, `RuntimeException`,
+  `Error`, `IllegalArgumentException`, `IllegalStateException` and
+  `UnsupportedOperationException` in `java.lang`; `Serializable`,
+  `Closeable` and `IOException` in `java.io`; `Iterator`, `Collection`,
+  `List`, `Set`, `Map` and `EventListener` in `java.util`; and
+  `java.util.concurrent.Callable`. Of these only `Map` contributes a member
+  type (`Entry`), which stays unresolved in such bodies. The member types
+  were checked by reflection on JDK 17 (public and protected member types,
+  including inherited ones); other JDK versions were not checked.
+
+  A supertype counts as one of these types only when a single-type import
+  names it (`import java.io.Serializable;`), because such an import outranks
+  same-package and on-demand types and so no unanalyzed source can claim the
+  name; and only when no enclosing type declares, inherits or may inherit a
+  member type of that name, and no type parameter or local type in the file
+  uses it. Everything else keeps the guard: an implicit `java.lang` name
+  (`extends RuntimeException`) or an on-demand import, because a same-package
+  source that is not analyzed (an excluded generated file, one with a parse
+  error) could declare the name; and a fully qualified name
+  (`implements java.io.Serializable`), because an unseen type named `java`
+  could obscure the package.
+- References inside local and anonymous class bodies, whose member and
+  inherited scopes are not modeled. Their methods still receive complexity
+  metrics.
+- On-demand (`*`) imports, which are never expanded to every file in a
+  package, and names that need wildcard or classpath lookup.
+- Qualified creation `outer.new Inner()` (relative to the outer instance's
+  type), other method references `X::m`, and static calls or field accesses
+  such as `X.m()` and `X.F`, whose qualifier may be an expression.
+- Reflective loading such as `Class.forName("…")` or `ServiceLoader`, which is
+  not modeled and therefore not counted as `opaque`.
+
+This is a conservative source dependency graph, not complete Java type or
+method-call resolution.
+
+The unresolved counters keep the shared meaning described in the
+[technical guide](TECH-GUIDE.md#5-the-four-kinds-of-unresolved-why-they-are-counted-separately):
+`external` is outside the analyzed sources and `unknown` is an internal
+resolution gap. Every import declaration is recorded; an unresolved one is
+`external` when no analyzed file declares its package (JDK, third party) and
+`unknown` otherwise (for example build-generated types in a project package).
+A type reference is recorded only while it may denote an analyzed type: it
+matches an analyzed type name or lies in an analyzed package. Type parameters,
+local type names, names bound to an external import (represented by that
+import) and names no analyzed file declares (`String`, `Override`) produce no
+record, as uses of external modules produce none in the JS/TS adapter. An
+unresolved recorded reference counts as `unknown`; for Java this mostly
+measures the conservative rules above. `imports[].kind = "static"` means a statically recorded dependency
+in the shared contract; it does not specifically mean Java's `import static`
+keyword. Edge weights count dependency records, including recorded imports
+and type references, rather than import declarations alone.
+
+Module (package) cycles are structural findings reported as errors; class
+(file) cycles are warnings, since classes load on demand and refer to each other
+routinely (see [Severity levels](USAGE.md#severity-levels)). Their
+messages, task exports and UI do not infer Python-style partial initialization
+or claim a Java runtime failure.
+
+Java has no package marker files, so its default modules are build units:
+each directory holding `pom.xml`, `build.gradle` or `build.gradle.kts` owns
+the sources below it, at any depth (`grouping.java: "build-modules"`); files
+outside every build module keep directory-depth grouping. A tree where at most
+one build module owns analyzed (non-test, non-generated) sources would be one
+module with nothing to compare, so it is split by package
+(`grouping.java: "packages"`): within each conventional source root
+`src/<set>/java`, at the first directory below the one shared by that root's
+files, typically the first package level below `src/main/java/<common prefix>`.
+Files directly in a source root, such as `module-info.java`, form that root's
+own module. Other files keep directory depth; a tree without such roots splits
+below the directory all its files share.
+
+Explicit `modules.groups` still win, and the files they claim do not shape the
+split. Setting `modules.depth` or `modules.packageBoundaries: false` restores
+directory-depth grouping. JPMS modules are not read.
+
+This grouping is inferred from build-file locations and source directories;
+Module grouping does not evaluate Maven or Gradle models. Java v5 separately reads
+a bounded set of Maven declarations for static-call candidates, described below. Adding a second build module, moving sources or changing a shared
+directory prefix can change the modules, and with them module edges, module
+cycles and hubs, without any dependency change. Compare module-level findings
+across runs only under the same grouping: for longitudinal comparison, pin
+the modules with `modules.groups`, for example
+`{ "modules": { "groups": { "core": ["core/src/main/java/**"], "web": ["web/src/main/java/**"] } } }`.
+A module cycle that disappears after a grouping change has not been fixed.
+
+## Complexity
+
+Methods, interface methods with bodies, constructors and record compact
+constructors emit the existing `functions` contract. Abstract/native methods
+without bodies are skipped. Qualified names follow the shared `Class.method`
+and `outer.<locals>.inner` form, with parameter types added, such as
+`Service.save(String,int...)`: Java overloads each have a body, and a source-order
+`#2` suffix would rename later overloads whenever one is added above them.
+Local and anonymous class methods, including enum constant bodies, are measured
+separately. Lambdas contribute to their containing method. Code outside any
+method is measured on its own, as module-level callbacks are in the JS/TS
+adapter: static and instance initializer blocks as `Class.<static initializer>`
+and `Class.<instance initializer>` (`#2` for further blocks of the same kind),
+and a field whose initializer contains a lambda under the field's name, such as
+`Registry.COMPARATOR`. Other field initializers are not measured.
+
+Complexity starts at 1, then adds 1 for each `if`, loop, `catch`, conditional
+expression, non-default switch label, pattern guard, `&&` and `||`. A label
+containing several case constants counts once. Nesting counts if/loop/switch/
+try/synchronized blocks; `else if` stays at the preceding if's depth, and
+catch/finally blocks stay at their try's depth. Comments and strings do not add
+branches. Existing thresholds and source-evidence views are reused.
+
+## Method invocation source navigation
+
+Default captures use `java-static-lexical-v5` (adapter revision 14). Historical
+v1 restrictions below describe the original collection contract. Later revisions
+add explicit class-qualified public static methods (v2), unique fixed-arity
+candidates among different-arity siblings (v3), and qualifier lookups from callers
+with closed captured ordinary-class ancestry (v4). Captured ancestors must have
+no inherited field or member-type blocker for the qualifier; this is not general
+inheritance or overload/type inference.
+A unique local static method can overload an inherited `Object` method name
+when the argument count rules out the inherited signature. If the arity also
+matches an `Object` method, the lexical target stays unknown.
+
+Java v5 additionally admits these inherited-context static calls across Maven
+project roots when captured POMs establish a unique **direct** project dependency.
+It reads literal project coordinates, local parents (including named parent XML
+files), inherited default properties and dependency management, and a shared
+literal reactor declaration. Main sources require compile/provided jar routes;
+test sources may also use test/runtime scope. A target in `src/test/java` requires
+a test-jar dependency; an ordinary jar does not expose test fixtures. Both the
+target and any captured ancestor used for qualifier absence need a valid route.
+Reactor co-location alone grants no dependency.
+
+`languageScope` records the exact used UTF-8 POM text and SHA-256, effective
+project coordinates/direct dependencies, profile identifiers, unsupported models
+and limitations. `calls[].buildEvidence` contains jumpable POM declaration
+points. Saved and paired investigations check these inputs for changes before
+allowing call navigation. POMs are metadata, not analyzed Java source files.
+The scanner captures configured XML/POM files so a named local parent can be
+read from the same snapshot; only used metadata is emitted. Maven archetype
+template markers under `src/main/resources/archetype-resources/` do not by
+themselves declare projects or become resolution inputs. An explicitly named
+local parent can still be read. Java files there follow configured
+include/exclude patterns.
+
+Relevant dependency/module profiles, unresolved parents/properties, duplicate
+coordinates, imported BOMs, custom main/test layouts and Gradle dependencies
+cannot grant these new routes. This does not execute Maven, Gradle, plugins,
+annotation processors or project code, and requires no JDK or Maven installation.
+Within a captured build module, main source cannot use a test-source ancestor
+or direct static target for navigation. Property-expanded child dependency and
+dependency-management declarations override matching parent entries before
+project-route evidence is granted.
+
+The XML reader pins `@xmldom/xmldom@0.9.12`. Apart from the main/test source-set
+boundary above, existing same-root and no-parent source candidates retain their
+previous contract; dependency evidence does not
+turn the global source type index into a complete classpath or disambiguate
+multiple declarations. External artifacts, transitive dependencies, CLI/settings
+activation, generated code, runtime loading and complete impact remain unknown.
+
+
+The original v1 captures declare `callModel: "java-static-lexical-v1"`. They inventory
+all parsed method invocation expressions with full original-source UTF-16 start
+and end-exclusive positions, including chained calls and lambda/nested type
+bodies. Constructors, method references and implicit invocations are excluded.
+A zero is known only for a current, parse-valid selected range with this marker;
+older Java empty arrays remain unavailable.
+
+`same-file-static-method` supplies a lexical source candidate only for a bare
+identifier invocation inside a measured ordinary method directly owned by a
+top-level ordinary class without `extends` or `implements`. The class must
+have exactly one method declaration of that name, explicitly `static` with a
+captured body and matching fixed arity. Overloads, varargs, explicit invocation
+type arguments, inherited Object method names and nested/local/anonymous owners
+remain unresolved, as do qualified/member calls. Calls inside lambdas retain
+the enclosing method context. Java function measurements include exact UTF-16
+`column`/`endColumn` positions so adjacent methods on one line stay distinct.
+
+This is source reading assistance, not Java compiler attribution: argument type
+applicability, compilation, virtual dispatch, reflection, provider selection and
+execution are unmodeled. All other invocation sites stay explicit unknowns.
+Saved question tasks expose these bounds and gate target navigation on captured
+source freshness; see [function analysis](FUNCTION-ANALYSIS.md).
+
+## Parser choice and boundaries
+
+The implementation pins `java-parser@3.0.1`, a synchronous JavaScript parser
+producing a CST with token offsets and line/column locations.
+
+Syntax probes cover Java 8-style generics/lambdas, records and compact
+constructors, sealed types, text blocks, module descriptors and Java 21 switch
+patterns/guards. These probes do not establish complete coverage of every Java
+release or preview feature. Unsupported syntax is reported as a parse error.
+
+One known misparse is corrected: `java-parser@3.0.1`
+reads a member record whose body is also a valid block, such as
+`record Value(int x) {}` or `record Value(int x) { static class Part {} }`, as
+a method returning type `record`. No such method compiles, so the adapter
+rewrites these nodes into record declarations and restores the nested types
+as member types.
+
+Java Unicode escapes are expanded before lexing, including inside comments.
+The adapter accepts escapes within parsed comments, string/character literals
+and text blocks when their decoded characters preserve token boundaries.
+It keeps the original text and source offsets. Paired raw backslashes leave
+the following `u` ineligible as an escape marker. Escaped quotes, comment
+delimiters, backslashes and line breaks still produce a diagnostic, as do
+malformed escapes and escapes outside those token ranges. Other source
+encodings, build-aware symbol resolution, generated/Lombok symbols, Spring
+injection, inheritance/call graphs and class initialization analysis are outside
+this adapter's scope.
+
+Small hand-counted fixtures protect dependency and complexity correctness. Real
+repository checks should fix a source revision, start with a submodule, then
+expand to the full tree. Report parse failures and unresolved coverage alongside
+runtime and memory; completion alone does not establish complete dependency
+coverage.

@@ -122,7 +122,7 @@ function previewPage() {
             body.dataset.hasArtifact = 'true';
           }
         } else if (state.status === 'needs-fix') {
-          status.textContent = 'Needs fix · ' + (state.revision ? 'showing rev ' + state.revision : 'no verified revision');
+          status.textContent = 'Needs fix · ' + (lastRevision ? 'showing rev ' + lastRevision : 'no verified revision');
           diagnostic.textContent = 'Generation ' + state.generation + ' · ' + state.failure.stage + '\\n\\n' + state.failure.message;
           failure.hidden = false;
         } else {

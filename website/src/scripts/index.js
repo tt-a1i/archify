@@ -464,10 +464,6 @@
     button.addEventListener('mouseenter', () => { if (window.matchMedia('(hover: hover)').matches) selectType(item.dataset.type); });
   });
 
-  /* ══ Light/dark compare ══ */
-  const compareStage = $('compare-stage');
-  $('compare-range').addEventListener('input', event => compareStage.style.setProperty('--split', `${event.target.value}%`));
-
   /* ══ Agent command switcher ══ */
   const agentCommand = $('agent-command');
   const agentTabs = [...document.querySelectorAll('.agent-tabs button')];

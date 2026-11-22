@@ -5,6 +5,29 @@
   "type": "object",
   "additionalProperties": false,
   "required": ["schema_version", "diagram_type", "meta", "components"],
+  "if": {
+    "required": ["layout"],
+    "properties": {
+      "layout": {
+        "type": "object",
+        "required": ["mode"],
+        "properties": { "mode": { "const": "auto" } }
+      }
+    }
+  },
+  "then": {
+    "properties": {
+      "layout": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": { "mode": true }
+      },
+      "components": {
+        "type": "array",
+        "items": { "type": "object", "properties": { "row": false, "col": false } }
+      }
+    }
+  },
   "properties": {
     "schema_version": { "const": 1 },
     "diagram_type": { "const": "architecture" },
@@ -20,7 +43,9 @@
         "output": { "$ref": "common.schema.json#/$defs/portableOutputPath" },
         "animation": { "$ref": "common.schema.json#/$defs/animation" },
         "visual_preset": { "$ref": "common.schema.json#/$defs/visualPreset" },
+        "feedback_links": { "type": "boolean", "description": "false hides the page footer with feedback and GitHub star links." },
         "quality_profile": { "$ref": "common.schema.json#/$defs/qualityProfile" },
+        "parentHref": { "$ref": "common.schema.json#/$defs/parentHref" },
         "engineering_profile": { "enum": ["deployment-ownership"] },
         "repository": { "$ref": "common.schema.json#/$defs/repository" },
         "views": { "$ref": "common.schema.json#/$defs/guidedViews" },
@@ -61,7 +86,7 @@
       "additionalProperties": false,
       "required": ["mode"],
       "properties": {
-        "mode": { "enum": ["grid"] },
+        "mode": { "enum": ["grid", "auto"] },
         "origin": { "$ref": "common.schema.json#/$defs/point" },
         "cols": { "type": "integer", "minimum": 1, "maximum": 12 },
         "gapX": { "type": "number", "minimum": 0 },
@@ -81,10 +106,15 @@
           "id": { "$ref": "common.schema.json#/$defs/id" },
           "type": { "$ref": "common.schema.json#/$defs/componentType" },
           "label": { "type": "string", "minLength": 1 },
+          "explanation": { "type": "string", "minLength": 1, "maxLength": 1200 },
+          "change": { "$ref": "common.schema.json#/$defs/changeStatus" },
+          "emphasis": { "$ref": "common.schema.json#/$defs/emphasis" },
           "sublabel": { "type": "string" },
           "tag": { "type": "string" },
           "icon": { "$ref": "common.schema.json#/$defs/nodeIcon" },
           "brand": { "$ref": "common.schema.json#/$defs/brandMark" },
+          "drilldowns": { "$ref": "common.schema.json#/$defs/drilldowns" },
+          "href": { "$ref": "common.schema.json#/$defs/nodeHrefSugar" },
           "sources": { "$ref": "common.schema.json#/$defs/sourceReferences" },
           "row": { "type": "integer", "minimum": 0 },
           "col": { "type": "integer", "minimum": 0 },
@@ -116,7 +146,9 @@
             "minItems": 1,
             "items": { "$ref": "common.schema.json#/$defs/id" }
           },
-          "pad": { "type": "number", "minimum": 0 }
+          "pad": { "type": "number", "minimum": 0 },
+          "change": { "$ref": "common.schema.json#/$defs/changeStatus" },
+          "emphasis": { "$ref": "common.schema.json#/$defs/emphasis" }
         }
       }
     },
@@ -143,7 +175,9 @@
           "labelDx": { "type": "number" },
           "labelDy": { "type": "number" },
           "labelSegment": { "type": "integer", "minimum": 0 },
-          "width": { "$ref": "common.schema.json#/$defs/relationshipWidth" }
+          "width": { "$ref": "common.schema.json#/$defs/relationshipWidth" },
+          "change": { "$ref": "common.schema.json#/$defs/changeStatus" },
+          "emphasis": { "$ref": "common.schema.json#/$defs/emphasis" }
         }
       }
     },

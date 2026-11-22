@@ -1573,6 +1573,7 @@
       }, true);
 
       document.addEventListener('keydown', function (event) {
+        if (event.isComposing || event.keyCode === 229) return;
         if (event.metaKey || event.ctrlKey || event.altKey) return;
         if (document.documentElement.getAttribute('data-guide-open') === 'true') return;
         var target = event.target;

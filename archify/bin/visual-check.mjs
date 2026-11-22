@@ -1627,6 +1627,10 @@ export class ChromeVisualBrowser {
     const targets = await this.cdp.send(
       'Target.getTargets', {}, undefined, this.startupTimeoutMs,
     );
+    // Deny downloads across this browser, including pages created by resetPage.
+    // If the browser rejects the policy, stop before loading an artifact whose
+    // exports could leave partial files in the user's Downloads folder (#1371).
+    await this.cdp.send('Browser.setDownloadBehavior', { behavior: 'deny' });
     let target = targets.targetInfos?.find((item) => item.type === 'page');
     if (!target) {
       const created = await this.cdp.send('Target.createTarget', { url: 'about:blank' });
@@ -1842,8 +1846,9 @@ export class ChromeVisualBrowser {
         scrollWidth: Math.ceil(document.documentElement.scrollWidth),
         // Bottom notes and index are reading material below the fold; the
         // Reader excludes them from the one-screen fit, and so does this check.
+        // The feedback footer always sits last, below the fold, for the same reason.
         scrollHeight: Math.max(window.innerHeight, Math.ceil(document.documentElement.scrollHeight - (
-          notesBelowFold ? outerHeight(reader.querySelector('.reader-rail')) : 0))),
+          notesBelowFold ? outerHeight(reader.querySelector('.reader-rail')) : 0) - outerHeight(document.querySelector('.page-feedback')))),
         resolvedTheme: document.documentElement.getAttribute('data-theme') || '',
         readerLayout: document.documentElement.getAttribute('data-reader-layout') || null,
         readerOverflow: document.documentElement.getAttribute('data-reader-overflow') || null,
@@ -2387,7 +2392,21 @@ function persistBrowserEvidenceFailure(
   failure,
   { outDir, compareSidecarParents = sameParent, ownership, command = 'visual-check', capture = true, captureViewports = CAPTURE_VIEWPORTS } = {},
 ) {
-  const outputs = evidenceSidecarPaths(artifactPath, { outDir, command, capture, captureViewports });
+  let outputs;
+  try {
+    outputs = evidenceSidecarPaths(artifactPath, { outDir, command, capture, captureViewports });
+  } catch (error) {
+    if (error?.code !== 'ARCHIFY_SIDECAR_NAMESPACE_INDETERMINATE') throw error;
+    const failed = evidenceWriteFailure(artifactPath, error.message, [{
+      directory: path.resolve(outDir || path.dirname(artifactPath)),
+      namespaceReason: error.sidecarNamespaceReason,
+    }]);
+    return {
+      ...failure, ok: false, status: 'fail', error: failed.error,
+      sidecars: { files: [] },
+      diagnostics: [...(failure.diagnostics || []), failed.diagnostic],
+    };
+  }
   const directory = resolveSidecarDirectory(artifactPath, outputs, compareSidecarParents);
   const capturedArtifact = readRegularFileContents(artifactPath, {
     subject: 'failure-artifact',

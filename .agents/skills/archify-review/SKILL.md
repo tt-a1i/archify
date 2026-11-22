@@ -19,4 +19,4 @@ Ground judgments in evidence: verify the target revision and relevant facts, dis
 
 Explain whether the work is worthwhile, the approach's cost and impact, any better alternatives, and unresolved questions that matter to the decision. Give reasons and scale the detail to the importance of each concern.
 
-For repository-specific review and contribution requirements, consult [REVIEWING.md](../../../REVIEWING.md) and [CONTRIBUTING.md](../../../CONTRIBUTING.md) as needed.
+Start repository PR reviews with the [readiness gate](../../../REVIEWING.md#check-readiness-before-detailed-review) before detailed investigation or delegation. Continue with the impact-based review and visual comparison procedure in [REVIEWING.md](../../../REVIEWING.md); contribution requirements live in [CONTRIBUTING.md](../../../CONTRIBUTING.md).

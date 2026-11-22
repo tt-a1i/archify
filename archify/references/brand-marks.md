@@ -1,5 +1,31 @@
 # Brand marks
 
+> **Trust boundary.** The authored brand URL is the initial untrusted input.
+> After the first response, redirect locations (`Location` headers), the
+> `finalUrl` of the page fetch, and any favicon `href` values found in the
+> fetched page's HTML head also become request targets and are themselves
+> untrusted. The HTTP client treats every URL in this chain as untrusted and
+> enforces:
+> - **Byte caps**: `MAX_IMAGE_BYTES = 1024 * 1024` (1 MB) for icons;
+>   `MAX_HTML_BYTES = 256 * 1024` (256 KB) for favicon head reads.
+> - **Timeout** (default 8 s; `ARCHIFY_BRAND_CAPTURE_TIMEOUT_MS` overrides in
+>   the range `[100, 30000]`).
+> - **Content-encoding forced to `identity`** (no compressed body to decode).
+> - **DNS-pinned lookup** — the socket opens against the *exact* resolved
+>   address that passed validation, closing the TOCTOU window between
+>   hostname check and socket open.
+> - **Content-type allowlist** for icon responses
+>   (`image/png`, `image/jpeg`, `image/webp`, `image/x-icon`,
+>   `image/vnd.microsoft.icon`). The favicon signature is then matched
+>   against the declared type before any bytes are hashed or stored, so a
+>   hostile page cannot swap a script payload into a permitted MIME slot.
+> - **Length- and encoding-bounded parsing** before any artifact is hashed
+>   or stored.
+>
+> A fetched page can choose the next favicon URL through its HTML head. The
+> same URL validation, response-type checks, and byte limits apply to that
+> request before its bytes are hashed and embedded.
+
 Use a brand mark only when a real product, provider, model family, channel, or
 service identity helps the reader. Semantic `type` still explains what the node
 does; `brand` explains whose product it is.
@@ -108,6 +134,13 @@ coding is closed and rejected explicitly. This keeps the existing byte limits
 and pinned digest tied to the unencoded representation. A later usable icon may
 still succeed; otherwise an encoding error is retained instead of being hidden
 by an unrelated favicon 404.
+
+WebP capture checks the declared RIFF range, chunk headers, payload bounds and
+required padding space. Still images need nonempty VP8/VP8L data; each ANMF
+frame needs bounded subchunks and nonempty image data after its frame header.
+Unknown chunks and bytes beyond the RIFF range remain accepted, and the digest
+covers the complete original file. These are container checks, not full codec,
+pixel, feature-flag or chunk-order validation.
 
 The final artifact never fetches a brand asset when opened. Preset vectors and
 digest-verified captured site icons remain embedded in SVG, PNG, WebP, JPEG,

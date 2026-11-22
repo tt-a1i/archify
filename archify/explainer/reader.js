@@ -11,6 +11,8 @@
   const all = (selector, within = document) => [...within.querySelectorAll(selector)];
   let toastTimer;
   function notify(text) { const toast=byId('toast');toast.textContent=text;toast.classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove('visible'),3000); }
+  // Call during user activation; async also routes unavailable APIs and synchronous throws to failure handlers.
+  async function copyText(text) { await navigator.clipboard.writeText(text); }
   // Measured board layout. Each panel is measured at every column width, then each column template is
   // simulated and the one with the least page height and blank area wins. Panels keep source order on
   // a 1px row grid, so the DOM and reading order never change.
@@ -50,21 +52,24 @@
     const items = panels.map(panel=>{
       const fixed = Number(panel.dataset.spanFixed) || 0;
       const wide = fixed >= 9 || Number((panel.className.match(/\bspan(\d+)\b/) || [])[1]) >= 9;
-      const min = Math.max(4,Number(panel.dataset.spanMin) || 4,fixed && fixed < 9 ? fixed : 0,readableSpan(panel));
+      const min = fixed || Math.max(4,Number(panel.dataset.spanMin) || 4,readableSpan(panel));
       const height = {}, fits = {};
-      for (const span of SPANS) {
+      // Authored widths are exact, including widths outside the automatic templates.
+      // Narrow tables and code keep their local scrolling instead of widening the panel.
+      for (const span of fixed ? [fixed] : SPANS) {
         panel.style.width = px(span) + 'px';
         height[span] = Math.ceil(panel.getBoundingClientRect().height);
-        fits[span] = span >= min && !all('.table-scroll,.diff-scroll,pre',panel).some(element=>element.scrollWidth > element.clientWidth + 1);
+        fits[span] = fixed ? true : span >= min && !all('.table-scroll,.diff-scroll,pre',panel).some(element=>element.scrollWidth > element.clientWidth + 1);
       }
       panel.style.width = '';
-      return {panel,wide,height,fits,text:panel.dataset.measure === 'text'};
+      return {panel,fixed,wide,height,fits,text:panel.dataset.measure === 'text'};
     });
     board.classList.remove('measuring');
     const width = board.clientWidth;
     const excess = (item,span) => item.text ? Math.max(0,px(span) - 720) / 720 * px(span) * item.height[span] * .6 : 0;
     // One set of column lines per section. Panels fill the shortest fitting column in source
-    // order; a panel that fits no column takes the full width and closes the section above it. The
+    // order; a panel that fits no column closes the section above it and uses its authored width,
+    // or the full width when automatic. The
     // last panel of every column stretches to the section bottom, so column edges and bottoms align.
     function simulate(template, section, forced = []) {
       const lines = template.reduce((acc,span)=>[...acc,acc[acc.length - 1] + span],[1]);
@@ -75,7 +80,7 @@
       const close = () => {
         // A conclusion alone in its section takes the full width rather than leaving blank columns beside it.
         const alone = last.filter(Boolean);
-        if (alone.length === 1 && alone[0] === placed[0] && placed.length === 1 && template.length > 1) {
+        if (alone.length === 1 && !alone[0].item.fixed && alone[0] === placed[0] && placed.length === 1 && template.length > 1) {
           Object.assign(alone[0],{line:1,span:12,height:alone[0].item.height[12]});
           cursor += alone[0].height + gap;
           open();
@@ -98,9 +103,10 @@
         if (!choices.length) {
           chosen.push(0);
           close();
-          placed.push({item,line:1,span:12,top:cursor,height:item.height[12]});
-          wide += excess(item,12);
-          cursor += item.height[12] + gap;
+          const span = item.fixed || 12;
+          placed.push({item,line:1,span,top:cursor,height:item.height[span]});
+          wide += excess(item,span);
+          cursor += item.height[span] + gap;
           continue;
         }
         // Reading order is top to bottom, then left to right: a panel never starts above the previous
@@ -203,15 +209,24 @@
       const widened = smallest > 0 && smallest < minimumText && needed <= preview.clientWidth;
       if (widened) preview.style.setProperty('--native-width',Math.ceil(needed / 1.25) + 'px');
       const insufficient = smallest > 0 && smallest < minimumText && !widened;
-      if (insufficient) {
-        preview.dataset.diagramRequiredWidth = String(Math.ceil(svg.getBoundingClientRect().width * minimumText / smallest));
+      // On a phone, preserve the reading floor inside a local scroll surface.
+      // Desktop keeps the complete-fit contract and its actionable fit warning.
+      const scrolling = insufficient && window.innerWidth <= 760;
+      if (scrolling) {
+        svg.style.minWidth = Math.ceil(needed) + 'px';
+        preview.tabIndex = 0;
+      } else preview.removeAttribute('tabindex');
+      if (insufficient && !scrolling) {
+        preview.dataset.diagramRequiredWidth = String(Math.ceil(needed));
       } else delete preview.dataset.diagramRequiredWidth;
-      preview.dataset.diagramFit = insufficient ? 'insufficient' : 'fit';
+      preview.dataset.diagramFit = scrolling ? 'scroll' : insufficient ? 'insufficient' : 'fit';
       preview.dataset.diagramMinimumText = String(minimumText);
       const status = svg.closest('.block-diagram').querySelector('.diagram-fit-status');
       changed ||= status.hidden === insufficient;
       status.hidden = !insufficient;
-      status.textContent = insufficient ? say('This diagram cannot fit this page width with readable text. Open the interactive view to inspect it.','此图在当前页宽下放不下且文字会太小，请打开交互图查看。') : '';
+      status.textContent = scrolling
+        ? say('Scroll the diagram sideways, or focus it and use the arrow keys. Open the interactive view for the full diagram.','左右滑动查看图表；也可聚焦图框后按方向键。打开交互图可查看全图。')
+        : insufficient ? say('This diagram cannot fit this page width with readable text. Open the interactive view to inspect it.','此图在当前页宽下放不下且文字会太小，请打开交互图查看。') : '';
     });
     return changed;
   }
@@ -254,25 +269,85 @@
   try { const saved = localStorage.getItem('archify-explainer-style'); if (saved) setStyle(saved,false); } catch {}
   toolMenu(document.querySelector('.style-menu'),item=>setStyle(item.dataset.styleChoice,true),()=>styleItems.find(item=>item.getAttribute('aria-checked') === 'true'));
   toolMenu(document.querySelector('.export-menu'),item=>item.matches('[data-print]') ? window.print() : exportImage(item.dataset.exportImage));
-  // Long image: the page as laid out now, drawn through an SVG foreignObject at twice the pixel
+  // Long image: keep complete tables and code in a static image, at up to twice the pixel
   // density. Controls, dialogs and walk-through bars are left out. Browsers that refuse to export a
   // foreignObject canvas (Safari) get a notice pointing to Print / PDF.
   async function pageImage(format = 'png') {
-    const shell = document.querySelector('.shell'), width = document.documentElement.clientWidth, height = Math.ceil(shell.getBoundingClientRect().height + 48);
-    const clone = root.cloneNode(true);
-    clone.querySelectorAll('script,dialog,#toast,.skip-link,.tools,.ask-button,.ask-floating,.walk-bar,.walk-start,.interactive,.diagram-fit-status').forEach(element=>element.remove());
+    const shell = document.querySelector('.shell'), liveWidth = document.documentElement.clientWidth;
+    let width = liveWidth + Math.ceil(Math.max(0,...all('.table-scroll').map(table=>table.scrollWidth - table.clientWidth)));
+    let height = Math.ceil(shell.getBoundingClientRect().height + 48);
+    let clone = root.cloneNode(true);
+    const liveCode = all('pre',shell);
+    const exportCode = all('pre',clone.querySelector('.shell')).filter((pre,index)=>liveCode[index].scrollWidth > liveCode[index].clientWidth + 1);
+    exportCode.forEach(pre=>pre.classList.add('export-code'));
+    const liveDiff = all('.diff-scroll');
+    const exportDiff = all('.diff-scroll',clone).filter((diff,index)=>liveDiff[index].scrollWidth > liveDiff[index].clientWidth + 1);
+    exportDiff.forEach(diff=>diff.classList.add('export-diff'));
+    // Wrapping changes panel height; release measured row spans in the export only.
+    if (exportCode.length || exportDiff.length) {
+      const copyBoard = clone.querySelector('.board');
+      copyBoard.classList.remove('measured');
+      all(':scope>.panel',copyBoard).forEach(panel=>panel.style.gridRow='');
+      all('.board-spacer',copyBoard).forEach(spacer=>spacer.remove());
+    }
+    if (width > liveWidth) {
+      const copyShell = clone.querySelector('.shell'), copyBoard = clone.querySelector('.board');
+      copyShell.style.width = `${shell.getBoundingClientRect().width + width - liveWidth}px`;
+      copyShell.style.maxWidth = 'none';
+      copyBoard.style.display = 'flex';
+      copyBoard.style.flexDirection = 'column';
+      all('.board-spacer',copyBoard).forEach(spacer=>spacer.remove());
+    }
+    clone.querySelectorAll('script,dialog,#toast,.skip-link,.tools,.ask-button,.ask-floating,.walk-bar,.walk-start,.interactive,.diagram-fit-status,.source-card').forEach(element=>element.remove());
     clone.querySelectorAll('.reader-highlight').forEach(element=>element.classList.remove('reader-highlight'));
     clone.querySelectorAll('.focusing').forEach(element=>element.classList.remove('focusing'));
+    // An exported image has no scroll interaction; retain the complete overview.
+    clone.querySelectorAll('.diagram-preview>svg').forEach(svg=>{svg.style.minWidth='0px';});
     // Inside a foreignObject the page's <html> is not :root, so theme and style rules would drop out;
     // the root's own attribute selects the same element with the same specificity.
     const sheet = clone.querySelector('head>style'); if (sheet) sheet.textContent = sheet.textContent.replace(/:root\b/g,'[data-archify-artifact]');
+    if (exportCode.length && sheet) sheet.textContent += '.export-code{overflow:visible;white-space:pre-wrap}.export-code code{white-space:pre-wrap;overflow-wrap:anywhere}';
+    if (exportDiff.length && sheet) sheet.textContent += '.export-diff{overflow:visible}.export-diff code{white-space:pre-wrap;overflow-wrap:anywhere}';
     clone.style.width = `${width}px`;
+    if (width > liveWidth) {
+      // Responsive padding and type change at the export width; measure in that viewport.
+      const frame = document.createElement('iframe');
+      frame.setAttribute('sandbox','allow-same-origin');
+      frame.style.cssText = `position:fixed;left:-100000px;top:0;width:${width}px;height:900px;border:0;visibility:hidden;pointer-events:none`;
+      const loaded = new Promise(resolve=>frame.addEventListener('load',resolve,{once:true}));
+      frame.srcdoc = '<!doctype html>' + clone.outerHTML;
+      document.body.append(frame);
+      try {
+        await loaded;
+        await frame.contentDocument.fonts.ready;
+        const doc = frame.contentDocument;
+        const remaining = Math.ceil(Math.max(0,...all('.table-scroll',doc).map(table=>table.scrollWidth - table.clientWidth)));
+        if (remaining) {
+          width += remaining;
+          frame.style.width = `${width}px`;
+          doc.documentElement.style.width = `${width}px`;
+          doc.querySelector('.shell').style.width = `${shell.getBoundingClientRect().width + width - liveWidth}px`;
+        }
+        if (all('.table-scroll',doc).some(table=>table.scrollWidth > table.clientWidth + 1)) throw new Error('Export table does not fit');
+        height = Math.ceil(doc.querySelector('.shell').getBoundingClientRect().height + 48);
+        clone = doc.documentElement.cloneNode(true);
+      } finally { frame.remove(); }
+    } else if (exportCode.length || exportDiff.length || clone.querySelector('[data-diagram-fit="scroll"]')) {
+      // Wrapped code/diffs or a full diagram overview change height at the same viewport.
+      // Measure the inert clone synchronously, then remove it before painting.
+      const measuring = document.createElement('div');
+      measuring.style.cssText = `position:fixed;left:-100000px;top:0;width:${width}px;visibility:hidden;pointer-events:none`;
+      measuring.append(clone);
+      document.body.append(measuring);
+      try { height = Math.ceil(clone.querySelector('.shell').getBoundingClientRect().height + 48); }
+      finally { measuring.remove(); }
+    }
     const xhtml = new XMLSerializer().serializeToString(clone);
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><foreignObject x="0" y="0" width="${width}" height="${height}">${xhtml}</foreignObject></svg>`;
     const image = new Image();
     image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
     await image.decode();
-    const scale = Math.min(2,16000 / height), canvas = document.createElement('canvas');
+    const scale = Math.min(2,16000 / Math.max(width,height)), canvas = document.createElement('canvas');
     canvas.width = Math.round(width * scale); canvas.height = Math.round(height * scale);
     const context = canvas.getContext('2d');
     context.fillStyle = getComputedStyle(document.body).backgroundColor; context.fillRect(0,0,canvas.width,canvas.height);
@@ -325,6 +400,8 @@
     const frame = document.createElement('iframe'); frame.addEventListener('load',()=>{viewerDialog.dataset.nativeLoaded = id;}); frame.title = byId('diagram-dialog-title').textContent;
     frame.setAttribute('sandbox','allow-scripts allow-downloads allow-modals');
     const script = `<script>(()=>{
+      // The page around this Viewer names the diagram, so the preset's standalone badges stay off.
+      document.documentElement.dataset.hosted='explainer';
       const token=${JSON.stringify(token)};
       let pending=null;
       const settle=data=>requestAnimationFrame(()=>{
@@ -363,7 +440,7 @@
     viewerDialog.append(frame);
     nativeHtml(diagram).then(html=>{
       if (viewer?.frame !== frame) return;
-      const end = html.toLowerCase().lastIndexOf('</body>');
+      const end = html.toLowerCase().lastIndexOf('<\/body>');
       frame.srcdoc = end < 0 ? html + script : html.slice(0,end) + script + html.slice(end);
     },()=>notify(say('This diagram could not be opened.','无法打开此交互图。')));
   }
@@ -380,8 +457,8 @@
   all('[data-open-diagram]').forEach(button=>button.addEventListener('click',()=>openViewer(button.dataset.openDiagram,'',button)));
   // A node clicked in the preview opens the interactive view focused on it, with its links.
   all('.diagram-preview').forEach(preview=>preview.addEventListener('click',event=>{
-    const node = event.target.closest('[data-node-id]')?.dataset.nodeId, block = preview.closest('.block');
-    if (node) openViewer(block.id,`focus=${encodeURIComponent(node)}`,block.querySelector('[data-open-diagram]'));
+    const node = event.target.closest('[data-node-id]'), block = preview.closest('.block');
+    if (node) openViewer(block.id,`focus=${encodeURIComponent(node.dataset.nodeId)}`,node.hasAttribute('tabindex') ? node : block.querySelector('[data-open-diagram]'));
   }));
   // One spotlight for every text-to-diagram link: the named nodes and edges stay lit, the rest dims.
   const previewOf = id => byId(id)?.querySelector('.diagram-preview');
@@ -523,37 +600,45 @@
   }
   all('[data-copy]').forEach(button=>button.addEventListener('click',()=>{
     const text = button.closest('figure').querySelector('pre code').textContent;
-    Promise.resolve(navigator.clipboard?.writeText(text)).then(()=>{button.textContent = words.copied;setTimeout(()=>{button.textContent = words.copy;},1600);},()=>notify(say('Copy failed.','复制失败。')));
+    copyText(text).then(()=>{button.textContent = words.copied;setTimeout(()=>{button.textContent = words.copy;},1600);},()=>notify(say('Copy failed. Select the code and copy it manually.','复制失败，请选中代码后手动复制。')));
   }));
   // Follow-up questions: a reader asks about a panel, or about selected text in it, and copies a
   // message that names the page, the panel ID and the quote, so the agent can revise just that panel.
   function setupAsk() {
     const dialog = document.createElement('dialog'); dialog.className = 'ask-dialog';
     const mac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
-    dialog.innerHTML = `<form method="dialog"><header><div><h2 id="ask-title">${words.ask}</h2><p class="ask-where"></p></div><button type="button" class="ask-close" data-ask-cancel aria-label="${words.askCancel}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button></header><blockquote hidden></blockquote><div class="ask-chips" role="group" aria-label="${words.askQuestion}">${words.askChips.map(chip=>`<button type="button" data-chip>${chip}</button>`).join('')}</div><textarea rows="4" aria-labelledby="ask-title" placeholder="${words.askPlaceholder}"></textarea><footer><p class="ask-note">${words.askNote}</p><button type="button" data-ask-cancel>${words.askCancel}</button><button type="submit" class="primary">${words.askCopy}<kbd>${mac ? '⌘↵' : 'Ctrl ↵'}</kbd></button></footer></form>`;
+    dialog.innerHTML = `<form method="dialog"><header><div><h2 id="ask-title">${words.ask}</h2><p class="ask-where"></p></div><button type="button" class="ask-close" data-ask-cancel aria-label="${words.askCancel}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button></header><blockquote hidden></blockquote><div class="ask-chips" role="group" aria-label="${words.askQuestion}">${words.askChips.map(chip=>`<button type="button" data-chip>${chip}</button>`).join('')}</div><textarea rows="4" aria-labelledby="ask-title" placeholder="${words.askPlaceholder}"></textarea><footer><p class="ask-note" role="status">${words.askNote}</p><button type="button" data-ask-cancel>${words.askCancel}</button><button type="submit" class="primary">${words.askCopy}<kbd>${mac ? '⌘↵' : 'Ctrl ↵'}</kbd></button></footer></form>`;
     document.body.append(dialog);
-    const area = dialog.querySelector('textarea'), quoteBox = dialog.querySelector('blockquote');
-    let context = null;
+    const area = dialog.querySelector('textarea'), quoteBox = dialog.querySelector('blockquote'), note = dialog.querySelector('.ask-note');
+    // The generated message left in the textarea after a failed copy; a retry copies it unchanged,
+    // while editing or clicking a chip strips its outer envelope instead of nesting a second copy.
+    let context = null, manual = null;
     const open = (panel, quote = '') => {
       const number = panel.id === 'answer' ? words.answer : panel.querySelector('.panel-id')?.textContent.trim();
       const title = panel.id === 'answer' ? words.answer : panel.dataset.title || panel.querySelector('h2')?.textContent.trim();
-      context = {panel,quote,number,title};
+      context = {panel,quote,number,title}; manual = null;
       dialog.querySelector('.ask-where').textContent = panel.id === 'answer' ? title : say(`Panel ${number} · ${title}`,`面板 ${number} · ${title}`);
       all('[data-chip]',dialog).forEach(chip=>chip.setAttribute('aria-pressed','false'));
       quoteBox.hidden = !quote; quoteBox.textContent = quote;
-      area.value = ''; dialog.showModal(); area.focus();
+      area.value = ''; note.textContent = words.askNote; dialog.showModal(); area.focus();
     };
+    function questionBody() {
+      const value = area.value;
+      if (!manual) return value;
+      const body = manual.prefix && value.startsWith(manual.prefix) ? value.slice(manual.prefix.length) : value;
+      return manual.suffix && body.endsWith(manual.suffix) ? body.slice(0, -manual.suffix.length) : body;
+    }
     // A suggested question is added once; choosing it again takes it back out.
     dialog.querySelectorAll('[data-chip]').forEach(chip=>chip.addEventListener('click',()=>{
-      const lines = area.value.split('\n').filter(line=>line.trim()), on = !lines.includes(chip.textContent);
+      const lines = questionBody().split('\n').filter(line=>line.trim()), on = !lines.includes(chip.textContent);
+      manual = null;
       area.value = (on ? [...lines,chip.textContent] : lines.filter(line=>line !== chip.textContent)).join('\n');
       chip.setAttribute('aria-pressed',String(on)); area.focus();
     }));
     area.addEventListener('keydown',event=>{ if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) { event.preventDefault(); dialog.querySelector('form').requestSubmit(); } });
     dialog.querySelectorAll('[data-ask-cancel]').forEach(button=>button.addEventListener('click',()=>dialog.close()));
-    dialog.querySelector('form').addEventListener('submit',event=>{
-      event.preventDefault();
-      const {panel,quote,number,title} = context, page = document.querySelector('h1')?.textContent.trim();
+    function buildMessage(question) {
+      const {panel,quote,number,title} = context, page = document.querySelector('.masthead')?.dataset.title || document.querySelector('h1')?.textContent.trim();
       const file = location.protocol === 'file:' ? decodeURIComponent(location.pathname) : location.href.split('#')[0];
       const quoteMark = text => english ? `"${text}"` : `「${text}」`;
       const lines = [
@@ -561,11 +646,15 @@
         `${words.askFile}${say(': ','：')}${file}`,
         `${words.askWhere}${say(': ','：')}${panel.id === 'answer' ? title : say(`Panel ${number} ${quoteMark(title)}`,`面板 ${number}${quoteMark(title)}`)}${say(` (ID: ${panel.id})`,`（ID: ${panel.id}）`)}`,
         ...(quote ? [`${words.askQuoteLabel}${say(': ','：')}${quoteMark(quote)}`] : []),
-        `${words.askQuestion}${say(': ','：')}${area.value.trim() || words.askChips[0]}`,
-        ...(panel.id === 'answer' ? [] : [words.askPatch]),
       ];
-      const text = lines.join('\n');
-      Promise.resolve(navigator.clipboard?.writeText(text)).then(()=>{ dialog.close(); notify(words.askCopied); },()=>{ area.value = text; area.select(); });
+      const prefix = `${lines.join('\n')}\n${words.askQuestion}${say(': ','：')}`;
+      const suffix = panel.id === 'answer' ? '' : `\n${words.askPatch}`;
+      return { prefix, suffix, text: `${prefix}${question}${suffix}` };
+    }
+    dialog.querySelector('form').addEventListener('submit',event=>{
+      event.preventDefault();
+      const payload = manual !== null && area.value === manual.text ? manual : buildMessage(questionBody().trim() || words.askChips[0]);
+      copyText(payload.text).then(()=>{ manual = null; dialog.close(); notify(words.askCopied); },()=>{ manual = payload; area.value = payload.text; area.focus(); area.select(); note.textContent = say('Copy failed. The text is selected; copy it manually.','复制失败，已选中文本，请手动复制。'); });
     });
     all('.panel').forEach(panel=>{
       const button = document.createElement('button'); button.type = 'button'; button.className = 'ask-button interactive'; button.textContent = words.ask;
@@ -598,47 +687,73 @@
   };
   function setupSourceCards() {
     const sources = prepared.preparedSources?.sources || {};
-    const card = document.createElement('div'); card.className = 'source-card'; card.hidden = true; card.setAttribute('role','tooltip');
+    const card = document.createElement('div'); card.className = 'source-card'; card.hidden = true; card.setAttribute('role','group'); card.setAttribute('aria-label',say('Source details','来源详情'));
     document.body.append(card);
-    let hideTimer;
-    const hide = () => { hideTimer = setTimeout(()=>{ card.hidden = true; },160); };
+    let hideTimer, opener;
+    const hide = () => { clearTimeout(hideTimer); hideTimer = setTimeout(()=>{ if (!card.contains(document.activeElement)) card.hidden = true; },160); };
     card.addEventListener('mouseenter',()=>clearTimeout(hideTimer)); card.addEventListener('mouseleave',hide);
-    const show = (link, id = decodeURIComponent(link.getAttribute('href').slice('#source-'.length))) => {
-      const source = sources[id] || prepared.document?.sources?.find(entry=>entry.id === id);
-      if (!source) return;
+    card.addEventListener('focusin',()=>clearTimeout(hideTimer)); card.addEventListener('focusout',hide);
+    const show = (link, id = decodeURIComponent(link.getAttribute('href').slice('#source-'.length)), blockId) => {
+      const content = blockId && byId(blockId);
+      const source = sources[id] || prepared.document?.sources?.find(entry=>entry.id === id) || {};
+      if (!Object.keys(source).length && !content) return;
       clearTimeout(hideTimer);
+      opener = link;
       const escapeText = value => String(value ?? '').replace(/[&<>"]/g,character=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[character]));
       // A repository source shows its pinned excerpt; a web page its host; any other note its text.
       const host = (()=>{ try { return new URL(source.url).host.replace(/^www\./,''); } catch { return ''; } })();
-      const where = source.path ? `${source.path}${source.lines ? `:${source.lines.join('–')}` : ''}` : host;
+      const where = source.path ? `${source.path}${source.lines ? `:${source.lines.join('–')}` : ''}` : host || (content ? source.title || '' : '');
       const kind = source.path ? 'code' : source.url ? 'web' : 'note';
       const lines = source.path && typeof source.text === 'string' ? source.text.split('\n') : [];
       const first = source.lines?.[0] || 1;
       const excerpt = lines.length ? `<pre><code>${lines.slice(0,14).map((line,index)=>`<span class="line"><i>${first + index}</i>${escapeText(line) || ' '}</span>`).join('')}${lines.length > 14 ? `<span class="line more"><i></i>…</span>` : ''}</code></pre>` : '';
       const note = !source.path && (source.text || source.method) ? `<p class="source-note">${escapeText(source.text || '')}${source.method ? `<span>${escapeText(source.method)}</span>` : ''}</p>` : '';
+      const contentNote = content ? `<p class="source-note source-content">${escapeText((content.innerText || content.textContent).trim())}</p>` : '';
+      const title = content ? link.getAttribute('data-node-label') || content.closest('.panel')?.querySelector('h2')?.textContent : source.title || source.path || id;
       const number = /^\d+$/.test(link.textContent.trim()) ? link.textContent.trim() : '';
-      card.innerHTML = `<header><span class="source-icon" data-kind="${kind}" aria-hidden="true">${sourceIcons[kind]}</span><span class="source-head"><b>${escapeText(source.title || source.path || id)}</b>${where ? `<span class="source-where">${escapeText(where)}</span>` : ''}</span>${number ? `<span class="source-number">${number}</span>` : ''}</header>${excerpt}${note}${source.revision || source.url ? `<footer>${source.revision ? `<span class="source-pin">${say('Pinned at','固定在')} <code>${escapeText(String(source.revision).slice(0,7))}</code></span>` : '<span></span>'}${source.url ? `<a href="${escapeText(source.url)}" target="_blank" rel="noopener noreferrer">${say('Open source','打开原文')} ↗</a>` : ''}</footer>` : ''}`;
+      card.innerHTML = `<header><span class="source-icon" data-kind="${kind}" aria-hidden="true">${sourceIcons[kind]}</span><span class="source-head"><b>${escapeText(title)}</b>${where ? `<span class="source-where">${escapeText(where)}</span>` : ''}</span>${number ? `<span class="source-number">${number}</span>` : ''}</header>${contentNote}${excerpt}${note}${source.revision || source.url || content ? `<footer>${content ? `<a href="#${encodeURIComponent(blockId)}">${say('Read this paragraph','阅读这段')} ↗</a>` : ''}${source.revision ? `<span class="source-pin">${say('Pinned at','固定在')} <code>${escapeText(String(source.revision).slice(0,7))}</code></span>` : ''}${source.url ? `<a href="${escapeText(source.url)}" target="_blank" rel="noopener noreferrer">${say('Open source','打开原文')} ↗</a>` : ''}</footer>` : ''}`;
       card.hidden = false;
+      card.scrollTop = 0;
       const box = link.getBoundingClientRect(), width = Math.min(520,innerWidth - 24);
       card.style.width = `${width}px`;
       card.style.left = `${Math.max(12,Math.min(innerWidth - width - 12,box.left - 24)) + scrollX}px`;
       const below = box.bottom + 8 + card.offsetHeight < innerHeight;
-      card.style.top = `${(below ? box.bottom + 8 : box.top - 8 - card.offsetHeight) + scrollY}px`;
+      const top = below ? box.bottom + 8 : box.top - 8 - card.offsetHeight;
+      card.style.top = `${Math.max(12,Math.min(innerHeight - card.offsetHeight - 12,top)) + scrollY}px`;
     };
     all('.cite a[href^="#source-"]').forEach(link=>{
       link.addEventListener('mouseenter',()=>show(link)); link.addEventListener('focus',()=>show(link));
       link.addEventListener('mouseleave',hide); link.addEventListener('blur',hide);
     });
     // A diagram node tied to a source opens the same card, so a code diagram doubles as a code tour.
-    all('.diagram-preview[data-node-sources]').forEach(preview=>{
-      let map = {}; try { map = JSON.parse(preview.dataset.nodeSources); } catch {}
+    all('.diagram-preview[data-node-sources],.diagram-preview[data-node-blocks]').forEach(preview=>{
+      let map = {}, blocks = {}; try { map = JSON.parse(preview.dataset.nodeSources || '{}'); blocks = JSON.parse(preview.dataset.nodeBlocks || '{}'); } catch {}
       all('[data-node-id]',preview).forEach(node=>{
-        const id = map[node.dataset.nodeId]; if (!id) return;
+        const nodeId = node.dataset.nodeId;
+        const id = Object.hasOwn(map,nodeId) ? map[nodeId] : '', blockId = Object.hasOwn(blocks,nodeId) ? blocks[nodeId] : ''; if (!id && !blockId) return;
         node.classList.add('has-source');
-        node.addEventListener('mouseenter',()=>show(node,id)); node.addEventListener('mouseleave',hide);
+        node.addEventListener('mouseenter',()=>show(node,id || '',blockId)); node.addEventListener('mouseleave',hide);
+        node.addEventListener('focus',()=>show(node,id || '',blockId)); node.addEventListener('blur',hide);
+        if (blockId) {
+          node.setAttribute('tabindex','0'); node.setAttribute('role','button');
+          node.setAttribute('aria-label',node.getAttribute('data-node-label') || node.dataset.nodeId);
+          node.setAttribute('aria-describedby',blockId);
+          node.addEventListener('keydown',event=>{ if (event.key==='Enter'||event.key===' ') { event.preventDefault(); node.dispatchEvent(new MouseEvent('click',{bubbles:true})); } });
+        }
       });
     });
-    document.addEventListener('keydown',event=>{ if (event.key === 'Escape') card.hidden = true; });
+    document.addEventListener('keydown',event=>{
+      if (event.key === 'Escape') {
+        if (card.contains(document.activeElement)) opener?.focus();
+        clearTimeout(hideTimer); card.hidden = true;
+      } else if (event.key === 'Tab' && !card.hidden && opener) {
+        // Visit the floating links after their opener, then resume the document's normal tab order.
+        const links = all('a[href]',card);
+        if (!event.shiftKey && event.target === opener && links.length) { event.preventDefault(); links[0].focus(); }
+        else if (event.shiftKey && event.target === links[0]) { event.preventDefault(); opener.focus(); }
+        else if (!event.shiftKey && event.target === links.at(-1)) { opener.focus(); card.hidden = true; }
+      }
+    });
   }
   // Checklist ticks are the reader's own progress; keep them per page and block across reloads.
   all('.checklist').forEach(list=>{
@@ -658,6 +773,31 @@
   setupWalks();
   setupAsk();
   setupSourceCards();
+  all('[data-feedback-menu]').forEach(menu=>{
+    const summary = menu.querySelector('summary'), copyBtn = menu.querySelector('[data-copy-email]');
+    let copyTimer;
+    document.addEventListener('click',event=>{ if (menu.open && !menu.contains(event.target)) menu.open = false; });
+    menu.addEventListener('keydown',event=>{
+      if (event.key === 'Escape' && menu.open) { event.stopPropagation(); menu.open = false; summary?.focus({preventScroll:true}); }
+    });
+    if (copyBtn) {
+      const label = copyBtn.querySelector('[data-copy-label]'), initialText = label?.textContent || '';
+      copyBtn.addEventListener('click',async()=>{
+        const email = copyBtn.dataset.copyEmail || '';
+        let ok = false;
+        try { await copyText(email); ok = true; } catch {
+          const area = document.createElement('textarea'); area.value = email; area.setAttribute('readonly','');
+          area.style.cssText = 'position:fixed;opacity:0;pointer-events:none'; document.body.appendChild(area); area.select();
+          try { ok = document.execCommand('copy'); } catch {} area.remove();
+        }
+        if (!label || !ok) return;
+        label.textContent = words.copied;
+        copyBtn.classList.add('is-copied');
+        clearTimeout(copyTimer);
+        copyTimer = setTimeout(()=>{ label.textContent = initialText; copyBtn.classList.remove('is-copied'); },1800);
+      });
+    }
+  });
   layoutBoard();
   const relayout = () => { layoutBoard(); ensureDiagramReadability(); };
   Promise.resolve(document.fonts?.ready).then(()=>requestAnimationFrame(()=>requestAnimationFrame(relayout)));

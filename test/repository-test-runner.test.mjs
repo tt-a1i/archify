@@ -24,14 +24,14 @@ ${runtime.parallelism === undefined ? '' : `require('node:os').availableParallel
 Object.defineProperty(process.versions, 'node', { value: ${JSON.stringify(nodeVersion)} });
 childProcess.spawnSync = (command, args, options) => {
   const cache = options.env.ARCHIFY_UPDATE_CACHE_DIRECTORY;
-  console.log(JSON.stringify({ command, args, cwd: options.cwd, cache, cacheExists: fs.existsSync(cache) }));
+  console.log(JSON.stringify({ command, args, cwd: options.cwd, cache, compileCache: options.env.NODE_COMPILE_CACHE, cacheExists: fs.existsSync(cache) }));
   return ${JSON.stringify(outcome)};
 };
 require('node:module').syncBuiltinESMExports();
 `);
   return spawnSync(process.execPath, ['--require', preload, runner, ...args], {
     cwd: directory, encoding: 'utf8',
-    env: { ...process.env, ...(runtime.chrome === undefined ? {} : { ARCHIFY_CHROME: runtime.chrome }), ARCHIFY_UPDATE_CACHE_DIRECTORY: path.join(directory, 'user-cache') },
+    env: { ...process.env, ...runtime.env, ...(runtime.chrome === undefined ? {} : { ARCHIFY_CHROME: runtime.chrome }), ARCHIFY_UPDATE_CACHE_DIRECTORY: path.join(directory, 'user-cache') },
   });
 }
 
@@ -47,6 +47,24 @@ test('focused runner selects exact files from an unrelated cwd and cleans isolat
   assert.match(path.basename(call.cache), /^archify-test-update-/);
   assert.equal(fs.existsSync(call.cache), false);
   assert.match(result.stderr, supportsConcurrency ? /2 files, concurrency 3/ : /2 files, concurrency Node default/);
+});
+
+test('the default compilation cache is temporary and respects caller settings', (t) => {
+  const args = ['test/repository-test-runner.test.mjs'];
+  const probe = (env) => {
+    const result = interceptedRun(t, args, { status: 0 }, process.versions.node, {
+      env: { NODE_COMPILE_CACHE: undefined, NODE_OPTIONS: undefined, NODE_V8_COVERAGE: undefined, ...env },
+    });
+    assert.equal(result.status, 0, result.stderr);
+    return JSON.parse(result.stdout);
+  };
+  const isolated = probe({});
+  assert.equal(isolated.compileCache, path.join(isolated.cache, 'compile'));
+  assert.equal(fs.existsSync(isolated.cache), false);
+  const ownedCache = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-caller-cache-'));
+  t.after(() => fs.rmSync(ownedCache, { recursive: true, force: true }));
+  assert.equal(probe({ NODE_COMPILE_CACHE: ownedCache }).compileCache, ownedCache);
+  assert.equal(probe({ NODE_V8_COVERAGE: ownedCache }).compileCache, undefined);
 });
 
 test('supported older Node retains default operation and rejects explicit concurrency', (t) => {
@@ -128,7 +146,7 @@ test('focus alias requires files and invalid options never launch a child', (t) 
 
 test('repository shards execute exactly their listed inventory and together cover every suite once', (t) => {
   const full = interceptedRun(t, ['--list']).stdout.trim().split('\n');
-  for (const count of [2, 3]) {
+  for (const count of [2, 3, 4]) {
     const shards = [];
     for (let index = 1; index <= count; index++) {
       const argument = `--shard=${index}/${count}`;

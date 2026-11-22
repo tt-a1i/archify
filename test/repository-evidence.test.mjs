@@ -401,7 +401,7 @@ test('local-only preserves root, origin, commit, blob, path and line checks', ()
     ['repository-evidence/root-required', () => {}, []],
     ['repository-evidence/revision-unavailable', (diagram) => { diagram.meta.repository.revision = '0'.repeat(40); }],
     ['repository-evidence/file-missing', (diagram) => { diagram.components[0].sources = [{ path: 'src/missing.js' }]; }],
-    ['repository-evidence/file-missing', (diagram) => { diagram.components[0].sources = [{ path: 'src' }]; }],
+    ['repository-evidence/directory-line', (diagram) => { diagram.components[0].sources = [{ path: 'src', line: 1 }]; }],
     ['repository-evidence/path-escape', (diagram) => { diagram.components[0].sources = [{ path: '../outside.js' }]; }],
     ['repository-evidence/path-escape', (diagram) => { diagram.components[0].sources = [{ path: '.git/config' }]; }],
     ['repository-evidence/line-out-of-range', (diagram) => { diagram.components[0].sources = [{ path: 'src/router.js', line: 4 }]; }],
@@ -767,6 +767,27 @@ test('live preview forwards repo-root and publishes only verified evidence', { t
   } finally {
     await preview.stop();
   }
+});
+
+test('every unresolved source reference is reported in one run, with the exact end_line to use', (t) => {
+  const data = fixture();
+  t.after(() => fs.rmSync(data.root, { recursive: true, force: true }));
+  data.diagram.components[0].sources = [
+    { path: 'src/router.js', line: 2, end_line: 9 },
+    { path: 'src/store.js', line: 5 },
+    { path: 'src/missing.js' },
+  ];
+  fs.writeFileSync(data.input, JSON.stringify(data.diagram));
+  const result = run(['validate', 'architecture', data.input, '--repo-root', data.root, '--json']);
+  assert.equal(result.status, 1);
+  const report = JSON.parse(result.stdout);
+  assert.deepEqual(report.diagnostics.map(({ code, subject }) => [code, subject.path]), [
+    ['repository-evidence/line-out-of-range', '/components/0/sources/0'],
+    ['repository-evidence/line-out-of-range', '/components/0/sources/1'],
+    ['repository-evidence/file-missing', '/components/0/sources/2/path'],
+  ]);
+  assert.match(report.diagnostics[0].supportedFixes[0], /set end_line to 3/);
+  assert.match(report.diagnostics[1].supportedFixes[0], /reread src\/store\.js \(1 lines\)/);
 });
 
 // POSIX permits trailing whitespace in a directory component; it belongs to

@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Platform Overview",
+    "locale": "en",
+    "subtitle": "Single-child sample: click Integrations to open the sibling architecture HTML",
+    "output": "examples/drilldown-platform.html",
+    "quality_profile": "standard",
+    "viewBox": [900, 420]
+  },
+  "components": [
+    {
+      "id": "portal",
+      "type": "frontend",
+      "label": "Customer Portal",
+      "sublabel": "Web / Mobile",
+      "pos": [50, 160],
+      "size": [150, 70]
+    },
+    {
+      "id": "core",
+      "type": "backend",
+      "label": "Core API",
+      "sublabel": "orders / catalog",
+      "pos": [300, 160],
+      "size": [160, 70]
+    },
+    {
+      "id": "integrations",
+      "type": "external",
+      "label": "Integrations",
+      "sublabel": "Click opens sibling HTML",
+      "pos": [560, 160],
+      "size": [190, 70],
+      "tag": "href sugar",
+      "href": "drilldown-integrations.html"
+    },
+    {
+      "id": "store",
+      "type": "database",
+      "label": "Catalog DB",
+      "sublabel": "PostgreSQL",
+      "pos": [300, 300],
+      "size": [160, 70]
+    }
+  ],
+  "connections": [
+    { "from": "portal", "to": "core", "label": "HTTPS", "variant": "emphasis" },
+    { "from": "core", "to": "integrations", "label": "webhooks", "variant": "dashed" },
+    { "from": "core", "to": "store", "label": "SQL", "variant": "default", "labelDy": 24 }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Single-child href",
+      "items": [
+        "Integrations uses href sugar (not a drilldowns array)",
+        "Click the node to open the sibling HTML",
+        "Alt-click focuses Passport without leaving this page"
+      ]
+    }
+  ]
+}

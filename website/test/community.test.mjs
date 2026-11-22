@@ -97,3 +97,24 @@ test('community catalog: every evidence link preserves its registry label and UR
       (entry.evidence || []).map(item => ({ label: `${item.label} ↗`, url: item.url })));
   }
 });
+
+
+test('community sponsors: homepage strip anchor resolves and sponsor links disclose sponsorship', () => {
+  const dom = communityDom();
+  const section = elements(dom, 'section').find((node) => attr(node, 'id') === 'sponsors');
+  assert.ok(section, 'community.html must carry the #sponsors anchor that the homepage strip links to');
+
+  const outbound = elements(section, 'a').filter((node) => (attr(node, 'href') || '').startsWith('https://'));
+  assert.ok(outbound.length >= 7, 'featured partner and six sponsor cards must render outbound links');
+  for (const link of outbound) {
+    assert.equal(attr(link, 'target'), '_blank', 'sponsor links must open externally');
+    assert.ok((attr(link, 'rel') || '').split(/\s+/).includes('sponsored'), 'sponsor links must disclose rel="sponsored"');
+  }
+
+  const homeDom = parse(fs.readFileSync(path.join(dist, 'index.html'), 'utf8'));
+  const strip = elements(homeDom, 'section').find((node) => hasClass(node, 'sponsors-strip'));
+  assert.ok(strip, 'homepage must render the compact sponsors strip');
+  const stripHrefs = elements(strip, 'a').map((node) => attr(node, 'href'));
+  assert.ok(stripHrefs.length > 0 && stripHrefs.every((href) => href === 'community.html#sponsors'),
+    'every strip item must route to community.html#sponsors');
+});

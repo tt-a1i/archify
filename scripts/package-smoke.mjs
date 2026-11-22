@@ -110,6 +110,55 @@ async function verifyPackagedExplainer() {
 
 }
 
+function verifyPackagedStory(){
+  const input=path.join(scratch,'story-native.html'),brief=path.join(scratch,'story-brief.json'),output=path.join(scratch,'story-enhanced.html');
+  const options={cwd:scratch,env:{...process.env,NODE_PATH:'',ARCHIFY_UPDATE_CHECK_DISABLED:'1'}};
+  run(['render','workflow',path.join(skillRoot,'examples/agent-tool-call.workflow.json'),input],options);
+  const draft=JSON.parse(run(['story','draft',input,brief,'--json'],options));
+  if(!draft.ok)throw Error('packaged story draft failed');
+  const facts=JSON.parse(fs.readFileSync(draft.sourceMap,'utf8')),edge=facts.edges[0];
+  fs.writeFileSync(brief,JSON.stringify({version:2,title:'Read the tool handoff',intro:'Establish its context.',outro:'Return to the original graph.',scenes:[{title:'Read the relationship',points:[{anchor:edge.to,via:edge.id,title:'Follow this handoff',text:'Explain the selected connection with its source endpoints.'}]}]}));
+  const receipt=JSON.parse(run(['story','attach',input,brief,output,'--json'],options));
+  if(!receipt.ok)throw Error('packaged story attachment failed');
+  const html=fs.readFileSync(output,'utf8'),start=html.indexOf('<style id="archify-story-attachment-style">');
+  if(start<0||html.slice(0,start)+html.slice(html.lastIndexOf('</body>'))!==fs.readFileSync(input,'utf8'))throw Error('packaged story changed the native HTML');
+  const choreoSpec=path.join(scratch,'story-choreo.json'),svgStem=path.join(scratch,'story-choreo'),stageOut=path.join(scratch,'story-stage.html');
+  fs.writeFileSync(choreoSpec,JSON.stringify({
+    schema_version:1,title:'Smoke choreography',preset:'classic',
+    views:[{id:'main',type:'workflow',diagram:JSON.parse(fs.readFileSync(path.join(skillRoot,'examples/agent-tool-call.workflow.json'),'utf8'))}],
+    steps:[{view:'main',title:'Agent tool loop',body:'Walk through the tool invocation path.',focus:[facts.nodes[0].id]}],
+  }));
+  const val=JSON.parse(run(['story','validate',choreoSpec,'--json'],options));
+  if(!val.ok||val.steps!==1)throw Error('packaged story validate failed');
+  const svgRec=JSON.parse(run(['story','svg',choreoSpec,svgStem,'--theme','both','--still','--json'],options));
+  if(!svgRec.ok||svgRec.outputs.length!==2||svgRec.stills.length!==2)throw Error('packaged story svg failed');
+  const stageRec=JSON.parse(run(['story','stage',choreoSpec,stageOut,'--json'],options));
+  if(!stageRec.ok||!fs.readFileSync(stageOut,'utf8').includes('ArchifyStoryStage'))throw Error('packaged story stage failed');
+  process.stdout.write('packaged story scan, draft, attach and choreography passed without dependencies\n');
+}
+
+function verifyPackagedCodeAnalysis() {
+  // Parser and schema packages are vendored, so a copied Skill analyzes TS and
+  // Java sources without installing node_modules.
+  const repo = path.join(scratch, 'code-analysis-repo');
+  const files = {
+    'src/a/index.ts': 'export function a() { return 1; }\n',
+    'src/b/index.ts': 'import { a } from "../a/index";\nexport const b = () => a();\n',
+    'java/src/main/java/demo/App.java': 'package demo;\npublic class App { int run() { return 1; } }\n',
+  };
+  for (const [relative, text] of Object.entries(files)) {
+    fs.mkdirSync(path.dirname(path.join(repo, relative)), { recursive: true });
+    fs.writeFileSync(path.join(repo, relative), text);
+  }
+  for (const [root, language, expected] of [[repo, 'ts', 2], [path.join(repo, 'java'), 'java', 1]]) {
+    const result = JSON.parse(run(['code-analysis', 'check', root, '--language', language, '--json']));
+    if (result.status !== 'ok' || result.files !== expected) {
+      throw new Error(`packaged Code Analysis ${language} check failed: ${JSON.stringify(result).slice(0, 400)}`);
+    }
+  }
+  process.stdout.write('packaged Code Analysis analyzed TS and Java without dependencies\n');
+}
+
 async function verifyPackage() {
   if (!fs.existsSync(cli)) throw new Error(`packaged CLI not found at ${cli}`);
   requireAbsent('node_modules');
@@ -117,6 +166,8 @@ async function verifyPackage() {
   requireAbsent(path.join('scripts', 'generate-validators.mjs'));
   requireAbsent(path.join('scripts', 'generate-brand-marks.mjs'));
   requireAbsent('test');
+  requireAbsent(path.join('modules', 'code-analysis', 'node_modules'));
+  requireAbsent(path.join('modules', 'code-analysis', 'test'));
   requireAbsent('.hive');
   requireAbsent('.workbuddy');
 
@@ -248,6 +299,10 @@ async function verifyPackage() {
   }
 
   await verifyPackagedExplainer();
+
+  verifyPackagedStory();
+
+  verifyPackagedCodeAnalysis();
 
   const workflowLayout = JSON.parse(run([
     'validate', 'workflow', path.join(skillRoot, 'examples', fixtures[1][1]),

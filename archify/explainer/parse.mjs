@@ -82,10 +82,11 @@ export function parseExplainer(sourceText, { inputPath, output } = {}) {
   } else {
     document = {schema_version:1,diagram_type:'explainer',meta:{},answer:{summary:''},panels:[],sources:[]};
     let panel = null, panelIndex = -1, titleSeen = false, answerSeen = false, reasonsAllowed = false, cursor = 0;
+    const workflowLocales = [];
     const descriptor = (line, endLine = line + 1) => locate(starts[line] ?? sourceText.length, starts[endLine] ?? sourceText.length);
     const closePanel = end => { if (panelIndex >= 0) sourceMap[`/panels/${panelIndex}`].end = end; };
     function heading(line, prefix) {
-      const match = line.slice(prefix.length).trim().match(/^(.*?)(?:\s+\{(?:#([^}\s]+))?(?:\s*span=(\d+))?\})?$/u);
+      const match = line.slice(prefix.length).trim().match(/^(.*?)(?:\s+\{(?:#([^}\s]+))?(?:\s*span=(\d+))?\})?$/su);
       return {title:match[1].trim(),id:match[2],...(match[3]?{span:Number(match[3])}:{})};
     }
     function addBlock(block, at, until, rows = []) {
@@ -94,7 +95,18 @@ export function parseExplainer(sourceText, { inputPath, output } = {}) {
       // Diagrams keep their ID because node and route links name it.
       if (block.id && block.id === panel.id && block.type !== 'diagram') block.id = `${panel.id}-${block.type}`;
       block.id ||= stable(block.type,`${panel.id}\0${JSON.stringify(block)}`);
-      if (block.type === 'comparison') for (const row of block.rows) row.id ||= stable('row', `${block.id}\0${row.label}`);
+      if (block.type === 'comparison') {
+        const occurrences = new Map();
+        for (const row of block.rows) {
+          if (row.id) continue;
+          const occurrence = occurrences.get(row.label) || 0;
+          occurrences.set(row.label, occurrence + 1);
+          // Repeated labels still represent separate rows. Keep the first automatic ID
+          // unchanged so existing row links and delivered source bindings remain valid.
+          const key = `${block.id}\0${row.label}`;
+          row.id = stable('row', occurrence ? `${key}\0${occurrence}` : key);
+        }
+      }
       const pointer = `/panels/${panelIndex}/blocks/${panel.blocks.length}`;
       panel.blocks.push(block); map(pointer,block,descriptor(at,until));
       const property = {facts:'entries',comparison:'rows',steps:'items',list:'items'}[block.type];
@@ -173,7 +185,7 @@ export function parseExplainer(sourceText, { inputPath, output } = {}) {
         }
       }
       const allowed = {
-        source:['title','url','path','lines','revision'],meta:['locale','quality_profile','style','repo_url','repo_revision','repo_provider','repo_link_mode'],answer:['scope'],
+        source:['title','url','path','lines','revision'],meta:['locale','quality_profile','style','repo_url','repo_revision','repo_provider','repo_link_mode'],answer:['scope','span'],
         prose:['id','text'],list:['id','ordered'],callout:['id','level','title','text'],facts:['id'],metric:['id','label','value','limit','unit','note','typical'],steps:['id'],diagram:['id','source','spec','title','changes'],code:['id','source','language'],diff:['id','caption'],image:['id','path','alt','caption'],comparison:['id','columns','label'],chart:['id','title','type','data','x','y','unit']
       }[type];
       if (!allowed) { fail(at+1,'directive',`Unsupported component @${type}.`,'@facts\n| key | value |'); return; }
@@ -187,8 +199,8 @@ export function parseExplainer(sourceText, { inputPath, output } = {}) {
         if(rows.length) fail(at+1,type,'Source declarations do not accept rows.','@source demo title="Timing model"');
         const pointer=`/sources/${document.sources.length}`;document.sources.push(source);map(pointer,source,descriptor(at,cursor));return;
       }
-      if (type==='meta') { Object.assign(document.meta,select(a,['locale','quality_profile','style'])); if(a.repo_url || a.repo_revision) document.meta.repository={url:a.repo_url,revision:a.repo_revision,...(a.repo_provider?{provider:a.repo_provider}:{}),...(a.repo_link_mode?{link_mode:a.repo_link_mode}:{})}; for(const key of ['locale','quality_profile','style','repository'])if(document.meta[key]!==undefined)map(`/meta/${key}`,document.meta[key],descriptor(at,cursor));return; }
-      if (type==='answer') { if(a.scope!==undefined){document.answer.scope=a.scope;sourceMap['/answer/scope']=descriptor(at,cursor);}return; }
+      if (type==='meta') { Object.assign(document.meta,select(a,['locale','quality_profile','style'])); if(a.feedback_links!==undefined){ if(a.feedback_links!=='false'&&a.feedback_links!=='true') fail(at+1,type,'feedback_links must be true or false.','@meta feedback_links=false'); document.meta.feedback_links=a.feedback_links==='true'; sourceMap['/meta/feedback_links']=descriptor(at,cursor); } if(a.repo_url || a.repo_revision) document.meta.repository={url:a.repo_url,revision:a.repo_revision,...(a.repo_provider?{provider:a.repo_provider}:{}),...(a.repo_link_mode?{link_mode:a.repo_link_mode}:{})}; for(const key of ['locale','quality_profile','style','repository'])if(document.meta[key]!==undefined)map(`/meta/${key}`,document.meta[key],descriptor(at,cursor));return; }
+      if (type==='answer') { for(const key of ['scope','span'])if(a[key]!==undefined){document.answer[key]=key==='span'?number(a[key],at,type):a[key];sourceMap[`/answer/${key}`]=descriptor(at,cursor);}return; }
       let block={type,...(a.id?{id:a.id}:{})};
       switch(type) {
         case 'prose': rowWidth(rows,1,1,type);block.text=a.text??rows.map(r=>r.cells[0]).join('\n');break;
@@ -203,9 +215,27 @@ export function parseExplainer(sourceText, { inputPath, output } = {}) {
           if(a.source!==undefined)block.source=a.source;
           if(a.spec!==undefined) { try{block.spec=JSON.parse(a.spec);}catch{fail(at+1,type,'Inline diagram spec must be valid JSON.','@diagram sequence spec=\'{"schema_version":1,...}\'');} }
           if(rows.length&&(a.spec!==undefined||a.source!==undefined))fail(at+1,type,'Choose shorthand rows, spec or source, not several.','@diagram sequence source=cache.sequence.json');
-          // A "source:<id>" cell ties that row's node to a declared source; the reader shows it on hover.
-          for(const r of rows){const index=r.cells.findIndex(cell=>/^source:[A-Za-z][\w-]*$/u.test(cell));if(index<0)continue;const node=r.cells[0].replace(/^(?:actor|entity)\s+/u,'').trim();if(index>0&&!r.cells[0].includes('>'))(block.nodeSources||={})[node]=r.cells[index].slice(7);r.cells=r.cells.filter((_,i)=>i!==index);}
-          if(rows.length&&a.spec===undefined&&a.source===undefined)try{block.spec=compileExplainerDiagram(block.diagramType,rows.map(r=>({cells:r.cells,line:r.line+1})),{id:a.id||stable('diagram',`${panel?.id}\0${JSON.stringify(rows.map(r=>r.cells))}`),title:a.title||panel?.title||document.meta.title,line:at+1,quality:document.meta.quality_profile});}catch(error){const found=error.archifyDiagnostics||error.diagnostics;if(found?.length)diagnostics.push(...found);else fail(at+1,type,'The diagram shorthand could not compile.','@diagram sequence source=cache.sequence.json');}
+          // Reference cells belong to the page, not to the native diagram spec.
+          for (const r of rows) {
+            for (let index=r.cells.length-1;index>=1;index--) {
+              const ref=r.cells[index].match(/^(source|block):([A-Za-z][\w-]*)$/u);
+              if(!ref)continue;
+              const node = r.cells[0].replace(/^(?:actor|entity)\s+/u, '').trim();
+              const key = ref[1] === 'source' ? 'nodeSources' : 'nodeBlocks';
+              const declaration = block.diagramType==='sequence' ? r.cells[0].startsWith('actor ') : block.diagramType==='erd' ? r.cells[0].startsWith('entity ') : true;
+              if (!ID.test(node) || !declaration) { fail(r.line+1,type,'A content reference belongs to a node, actor or entity row.','| api | API | backend | block:api-notes |'); continue; }
+              if (Object.hasOwn(block[key] || {}, node)) { fail(r.line+1,type,'A node accepts one reference of each kind.','| api | API | backend | block:api-notes |'); continue; }
+              (block[key] ||= {})[node] = ref[2];
+              (r.references ||= []).push({ key, node });
+              r.cells.splice(index,1);
+            }
+          }
+          if(rows.length&&a.spec===undefined&&a.source===undefined)try{
+            const input=rows.map(r=>({cells:r.cells,line:r.line+1}));
+            const options={id:a.id||stable('diagram',`${panel?.id}\0${JSON.stringify(rows.map(r=>r.cells))}`),title:a.title||panel?.title||document.meta.title,line:at+1,quality:document.meta.quality_profile};
+            block.spec=compileExplainerDiagram(block.diagramType,input,options);
+            if(block.diagramType==='workflow')workflowLocales.push({block,input,options,pointer:`/panels/${panelIndex}/blocks/${panel?.blocks.length}/spec`});
+          }catch(error){const found=error.archifyDiagnostics||error.diagnostics;if(found?.length)diagnostics.push(...found);else fail(at+1,type,'The diagram shorthand could not compile.','@diagram sequence source=cache.sequence.json');}
           if(a.changes!==undefined)block.changes=csv(a.changes).map(value=>{const [target,change]=value.split(':');return{target,change};});break;
         }
         case 'code':Object.assign(block,select(a,['source','language']));break;
@@ -217,6 +247,7 @@ export function parseExplainer(sourceText, { inputPath, output } = {}) {
       if (['metric','code','image','chart'].includes(type)&&rows.length)fail(at+1,type,'This component accepts header arguments only.',`@${type} ${allowed.filter(k=>k!=='id').map(k=>`${k}=...`).join(' ')}`);
       if(type!=='diff')for(const row of rows)for(const text of row.cells)unsupported(text,row.line+1,type);
       addBlock(block,at,cursor,rows);
+      if(type==='diagram'&&panel)for(const r of rows)for(const ref of r.references||[])sourceMap[`/panels/${panelIndex}/blocks/${panel.blocks.length-1}/${ref.key}/${pointerKey(ref.node)}`]=descriptor(r.line,r.line+1);
       if(type==='diff'&&panel) {
         const pointer=`/panels/${panelIndex}/blocks/${panel.blocks.length-1}/text`;
         sourceMap[pointer]=literalStart!==undefined?locate(starts[literalStart]??sourceText.length,(starts[literalStart]??sourceText.length)+literal.length):descriptor(rows[0]?.line??at,cursor);
@@ -275,6 +306,13 @@ export function parseExplainer(sourceText, { inputPath, output } = {}) {
       } else addBlock({type:'prose',text},at,cursor);
     }
     closePanel(sourceText.length);
+    // Resolve workflow labels after metadata without changing the original compile
+    // options or the automatic block ID already bound to the authored rows.
+    for(const {block,input,options,pointer} of workflowLocales)if(typeof document.meta.locale==='string'&&!document.meta.locale.startsWith('zh')){
+      block.spec=compileExplainerDiagram('workflow',input,{...options,locale:document.meta.locale});
+      if(sourceMap[pointer])map(pointer,block.spec,sourceMap[pointer]);
+    }
+
     if(!titleSeen)fail(1,'title','A document requires one # title.','# What should we choose?');
     if(!answerSeen)fail(1,'answer','A short answer is required before question panels.','# A title\n\nA direct answer.\n\n## Why?');
     if(!document.panels.length)fail(1,'panel','At least one question panel is required.','## Why does this happen?');

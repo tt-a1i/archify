@@ -212,7 +212,7 @@
       </div>
       <div class="metrics" aria-label="Guide metrics">
         <div class="metric"><strong>[[RECIPE_COUNT]]</strong><span data-i18n-html="metricRecipes">real-world<br>recipes</span></div>
-        <div class="metric"><strong>6</strong><span data-i18n-html="metricModes">typed diagram<br>modes</span></div>
+        <div class="metric"><strong>[[TYPE_MODE_COUNT]]</strong><span data-i18n-html="metricModes">typed diagram<br>modes</span></div>
         <div class="metric"><strong>0</strong><span data-i18n-html="metricRuntime">runtime<br>dependencies</span></div>
       </div>
     </section>
@@ -250,7 +250,7 @@
       'use strict';
       var recipes = JSON.parse(document.getElementById('guide-data').textContent);
       var types = [[DIAGRAM_TYPES_JSON]];
-      var colors = { architecture:'#0891b2', workflow:'#047857', sequence:'#6d28d9', dataflow:'#b45309', lifecycle:'#be123c', erd:'#0f766e' };
+      var colors = { architecture:'#0891b2', workflow:'#047857', sequence:'#6d28d9', dataflow:'#b45309', lifecycle:'#be123c', erd:'#0f766e', class:'#c2410c', tree:'#4d7c0f', timeline:'#0369a1', waterfall:'#9333ea' };
       var language = ArchifySiteLanguage.read();
       var activeType = 'all';
       var lastRecipe = null;

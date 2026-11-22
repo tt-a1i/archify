@@ -6,12 +6,27 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { SaxesParser } from 'saxes';
+import { parse } from 'parse5';
 import { compileExplainerDiagram, prepareExplainerDiagrams, validateExplainerDiagramTarget } from '../archify/explainer/diagrams.mjs';
+import { parseExplainer } from '../archify/explainer/parse.mjs';
+import { renderExplainer } from '../archify/explainer/render.mjs';
+import { unpackPageBundle } from '../archify/explainer/page-bundle.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const documentOf = blocks => ({ panels: [{ id: 'mechanism', blocks }] });
 const blockOf = (type, spec, extra = {}) => ({ id: type, type: 'diagram', diagramType: type, spec, ...extra });
+function nodeXs(svg) {
+  const positions = new Map(), owners = [], xml = new SaxesParser();
+  xml.on('opentag', tag => {
+    const owner = tag.attributes['data-node-id'] || owners.at(-1);
+    owners.push(owner);
+    if (owner && tag.name === 'rect' && !positions.has(owner)) positions.set(owner, Number(tag.attributes.x));
+  });
+  xml.on('closetag', () => owners.pop());
+  xml.write(svg).close();
+  return positions;
+}
 const rows = {
   sequence: ['actor client | Client | frontend', 'actor api | API | backend', 'actor redis | Redis | database',
     'client | api | Request', 'api | redis | Read', 'redis | api | Miss | return'],
@@ -133,6 +148,50 @@ test('explainer diagrams: structural changes decorate only explicit preview targ
     { changes: [{ target: 'nonexistent', change: 'removed' }] })])), error => error.archifyDiagnostics[0].code === 'explainer/diagram-change-target');
 });
 
+test('explainer diagrams: structural changes reach edges identified only by their semantic key', async () => {
+  const compiled = compileExplainerDiagram('architecture', rows.architecture, { id: 'topology' });
+  const spec = { ...compiled, connections: compiled.connections.map(({ id, ...connection }) => connection) };
+  const baseline = await prepareExplainerDiagrams(documentOf([blockOf('architecture', spec)]));
+  const edge = baseline.diagrams.architecture.semantic.edges.find(entry => entry.from === 'api' && entry.to === 'redis');
+  assert.ok(edge.key !== undefined && !/data-edge-id=/.test(baseline.diagrams.architecture.svg), 'fixture edges carry a key but no authored id');
+  const { diagrams } = await prepareExplainerDiagrams(documentOf([blockOf('architecture', spec,
+    { changes: [{ target: edge.id, change: 'removed' }] })]));
+  const marked = [...diagrams.architecture.svg.matchAll(/<[a-zA-Z][^>]*data-explainer-change="removed"[^>]*>/g)].map(match => match[0]);
+  assert.ok(marked.length >= 1, 'the keyed edge receives the preview mark');
+  assert.ok(marked.every(tag => tag.includes(`data-edge-key="${edge.key}"`) && tag.includes('data-edge-from="api"')), 'only the targeted edge is marked');
+  assert.equal(hash(diagrams.architecture.html), diagrams.architecture.sha256);
+});
+
+test('explainer diagrams: structural changes name their targets as the preview shows them', async () => {
+  const spec = compileExplainerDiagram('sequence', rows.sequence, { id: 'request' });
+  const document = { schema_version: 1, diagram_type: 'explainer', meta: { id: 'changed-request', title: 'Changed request', locale: 'en' },
+    answer: { summary: 'The API now reads Redis.' }, sources: [], panels: [{ id: 'request', title: 'What changed?',
+      blocks: [blockOf('sequence', spec, { id: 'request', changes: [{ target: 'api', change: 'modified' }, { target: 'api-to-redis-1', change: 'added' }] })] }] };
+  const html = renderExplainer(document, { preparedDiagrams: await prepareExplainerDiagrams(document) });
+  const changes = html.match(/<dl class="changes">[\s\S]*?<\/dl>/)[0];
+  assert.match(changes, /<dd data-change-target="api"><span class="chip modified">[^<]+<\/span> API<\/dd>/);
+  assert.match(changes, /<dd data-change-target="api-to-redis-1"><span class="chip added">[^<]+<\/span> API → Redis · Read<\/dd>/);
+  assert.doesNotMatch(changes, /<code>/, 'readers see names, not authoring IDs');
+});
+
+test('explainer diagrams: a change target whose name another node or edge shares keeps its ID beside the name', async () => {
+  const sequence = compileExplainerDiagram('sequence', [...rows.sequence, 'api | redis | Read'], { id: 'repeat' });
+  const repeated = (await prepareExplainerDiagrams(documentOf([blockOf('sequence', sequence)]))).diagrams.sequence.semantic.edges
+    .filter(edge => edge.from === 'api' && edge.to === 'redis').map(edge => edge.id);
+  assert.equal(repeated.length, 2, 'the fixture repeats one message');
+  const architecture = compileExplainerDiagram('architecture', ['web | Web app | frontend', 'eu | Cache | database', 'us | Cache | database', 'web > eu | Reads', 'web > us | Reads'], { id: 'caches' });
+  const document = { schema_version: 1, diagram_type: 'explainer', meta: { id: 'repeated-names', title: 'Repeated names', locale: 'en' },
+    answer: { summary: 'One read and one cache changed.' }, sources: [], panels: [{ id: 'request', title: 'What changed?', blocks: [
+      blockOf('sequence', sequence, { id: 'repeat', changes: [{ target: repeated[1], change: 'modified' }, { target: 'client-to-api-1', change: 'added' }] }),
+      blockOf('architecture', architecture, { id: 'caches', changes: [{ target: 'us', change: 'removed' }, { target: 'web', change: 'modified' }] })] }] };
+  const html = renderExplainer(document, { preparedDiagrams: await prepareExplainerDiagrams(document) });
+  const [messages, nodes] = html.match(/<dl class="changes">[\s\S]*?<\/dl>/g);
+  assert.match(messages, new RegExp(`<dd data-change-target="${repeated[1]}"><span class="chip modified">[^<]+</span> API → Redis · Read <code>${repeated[1]}</code></dd>`));
+  assert.match(messages, /<dd data-change-target="client-to-api-1"><span class="chip added">[^<]+<\/span> Client → API · Request<\/dd>/, 'a unique message keeps its name alone');
+  assert.match(nodes, /<dd data-change-target="us"><span class="chip removed">[^<]+<\/span> Cache <code>us<\/code><\/dd>/);
+  assert.match(nodes, /<dd data-change-target="web"><span class="chip modified">[^<]+<\/span> Web app<\/dd>/, 'a unique node keeps its name alone');
+});
+
 test('explainer diagrams: rejected native causes retain author line, component and repair example', async () => {
   assert.throws(() => compileExplainerDiagram('sequence', [
     { text: 'Client | API | Request', line: 18 }, { text: 'API | Client | Reply | strange', line: 23 },
@@ -235,4 +294,296 @@ test('explainer diagrams: a phase that recurs later in the flow keeps phase rows
   const spec = compileExplainerDiagram('workflow', ['lane run | Orchestrate', 'lane work | Work', 'start | Start | backend | run', 'do | Do | backend | work', 'end | Record | backend | run', 'start > do', 'do > end'], { id: 'recur' });
   assert.equal(spec.lanes.length, 2, 'the recurring phase stays a lane');
   assert.equal(spec.phases, undefined);
+});
+
+test('explainer diagrams: converging retry branches keep the complete graph and pass native validation', async () => {
+  const declarations = ['enter | Enter', 'check | Check?', 'verify | Verify?', 'record | Record', 'done | Done', 'revise | Revise'];
+  const relations = [
+    'enter > check', 'check > verify | yes', 'verify > record | yes', 'record > done',
+    'check > revise | no', 'verify > revise | no', 'record > revise | error', 'revise > enter | retry | dashed',
+  ];
+  const authored = [...declarations, ...relations];
+  const spec = compileExplainerDiagram('workflow', authored, { id: 'retry', title: 'Review and retry' });
+  const frozen = JSON.stringify(spec);
+  const { diagrams } = await prepareExplainerDiagrams(documentOf([blockOf('workflow', spec, { id: 'retry' })]));
+  assert.equal(diagrams.retry.checks.check.ok, true);
+  assert.equal(JSON.stringify(spec), frozen, 'native layout cannot rewrite the input');
+  assert.deepEqual(authored, [...declarations, ...relations]);
+  assert.deepEqual(diagrams.retry.semantic.nodes.map(node => node.id).sort(), ['enter', 'check', 'verify', 'record', 'done', 'revise'].sort());
+  assert.deepEqual(diagrams.retry.semantic.edges.map(({ from, to, label }) => [from, to, label]).sort(), [
+    ['enter', 'check', ''], ['check', 'verify', 'yes'], ['verify', 'record', 'yes'], ['record', 'done', ''],
+    ['check', 'revise', 'no'], ['verify', 'revise', 'no'], ['record', 'revise', 'error'], ['revise', 'enter', 'retry'],
+  ].sort());
+  assert.equal(diagrams.retry.spec.edges.find(edge => edge.from === 'revise').variant, 'dashed');
+});
+
+test('cyclic workflow preview follows the selected lanes while preserving authored evidence', async () => {
+  const spec = compileExplainerDiagram('workflow', ['lane a | First phase', 'lane b | Second phase',
+    'n0 | Enter | backend | a', 'n1 | Check | backend | a', 'n2 | Record | backend | b', 'n3 | Retry | backend | b',
+    'n0 > n1', 'n1 > n2', 'n2 > n3', 'n3 > n0'], { id: 'ring' });
+  const authored = JSON.stringify(spec);
+  assert.equal(spec.lanes.length, 2);
+  const document = { schema_version: 1, diagram_type: 'explainer', meta: { id: 'phased-ring', title: 'Review loop', locale: 'en' },
+    answer: { summary: 'Two phases form a review loop.' }, sources: [], panels: [{ id: 'loop', title: 'How does it repeat?', blocks: [blockOf('workflow', spec, { id: 'ring' })] }] };
+  const preparedDiagrams = await prepareExplainerDiagrams(document);
+  const entry = preparedDiagrams.diagrams.ring;
+  assert.equal(entry.checks.check.ok, true);
+  const laneCount = (entry.svg.match(/data-composition-frame-kind="lane"/g) || []).length;
+  assert.ok(laneCount > 0);
+  assert.equal(JSON.stringify(entry.spec), authored);
+  assert.equal(Buffer.from(entry.specification.contentBase64, 'base64').toString(), authored);
+  const html = renderExplainer(document, { preparedDiagrams });
+  const walk = node => [node, ...(node.childNodes || []).flatMap(walk)];
+  const nodes = walk(parse(html));
+  const preview = nodes.find(node => node.attrs?.some(attr => attr.name === 'class' && attr.value.split(' ').includes('diagram-preview')));
+  const classes = preview.attrs.find(attr => attr.name === 'class').value.split(' ');
+  assert.equal(classes.includes('single-lane'), laneCount === 1, 'preview must use the rendered lane arrangement');
+  if (laneCount === 1) assert.ok(classes.includes('bare-lanes'), 'a lone frame is redundant in the preview');
+  const bundle = nodes.find(node => node.attrs?.some(attr => attr.name === 'id' && attr.value === 'archify-explainer-prepared'));
+  const restored = unpackPageBundle(JSON.parse(bundle.childNodes[0].value));
+  assert.equal(renderExplainer(restored.document, restored), html, 'serialized delivery keeps the selected preview layout');
+});
+
+test('explainer diagrams: cyclic placement retains disconnected nodes, parallel returns and downstream exits', async () => {
+  const flow = ['enter | Enter', 'check | Check?', 'exit | Exit', 'other | Independent',
+    'enter > check | request', 'check > enter | retry | dashed', 'check > exit | accepted'];
+  const rows = [...flow, 'check > enter | rejected | security', 'other > other | repeat'];
+  for (const type of ['workflow', 'architecture']) {
+    const spec = compileExplainerDiagram(type, rows, { id: 'cycles' });
+    const nodes = spec.nodes || spec.components, edges = spec.edges || spec.connections;
+    assert.equal(nodes.length, 4);
+    assert.equal(edges.length, 5);
+    assert.equal(edges.filter(edge => edge.from === 'check' && edge.to === 'enter').length, 2);
+    assert.ok(edges.some(edge => edge.from === 'other' && edge.to === 'other'));
+    const unfolded = compileExplainerDiagram(type, flow, { id: 'flow' });
+    const { diagrams } = await prepareExplainerDiagrams(documentOf([blockOf(type, unfolded)]));
+    const forward = nodeXs(diagrams[type].svg);
+    assert.ok(forward.get('exit') > forward.get('check'),
+      'an exit after a cycle must remain downstream, rather than falling into column zero');
+    assert.deepEqual(compileExplainerDiagram(type, rows, { id: 'cycles' }), spec, 'repeat rendering is deterministic');
+  }
+});
+
+test('explainer diagrams: cyclic architecture preserves renderable inputs at the native column limit', async () => {
+  const nodes = Array.from({ length: 13 }, (_, index) => `n${index} | Node ${index}`);
+  const chain = Array.from({ length: 12 }, (_, index) => `n${index} > n${index + 1}`);
+  const spec = compileExplainerDiagram('architecture', [...nodes, ...chain, 'n12 > n0'], { id: 'cycle', quality: 'standard' });
+  assert.ok(spec.layout.cols <= 12, 'unfolding a cycle cannot exceed the existing native grid budget');
+  assert.equal(spec.components.length, 13);
+  assert.equal(spec.connections.length, 13);
+  assert.ok(spec.connections.some(edge => edge.from === 'n12' && edge.to === 'n0'));
+  const { diagrams } = await prepareExplainerDiagrams(documentOf([blockOf('architecture', spec)]), { quality: 'standard' });
+  assert.equal(diagrams.architecture.checks.check.ok, true);
+  assert.throws(() => compileExplainerDiagram('architecture', [...nodes, ...chain]),
+    error => error.archifyDiagnostics.some(item => item.code === 'explainer/diagram-shorthand-limit'),
+    'an already unsupported wide acyclic chain keeps its existing diagnostic');
+});
+
+test('cyclic architecture preserves readability under both native quality profiles', async () => {
+  for(const [count,suffix] of [[9,''],[10,''],[6,' with a deliberately long architecture label']]){
+    const rows=[...Array.from({length:count},(_,i)=>`n${i} | Node ${i}${suffix}`),...Array.from({length:count},(_,i)=>`n${i} > n${(i+1)%count}`)];
+    const spec=compileExplainerDiagram('architecture',rows,{id:'ring',quality:'showcase'});
+    assert.equal(spec.components.length,count);
+    assert.equal(spec.connections.length,count);
+    const {diagrams}=await prepareExplainerDiagrams(documentOf([blockOf('architecture',spec)]),{quality:'showcase'});
+    assert.equal(diagrams.architecture.checks.check.ok,true);
+    if(count===9)assert.ok(new Set(nodeXs(diagrams.architecture.svg).values()).size>1,'readable cyclic expansion remains available');
+    const standard=compileExplainerDiagram('architecture',rows,{id:'ring',quality:'standard'});
+    const checked=await prepareExplainerDiagrams(documentOf([blockOf('architecture',standard)]),{quality:'standard'});
+    assert.equal(checked.diagrams.architecture.checks.check.ok,true);
+  }
+});
+
+test('cyclic architecture keeps deliverable routes and labels clear of other nodes', async () => {
+  const examples = [
+    { count: 5, edges: 8, rows: [...Array.from({ length: 5 }, (_, i) => `n${i} | Node ${i}`),
+      'n2 > n3', 'n3 > n4', 'n4 > n1', 'n0 > n2', 'n0 > n1', 'n0 > n4', 'n3 > n0', 'n3 > n1'] },
+    { count: 6, edges: 9, rows: [...Array.from({ length: 6 }, (_, i) => `n${5 - i} | Node ${5 - i}`),
+      'n0 > n1 | step', 'n1 > n2', 'n2 > n3 | step', 'n3 > n4', 'n4 > n5 | step',
+      'n5 > n0', 'n5 > n1 | step', 'n3 > n1', 'n3 > n0 | step'] },
+    { count: 3, edges: 6, qualities: ['showcase'], rows: ['n1 | Wide xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', 'n2 | n2', 'n0 | n0',
+      'n1 > n0', 'n1 > n0', 'n2 > n1 | primary', 'n1 > n2 | a', 'n0 > n2', 'n1 > n2 | secondary'] },
+  ];
+  for (const { count, edges, rows, qualities = ['standard', 'showcase'] } of examples) for (const quality of qualities) {
+    const spec = compileExplainerDiagram('architecture', rows, { id: 'routes', quality });
+    const frozen = JSON.stringify(spec);
+    const { diagrams } = await prepareExplainerDiagrams(documentOf([blockOf('architecture', spec)]), { quality });
+    assert.equal(diagrams.architecture.checks.check.ok, true);
+    assert.equal(diagrams.architecture.semantic.nodes.length, count);
+    assert.equal(diagrams.architecture.semantic.edges.length, edges);
+    assert.equal(JSON.stringify(spec), frozen, 'native checks preserve the compiled input');
+  }
+});
+
+test('cyclic workflow preserves deliverability after folding return routes into lanes', async () => {
+  const ring = Array.from({ length: 8 }, (_, i) => `n${i} > n${(i + 1) % 8}`);
+  const examples = [
+    { edges: 11, rows: [...Array.from({ length: 8 }, (_, i) => `n${7 - i} | N${7 - i}`), ...ring, 'n1 > n0', 'n1 > n3', 'n4 > n2'] },
+    { edges: 8, rows: [...Array.from({ length: 8 }, (_, i) => `n${i} | A detailed verification step with a long label that stays readable on its own row ${i}`), ...ring] },
+    { count: 6, edges: 9, qualities: ['showcase'], rows: [
+      ...Array.from({ length: 6 }, (_, i) => `n${i} | N${i}`),
+      ...Array.from({ length: 6 }, (_, i) => `n${i} > n${(i + 1) % 6}`), 'n0 > n4', 'n1 > n3', 'n2 > n5'] },
+  ];
+  for (const { rows, edges, count = 8, qualities = ['standard', 'showcase'] } of examples) for (const quality of qualities) {
+    const spec = compileExplainerDiagram('workflow', rows, { id: 'routes', quality });
+    const frozen = JSON.stringify(spec);
+    const { diagrams } = await prepareExplainerDiagrams(documentOf([blockOf('workflow', spec)]), { quality });
+    assert.equal(diagrams.workflow.checks.check.ok, true);
+    assert.equal(diagrams.workflow.semantic.nodes.length, count);
+    assert.equal(diagrams.workflow.semantic.edges.length, edges);
+    assert.equal(JSON.stringify(spec), frozen);
+  }
+});
+
+test('automatic alternatives do not override explicit or subsequently edited native geometry', async () => {
+  const rows = [...Array.from({length:6},(_,i)=>`n${i} | N${i}`),
+    ...Array.from({length:6},(_,i)=>`n${i} > n${(i+1)%6}`),'n0 > n4','n1 > n3','n2 > n5'];
+  const spec = compileExplainerDiagram('workflow',rows,{id:'ring'});
+  await assert.rejects(prepareExplainerDiagrams(documentOf([blockOf('workflow',structuredClone(spec))])),
+    error=>error.archifyDiagnostics?.some(entry=>entry.code==='explainer/diagram-render'));
+  const prepared = await prepareExplainerDiagrams(documentOf([blockOf('workflow',spec)]));
+  assert.equal(prepared.diagrams.workflow.checks.check.ok,true);
+  assert.equal(prepared.diagrams.workflow.semantic.edges.length,9);
+  const edited = compileExplainerDiagram('architecture',['a | A','b | B','a > b','b > a']);
+  edited.components[0].col = 99;
+  await assert.rejects(prepareExplainerDiagrams(documentOf([blockOf('architecture',edited)])),
+    error=>error.archifyDiagnostics?.length>0);
+});
+
+test('automatic workflow branch labels follow locale without changing authored lanes or topology (#1082)',()=>{
+  const rows=['a | Build | backend','b | Ship | backend','c | Roll back | backend','a > b | green','a > c | red'];
+  const original=compileExplainerDiagram('workflow',rows,{id:'flow',title:'Release flow'});
+  const english=compileExplainerDiagram('workflow',rows,{id:'flow',title:'Release flow',locale:'en'});
+  assert.equal(original.lanes[1].label,'分支 1');
+  assert.equal(english.lanes[1].label,'Branch 1');
+  const withOriginalLabels=structuredClone(english);
+  withOriginalLabels.lanes=original.lanes;
+  assert.deepEqual(withOriginalLabels,original);
+  const authored=compileExplainerDiagram('workflow',['lane build | Authored lane','a | Build | backend | build','b | Ship | backend | build','a > b'],{id:'authored',title:'Authored workflow',locale:'en'});
+  assert.ok(authored.lanes.some(lane=>lane.label==='Authored lane')||authored.phases?.some(phase=>phase.label==='Authored lane'));
+  const wrappedRows=[...Array.from({length:8},(_,i)=>`n${i} | Step ${i} | backend`),...Array.from({length:7},(_,i)=>`n${i} > n${i+1}`)];
+  const wrapped=compileExplainerDiagram('workflow',wrappedRows,{id:'wrapped',title:'Release bands'});
+  assert.ok(wrapped.lanes.length>1);
+  assert.deepEqual(compileExplainerDiagram('workflow',wrappedRows,{id:'wrapped',title:'Release bands',locale:'en'}),wrapped,'wrapped band titles stay authored');
+});
+
+test('compact diagrams support domain role naming via role <type> | <label> and localized group lenses', async () => {
+  const arch = compileExplainerDiagram('architecture', [
+    'role frontend | Draft state',
+    'role backend | Frozen state',
+    'draft | Draft | frontend',
+    'frozen | Frozen | backend',
+    'store | Store | database',
+    'draft > frozen | produce',
+    'frozen > store | snapshot',
+  ], { id: 'immer-arch', title: 'Immer state model', locale: 'zh-CN' });
+  assert.equal(arch.meta.translations['viewer.kind.frontend'], 'Draft state');
+  assert.equal(arch.meta.translations['viewer.kind.backend'], 'Frozen state');
+  assert.equal(arch.meta.legend.entries.frontend.label, 'Draft state');
+  assert.equal(arch.meta.legend.entries.backend.label, 'Frozen state');
+  assert.equal(arch.components.find(c => c.id === 'draft').icon, 'none');
+  assert.equal(arch.components.find(c => c.id === 'frozen').icon, 'none');
+  assert.equal(arch.components.find(c => c.id === 'store').icon, undefined, 'unrenamed kinds keep default icons');
+
+  const wf = compileExplainerDiagram('workflow', [
+    'role frontend | Draft state',
+    'edit | Mutate draft | frontend',
+    'guard | Valid? | frontend',
+    'commit | Commit | backend',
+    'edit > guard',
+    'guard > commit | yes',
+  ], { id: 'immer-flow', title: 'Draft validation' });
+  assert.equal(wf.nodes.find(n => n.id === 'edit').icon, 'none');
+  assert.equal(wf.nodes.find(n => n.id === 'guard').icon, 'decision', 'decision question mark icon overrides role suppression');
+  assert.equal(wf.meta.legend.entries.frontend.label, 'Draft state');
+
+  const seq = compileExplainerDiagram('sequence', [
+    'role frontend | Caller',
+    'actor caller | Caller | frontend',
+    'actor engine | Engine | backend',
+    'caller | engine | produce(base, fn)',
+  ], { id: 'immer-seq', title: 'Producer sequence' });
+  assert.equal(seq.meta.translations['viewer.kind.frontend'], 'Caller');
+  assert.equal(seq.meta.legend, undefined, 'sequence specs keep legend undefined');
+
+  const doc = {
+    schema_version: 1, diagram_type: 'explainer', meta: { id: 'role-test', title: 'Role test', locale: 'en' },
+    answer: { summary: 'Roles map kinds cleanly.' }, sources: [],
+    panels: [{ id: 'p', title: 'Model', blocks: [blockOf('architecture', arch), blockOf('workflow', wf), blockOf('sequence', seq)] }],
+  };
+  const archFrozen = JSON.stringify(arch);
+  const prepared = await prepareExplainerDiagrams(doc);
+  assert.equal(JSON.stringify(arch), archFrozen, 'native preparation preserves authored spec bytes');
+  assert.equal(prepared.diagrams.architecture.checks.check.ok, true);
+  assert.equal(prepared.diagrams.workflow.checks.check.ok, true);
+  assert.equal(prepared.diagrams.sequence.checks.check.ok, true);
+  assert.equal(prepared.diagrams.architecture.spec.meta.translations['viewer.lens.title'], undefined, 'frozen spec retains authored translations');
+  assert.match(prepared.diagrams.architecture.html, /Compare groups/);
+  assert.match(prepared.diagrams.workflow.html, /Compare groups/);
+  assert.match(prepared.diagrams.sequence.html, /Compare groups/);
+
+  const customLens = structuredClone(arch);
+  customLens.meta.translations['viewer.lens.title'] = 'Custom title';
+  const preparedCustom = await prepareExplainerDiagrams({ ...doc, meta: { ...doc.meta, locale: 'zh-CN' }, panels: [{ id: 'p', title: 'Model', blocks: [blockOf('architecture', customLens)] }] });
+  assert.match(preparedCustom.diagrams.architecture.html, /Custom title/);
+  assert.match(preparedCustom.diagrams.architecture.html, /选择一个分组以高亮对应元素。/);
+
+  const preparedZhTw = await prepareExplainerDiagrams({ ...doc, meta: { ...doc.meta, locale: 'zh-tw' }, panels: [{ id: 'p', title: 'Model', blocks: [blockOf('architecture', arch)] }] });
+  assert.match(preparedZhTw.diagrams.architecture.html, /比較分組/);
+  assert.match(preparedZhTw.diagrams.architecture.html, /選擇一個分組以反白對應元素。/);
+
+  const omittedLocaleMd = [
+    '# State model {#state-model}',
+    '',
+    'Draft state freezes into snapshots.',
+    '',
+    '## How do states transition? {#state-panel}',
+    '',
+    '@architecture id=omitted-locale-arch',
+    '| role frontend | Draft state |',
+    '| draft | Draft | frontend |',
+    '| store | Store | database |',
+    '| draft > store | snapshot |',
+  ].join('\n');
+  const parsedOmitted = parseExplainer(omittedLocaleMd);
+  assert.equal(parsedOmitted.document.meta.locale, undefined);
+  const preparedOmitted = await prepareExplainerDiagrams(parsedOmitted.document);
+  const omittedEntry = preparedOmitted.diagrams['omitted-locale-arch'];
+  assert.equal(omittedEntry.spec.meta.locale, undefined, 'frozen spec retains omitted locale');
+  assert.match(omittedEntry.svg, />Draft state<\/text>/, 'diagram legend displays custom role');
+  const omittedI18n = JSON.parse(omittedEntry.html.match(/<script id="archify-i18n-data" type="application\/json">([\s\S]*?)<\/script>/)[1]);
+  assert.equal(omittedI18n.messages['viewer.kind.frontend'], 'Draft state', 'omitted-locale Viewer registers custom role label');
+  assert.equal(omittedI18n.messages['viewer.lens.title'], '比较分组', 'omitted-locale explainer defaults Viewer lens to zh-CN');
+  assert.equal(omittedI18n.messages['viewer.lens.instruction'], '选择一个分组以高亮对应元素。');
+
+  const bracedMd = [
+    '# Braced role {#braced}',
+    '',
+    'Answer.',
+    '',
+    '@meta locale=en',
+    '',
+    '## Model {#model}',
+    '',
+    '@architecture id=braced-arch',
+    '| role frontend | State {id} |',
+    '| a | Example | frontend |',
+  ].join('\n');
+  const parsedBraced = parseExplainer(bracedMd);
+  assert.equal(parsedBraced.document, null);
+  assert.equal(parsedBraced.diagnostics[0].code, 'explainer/diagram-role');
+  assert.equal(parsedBraced.diagnostics[0].subject.line, 10);
+
+  const literalRoleNode = compileExplainerDiagram('workflow', ['role | Assign role', 'next | Done', 'role > next'], { id: 'literal-role' });
+  assert.equal(literalRoleNode.nodes[0].id, 'role');
+
+  for (const [badRows, code] of [
+    [['role bogus | Label', 'a | A'], 'explainer/diagram-role'],
+    [[`role frontend | ${'x'.repeat(81)}`, 'a | A'], 'explainer/diagram-role'],
+    [['role frontend | State {id}', 'a | A'], 'explainer/diagram-role'],
+    [['role frontend | One', 'role frontend | Two', 'a | A'], 'explainer/diagram-role-duplicate'],
+    [['role frontend | Only role'], 'explainer/diagram-rows'],
+  ]) {
+    assert.throws(() => compileExplainerDiagram('architecture', badRows), error => error.archifyDiagnostics?.some(item => item.code === code), code);
+  }
 });

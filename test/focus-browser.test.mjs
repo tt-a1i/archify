@@ -104,7 +104,7 @@ test('Focus preserves semantic selection, relationships, reachability and shared
   }
 
   await t.test('five modes expose the same Focus and flowTokens surfaces at cold start',async()=>{
-    const expected=['set','setMany','clear','copyLink','reach','clearReach','reachabilitySnapshot','inspectRelationship','inspectRelationshipById','reposition','relationship','reachability','active'].sort();
+    const expected=['set','setMany','clear','copyLink','explain','explaining','reach','clearReach','reachabilitySnapshot','inspectRelationship','inspectRelationshipById','reposition','relationship','reachability','active'].sort();
     for(const mode of Object.keys(cases)) {
       await load(mode);assert.deepEqual(await run('Object.keys(Archify.focus).sort()'),expected);assert.deepEqual(await run('Object.keys(Archify.flowTokens).sort()'),['create','kind','path']);
       const cold=await snapshot(mode+'-cold');assert.equal(cold.active,null);
@@ -124,6 +124,17 @@ test('Focus preserves semantic selection, relationships, reachability and shared
     await run(`Archify.routeProbe.begin({source:'users'});Archify.focus.set('api',{preserveRoute:true,updateUrl:false})`);assert.notEqual(await run('Archify.routeProbe.active()'),null);
     await run(`Archify.routeProbe.clear();Archify.focus.set('api',{toggle:false});Archify.focus.clear({restoreFocus:true,updateUrl:false,preserveView:true})`);assert.equal(await run('document.activeElement.dataset.nodeId'),'api');assert.equal(await run('Archify.focus.active()'),null);
     await run('Archify.focus.clear();Archify.focus.clear()');assert.equal((await snapshot('repeated-clear')).hash,'');
+  });
+  await t.test('diagram nav keeps the selection while zooming and starting a route',async()=>{
+    await load();await click(node('api'));assert.equal((await snapshot('nav-selected')).active,'api');
+    await click('[data-view="reset"]');assert.equal(await run(`document.querySelector('[data-view-percent]').textContent`),'100%');assert.equal(await run('Archify.focus.active()'),'api');
+    await click('[data-view="in"]');assert.equal(await run(`document.querySelector('[data-view-percent]').textContent`),'125%');assert.equal(await run('Archify.focus.active()'),'api');
+    await click('[data-view="out"]');assert.equal(await run(`document.querySelector('[data-view-percent]').textContent`),'100%');assert.equal(await run('Archify.focus.active()'),'api');
+    await click('.header-row');assert.equal(await run('Archify.focus.active()'),null);
+    await click(node('api'));assert.equal(await run('Archify.focus.active()'),'api');
+    await click('#btn-route-probe');assert.equal(await run('Archify.routeProbe.active()'),'target');
+    await click(node('db'));const route=await run('Archify.routeProbe.result()');assert.equal(route.source,'api');assert.equal(route.target,'db');
+    await snapshot('nav-route-result');
   });
   await t.test('Passport rows preserve keyboard navigation, missing metadata and no-neighbor state',async()=>{
     await load();await select('cdn');await focus('#btn-focus-relations');await key('Enter','Enter',13);
@@ -186,8 +197,9 @@ test('Focus preserves semantic selection, relationships, reachability and shared
       await load();await select('cdn');await run(`Archify.focus.reach('downstream',{reveal:false})`);
       const r=await run(`(async()=>{let value;const exec=document.execCommand;Object.defineProperty(navigator,'clipboard',{configurable:true,value:${mode==='missing'?'undefined':`{writeText:text=>{value=text;return ${mode==='success'?'Promise.resolve()':'Promise.reject(new Error("denied"))'};}}`}});
         document.execCommand=()=>{value=document.querySelector('textarea[readonly]').value;${mode==='throw'?'throw new Error("copy denied");':`return ${mode==='false'?'false':'true'};`}};
-        try{const copied=await Archify.focus.copyLink();return {copied,hash:new URL(value).hash,query:new URL(value).search,label:document.getElementById('btn-focus-copy').textContent,remaining:document.querySelectorAll('textarea[readonly]').length};}finally{document.execCommand=exec;}})()`);
-      assert.equal(r.copied,!['false','throw'].includes(mode));assert.equal(r.hash,'#focus=cdn&reach=downstream');assert.match(r.query,/keep=yes/);assert.equal(r.remaining,0);assert.equal(r.label,r.copied?'Copied':'Copy failed');records.push({scenario:'copy-'+mode,...r});
+        const opener=document.getElementById('btn-focus-copy');opener.focus();
+        try{const copied=await Archify.focus.copyLink();return {focusRetained:document.activeElement===opener,copied,hash:new URL(value).hash,query:new URL(value).search,label:document.getElementById('btn-focus-copy').textContent,remaining:document.querySelectorAll('textarea[readonly]').length};}finally{document.execCommand=exec;}})()`);
+      assert.equal(r.focusRetained,true,'copy '+mode+' retains the keyboard opener');assert.equal(r.copied,!['false','throw'].includes(mode));assert.equal(r.hash,'#focus=cdn&reach=downstream');assert.match(r.query,/keep=yes/);assert.equal(r.remaining,0);assert.equal(r.label,r.copied?'Copied':'Copy failed');records.push({scenario:'copy-'+mode,...r});
       await run(`focusWait(()=>document.getElementById('btn-focus-copy').textContent===viewerText('viewer.passport.copy'))`);
     }
     await load();

@@ -1,5 +1,6 @@
 ---
 import { version, versioned, jsonScript, guide } from '../data/site';
+import { productChannel } from '../data/product-facts';
 import SupportedDiagrams from '../components/SupportedDiagrams.astro';
 import SiteLayout from '../layouts/SiteLayout.astro';
 import Navigation from '../components/Navigation.astro';
@@ -64,7 +65,7 @@ const { lang = 'en' } = Astro.props;
     </aside>
   </main>
 
-  <footer><div class="shell"><span data-i18n="footerLeft">Generated from the same recipe source as the Archify CLI.</span><span>archify guide "your scenario"</span><span data-i18n="versionLabel">Scenario guide / development / v{version}</span></div></footer>
+  <footer><div class="shell"><span data-i18n="footerLeft">Generated from the same recipe source as the Archify CLI.</span><span>archify guide "your scenario"</span><span data-i18n="versionLabel">Scenario guide / {productChannel} / v{version}</span><a href="index.html#support" data-en="Support" data-zh="支持项目">Support</a></div></footer>
 
   <script is:inline id="guide-data" type="application/json" set:html={jsonScript(guide)}></script>
   <script is:inline src="assets/site-language.js"></script>
