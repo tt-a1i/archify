@@ -135,6 +135,7 @@ test('finalize reuses delivery validation, runs one build, and keeps full stage 
   const outDir = path.join(directory, 'evidence');
   const source = '{"meta":{"quality_profile":"showcase"}}';
   fs.writeFileSync(input, source);
+  fs.writeFileSync(path.join(directory, 'server.js'), 'export const port = 3000;');
   const calls = [];
   const runCommand = ({ stage, args }) => {
     calls.push({ stage, args });
@@ -177,6 +178,7 @@ test('finalize reuses delivery validation, runs one build, and keeps full stage 
   assert.equal(finalized.summary.codeAnalysisOffer.action, 'offer-code-analysis');
   assert.equal(finalized.summary.codeAnalysisOffer.dependencies, 'installed');
   assert.deepEqual(finalized.summary.codeAnalysisOffer.start.argv, [process.execPath, '/fake/archify.mjs', 'start', directory, '--ir', input]);
+  assert.equal('linkedDiagrams' in finalized.summary.codeAnalysisOffer, false);
   assert.equal('stages' in finalized.summary, false);
   assert.equal(JSON.stringify(finalized.summary).includes('large-stage-array'), false);
   assert.equal(finalized.receipt.stages['browser-check'].receipt.containment.viewports.length, VISUAL_CHECK_VIEWPORTS.length);
@@ -196,19 +198,19 @@ test('finalize reuses delivery validation, runs one build, and keeps full stage 
   assert.equal('stages' in persistedSummary, false);
 });
 
-test('finalize offers Architecture Diagnosis only for a repository-backed Architecture and never starts it', async t => {
+test('finalize offers Architecture Diagnosis only for supported repository-backed Architecture and never starts it', async t => {
   const directory = workspace(t);
   const input = path.join(directory, 'diagram.json');
   const output = path.join(directory, 'diagram.html');
   const outDir = path.join(directory, 'evidence');
-  const source = '{"meta":{"quality_profile":"showcase"}}';
-  fs.writeFileSync(input, source);
   let dependencyChecks = 0;
   const checkMissingAnalysisDependencies = () => {
     dependencyChecks += 1;
     return ['typescript'];
   };
-  const finalizeWith = async ({ type, repoRoot }) => {
+  const finalizeWith = async ({ type, repoRoot, navigation }) => {
+    const source = JSON.stringify({ meta: { quality_profile: 'showcase' }, ...navigation });
+    fs.writeFileSync(input, source);
     const stages = [];
     const runCommand = ({ stage }) => {
       stages.push(stage);
@@ -235,12 +237,36 @@ test('finalize offers Architecture Diagnosis only for a repository-backed Archit
   assert.equal('codeAnalysisOffer' in workflow, false);
   assert.equal(dependencyChecks, 0);
 
+  fs.writeFileSync(path.join(directory, 'site.php'), '<?php echo "fixture";');
+  const unsupported = await finalizeWith({ type: 'architecture', repoRoot: directory });
+  assert.equal(unsupported.repositoryReferences.status, 'not-declared');
+  assert.equal('codeAnalysisOffer' in unsupported, false);
+  assert.equal(dependencyChecks, 0);
+
+  fs.mkdirSync(path.join(directory, 'dist'));
+  fs.writeFileSync(path.join(directory, 'dist', 'generated.js'), 'export const generated = true;');
+  const excluded = await finalizeWith({ type: 'architecture', repoRoot: directory });
+  assert.equal('codeAnalysisOffer' in excluded, false);
+  assert.equal(dependencyChecks, 0);
+
+  fs.mkdirSync(path.join(directory, 'src'));
+  fs.writeFileSync(path.join(directory, 'src', 'server.js'), 'export const port = 3000;');
+  fs.writeFileSync(path.join(directory, 'src', 'worker.py'), 'pass');
   const architecture = await finalizeWith({ type: 'architecture', repoRoot: directory });
   assert.equal(dependencyChecks, 1);
   assert.equal(architecture.codeAnalysisOffer.dependencies, 'missing');
   assert.deepEqual(architecture.codeAnalysisOffer.start.argv, [process.execPath, '/fake/archify.mjs', 'start', directory, '--ir', input]);
   assert.equal('prepare' in architecture.codeAnalysisOffer, false);
   assert.equal('alignWithDiagram' in architecture.codeAnalysisOffer, false);
+
+  for (const [label, navigation] of [
+    ['component href', { components: [{ id: 'child', href: 'child.html' }] }],
+    ['drilldown list', { components: [{ id: 'child', drilldowns: [{ href: 'child.html', label: 'Child' }] }] }],
+    ['parent link', { meta: { quality_profile: 'showcase', parentHref: 'parent.html' } }],
+  ]) {
+    const linked = await finalizeWith({ type: 'architecture', repoRoot: directory, navigation });
+    assert.equal(linked.codeAnalysisOffer.linkedDiagrams, true, label);
+  }
 });
 
 test('finalize stops at the failed gate and persists actionable failure evidence', async t => {

@@ -421,15 +421,19 @@ Passing one claim never implies the others. Never claim that the deterministic r
 ## Architecture Diagnosis offer
 
 After a passing `finalize architecture` with `--repo-root`, the full receipt
-and compact summary include `codeAnalysisOffer` with `start.argv` and a
-`dependencies` status of `installed` or `missing`. Finalize only checks for
-the analysis components and emits the offer.
+and compact summary include `codeAnalysisOffer` if a bounded scan finds
+sources eligible for the default analysis. The offer includes `start.argv`
+and a `dependencies` status of `installed` or `missing`. Finalize performs
+these checks without starting analysis or installing anything.
 
 Ask once per repository in the task after delivering the diagram. Skip the
 offer if the user already asked for or declined analysis. Use the user's
 language. Include the final parenthetical only when `dependencies` is
 `missing`. A yes to a pitch that discloses installation covers that
-first-use installation. Wait for yes before starting.
+first-use installation. If the offer includes `linkedDiagrams: true`, tell
+the user to use the original delivered diagram for navigation links to sibling
+diagrams. Those links are unavailable on the Diagnosis server. Wait for yes
+before starting.
 
 **中文**
 

@@ -19,6 +19,7 @@ import {
 } from './visual-check.mjs';
 import { startDeliveryUpdateCheck } from './delivery-update.mjs';
 import { declaredExplainerInputPaths } from '../explainer/prepare.mjs';
+import { hasDefaultAnalysisSources } from '../modules/code-analysis/extract/shared/files.mjs';
 
 export const FINALIZE_STAGES = Object.freeze(['validate', 'deliver', 'check', 'browser-check']);
 const FINALIZE_UPDATE_DEADLINE_MS = 4_000;
@@ -27,13 +28,18 @@ function sha256(buffer) {
   return createHash('sha256').update(buffer).digest('hex');
 }
 
-function identity(file) {
+function readFileIdentity(file) {
+  const resolved = path.resolve(file);
   try {
     const bytes = fs.readFileSync(file);
-    return { path: path.resolve(file), sha256: sha256(bytes), bytes: bytes.byteLength };
+    return { identity: { path: resolved, sha256: sha256(bytes), bytes: bytes.byteLength }, bytes };
   } catch {
-    return { path: path.resolve(file) };
+    return { identity: { path: resolved } };
   }
+}
+
+function identity(file) {
+  return readFileIdentity(file).identity;
 }
 
 function durationMs(start) {
@@ -867,13 +873,17 @@ async function getMissingAnalysisDependencies() {
   return missingAnalysisDependencies();
 }
 
-function codeAnalysisOffer({ cliPath, repoRoot, candidate, missingDependencies }) {
+function codeAnalysisOffer({ cliPath, repoRoot, candidate, bytes, missingDependencies }) {
+  const doc = parsedReceipt(bytes);
+  const linkedDiagrams = doc?.meta?.parentHref
+    || doc?.components?.some(component => component.href || component.drilldowns?.length);
   return {
     action: 'offer-code-analysis',
     reason: 'Archify’s built-in Architecture Diagnosis adds component findings, a radial star map, and a rotatable 3D view of repository dependencies.',
     instruction: 'Use the referenced pitch once per repository and wait for consent before starting.',
     dependencies: missingDependencies.length ? 'missing' : 'installed',
     start: { argv: [process.execPath, cliPath, 'start', path.resolve(repoRoot), '--ir', candidate] },
+    ...(linkedDiagrams ? { linkedDiagrams: true } : {}),
     reference: 'references/delivery-contract.md#architecture-diagnosis-offer',
   };
 }
@@ -1237,7 +1247,8 @@ export async function runFinalize({
         receipt.diagnostics = [diagnostic];
       }
     }
-    if (receipt.ok && !identitiesMatch(specification, identity(resolvedInput))) {
+    const finalizedCandidate = receipt.ok ? readFileIdentity(resolvedInput) : null;
+    if (finalizedCandidate && !identitiesMatch(specification, finalizedCandidate.identity)) {
       exitCode = 1;
       receipt.ok = false;
       receipt.status = 'fail';
@@ -1246,7 +1257,7 @@ export async function runFinalize({
         code: 'finalize/candidate-changed', severity: 'error',
         message: 'The frozen candidate changed before the final handoff.',
         subject: { candidate: resolvedInput },
-        evidence: { expected: specification, actual: identity(resolvedInput) },
+        evidence: { expected: specification, actual: finalizedCandidate.identity },
         supportedFixes: ['restore the frozen candidate, or finalize the edited candidate as a new attempt'],
       }];
     }
@@ -1260,9 +1271,11 @@ export async function runFinalize({
         ? { status: 'verified', revision: source.revision, count: source.references }
         : { status: 'not-declared', count: 0,
           guidance: 'For a repository diagram, pin meta.repository and cite the source ranges on its primary elements, then rerun finalize.' };
-      if (type === 'architecture') {
+      if (type === 'architecture' && hasDefaultAnalysisSources(repoRoot)) {
         const missingDependencies = await checkMissingAnalysisDependencies();
-        receipt.codeAnalysisOffer = codeAnalysisOffer({ cliPath, repoRoot, candidate: resolvedInput, missingDependencies });
+        receipt.codeAnalysisOffer = codeAnalysisOffer({
+          cliPath, repoRoot, candidate: resolvedInput, bytes: finalizedCandidate.bytes, missingDependencies,
+        });
       }
     }
     receipt.artifact = receipt.ok
