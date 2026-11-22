@@ -168,7 +168,7 @@ cancel obsolete CI runs for the same PR.
 
 ## Local setup and verification
 
-Use the pnpm version pinned in the root `package.json` (12.21.0). A root install provisions the repository tests, renderer and Code Analysis. Run `pnpm --dir website install --frozen-lockfile` for the separate website workspace. Its dependency changes can run website CI independently. The packaged Code Analysis module keeps its npm lockfile for first use on machines with Node and npm.
+Use the pnpm version pinned in the root `package.json`. On a machine with Node and npm, `npm install --global pnpm@12.21.0` installs that version. A root install provisions the repository tests, renderer and Code Analysis. Run `pnpm --dir website install --frozen-lockfile` for the separate website workspace. Its dependency changes can run website CI independently. The packaged Code Analysis module keeps its npm lockfile for first use on machines with Node and npm.
 
 ```sh
 pnpm install --frozen-lockfile

@@ -62,7 +62,7 @@ jobs:
           CI_EVENT_NAME: ${{ github.event_name }}
           CI_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
           CI_REF: ${{ github.ref }}
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+      - uses: ./.github/actions/setup-pnpm
         if: steps.classify.outputs.scope == 'docs' && (contains(fromJSON(steps.classify.outputs.owners), 'readme') || contains(fromJSON(steps.classify.outputs.owners), 'changelog'))
       - name: Install documentation check dependencies
         if: steps.classify.outputs.scope == 'docs' && (contains(fromJSON(steps.classify.outputs.owners), 'readme') || contains(fromJSON(steps.classify.outputs.owners), 'changelog'))
@@ -93,9 +93,7 @@ jobs:
         with:
           package-manager-cache: false
           node-version: 22
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
-        with:
-          cache: true
+      - uses: ./.github/actions/setup-pnpm
       - name: Install regression dependencies
         run: pnpm install --frozen-lockfile
       # Reuse a shard's installed runtime instead of bootstrapping after all
@@ -156,10 +154,8 @@ jobs:
         with:
           package-manager-cache: false
           node-version: ${{ matrix.node-version }}
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+      - uses: ./.github/actions/setup-pnpm
         if: needs.scope.outputs.compatibility == 'true'
-        with:
-          cache: true
       - name: Install renderer dependencies
         if: needs.scope.outputs.compatibility == 'true'
         run: pnpm install --frozen-lockfile
@@ -199,10 +195,8 @@ jobs:
         with:
           package-manager-cache: false
           node-version: 22
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+      - uses: ./.github/actions/setup-pnpm
         if: needs.scope.outputs.scope == 'core'
-        with:
-          cache: true
       - name: Install renderer dependencies
         if: needs.scope.outputs.scope == 'core'
         run: pnpm install --frozen-lockfile
@@ -243,9 +237,7 @@ jobs:
         with:
           chrome-version: stable
           install-dependencies: true
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
-        with:
-          cache: true
+      - uses: ./.github/actions/setup-pnpm
       - name: Install browser test dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts
       - name: Run shared browser regression gate
@@ -495,10 +487,8 @@ jobs:
       - name: Validate packaged skill without installing dependencies
         if: needs.scope.outputs.package == 'true'
         run: node scripts/package-smoke.mjs
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+      - uses: ./.github/actions/setup-pnpm
         if: needs.scope.outputs.scope == 'full' || (needs.scope.outputs.windows == 'true' && runner.os != 'Linux')
-        with:
-          cache: true
       - name: Install repository test dependencies
         if: needs.scope.outputs.scope == 'full' || (needs.scope.outputs.windows == 'true' && runner.os != 'Linux')
         run: pnpm install --frozen-lockfile --ignore-scripts
@@ -564,10 +554,9 @@ jobs:
         with:
           package-manager-cache: false
           node-version: 22
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+      - uses: ./.github/actions/setup-pnpm
         with:
-          cache: true
-          cache_dependency_path: website/pnpm-lock.yaml
+          workspace: website
       - name: Install website dependencies
         run: pnpm install --frozen-lockfile
         working-directory: website
@@ -678,10 +667,8 @@ jobs:
         with:
           package-manager-cache: false
           node-version: ${{ matrix.node-version }}
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+      - uses: ./.github/actions/setup-pnpm
         if: needs.scope.outputs.windows == 'true'
-        with:
-          cache: true
       - name: Install test dependencies
         if: needs.scope.outputs.windows == 'true'
         run: pnpm install --frozen-lockfile --ignore-scripts

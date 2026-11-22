@@ -21,9 +21,7 @@ jobs:
         with:
           package-manager-cache: false
           node-version: ${{ matrix.node-version }}
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
-        with:
-          cache: true
+      - uses: ./.github/actions/setup-pnpm
       - name: Install test dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts
       - name: Provision controlled Windows path fixtures
@@ -51,9 +49,7 @@ jobs:
         with:
           package-manager-cache: false
           node-version: 22
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
-        with:
-          cache: true
+      - uses: ./.github/actions/setup-pnpm
       - name: Install renderer dependencies
         run: pnpm install --frozen-lockfile
       - name: Complete regression suite on canonical Node before releasing
