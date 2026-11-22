@@ -544,15 +544,24 @@ function endpointLabelZones({ relation, points }) {
   }
   // The marker polygon extends 9 stroke widths behind its reference point
   // and one ahead. Preserve the short departure as well.
+  const first = distinctNeighbor(points, 'start');
   return [
-    zone(points[0], points[1], Math.min(8, Math.hypot(points[1][0] - points[0][0], points[1][1] - points[0][1])), stroke),
-    zone(points.at(-1), points.at(-2), 9 * stroke, 3.5 * stroke, stroke),
+    zone(points[0], first, Math.min(8, Math.hypot(first[0] - points[0][0], first[1] - points[0][1])), stroke),
+    zone(points.at(-1), distinctNeighbor(points, 'end'), 9 * stroke, 3.5 * stroke, stroke),
   ].filter(Boolean);
+}
+
+// SVG orients a marker from the last nonzero segment, so skip authored
+// waypoints that repeat an endpoint.
+function distinctNeighbor(points, end) {
+  const tip = end === 'start' ? points[0] : points.at(-1);
+  const ordered = end === 'start' ? points.slice(1) : points.slice(0, -1).reverse();
+  return ordered.find(([x, y]) => x !== tip[0] || y !== tip[1]) || tip;
 }
 
 function routeArrowheads(routes) {
   return routes.map(({ relation, relationIndex, points }) => ({
-    relationIndex, marker: arrowheadTriangle(points.at(-1), points.at(-2),
+    relationIndex, marker: arrowheadTriangle(points.at(-1), distinctNeighbor(points, 'end'),
       relation.width || (relation.variant === 'emphasis' ? 1.8 : 1.5)),
   }));
 }

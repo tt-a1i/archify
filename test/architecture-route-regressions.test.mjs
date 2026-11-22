@@ -328,7 +328,7 @@ for (const name of ['fixed-canvas-overflow', 'fixed-canvas-false-membership', 'f
   });
 }
 
-for (const name of ['label-masks-neighbor-arrowhead', 'label-relocation-masks-return-arrowhead', 'pin-skips-arrowhead-clearance']) {
+for (const name of ['label-masks-neighbor-arrowhead', 'label-relocation-masks-return-arrowhead', 'pin-skips-arrowhead-clearance', 'repeated-endpoint-arrowhead']) {
   test(`automatic labels keep every arrowhead visible in ${name}`, () => {
     const { status, receipt } = validate(fileURLToPath(fixtureUrl(name)), 'standard', '--layout-json');
     assert.equal(status, 0, JSON.stringify(receipt.diagnostics));
@@ -340,7 +340,11 @@ for (const name of ['label-masks-neighbor-arrowhead', 'label-relocation-masks-re
       for (const [markerIndex, { points }] of routes.entries()) {
         const marker = relations[markerIndex];
         const stroke = marker.width || (marker.variant === 'emphasis' ? 1.8 : 1.5);
-        assert.equal(maskCoversArrowhead(rect, arrowheadTriangle(points.at(-1), points.at(-2), stroke)), false,
+        const tip = points.at(-1);
+        const before = points.findLast(([x, y]) => x !== tip[0] || y !== tip[1]);
+        const triangle = arrowheadTriangle(tip, before, stroke);
+        assert.ok(triangle, `${marker.label || marker.to} has a measurable arrowhead`);
+        assert.equal(maskCoversArrowhead(rect, triangle), false,
           `${route.label} masks ${marker.label || marker.to}`);
       }
     }
