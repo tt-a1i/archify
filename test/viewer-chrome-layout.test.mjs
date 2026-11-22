@@ -1113,8 +1113,9 @@ test('theme switches repaint the page and diagram without dropping the desktop r
   const file = render('architecture', CASES.architecture);
   const browser = new ChromeVisualBrowser(chromePath);
   try {
-    const session = await load(browser, file, { query: '?theme=dark' });
-    for (const theme of ['light', 'dark']) {
+    for (const initialTheme of ['dark', 'light']) {
+      const theme = initialTheme === 'dark' ? 'light' : 'dark';
+      const session = await load(browser, file, { query: '?theme=' + initialTheme });
       const result = await evaluate(browser, session, `(async function () {
         var root = document.documentElement;
         var panel = document.querySelector('.diagram-container');
@@ -1122,6 +1123,7 @@ test('theme switches repaint the page and diagram without dropping the desktop r
           var rect = panel.getBoundingClientRect();
           return {
             theme: root.getAttribute('data-theme'),
+            colorScheme: getComputedStyle(root).colorScheme,
             body: getComputedStyle(document.body).backgroundColor,
             panel: getComputedStyle(panel).backgroundColor,
             rail: root.getAttribute('data-nav-stage-rail'),
@@ -1138,8 +1140,12 @@ test('theme switches repaint the page and diagram without dropping the desktop r
         }
         return { before: before, frames: frames };
       })()`, true);
+      assert.equal(result.before.theme, initialTheme);
+      assert.equal(result.before.colorScheme, initialTheme, 'native controls follow the theme on load');
       assert.equal(result.before.rail, 'true', 'fixture exercises the reserved stage rail');
       assert.equal(result.frames.at(-1).theme, theme);
+      assert.ok(result.frames.every((frame) => frame.colorScheme === theme),
+        'native controls follow the theme from the first frame after toggling');
       assert.notEqual(result.before.body, result.frames.at(-1).body);
       assert.notEqual(result.before.panel, result.frames.at(-1).panel);
       assert.ok(result.frames.every((frame) => frame.body === result.frames.at(-1).body),
