@@ -18,8 +18,10 @@ import {
   normalizeRoutePoints,
   rectsOverlap,
   roundedPath,
+  roundedPathSegments,
   collectBorderRuns,
   collectRouteRhythmIssues,
+  routeBudgetMetrics,
   frameBorderSegments,
   labelPoint,
 } from '../shared/geometry.mjs';
@@ -27,6 +29,7 @@ import { shortestOrthogonalGridRoute } from '../shared/route-quality.mjs';
 import { textUnits } from '../shared/utils.mjs';
 import { reservedLabelRect } from '../shared/automatic-labels.mjs';
 import { changeEdgeLabelExtraWidth } from '../shared/change-marks.mjs';
+import { prepareCrossingPath, visibleCrossings } from '../shared/route-crossings.mjs';
 
 function labelDistance(points, rect, limit) {
   return Math.min(...points.slice(1).map((end, index) =>
@@ -67,6 +70,54 @@ export function parallelFrameRunLength(points, borders, clearance = 8) {
 
 export const READABLE_PORT_GAP = 22;
 export const MIN_PARALLEL_DEPARTURE = 48;
+export const READABLE_FRAME_GAP = 12;
+
+function reciprocalPair(left, right) {
+  return left.from === right.to && left.to === right.from;
+}
+
+function relationshipStroke(relation) {
+  return relation.width || (relation.variant === 'emphasis' ? 1.8 : 1.5);
+}
+
+export function* closeParallelRuns(points, otherPoints, gap) {
+  for (let index = 0; index + 1 < points.length; index += 1) {
+    const start = points[index];
+    const end = points[index + 1];
+    const axis = start[1] === end[1] ? 0 : 1;
+    const across = 1 - axis;
+    if (start[across] !== end[across]) continue;
+    for (let peerIndex = 0; peerIndex + 1 < otherPoints.length; peerIndex += 1) {
+      const peerStart = otherPoints[peerIndex];
+      const peerEnd = otherPoints[peerIndex + 1];
+      const separation = start[across] - peerStart[across];
+      if (peerStart[across] !== peerEnd[across] || Math.abs(separation) >= gap - 0.0001) continue;
+      const overlap = Math.min(Math.max(start[axis], end[axis]), Math.max(peerStart[axis], peerEnd[axis]))
+        - Math.max(Math.min(start[axis], end[axis]), Math.min(peerStart[axis], peerEnd[axis]));
+      if (overlap > 0.0001) yield { index, across, separation, overlap, gap };
+    }
+  }
+}
+
+function parallelGap(left, right) {
+  const arrowheadWidth = 3.5 * (relationshipStroke(left) + relationshipStroke(right));
+  return Math.max(reciprocalPair(left, right) ? 28 : 18, arrowheadWidth + 4);
+}
+
+export function parallelRunMeasures(routes) {
+  let length = 0;
+  let debt = 0;
+  for (const [index, { relation, points }] of routes.entries()) {
+    for (let peer = index + 1; peer < routes.length; peer += 1) {
+      const other = routes[peer];
+      for (const run of closeParallelRuns(points, other.points, parallelGap(relation, other.relation))) {
+        length += run.overlap;
+        debt += run.overlap * (1 - Math.abs(run.separation) / run.gap);
+      }
+    }
+  }
+  return { length, debt };
+}
 
 export function* closeReciprocalLanes(points, otherPoints) {
   for (const [index, end] of points.slice(1).entries()) {
@@ -88,7 +139,7 @@ export function* closeReciprocalLanes(points, otherPoints) {
 // Use the same architecture route preferences for rendering and placement checks.
 export function createArchitectureRouter(components, connections, {
   frames = [], fixedCanvas = false, automaticPlacement = false, acceptSimplification,
-  readablePorts = false, spreadLanes = false, frameClearance = 0,
+  readablePorts = false, spreadLanes = false, frameClearance = 0, separateRuns = false,
 } = {}) {
   return createRouter(components, connections, {
     distinctAutomaticPorts: true,
@@ -98,6 +149,7 @@ export function createArchitectureRouter(components, connections, {
     readablePorts,
     spreadLanes,
     frameClearance,
+    separateRuns,
     acceptSimplification,
     // Intrinsic canvases can use one outward stub without shrinking their text.
     readabilityBottomMargin: fixedCanvas ? 0 : 24,
@@ -189,6 +241,7 @@ export function createRouter(components, connections = [], {
   readablePorts = false,
   spreadLanes = false,
   frameClearance = 0,
+  separateRuns = false,
   acceptSimplification = null,
 } = {}) {
   const frameBorders = frames.flatMap((frame) => frameBorderSegments(frame));
@@ -1055,7 +1108,16 @@ export function createRouter(components, connections = [], {
       && !routeOverlapsResolved(conn, routed.points, resolvedRoutes);
   }
 
+  const crossingPaths = new WeakMap();
+  function crossingPath(points) {
+    if (!crossingPaths.has(points)) crossingPaths.set(points, prepareCrossingPath(roundedPathSegments(points, 8)));
+    return crossingPaths.get(points);
+  }
+
   function crossingPoints(points, other, limit = Infinity) {
+    if (countSharedEndpointCrossings) {
+      return visibleCrossings(crossingPath(points), crossingPath(other.points), limit).length;
+    }
     let count = 0;
     for (let index = 1; index < points.length; index += 1) {
       for (let otherIndex = 1; otherIndex < other.points.length; otherIndex += 1) {
@@ -1905,6 +1967,109 @@ export function createRouter(components, connections = [], {
           }
         }
       }
+
+      function separateParallelRuns() {
+        const measure = (entry, others) => {
+          const runs = others.flatMap(other => [...closeParallelRuns(entry.points, other.points, parallelGap(entry.conn, other.conn))]);
+          const borders = frameBorders.flatMap(border => [...closeParallelRuns(entry.points, [border.start, border.end], READABLE_FRAME_GAP)])
+            .filter(run => run.overlap >= 24);
+          return { runs, borders, parallel: runs.reduce((sum, run) => sum + run.overlap, 0),
+            frame: borders.reduce((sum, run) => sum + run.overlap, 0),
+            debt: runs.reduce((sum, run) => sum + run.overlap * (1 - Math.abs(run.separation) / run.gap), 0) };
+        };
+        const ranked = resolvedRoutes.map(entry => ({ entry, ...measure(entry, resolvedRoutes.filter(other => other !== entry)) }))
+          .sort((a, b) => b.debt + b.frame - a.debt - a.frame);
+        let probes = 160;
+        let compositions = 12;
+        for (const { entry, parallel, frame } of ranked) {
+          if (!probes || (!parallel && !frame)) break;
+          const { conn, points } = entry;
+          if (typeOwned.has(conn) || conn.from === conn.to || hasAuthoredRouteGeometry(conn) || hasAuthoredLabelPlacement(conn)
+              || [conn.fromSide, conn.toSide].some(side => side && side !== 'auto')) continue;
+          const others = resolvedRoutes.filter(other => other !== entry);
+          const before = measure(entry, others);
+          if (!before.parallel && !before.frame) continue;
+          const oldSides = selectedSides.get(conn);
+          const from = components.get(conn.from);
+          const to = components.get(conn.to);
+          const labels = reservedLabels.filter(label => label.conn !== conn);
+          const previousCrossings = others.map(other => crossingPoints(points, other));
+          const budget = routeBudgetMetrics({ routedRelations: [entry] });
+          const length = routeLength(points);
+          const approach = path => routeLength(path.slice(-2));
+          const maxLength = length + Math.min(before.frame ? 40 : 24, length * 0.2);
+          const moves = [];
+          for (const { index, across, separation, gap } of [...before.runs, ...before.borders]
+            .sort((a, b) => b.overlap - a.overlap).slice(0, 6)) {
+            const peer = points[index][across] - separation;
+            for (const direction of (separation < 0 ? [-1, 1] : [1, -1])) {
+              const shifted = points.map(point => [...point]);
+              shifted[index][across] = shifted[index + 1][across] = peer + direction * gap;
+              moves.push({ points: normalizeRoutePoints(shifted), sides: oldSides });
+            }
+          }
+          // Staggered reciprocal elbows may leave no usable room in their
+          // shared corridor. Try a different face with at most one turn.
+          const alternatePorts = (box, side, point, previous, pinnedSide) => {
+            if (side === pinnedSide) return [previous];
+            const axis = side === 'top' || side === 'bottom' ? 0 : 1;
+            const low = (axis ? box.y : box.x) + 16;
+            const high = (axis ? box.y + box.height : box.x + box.width) - 16;
+            const near = [...point];
+            near[axis] = Math.max(low, Math.min(high, previous[axis]));
+            return [near, point];
+          };
+          for (const sides of candidateSidePairs(conn)) {
+            const { start, end } = connectionGeometry(conn, sides);
+            const starts = alternatePorts(from, sides.fromSide, start, points[0], oldSides.fromSide);
+            const ends = alternatePorts(to, sides.toSide, end, points.at(-1), oldSides.toSide);
+            for (const first of starts) for (const last of ends) {
+              for (const elbow of [[first[0], last[1]], [last[0], first[1]]]) {
+                moves.push({ points: normalizeRoutePoints([first, elbow, last]), sides });
+              }
+            }
+          }
+          const seen = new Set();
+          const feasible = [];
+          for (const { points: next, sides } of moves) {
+            const key = JSON.stringify(next);
+            if (seen.has(key) || next.length < 2 || !next.every(withinScene)
+                || routeLength(next) > maxLength || next.length > Math.max(4, points.length)
+                || approach(next) < Math.min(approach(points), 16)) continue;
+            seen.add(key);
+            const after = measure({ conn, points: next }, others);
+            if (after.parallel > before.parallel + 0.0001 || after.frame > before.frame + 0.0001
+                || after.debt > before.debt + 0.0001
+                || (after.debt >= before.debt - 0.0001 && after.frame >= before.frame - 0.0001)) continue;
+            const nextBudget = routeBudgetMetrics({ routedRelations: [{ points: next }] });
+            if (nextBudget.routesOverSuggestedStretch > budget.routesOverSuggestedStretch) continue;
+            if (!probes) break;
+            probes -= 1;
+            if (!portHasCornerClearance(from, sides.fromSide, next[0]) || !portHasCornerClearance(to, sides.toSide, next.at(-1))
+                || !endpointSlotsClear([{ conn, points: next }], others, other => other === conn ? sides : selectedSides.get(other))
+                || !routeIsClear(conn, { points: next }, { ...sides, from, to }, others, [])
+                || others.some((other, index) => crossingPoints(next, other, previousCrossings[index] + 1) > previousCrossings[index])) continue;
+            const gain = before.debt + before.frame - after.debt - after.frame;
+            const rect = labelRectFor?.(conn, next, { routes: [...others.map(other => other.points), next], labels: labels.map(label => label.rect) });
+            const hint = labelClears(rect, conn, others, labels) ? rect : null;
+            const routed = { points: next, d: roundedPath(next, 8), ...(hint ? { labelAt: [hint.lx, hint.ly] } : {}) };
+            feasible.push({ routed, sides, rect: hint, gain, length: routeLength(next) });
+          }
+          // Provisional labels can block the best lane on paper. Check the
+          // final composition, including label ownership, before committing.
+          const chosen = feasible.sort((a, b) => b.gain - a.gain || a.length - b.length).slice(0, 4)
+            .find(candidate => {
+              if (!compositions) return false;
+              compositions -= 1;
+              return !acceptSimplification || acceptSimplification(other => pathCache.get(other),
+                other => other === conn ? candidate.routed : pathCache.get(other));
+            });
+          if (!chosen) continue;
+          entry.points = chosen.routed.points;
+          cachePath(conn, chosen.routed, chosen.sides);
+          reservedLabels = [...labels, ...(chosen.rect ? [{ conn, rect: chosen.rect }] : [])];
+        }
+      }
       allowGridSearch = false;
       try {
         if (repairAutomaticPorts) straightenParallelCorridors();
@@ -2027,6 +2192,7 @@ export function createRouter(components, connections = [], {
           uncrossEndpointPorts();
           simplifyResidualRoutes();
           if (spreadLanes) separateNearbyLanes();
+          if (separateRuns) separateParallelRuns();
         }
       } finally {
         allowGridSearch = true;

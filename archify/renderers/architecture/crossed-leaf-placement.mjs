@@ -78,6 +78,7 @@ export function placeCrossedLeaf(components, connections, frames, baseline, make
         segmentIntersectsRect({ start: points[index], end }, box, 8)))) continue;
       const moved = new Map(components).set(leaf.id, box);
       const router = makeRouter(moved);
+      if (!router) return null;
       if (router.crossingPairs().length) continue;
       if (!connections.every(conn => {
         const previous = paths.get(conn);
@@ -110,6 +111,7 @@ export function placeCrossedSinks(components, connections, frames, baseline, mak
   const moved = new Map(components);
   for (const box of boxes) moved.set(box.id, box);
   const router = makeRouter(moved);
+  if (!router) return null;
   if (router.crossingPairs().length) return null;
   const before = new Map(connections.map(conn => [conn, baseline.pathFor(conn).points]));
   const after = new Map(connections.map(conn => [conn, router.pathFor(conn).points]));

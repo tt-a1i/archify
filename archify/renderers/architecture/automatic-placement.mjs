@@ -558,7 +558,33 @@ function nearestFreePosition(x, y, minX, minY, obstacles, maxX = Infinity, maxY 
   return closest;
 }
 
-function avoidPinnedComponents(byId, connections, boundaries, viewBox, composedTitle) {
+function fixedCanvasProblems(byId, boundaries, [width, height], composedTitle) {
+  const cards = [...byId].map(([id, item]) => {
+    const [x, y] = item.pin ?? [item.x, item.y];
+    return { id, x, y, width: item.width, height: item.height };
+  });
+  const boxes = new Map(cards.map(box => [box.id, box]));
+  const outside = box => box.x < -1e-9 || box.y < -1e-9
+    || box.x + box.width > width + 1e-9 || box.y + box.height > height + 1e-9;
+  let problems = cards.reduce((sum, box, index) => sum + Number(outside(box))
+    + cards.slice(index + 1).filter(other => rectsOverlap(box, other)).length, 0);
+  for (const boundary of boundaries) {
+    const members = new Set(boundary.wraps);
+    const wrapped = [...members].map(id => boxes.get(id)).filter(Boolean);
+    if (!wrapped.length) continue;
+    const insets = boundaryInsets(boundary.pad, composedTitle);
+    const x = Math.min(...wrapped.map(box => box.x)) - insets.side;
+    const y = Math.min(...wrapped.map(box => box.y)) - insets.top;
+    const right = Math.max(...wrapped.map(box => box.x + box.width)) + insets.side;
+    const bottom = Math.max(...wrapped.map(box => box.y + box.height)) + insets.bottom;
+    problems += Number(outside({ x, y, width: right - x, height: bottom - y }));
+    problems += cards.filter(box => !members.has(box.id) && box.x >= x - 1e-9 && box.y >= y - 1e-9
+      && box.x + box.width <= right + 1e-9 && box.y + box.height <= bottom + 1e-9).length;
+  }
+  return problems;
+}
+
+function avoidPinnedComponents(byId, connections, boundaries, viewBox, composedTitle, frameInsets = false) {
   const items = [...byId.values()];
   const pinned = items.filter((item) => item.pin);
   const fixedRoutes = connections.filter((edge) => asArray(edge?.via).length
@@ -602,14 +628,7 @@ function avoidPinnedComponents(byId, connections, boundaries, viewBox, composedT
       }
     }
     if (!viewBox) return;
-    const [right, bottom] = viewBox;
-    const cardsFit = items.every(item => item.x + item.width <= right && item.y + item.height <= bottom);
-    const framesFit = boundaries.every(boundary => asArray(boundary.wraps).every(id => {
-      const item = byId.get(id);
-      const padding = boundaryInsets(boundary.pad, composedTitle);
-      return !item || (item.x + item.width + padding.side <= right && item.y + item.height + padding.bottom <= bottom);
-    }));
-    if (cardsFit && framesFit) return;
+    if (fixedCanvasProblems(byId, boundaries, viewBox, composedTitle) === 0) return;
   }
 
   // Let each inferred box follow the nearest anchor along the relationship
@@ -634,7 +653,7 @@ function avoidPinnedComponents(byId, connections, boundaries, viewBox, composedT
 
   const clearance = 24;
   const canvasInsets = new Map();
-  if (viewBox) {
+  if (viewBox && frameInsets) {
     for (const boundary of boundaries) {
       const padding = boundaryInsets(boundary.pad, composedTitle);
       for (const id of asArray(boundary.wraps)) {
@@ -715,11 +734,13 @@ function avoidPinnedComponents(byId, connections, boundaries, viewBox, composedT
     // Prefer a clear slot on the authored canvas. Retain the unbounded
     // fallback so genuinely impossible constraints still reach validation.
     // The outer bounds are those of the wrapped frame, not just the card.
-    const { side, top, bottom } = canvasInsets.get(item) ?? { side: 0, top: 0, bottom: 0 };
+    const { side, top, bottom } = canvasInsets.get(item) ?? {
+      side: Math.max(0, ...groups.map(group => group.pad)), top: 0, bottom: groups.length ? 20 : 0,
+    };
     const maxX = viewBox ? viewBox[0] - item.width - side : Infinity;
     const maxY = viewBox ? viewBox[1] - item.height - bottom : Infinity;
-    const lowerX = viewBox ? side : minX;
-    const lowerY = viewBox ? top : minY;
+    const lowerX = viewBox && frameInsets ? side : minX;
+    const lowerY = viewBox && frameInsets ? top : minY;
     [item.x, item.y] = nearestFreePosition(x, y, lowerX, lowerY, obstacles, maxX, maxY)
       ?? nearestFreePosition(x, y, lowerX, lowerY, basic, maxX, maxY)
       ?? (viewBox ? nearestFreePosition(x, y, minX, minY, obstacles) : undefined)
@@ -747,6 +768,21 @@ export function automaticComponentPositions(arch, defaultSize = [120, 60]) {
       && (!edge?.route || edge.route === 'auto'));
   const viewBox = isPoint(arch.meta?.viewBox) ? arch.meta.viewBox : undefined;
   idealPositions(root, { allowParallel, viewBox, relocatesLabels: arch.meta?.quality_profile === 'showcase' });
-  avoidPinnedComponents(byId, connections, boundaries, viewBox, Boolean(arch.meta?.quality_profile));
+  const composedTitle = Boolean(arch.meta?.quality_profile);
+  const initial = viewBox && boundaries.length ? [...byId.values()].map(item => [item.x, item.y]) : null;
+  avoidPinnedComponents(byId, connections, boundaries, viewBox, composedTitle);
+  if (initial) {
+    const problems = fixedCanvasProblems(byId, boundaries, viewBox, composedTitle);
+    if (problems > 0) {
+      // The hierarchy holds the item objects. Reset their coordinates before
+      // trying a different set of placement bounds.
+      const saved = [...byId.values()].map(item => [item.x, item.y]);
+      [...byId.values()].forEach((item, index) => { [item.x, item.y] = initial[index]; });
+      avoidPinnedComponents(byId, connections, boundaries, viewBox, composedTitle, true);
+      if (fixedCanvasProblems(byId, boundaries, viewBox, composedTitle) >= problems) {
+        [...byId.values()].forEach((item, index) => { [item.x, item.y] = saved[index]; });
+      }
+    }
+  }
   return new Map([...byId].map(([id, item]) => [id, item.pin ?? [item.x, item.y]]));
 }

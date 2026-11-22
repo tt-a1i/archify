@@ -1,64 +1,12 @@
 import { properSegmentIntersection, rectsOverlap } from '../shared/geometry.mjs';
 import { analyzeSvgPath } from '../shared/svg-path-analysis.mjs';
+import { prepareCrossingPath, visibleCrossings } from '../shared/route-crossings.mjs';
 import { horizontalLabelClearance } from './routing.mjs';
 
-function pointOnSegment(point, { start, end }) {
-  const [x, y] = point;
-  return x >= Math.min(start[0], end[0]) && x <= Math.max(start[0], end[0])
-    && y >= Math.min(start[1], end[1]) && y <= Math.max(start[1], end[1])
-    && Math.abs((end[0] - start[0]) * (y - start[1])
-      - (end[1] - start[1]) * (x - start[0])) <= 0.0001;
-}
-
-function samePoint(a, b) {
-  return a[0] === b[0] && a[1] === b[1];
-}
-
-function raysAlternate(point, a, b, c, d) {
-  const rays = [a, b, c, d].map(([x, y], index) => ({
-    angle: Math.atan2(y - point[1], x - point[0]), path: index < 2,
-  })).sort((left, right) => left.angle - right.angle);
-  return rays.every((ray, index) => {
-    const next = rays[(index + 1) % rays.length];
-    const angle = next.angle - ray.angle + (index === rays.length - 1 ? 2 * Math.PI : 0);
-    return ray.path !== next.path && angle > 1e-9;
-  });
-}
-
-function crossesAtInteriorVertex(points, other) {
-  for (let i = 1; i < points.length - 1; i += 1) {
-    const point = points[i];
-    for (let j = 1; j < other.length; j += 1) {
-      const start = other[j - 1];
-      const end = other[j];
-      if (!pointOnSegment(point, { start, end }) || samePoint(point, end)) continue;
-      // Inspect an interior vertex of the other path only on its outgoing
-      // segment. True endpoints have one ray and cannot form a crossing.
-      const before = samePoint(point, start) ? other[j - 2] : start;
-      if (before && raysAlternate(point, points[i - 1], points[i + 1], before, end)) return true;
-    }
-  }
-  return false;
-}
-
-function pathsCross(left, right) {
-  if (left.maxX < right.minX || right.maxX < left.minX || left.maxY < right.minY || right.maxY < left.minY) return false;
-  return left.segments.some(a => right.segments.some(b => properSegmentIntersection(a.start, a.end, b.start, b.end)))
-    || crossesAtInteriorVertex(left.points, right.points) || crossesAtInteriorVertex(right.points, left.points);
-}
-
 export function measuredCrossingPairs(routes) {
-  const paths = routes.map(({ d }) => analyzeSvgPath(d).subpaths.map(part => {
-    const points = part.points.filter((point, index, points) => !index || !samePoint(points[index - 1], point));
-    const xs = points.map(([x]) => x);
-    const ys = points.map(([, y]) => y);
-    return {
-      segments: part.segments, points,
-      minX: Math.min(...xs), maxX: Math.max(...xs), minY: Math.min(...ys), maxY: Math.max(...ys),
-    };
-  }));
+  const paths = routes.map(({ d }) => analyzeSvgPath(d).subpaths.map(({ commands }) => prepareCrossingPath(commands)));
   return routes.flatMap(({ relation }, index) => routes.slice(index + 1).flatMap(({ relation: other }, offset) =>
-    paths[index].some(a => paths[index + offset + 1].some(b => pathsCross(a, b)))
+    paths[index].some(a => paths[index + offset + 1].some(b => visibleCrossings(a, b, 1).length))
       ? [[relation, other]] : []));
 }
 

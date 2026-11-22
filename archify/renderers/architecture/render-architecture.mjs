@@ -17,9 +17,11 @@ import { placeCrossedLeaf, placeCrossedSinks, facingFramePlacements } from './cr
 import { crossingPlacementCandidates, foldedChain, frameAttachmentCandidates, frameEnclosureCandidates, measuredCrossingPairs, routeSpanMeasures, strongestLayerOrder, terminalBranchCandidates } from './automatic-placement-candidates.mjs';
 import {
   closeReciprocalLanes, createArchitectureRouter, connectionLabelBoxAt, parallelFrameRunLength,
-  MIN_PARALLEL_DEPARTURE, READABLE_PORT_GAP,
+  MIN_PARALLEL_DEPARTURE, parallelRunMeasures, READABLE_FRAME_GAP, READABLE_PORT_GAP,
 } from './routing.mjs';
 import { placeAutomaticLabels } from '../shared/automatic-labels.mjs';
+import { arrowheadTriangle, maskCoversArrowhead } from '../shared/arrowhead.mjs';
+import { prepareCrossingPath, visibleCrossings } from '../shared/route-crossings.mjs';
 import { cleanRouteDetourProblems } from '../shared/route-quality.mjs';
 import {
   asArray,
@@ -33,6 +35,7 @@ import {
   collectArrowheadCollisions,
   routeBudgetMetrics,
   frameBorderSegments,
+  roundedPathSegments,
   collectLabelRouteClearance,
   segmentRectClearanceWithin,
   cleanBorderRunProblems,
@@ -308,8 +311,8 @@ function horizontalOverlap(left, right) {
 // along its rail to the nearest clear position inside the frame.
 function slideTitleOffRoutes(boundary, title, placedTitles, { titleRouteSegments, boxes, connectionLabels }) {
   if (!enforcesBoundaryTitleComposition) return;
-  const clear = (x) => {
-    const rect = { ...title, x };
+  const clear = (x, y = title.y) => {
+    const rect = { ...title, x, y };
     return !titleRouteSegments.some((segment) => segmentIntersectsRect(segment, rect, 2))
       && ![...placedTitles, ...boxes.values(), ...connectionLabels].some((other) => rectsOverlap(rect, other));
   };
@@ -328,8 +331,20 @@ function slideTitleOffRoutes(boundary, title, placedTitles, { titleRouteSegments
     label.x + label.width + 8, label.x - 8 - title.width,
   ])].filter((value) => value >= left && value <= right)
     .sort((a, b) => a - b)
-    .find(clear);
-  if (x !== undefined) title.x = x;
+    .find(value => clear(value));
+  if (x !== undefined) {
+    title.x = x;
+    return;
+  }
+  if (!whollyInferred) return;
+  // Wide titles sometimes cannot fit on either side of a route on the top
+  // rail. Try the unused bottom inset before changing the frame's footprint.
+  const bottomRail = boundary.y + boundary.height - title.height - layout.boundaryLabelFrameInset;
+  const bottomX = [left, (left + right) / 2, right].find(value => clear(value, bottomRail));
+  if (bottomX !== undefined) {
+    title.x = bottomX;
+    title.y = bottomRail;
+  }
 }
 
 function layoutBoundaryTitles(rawBoundaries, minimumFontSize, scene) {
@@ -419,9 +434,18 @@ const makeRouter = (boxes, boundaries = rawBoundaries, routingOptions = {}) => {
 };
 const routable = new Map([...components].filter(([, box]) => isFinitePoint(box.x, box.y, box.width, box.height)));
 let router = makeRouter(routable);
+// Every routed placement shares this allowance, including the early
+// specialist passes. Larger scenes already spend more on each routing call.
+const placementRouteLimit = components.size >= 24 || connections.length >= 28 ? 4 : 12;
+let remainingPlacementRoutes = placementRouteLimit;
+function routePlacement(boxes, bounds, options) {
+  if (!remainingPlacementRoutes) return null;
+  remainingPlacementRoutes -= 1;
+  return makeRouter(boxes, bounds, options);
+}
 if (automaticPositions && !arch.meta?.viewBox) {
-  const leaf = placeCrossedLeaf(routable, connections, routingFrames, router, makeRouter);
-  const sinks = placeCrossedSinks(routable, connections, routingFrames, router, makeRouter,
+  const leaf = placeCrossedLeaf(routable, connections, routingFrames, router, routePlacement);
+  const sinks = placeCrossedSinks(routable, connections, routingFrames, router, routePlacement,
     (boxes, before, after) => preservesLabels(
       labelProblems(resolveConnectionComposition(routable, before)),
       labelProblems(resolveConnectionComposition(boxes, after)),
@@ -436,7 +460,8 @@ if (automaticPositions && !arch.meta?.viewBox) {
     for (const moved of facingFramePlacements(routable, connections, routingFrames, right)) {
       const bounds = boundsFor(moved);
       if (bounds.some(frame => [...moved.values()].some(box => !frame.wraps.includes(box.id) && rectsOverlap(frame, box)))) continue;
-      const candidate = makeRouter(moved, bounds);
+      const candidate = routePlacement(moved, bounds);
+      if (!candidate) break;
       const previous = resolveConnectionComposition(routable, router.pathFor);
       const next = resolveConnectionComposition(moved, candidate.pathFor, bounds);
       const before = routeBudgetMetrics({ routedRelations: previous.routes });
@@ -547,14 +572,19 @@ function resolveConnectionComposition(boxes, routeFor, measuredBoundaries = boun
   const protectedEndpoints = new Map(whollyInferred ? routes
     .filter(({ relation }) => relation.label && hasAutomaticRouteGeometry(relation))
     .map(route => [route.relationIndex, endpointLabelZones(route)]) : []);
+  const arrowheads = whollyInferred ? routes.map(({ relation, relationIndex, points }) => ({
+    relationIndex, marker: arrowheadTriangle(points.at(-1), points.at(-2),
+      relation.width || (relation.variant === 'emphasis' ? 1.8 : 1.5)),
+  })) : [];
   const showcase = arch.meta?.quality_profile === 'showcase';
   const hitEndpoint = !showcase && labels.some(label => protectedEndpoints.get(label.relationIndex)
-    ?.some(zone => rectsOverlap(label, zone)));
+    ?.some(zone => rectsOverlap(label, zone)) || arrowheads.some(({ marker }) => maskCoversArrowhead(label, marker)));
   const placed = showcase || hitEndpoint ? placeAutomaticLabels({
     keepFallbackNearRoute: true,
     labels,
     routes,
     protectedEndpoints,
+    arrowheads,
     onlyProtectedEndpoints: !showcase,
     components: [...boxes.values()],
     titles: boundaries.map(boundary => boundary.title),
@@ -564,10 +594,10 @@ function resolveConnectionComposition(boxes, routeFor, measuredBoundaries = boun
       ? viewBox[1] - 48 - legendFootprint(architectureLegendEntries, { width: viewBox[0] - layout.margin * 2 }).extraHeight
       : viewBox[1],
   }) : labels;
-  return { routes, labels: placed, titles, viewBox, boxes, protectedEndpoints };
+  return { routes, labels: placed, titles, viewBox, boxes, protectedEndpoints, arrowheads };
 }
 
-function labelProblems({ routes, labels, titles, viewBox, boxes, protectedEndpoints }) {
+function labelProblems({ routes, labels, titles, viewBox, boxes, protectedEndpoints, arrowheads }) {
   const problems = new Map();
   // Use the same measurements as the composition gate. Compare distances
   // per label and relationship so an existing defect cannot mask a new one.
@@ -582,6 +612,9 @@ function labelProblems({ routes, labels, titles, viewBox, boxes, protectedEndpoi
     const { relationIndex } = label;
     if (protectedEndpoints.get(relationIndex)?.some(zone => rectsOverlap(label, zone))) {
       problems.set(`endpoint/${relationIndex}`, 1);
+    }
+    for (const { marker, relationIndex: otherIndex } of arrowheads) {
+      if (maskCoversArrowhead(label, marker)) problems.set(`marker/${relationIndex}/${otherIndex}`, 1);
     }
     const owner = byIndex.get(relationIndex);
     const own = distance(owner.points, label, Infinity);
@@ -653,6 +686,12 @@ function spacingDebt({ routes, boxes, titles }) {
   return { portDebt, borderDebt };
 }
 
+function corridorMeasures({ routes, titles }) {
+  const borders = forRouting(titles.boundaries).flatMap(frameBorderSegments);
+  return { ...parallelRunMeasures(routes),
+    border: routes.reduce((total, { points }) => total + parallelFrameRunLength(points, borders, READABLE_FRAME_GAP), 0) };
+}
+
 function chooseAutomaticPlacement() {
   if (!auto || components.size > 40 || connections.length > 64 || rawBoundaries.length > 24
       || [...components.values()].some(box => box.pos)
@@ -675,8 +714,9 @@ function chooseAutomaticPlacement() {
   const baseline = measure(initial);
   let best = { ...baseline, crossings, enclosures, scene: initial, router };
   function consider(moved, enclosureLimit = 0, kind = '', routingOptions) {
+    if (!remainingPlacementRoutes) return;
     const bounds = boundsFor(moved);
-    const candidate = makeRouter(moved, bounds, routingOptions);
+    const candidate = routePlacement(moved, bounds, routingOptions);
     const scene = resolveConnectionComposition(moved, candidate.pathFor, bounds);
     const nextCrossings = measuredCrossingPairs(scene.routes);
     const next = measure(scene);
@@ -701,6 +741,13 @@ function chooseAutomaticPlacement() {
           || next.length > best.length * 1.025 || next.area > best.area || next.longest > best.longest + 0.025
           || debt.portDebt > old.portDebt || debt.borderDebt > old.borderDebt + 0.0001
           || (debt.portDebt === old.portDebt && debt.borderDebt >= old.borderDebt - 0.0001)) return;
+    } else if (kind === 'corridor') {
+      const old = corridorMeasures(best.scene);
+      const debt = corridorMeasures(scene);
+      if (nextCrossings.length > best.crossings.length || next.bends > best.bends || next.stretch > best.stretch
+          || next.length > best.length * 1.025 || next.area > best.area
+          || debt.length > old.length + 0.0001 || debt.border > old.border + 0.0001 || debt.debt > old.debt + 0.0001
+          || (debt.debt >= old.debt - 0.0001 && debt.border >= old.border - 0.0001)) return;
     } else if (kind === 'fold') {
       if (nextCrossings.length > best.crossings.length || next.bends > best.bends || next.stretch > best.stretch
           || scene.viewBox[1] >= best.scene.viewBox[1] * 0.75 || next.area > best.area * 1.25) return;
@@ -714,9 +761,8 @@ function chooseAutomaticPlacement() {
       if (!error.archifyDiagnostics?.length) throw error;
       if (!nextEnclosures.length || error.archifyDiagnostics.some(d => d.code !== 'layout/boundary-encloses-non-member')) return;
     }
-    best = { ...next, crossings: nextCrossings, enclosures: nextEnclosures, scene, router: candidate };
+    best = { ...next, crossings: nextCrossings, enclosures: nextEnclosures, scene, router: candidate, routingOptions };
   }
-  let remaining = 12;
   if (!small) {
     // Route only the strongest projected order on larger scenes. The same
     // composition and validation checks decide whether it is kept.
@@ -725,14 +771,13 @@ function chooseAutomaticPlacement() {
       if (moved) consider(moved);
     }
   } else if (enclosures.length) {
-    while (remaining > 0 && best.enclosures.length) {
+    while (remainingPlacementRoutes > 0 && best.enclosures.length) {
       const start = best;
       // Rank moves on frame geometry before spending any routing work.
       const proposals = [...frameEnclosureCandidates(start.scene.boxes, start.enclosures)]
         .map(moved => ({ moved, count: frameEnclosures(moved, boundsFor(moved)).length }))
         .sort((a, b) => a.count - b.count);
-      for (const { moved } of proposals.slice(0, Math.min(remaining, 4))) {
-        remaining -= 1;
+      for (const { moved } of proposals.slice(0, Math.min(remainingPlacementRoutes, 4))) {
         consider(moved, start.enclosures.length);
       }
       if (start === best) break;
@@ -741,29 +786,29 @@ function chooseAutomaticPlacement() {
   } else if (crossings.length) {
     function tryCrossingMoves(candidates) {
       for (const moved of candidates) {
-        if (remaining <= 0) break;
-        remaining -= 1;
+        if (remainingPlacementRoutes <= 0) break;
         consider(moved);
       }
     }
     tryCrossingMoves(crossingPlacementCandidates(components, connections, rawBoundaries, crossings));
-    if (remaining && best.crossings.length) {
+    if (remainingPlacementRoutes && best.crossings.length) {
       tryCrossingMoves(frameAttachmentCandidates(best.scene.boxes, connections, best.scene.titles.boundaries, best.crossings));
     }
   }
   if (canShorten) {
-    let budget = 12;
-    for (let pass = 0; pass < 3 && budget; pass += 1) {
+    // Reserve an alternative when the accepted scene has competing lanes.
+    const corridor = corridorMeasures(best.scene);
+    const reserve = best.crossings.length ? 0 : (corridor.length || corridor.border ? 2 : 1);
+    for (let pass = 0; pass < 3 && remainingPlacementRoutes > reserve; pass += 1) {
       const start = best;
       const moves = terminalBranchCandidates(start.scene, start.spans);
       let attempts = 0;
       const tried = new Map();
       for (const { moved, attach } of moves) {
-        if (!budget || attempts >= 6) break;
+        if (remainingPlacementRoutes <= reserve || attempts >= 6) break;
         if ((tried.get(attach) ?? 0) >= 3) continue;
         tried.set(attach, (tried.get(attach) ?? 0) + 1);
         attempts += 1;
-        budget -= 1;
         consider(moved, 0, 'span');
       }
       if (start === best) break;
@@ -773,7 +818,9 @@ function chooseAutomaticPlacement() {
     const debt = spacingDebt(best.scene);
     if (debt.portDebt) {
       consider(best.scene.boxes, 0, 'spacing', { spreadLanes: true });
-      consider(best.scene.boxes, 0, 'spacing', { readablePorts: true, spreadLanes: true });
+      if (remainingPlacementRoutes > 1) {
+        consider(best.scene.boxes, 0, 'spacing', { readablePorts: true, spreadLanes: true });
+      }
     }
     if (debt.borderDebt) {
       consider(best.scene.boxes, 0, 'spacing', { frameClearance: 8 });
@@ -781,6 +828,10 @@ function chooseAutomaticPlacement() {
     }
     const folded = foldedChain(best.scene);
     if (folded) consider(folded, 0, 'fold');
+    const corridor = corridorMeasures(best.scene);
+    if (corridor.length || corridor.border) {
+      consider(best.scene.boxes, 0, 'corridor', { ...best.routingOptions, separateRuns: true });
+    }
   }
   if (best.router !== router) {
     router = best.router;
@@ -789,7 +840,28 @@ function chooseAutomaticPlacement() {
   return best.scene;
 }
 
-const composition = chooseAutomaticPlacement() ?? resolveConnectionComposition(components, pathFor, rawBoundaries);
+function clearFrameLabelBorders(scene) {
+  if (!whollyInferred || !scene.labels.length || !scene.titles.boundaries.length) return scene;
+  const clearanceBorders = forRouting(scene.titles.boundaries).flatMap(frameBorderSegments);
+  if (!scene.labels.some(label => clearanceBorders.some(border => segmentRectClearanceWithin(border, label, 2) < 2 - 0.0001))) {
+    return scene;
+  }
+  const labels = placeAutomaticLabels({
+    ...scene,
+    clearanceBorders,
+    keepFallbackNearRoute: true,
+    onlyProtectedEndpoints: true,
+    components: [...scene.boxes.values()],
+    titles: scene.titles.boundaries.map(frame => frame.title),
+    placementBottom: architectureLegendEntries.length
+      ? scene.viewBox[1] - 48 - legendFootprint(architectureLegendEntries, { width: scene.viewBox[0] - layout.margin * 2 }).extraHeight
+      : scene.viewBox[1],
+  });
+  const next = { ...scene, labels };
+  return preservesLabels(labelProblems(scene), labelProblems(next)) ? next : scene;
+}
+
+const composition = clearFrameLabelBorders(chooseAutomaticPlacement() ?? resolveConnectionComposition(components, pathFor, rawBoundaries));
 const {
   titles: { boundaries }, labels: connectionLabels, viewBox,
 } = composition;
@@ -1238,6 +1310,9 @@ function validateArchitecture({
     diagramType: 'architecture',
     relationCollection: 'connections',
     profile: arch.meta?.quality_profile,
+    includeSharedEndpoints: () => true,
+    visiblePathFor: ({ points }) => prepareCrossingPath(roundedPathSegments(points, 8)),
+    visibleCrossingFor: (left, right) => visibleCrossings(left, right, 1)[0],
     // Automatic architecture routes render with an opaque crossover halo.
     // That makes a proper X visually unambiguous while explicit authored
     // crossings remain a blocking composition error.
@@ -1381,6 +1456,7 @@ function buildLayoutReport() {
     ok: true,
     diagram_type: 'architecture',
     layout: grid ?? { mode: automaticPositions ? 'auto' : 'free' },
+    ...(automaticPositions ? { routedPlacementCandidates: placementRouteLimit - remainingPlacementRoutes } : {}),
     viewBox,
     components: [...components.values()].map(componentBox),
     boundaries: boundaries.map(boundaryBox),

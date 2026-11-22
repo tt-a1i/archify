@@ -1,11 +1,13 @@
 import { normalizeRoutePoints, rectsOverlap, segmentRectClearanceWithin } from './geometry.mjs';
 import { createSpatialGrid } from './spatial-grid.mjs';
+import { maskCoversArrowhead } from './arrowhead.mjs';
 
 // A bounded fallback for an unpinned label whose usual position collides.
 // It never routes an edge, moves a node, expands the canvas, or rewrites input.
 export function placeAutomaticLabels({
   labels, routes, components, titles, viewBox, placementBottom = viewBox[1], fallbackRing = true, keepFallbackNearRoute = false,
   gridSweep = false, maxOwnRouteDistance = Infinity, protectedEndpoints = new Map(), onlyProtectedEndpoints = false,
+  arrowheads = [], clearanceBorders = [],
 }) {
   const placed = [...labels];
   const obstacles = [...components, ...titles];
@@ -43,11 +45,25 @@ export function placeAutomaticLabels({
   const overlapsLabel = (rect, index, gap = 0) => placed.some((other, otherIndex) => (
     otherIndex !== index && rectsOverlap(rect, other, gap)
   ));
-  const coversEndpoint = rect => protectedEndpoints.get(rect.relationIndex)?.some(zone => rectsOverlap(rect, zone));
+  const coversEndpoint = rect => protectedEndpoints.get(rect.relationIndex)?.some(zone => rectsOverlap(rect, zone))
+    || arrowheads.some(({ marker }) => maskCoversArrowhead(rect, marker));
+  const touchesBorder = rect => clearanceBorders.some(part => segmentRectClearanceWithin(part, rect, 2) < 2 - 0.0001);
+  const mustKeepOwner = new Set(labels.filter(label => touchesBorder(label) || arrowheads.some(({ relationIndex, marker }) =>
+    relationIndex !== label.relationIndex && maskCoversArrowhead(label, marker))).map(label => label.relationIndex));
+  function keepsOwner(rect) {
+    if (!mustKeepOwner.has(rect.relationIndex)) return true;
+    let own = Infinity;
+    for (const segment of segments) if (segment.relationIndex === rect.relationIndex) {
+      own = Math.min(own, segmentRectClearanceWithin(segment, rect, own));
+    }
+    return Number.isFinite(own) && segmentsNear(rect, own).every(segment => (
+      segment.relationIndex === rect.relationIndex || segmentRectClearanceWithin(segment, rect, own) > own
+    ));
+  }
   const clear = (rect, index) => (
     inside(rect) && rect.y + rect.height <= placementBottom
     && !obstacles.some(obstacle => rectsOverlap(rect, obstacle, 2))
-    && !overlapsLabel(rect, index, 2) && !masksRoute(rect) && !coversEndpoint(rect)
+    && !overlapsLabel(rect, index, 2) && !masksRoute(rect) && !coversEndpoint(rect) && !touchesBorder(rect) && keepsOwner(rect)
     && (!Number.isFinite(maxOwnRouteDistance) || segments.some(segment =>
       segment.relationIndex === rect.relationIndex
       && segmentRectClearanceWithin(segment, rect, maxOwnRouteDistance) <= maxOwnRouteDistance))
@@ -154,7 +170,7 @@ export function placeAutomaticLabels({
 
   const pinned = label => ['labelAt', 'labelDx', 'labelDy', 'labelSegment']
     .some(key => label.relation[key] !== undefined);
-  const needsPlacement = (label, index) => coversEndpoint(label) || (!onlyProtectedEndpoints && (!inside(label)
+  const needsPlacement = (label, index) => coversEndpoint(label) || touchesBorder(label) || (!onlyProtectedEndpoints && (!inside(label)
     || components.some(component => rectsOverlap(label, component, -2))
     || titles.some(title => rectsOverlap(label, title))
     || overlapsLabel(label, index) || masksRoute(label)));

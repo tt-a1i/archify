@@ -6,8 +6,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { automaticComponentPositions } from '../archify/renderers/architecture/automatic-placement.mjs';
+import { arrowheadTriangle, maskCoversArrowhead } from '../archify/renderers/shared/arrowhead.mjs';
 import { measuredCrossingPairs } from '../archify/renderers/architecture/automatic-placement-candidates.mjs';
-import { connectionLabelBoxAt, createArchitectureRouter } from '../archify/renderers/architecture/routing.mjs';
+import { connectionLabelBoxAt, createArchitectureRouter, parallelRunMeasures } from '../archify/renderers/architecture/routing.mjs';
 import { properSegmentIntersection, rectsOverlap, roundedPath, segmentRectClearance } from '../archify/renderers/shared/geometry.mjs';
 
 const fixtureUrl = name => new URL(`fixtures/architecture-route-regressions/${name}.json`, import.meta.url);
@@ -95,6 +96,24 @@ test('two close arrivals get room between their arrowheads on the same face', t 
   const [first, second] = [api, agent].map(route => route.points.at(-1));
   assert.equal(first[1], second[1]);
   assert.ok(Math.abs(first[0] - second[0]) >= 22 - 0.001, JSON.stringify({ first, second }));
+});
+
+test('staggered request and return routes choose separate shafts when their facing gap is narrow', t => {
+  const components = [
+    ['author', 'external', 149], ['agent', 'frontend', 164], ['existing', 'external', 178], ['cli', 'backend', 197],
+    ['renderer', 'backend', 172], ['viewer', 'frontend', 172], ['output', 'external', 135],
+  ].map(([id, type, width]) => ({ id, type, label: id, size: [width, 60] }));
+  const connections = [
+    ['author', 'agent', 'Prompt', 'emphasis'], ['agent', 'cli', 'Typed JSON', 'emphasis'],
+    ['existing', 'cli', 'Direct CLI call'], ['cli', 'renderer', 'Spec by type'],
+    ['renderer', 'cli', 'Staged HTML'], ['cli', 'viewer', 'Publish if checked', 'emphasis'],
+    ['viewer', 'output', 'Export in browser'],
+  ].map(([from, to, label, variant]) => ({ from, to, label, variant }));
+  const layout = inferredLayout(t, components, connections);
+  const pair = layout.connections.filter(({ from, to }) => [from, to].every(id => ['cli', 'renderer'].includes(id)));
+  assert.equal(pair.length, 2);
+  const measured = parallelRunMeasures(pair.map(relation => ({ relation, points: relation.points })));
+  assert.ok(measured.length < 40, JSON.stringify(pair));
 });
 
 test('a shorter route cannot cause the final label solver to put another label on an arrow', () => {
@@ -280,6 +299,58 @@ test('a rounded corner crossing counts at its exact sample point', () => {
   assert.equal(crosses('M 98 0 L 98 102 L 98 300'), 1, 'both paths can have an interior vertex there');
   assert.equal(crosses('M 98 0 L 98 102'), 0, 'touching a true endpoint is not a crossing');
   assert.equal(crosses('M 95 105 L 98 102 L 97 106'), 0, 'a route that turns back at the contact only touches');
+});
+
+test('a rendered corner crosses at the same point in the router and validation', () => {
+  for (const name of ['rounded-sample-crossing', 'rounded-sample-crossing-offset']) {
+    const spec = load(name);
+    const boxes = new Map(spec.components.map(({ id, pos: [x, y], size: [width, height] }) =>
+      [id, { id, x, y, width, height, cx: x + width / 2, cy: y + height / 2 }]));
+    assert.equal(createArchitectureRouter(boxes, spec.connections).crossingPairs().length, 1);
+    const { status, receipt } = validate(fileURLToPath(fixtureUrl(name)), 'showcase', '--json');
+    assert.equal(status, 1);
+    assert.ok(receipt.diagnostics.some(diagnostic => diagnostic.code === 'composition/proper-crossing'), JSON.stringify(receipt));
+  }
+});
+
+for (const name of ['fixed-canvas-overflow', 'fixed-canvas-false-membership', 'fixed-canvas-pinned-outsider']) {
+  test(`fixed-canvas recovery leaves valid frame membership and bounds in ${name}`, () => {
+    const spec = load(name);
+    const { status, receipt } = validate(fileURLToPath(fixtureUrl(name)), 'showcase', '--layout-json');
+    assert.equal(status, 0, JSON.stringify(receipt.diagnostics));
+    assert.deepEqual(receipt.viewBox, spec.meta.viewBox);
+    for (const pin of spec.components.filter(card => card.pos)) {
+      const placed = receipt.components.find(card => card.id === pin.id);
+      assert.deepEqual([placed.x, placed.y], pin.pos);
+    }
+  });
+}
+
+for (const name of ['label-masks-neighbor-arrowhead', 'label-relocation-masks-return-arrowhead']) {
+  test(`automatic labels keep every arrowhead visible in ${name}`, () => {
+    const { status, receipt } = validate(fileURLToPath(fixtureUrl(name)), 'standard', '--layout-json');
+    assert.equal(status, 0, JSON.stringify(receipt.diagnostics));
+    const routes = receipt.connections;
+    const relations = load(name).connections;
+    for (const [index, route] of routes.entries()) {
+      if (!route.label) continue;
+      const rect = connectionLabelBoxAt(relations[index], route.labelAt);
+      for (const [markerIndex, { points }] of routes.entries()) {
+        const marker = relations[markerIndex];
+        const stroke = marker.width || (marker.variant === 'emphasis' ? 1.8 : 1.5);
+        assert.equal(maskCoversArrowhead(rect, arrowheadTriangle(points.at(-1), points.at(-2), stroke)), false,
+          `${route.label} masks ${marker.label || marker.to}`);
+      }
+    }
+  });
+}
+
+test('a dense automatic render bounds placement routing across all passes', () => {
+  const result = spawnSync(process.execPath, [renderer, '--layout-json', fileURLToPath(fixtureUrl('runtime-24-terminal-branches'))],
+    { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const count = JSON.parse(result.stdout).routedPlacementCandidates;
+  assert.ok(count > 0 && count <= 4, `Routed ${count} candidates`);
 });
 
 test('router and delivered artifact count crossings with a shared endpoint and a pinned label', t => {
