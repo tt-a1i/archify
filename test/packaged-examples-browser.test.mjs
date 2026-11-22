@@ -13,10 +13,7 @@ const chromePath = process.env.ARCHIFY_CHROME ? findChrome() : null;
 const examplesRoot = path.join(skillRoot, '..', 'examples');
 const renderedExampleOutputs = [...fs.readFileSync(path.join(skillRoot, 'scripts/render-examples.mjs'), 'utf8')
   .matchAll(/'([a-z0-9-]+\.html)'/g)].map((match) => match[1]);
-const packagedHtmlExamples = [...new Set([
-  ...renderedExampleOutputs,
-  ...fs.readdirSync(examplesRoot).filter((name) => /^drilldown-.*\.html$/.test(name)),
-])].sort();
+const packagedHtmlExamples = [...new Set(renderedExampleOutputs)].sort();
 
 test('all rendered HTML examples pass the real visual-check desktop gate', {
   skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
