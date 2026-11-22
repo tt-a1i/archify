@@ -170,6 +170,10 @@ ${toolbar.css}
 .stage-pane>svg{display:block;width:100%;height:auto;border-radius:10px}
 .controls{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 14px}
 .timeline{flex:1;min-width:120px;accent-color:var(--accent)}
+@media (max-width:480px){
+  .controls{flex-wrap:wrap}
+  .controls .timeline{flex-basis:100%;order:1}
+}
 .clock{font:500 12px/1 ui-monospace,Consolas,monospace;color:var(--muted);min-width:96px;text-align:right;font-variant-numeric:tabular-nums}
 .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px}
 .stage-step{background-color:var(--surface);color:var(--ink);border-color:var(--border);border-radius:10px;padding:8px 10px;text-align:left;display:flex;align-items:center;gap:8px}

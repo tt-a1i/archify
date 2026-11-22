@@ -661,6 +661,43 @@ test('story SVGs render in <img>/<picture>, settle under prefers-reduced-motion,
   });
 });
 
+test('Story Stage seeks by pointer at 320px and 768px', { skip: !chrome }, async (t) => {
+  const dir = createScratchDirectory(path.join(os.tmpdir(), 'archify-story-seek-'));
+  const spec = buildChoreographySample(dir);
+  const stageHtml = path.join(dir, 'stage.html');
+  const stage = run(['story', 'stage', spec, stageHtml], dir);
+  assert.equal(stage.status, 0, stage.stdout + stage.stderr);
+
+  const browser = desktopBrowser(chrome);
+  t.after(() => browser.close());
+  const session = await browser.sessionPromise;
+  const send = (method, params = {}) => browser.cdp.send(method, params, session);
+  const read = async (expression) => {
+    const result = await send('Runtime.evaluate', { expression, returnByValue: true });
+    assert.equal(result.exceptionDetails, undefined, result.exceptionDetails?.text);
+    return result.result.value;
+  };
+  for (const width of [320, 768]) {
+    await send('Emulation.setDeviceMetricsOverride', { width, height: 800, deviceScaleFactor: 1, mobile: false });
+    const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
+    await send('Page.navigate', { url: pathToFileURL(stageHtml).href });
+    await loaded;
+    const target = await read(`(() => {
+      const slider = document.getElementById('stage-range');
+      slider.scrollIntoView({ block: 'nearest' });
+      const box = slider.getBoundingClientRect();
+      return { width: box.width, x: box.left + 0.8 * box.width, y: box.top + box.height / 2, value: Number(slider.value) };
+    })()`);
+    assert.ok(target.width >= 100, `${width}px viewport has a usable seek track`);
+    const { x, y } = target;
+    for (const type of ['mousePressed', 'mouseReleased']) {
+      await send('Input.dispatchMouseEvent', { type, x, y, button: 'left', clickCount: 1 });
+    }
+    assert.ok(await read("Number(document.getElementById('stage-range').value)") > target.value,
+      `${width}px viewport can seek by clicking the track`);
+  }
+});
+
 test('choreography preserves revisits, successive labels, parallel travel, initial focus and finite playback', { skip: !chrome }, async (t) => {
   const dir = createScratchDirectory(path.join(os.tmpdir(), 'archify-story-motion-'));
   buildChoreographySample(dir);
