@@ -39,6 +39,76 @@ function inferredLayout(t, components, connections, boundaries, quality = 'showc
   return receipt;
 }
 
+function renderFacingCards(t, { horizontal = true, gap, connection }) {
+  const dir = mkdtempSync(join(tmpdir(), 'archify-facing-cards-'));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const input = join(dir, 'input.json');
+  const output = join(dir, 'output.html');
+  const positions = [[80, 80], horizontal ? [200 + gap, 80] : [80, 140 + gap]];
+  const components = positions.map((pos, index) => ({
+    id: index ? 'target' : 'source', type: 'backend', label: index ? 'Target' : 'Source', pos, size: [120, 60],
+  }));
+  writeFileSync(input, JSON.stringify({
+    schema_version: 1, diagram_type: 'architecture',
+    meta: { title: 'Facing cards', viewBox: [560, 360], output: 'output.html' },
+    components, connections: [{ from: 'source', to: 'target', ...connection }],
+  }));
+  const result = spawnSync(process.execPath, [renderer, input, output], { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const html = readFileSync(output, 'utf8');
+  const edge = html.match(/<path [^>]*data-edge-from="source"[^>]*>/)[0];
+  const points = edge.match(/data-composition-points="([^"]+)"/)[1].split(';')
+    .map(point => point.split(',').map(Number));
+  return { html, edge, points, positions };
+}
+
+test('short connections between facing cards keep a wide label beside a straight shaft', t => {
+  for (const horizontal of [true, false]) {
+    const gap = horizontal ? 55 : 36;
+    const label = 'Fetch current metadata';
+    const { html, points, positions } = renderFacingCards(t, { horizontal, gap, connection: { label } });
+    assert.equal(points.length, 2, JSON.stringify(points));
+    const along = horizontal ? 0 : 1;
+    assert.equal(points[0][1 - along], points[1][1 - along]);
+    assert.equal(points[1][along] - points[0][along], gap);
+    const mask = html.match(/<rect x="([^"]+)" y="([^"]+)" width="([^"]+)" height="([^"]+)" rx="3" class="c-mask"\/>\s*<text [^>]*>Fetch current metadata<\/text>/);
+    assert.ok(mask, 'the relationship mask is rendered');
+    const [x, y, width, height] = mask.slice(1).map(Number);
+    const rect = { x, y, width, height };
+    assert.ok(width > gap);
+    for (const [x, y] of positions) assert.equal(rectsOverlap(rect, { x, y, width: 120, height: 60 }, 2), false);
+    const [start, end] = points;
+    const distance = segmentRectClearance({ start, end }, rect);
+    assert.ok(distance > 0.75 && distance <= height * 3, JSON.stringify({ distance, rect, points }));
+    assert.equal(maskCoversArrowhead(rect, arrowheadTriangle(end, start, 1.5)), false);
+  }
+});
+
+test('wide architecture markers respect absolute and final approach bounds', t => {
+  for (const { gap, via } of [
+    { gap: 40 },
+    { gap: 140 },
+    { gap: 100, via: [[220, 110], [220, 50], [270, 50], [270, 110]] },
+  ]) {
+    const { edge, html, points } = renderFacingCards(t, {
+      gap, connection: { width: 8, fromSide: 'right', toSide: 'left', ...(via && { via }) },
+    });
+    assert.deepEqual(points, [[200, 110], ...(via || []), [200 + gap, 110]]);
+    assert.match(edge, /stroke-width="8"/);
+    const approach = via ? edge.match(/\sd="[^"]* ([-\d.]+) 110 L ([-\d.]+) 110"/)
+      .slice(1).map(Number).reduce((start, end) => end - start) : gap;
+    const markerId = edge.match(/marker-end="url\(#([^)]*)\)"/)[1];
+    const marker = html.match(new RegExp(`<marker id="${markerId}"[^>]*>`))[0];
+    assert.match(marker, /markerUnits="userSpaceOnUse"/);
+    const length = Number(marker.match(/markerWidth="([^"]+)"/)[1]);
+    const width = Number(marker.match(/markerHeight="([^"]+)"/)[1]);
+    assert.ok(length <= Math.min(24, approach * 0.4) && length >= 8, marker);
+    assert.ok(Math.abs(width - length * 0.7) < 0.0001, marker);
+  }
+  const { edge } = renderFacingCards(t, { gap: 70, connection: {} });
+  assert.match(edge, /stroke-width="1.5" marker-end="url\(#arrowhead\)"/);
+});
+
 test('an inferred input with a deep consumer approaches from an adjacent slot', t => {
   const components = [
     ['cli', 'external'], ['collect', 'backend'], ['remote', 'cloud'], ['snapshot', 'database'],

@@ -533,6 +533,21 @@ function routeStrokeWidth(relation) {
   return relation.width || (relation.variant === 'emphasis' ? 1.8 : 1.5);
 }
 
+function routeMarkerScale(points, stroke) {
+  // Keep the standard markers and their short approaches unchanged.
+  const maxScale = 2.4;
+  if (stroke <= maxScale || points.length < 2) return stroke;
+  const tip = points.at(-1);
+  const previous = distinctNeighbor(points, 'end');
+  const lastLeg = Math.hypot(tip[0] - previous[0], tip[1] - previous[1]);
+  // Preserve the marker's aspect ratio. Reserve 60% of the drawn approach
+  // for the shaft and limit the full triangle to 24 × 16.8 SVG units.
+  if (!lastLeg || lastLeg - 8 >= 25 * maxScale) return maxScale;
+  const last = roundedPathSegments(points, 8).findLast(({ start, end }) =>
+    start[0] !== end[0] || start[1] !== end[1]);
+  return Math.min(maxScale, Math.hypot(last.end[0] - last.start[0], last.end[1] - last.start[1]) / 25);
+}
+
 function endpointLabelZones({ relation, points }) {
   const stroke = routeStrokeWidth(relation);
   function zone(tip, next, along, across, overhang = 0) {
@@ -548,8 +563,8 @@ function endpointLabelZones({ relation, points }) {
     return { x: Math.min(sx, x) - dx, y: Math.min(sy, y) - dy,
       width: Math.abs(x - sx) + 2 * dx, height: Math.abs(y - sy) + 2 * dy };
   }
-  // The marker polygon extends 9 stroke widths behind its reference point
-  // and one ahead. Preserve the short departure as well.
+  // Reserve the full stroke-scaled approach, even when the rendered marker
+  // is smaller. Keep the routing and label clearances independent of the cap.
   const first = distinctNeighbor(points, 'start');
   return [
     zone(points[0], first, Math.min(8, Math.hypot(first[0] - points[0][0], first[1] - points[0][1])), stroke),
@@ -894,8 +909,8 @@ function frameOutline(frame) {
   return prepareCrossingPath(segments);
 }
 
-function finishAutomaticLabels(scene, repairFixedCanvas = false, changedRelation) {
-  if ((!auto && !changedRelation) || !scene.labels.length) return scene;
+function finishAutomaticLabels(scene, repairFixedCanvas = false, { canMove, sideOnly = false } = {}) {
+  if ((!auto && !canMove) || !scene.labels.length) return scene;
   const clearanceBorders = whollyInferred ? forRouting(scene.titles.boundaries).flatMap(frameBorderSegments) : [];
   const arrowheads = scene.arrowheads.length ? scene.arrowheads : routeArrowheads(scene.routes);
   const frameOutlines = repairFixedCanvas ? forRouting(scene.titles.boundaries).map(frameOutline) : [];
@@ -907,7 +922,7 @@ function finishAutomaticLabels(scene, repairFixedCanvas = false, changedRelation
   const strokesByIndex = repairFixedCanvas && new Map(strokes.map(stroke => [stroke.relationIndex, stroke]));
   const labels = placeAutomaticLabels({
     ...scene,
-    canMove: changedRelation && (label => label.relation === changedRelation),
+    canMove,
     arrowheads,
     clearanceBorders,
     // The quadratic outline approximates the SVG's round corners within
@@ -922,11 +937,13 @@ function finishAutomaticLabels(scene, repairFixedCanvas = false, changedRelation
     repairOwnership: true,
     searchBand: true,
     keepFallbackNearRoute: true,
-    onlyProtectedEndpoints: true,
+    // A proposed straight route can start with a label off the shaft but
+    // inside a card. Search for a clear side position before rejecting it.
+    onlyProtectedEndpoints: !sideOnly,
     // A label can interrupt its own straight shaft where space is tight.
     // Keep its bends, and every part of every competing route, visible.
     coversRouteStroke: label => strokes.some(({ path, corners, halfWidth, relationIndex }) =>
-      drawnPathRectClearance(relationIndex === label.relationIndex ? corners : path, label, halfWidth) < halfWidth),
+      drawnPathRectClearance(!sideOnly && relationIndex === label.relationIndex ? corners : path, label, halfWidth) < halfWidth),
     components: [...scene.boxes.values()],
     titles: scene.titles.boundaries.map(frame => frame.title),
     placementBottom: architectureLegendEntries.length
@@ -1080,7 +1097,13 @@ function repairFixedCanvasLabels(scene) {
 
 const automaticComposition = chooseAutomaticPlacement();
 function simplifyFinishedComposition(initial, sceneRouter = router) {
-  let current = initial;
+  const straight = new Set(initial.routes.filter(({ points }) => points.length === 2).map(({ relation }) => relation));
+  const boxes = [...initial.boxes.values()];
+  const blockedStraightLabels = new Set(initial.labels.filter(label =>
+    straight.has(label.relation) && boxes.some(box => rectsOverlap(label, box, -2))).map(label => label.relation));
+  let current = blockedStraightLabels.size ? finishAutomaticLabels(initial, true, {
+    canMove: label => blockedStraightLabels.has(label.relation), sideOnly: true,
+  }) : initial;
   let beforeProblems;
   const borders = forRouting(initial.titles.boundaries).flatMap(frameBorderSegments);
   let outlines;
@@ -1113,7 +1136,9 @@ function simplifyFinishedComposition(initial, sceneRouter = router) {
     const labels = current.labels.map(label => label.relation === relation
       ? { ...label, ...connectionLabelBoxAt(relation, labelPoint(relation, route.points)) } : label);
     const proposed = { ...current, routes, labels, titles, arrowheads, protectedEndpoints };
-    const candidate = relation.label ? finishAutomaticLabels(proposed, true, relation) : proposed;
+    const candidate = relation.label ? finishAutomaticLabels(proposed, true, {
+      canMove: label => label.relation === relation, sideOnly: route.points.length === 2,
+    }) : proposed;
     if (candidate.labels.some(label => drawnPathRectClearance(path, label, halfWidth) < halfWidth)) return false;
     const ownLabel = candidate.labels.find(label => label.relation === relation);
     if (ownLabel) {
@@ -1833,17 +1858,32 @@ function renderBoundaryLabel(b, index) {
         </g>`;
 }
 
-function renderConnectionPath(conn, index) {
-  const [cls, marker] = arrowClassMap[conn.variant || 'default'] || arrowClassMap.default;
+function connectionMarker(conn, index, definitions) {
+  const [, fallback] = arrowClassMap[conn.variant || 'default'] || arrowClassMap.default;
+  const marker = changeMarkerFor(conn, fallback);
+  const stroke = routeStrokeWidth(conn);
+  const scale = routeMarkerScale(pathFor(conn).points, stroke);
+  if (scale === stroke) return marker;
+  const id = `arrowhead-bounded-${index}`;
+  const tone = marker === 'arrowhead' ? 'default' : marker.slice('arrowhead-'.length);
+  definitions.push(`
+          <marker id="${id}" markerUnits="userSpaceOnUse" viewBox="0 0 10 7" markerWidth="${10 * scale}" markerHeight="${7 * scale}" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-${tone}" />
+          </marker>`);
+  return id;
+}
+
+function renderConnectionPath(conn, index, marker) {
+  const [cls] = arrowClassMap[conn.variant || 'default'] || arrowClassMap.default;
   const routed = pathFor(conn);
-  const strokeWidth = conn.width || (conn.variant === 'emphasis' ? 1.8 : 1.5);
+  const strokeWidth = routeStrokeWidth(conn);
   const automaticRoute = hasAutomaticRouteGeometry(conn);
   const underlay = automaticRoute
     ? `          <path data-graph-role="automatic-crossover-underlay" d="${routed.d}" fill="none" stroke="var(--mask)" stroke-width="${strokeWidth + 4}" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"/>\n`
     : '';
   const crossover = automaticRoute
     ? ` data-composition-crossover="halo"${conn.labelAt ? '' : ' data-composition-independent="true"'}` : '';
-  const edge = `        <path ${focusEdgeAttrs(conn.from, conn.to, conn.label, index, conn.id)}${changeEdgeAttrs(changeReview, conn)} data-composition-points="${routePointsValue(routed.points)}"${crossover}${authoredStraightRouteAttrs(conn, routed.points)} d="${routed.d}" class="${cls}"${animateAttr(arch.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${changeMarkerFor(conn, marker)})"/>`;
+  const edge = `        <path ${focusEdgeAttrs(conn.from, conn.to, conn.label, index, conn.id)}${changeEdgeAttrs(changeReview, conn)} data-composition-points="${routePointsValue(routed.points)}"${crossover}${authoredStraightRouteAttrs(conn, routed.points)} d="${routed.d}" class="${cls}"${animateAttr(arch.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
   if (!automaticRoute) return edge;
   // The wrapper is presentation-only: viewer state remains on the one semantic
   // edge, while CSS can keep its preceding mask underlay at the same opacity.
@@ -2022,6 +2062,9 @@ function renderLegend() {
 }
 
 function renderSvg() {
+  const markerDefinitions = [changeMarkerDefinitions(changeReview)];
+  const paths = connections.map((conn, index) =>
+    renderConnectionPath(conn, index, connectionMarker(conn, index, markerDefinitions)));
   // An automatic architecture canvas is compiler-measured geometry. Let the
   // Reader spend the real desktop height budget on it, including when an
   // outer route makes the canvas taller than the ordinary wide-diagram
@@ -2037,7 +2080,7 @@ function renderSvg() {
   const readerPrimaryText = arch.meta?.viewBox ? '' : ' data-reader-primary-text="14"';
   return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(arch.meta)} ${NODE_CARD_ATTR}${readerFit}${readerMinimumText}${readerPrimaryText}>
 ${svgAccessibleText(arch.meta, 'architecture')}
-${renderDefinitions(changeMarkerDefinitions(changeReview))}
+${renderDefinitions(markerDefinitions.join(''))}
 ${nodeCardStyle()}
 
         <!-- Background Grid -->
@@ -2047,7 +2090,7 @@ ${nodeCardStyle()}
 ${boundaries.map(renderBoundaryFrame).join('\n\n')}
 
         <!-- Connection paths (before components for correct z-order) -->
-${asArray(arch.connections).map(renderConnectionPath).join('\n')}
+${paths.join('\n')}
 
         <!-- Components -->
 ${[...components.values()].map(renderComponent).join('\n\n')}
