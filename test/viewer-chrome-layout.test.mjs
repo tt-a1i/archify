@@ -521,6 +521,49 @@ test('camera pan clips authored relationship paint at the protected stage bounda
   }
 });
 
+test('the initial architecture Dock leaves the formatted-result return readable', {
+  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
+}, async t => {
+  const browser = new ChromeVisualBrowser(chromePath);
+  t.after(() => browser.close());
+  const spec = JSON.parse(fs.readFileSync(
+    path.join(__dirname, 'fixtures/reader-readability/synthetic-wide.architecture.json'), 'utf8'));
+  spec.layout = { mode: 'auto' };
+  delete spec.meta.viewBox;
+  for (const card of spec.components) delete card.pos;
+  for (const link of spec.connections) {
+    delete link.fromSide;
+    delete link.toSide;
+    delete link.labelAt;
+  }
+  const input = path.join(tmp, 'automatic-wide.json');
+  const output = path.join(tmp, 'automatic-wide.html');
+  fs.writeFileSync(input, JSON.stringify(spec));
+  execFileSync(process.execPath, [path.join(skillRoot, 'bin/archify.mjs'), 'render', 'architecture', input, output]);
+  await browser.inspect({ artifactPath: output, width: 1440, height: 900, theme: 'light' });
+  const geometry = await evaluate(browser, await browser.sessionPromise, `(() => {
+    const dock = document.querySelector('.diagram-nav').getBoundingClientRect();
+    const plate = document.querySelector('g[data-edge-label="formatted result"] > rect').getBoundingClientRect();
+    const edge = document.querySelector('path[data-edge-label="formatted result"]');
+    const length = edge.getTotalLength();
+    const matrix = edge.getScreenCTM();
+    const contains = rect => rect.right > dock.left && rect.left < dock.right
+      && rect.bottom > dock.top && rect.top < dock.bottom;
+    const hitsRoute = Array.from({ length: 33 }, (_, index) => edge.getPointAtLength(length * index / 32)
+      .matrixTransform(matrix)).some(point => contains({ left: point.x - 1, right: point.x + 1,
+        top: point.y - 1, bottom: point.y + 1 }));
+    const liftedTop = innerHeight - 16 - dock.height;
+    return { hitsRoute, hitsPlate: contains(plate), dockWidth: dock.width, scroll: scrollY,
+      floatingWouldHit: dock.left < plate.right && dock.right > plate.left
+        && liftedTop < plate.bottom && innerHeight - 16 > plate.top };
+  })()`);
+  assert.equal(geometry.scroll, 0);
+  assert.ok(geometry.dockWidth > 0);
+  assert.equal(geometry.floatingWouldHit, true, JSON.stringify(geometry));
+  assert.equal(geometry.hitsRoute, false);
+  assert.equal(geometry.hitsPlate, false);
+});
+
 test('live camera transitions keep authored relationship paint outside the Dock on every frame', {
   skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
 }, async () => {
