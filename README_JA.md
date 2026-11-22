@@ -252,6 +252,12 @@ Show 8–12 core components, one primary path, external dependencies, and trust 
 Put supporting detail in cards instead of adding more edges.
 ```
 
+リポジトリのコードに基づく図を作成した後、Archify は Code Analysis を一行で案内し、依頼があった場合にだけ実行します。ソースコードに基づく対話型ワークベンチでは、モジュール間の結合、循環依存、レイヤー違反、大きなファイル、複雑度の高い箇所を確認できます。既存のアーキテクチャ図をコードと照合することもできます。[Code Analysis の使い方](archify/modules/code-analysis/docs/USAGE.md)を参照してください。
+
+```text
+Use archify Code Analysis on this repository: show module coupling, dependency cycles and hotspots.
+```
+
 ### 3. チャットで調整する
 
 `add Redis`、`move auth to the left`、`highlight the rollback path` のように、焦点を絞った依頼を続けてください。Archify は型付きソースを保持しているため、狙った箇所だけを反復できます。

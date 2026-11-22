@@ -142,6 +142,12 @@ Archify는 선택적 업데이트 알림을 위해 고정된 stable manifest를 
 Archify로 그려 줘: Browser -> API -> Redis cache -> PostgreSQL fallback.
 ```
 
+저장소의 코드를 바탕으로 다이어그램을 만든 뒤, Archify는 Code Analysis를 한 줄로 안내합니다. 사용자가 요청할 때만 분석을 실행합니다. 소스 코드에 근거한 대화형 워크벤치에서 모듈 결합도, 순환 의존성, 계층 위반, 큰 파일, 복잡도가 높은 부분을 확인할 수 있습니다. 기존 아키텍처 다이어그램을 코드와 대조할 수도 있습니다. 자세한 내용은 [Code Analysis 사용 가이드](archify/modules/code-analysis/docs/USAGE.md)를 참고하세요.
+
+```text
+Use archify Code Analysis on this repository: show module coupling, dependency cycles and hotspots.
+```
+
 ### 3. 대화로 다듬기
 
 `Redis 추가`, `인증을 왼쪽으로 이동`, `롤백 경로 강조`처럼 구체적인 요청을 이어 가세요. Archify는 선택적 수정을 위해 typed source를 유지합니다.

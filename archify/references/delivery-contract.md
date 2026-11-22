@@ -306,6 +306,13 @@ the connected scene while preserving meaning and user-fixed geometry, then
 finalize again. This suggestion changes no gate or exit status and requires
 no screenshot. A fixed canvas or uncertain measurement receives no suggestion.
 
+After a passing native diagram finalize with `--repo-root`, the full receipt
+and compact summary include `codeAnalysisOffer`. Its `prepare.argv` prepares a
+separate workbench, and Architecture also offers `alignWithDiagram.argv`
+for the finalized candidate. Finalize only emits the offer. If the user asks
+for analysis, follow the linked [Code Analysis entry](../modules/code-analysis/docs/USAGE.md#agent-entry-and-investigation),
+including adapter selection for repositories with several supported languages.
+
 A passing finalizer receipt is sufficient evidence for all four gates. Merely
 naming the gates or requiring each one to pass does not require replaying their
 standalone commands. Replay an individual command only when the request

@@ -286,6 +286,12 @@ Show 8–12 core components, one primary path, external dependencies, and trust 
 Put supporting detail in cards instead of adding more edges.
 ```
 
+After delivering a diagram based on repository code, Archify offers Code Analysis in one line. It runs only when you ask. The interactive, source-backed workbench shows module coupling, dependency cycles, layer violations, large files, and complexity hotspots. It can also check an existing architecture diagram against the code. See the [Code Analysis guide](archify/modules/code-analysis/docs/USAGE.md).
+
+```text
+Use archify Code Analysis on this repository: show module coupling, dependency cycles and hotspots.
+```
+
 ### 3. Refine in chat
 
 Continue with focused requests such as `add Redis`, `move auth to the left`, or `highlight the rollback path`. Archify keeps the typed source available for targeted iteration.

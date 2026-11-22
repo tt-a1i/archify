@@ -284,6 +284,12 @@ DeepSeek Harness（社区集成、显式启用）：运行 `dsh plugin --profile
 辅助信息放进说明卡片，不要继续增加连线。
 ```
 
+交付基于仓库源码的图后，Archify 会用一句话提示你可以使用 Code Analysis。只有在你提出请求后才会运行。交互式工作台以源码为依据，展示模块耦合、循环依赖、分层违规、大文件和复杂度热点，也可以对照源码检查已有的架构图。详见 [Code Analysis 使用指南](archify/modules/code-analysis/docs/USAGE.md)。
+
+```text
+用 archify 的 Code Analysis 分析这个仓库：看模块耦合、循环依赖和复杂度热点。
+```
+
 ### 3. 在对话中细调
 
 继续说：`增加 Redis`、`把鉴权移到左侧`、`突出回滚路径`。Archify 会保留 Typed Source，只修改相关部分。

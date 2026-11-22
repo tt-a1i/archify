@@ -6120,6 +6120,11 @@ async function commandFinalize(rawArgs) {
     for (const entry of result.summary.diagnostics || []) {
       if (entry.severity === 'warning') console.error(`warning [${entry.code}] ${entry.message}`);
     }
+    const offer = result.summary.codeAnalysisOffer;
+    if (offer) {
+      const shellWord = (word) => /^[\w@%+=:,./-]+$/.test(word) ? word : `'${word.replaceAll("'", "'\\''")}'`;
+      console.log(`code analysis available (not run): ${offer.prepare.argv.map(shellWord).join(' ')}`);
+    }
     if (result.summary.update?.noticeRequired) console.log(result.summary.update.noticeText);
   }
   process.exitCode = result.exitCode;

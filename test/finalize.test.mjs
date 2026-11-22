@@ -173,6 +173,10 @@ test('finalize reuses delivery validation, runs one build, and keeps full stage 
   assert.equal(finalized.summary.visualReview, 'not-requested');
   assert.equal(finalized.summary.repositoryReferences.status, 'not-declared');
   assert.equal(finalized.summary.repositoryReferences.count, 0);
+  const prepare = [process.execPath, '/fake/archify.mjs', 'code-analysis', 'prepare', directory, '--out', path.join(directory, 'code-analysis')];
+  assert.equal(finalized.summary.codeAnalysisOffer.action, 'offer-code-analysis');
+  assert.deepEqual(finalized.summary.codeAnalysisOffer.prepare.argv, prepare);
+  assert.deepEqual(finalized.summary.codeAnalysisOffer.alignWithDiagram.argv, [...prepare, '--ir', input]);
   assert.equal('stages' in finalized.summary, false);
   assert.equal(JSON.stringify(finalized.summary).includes('large-stage-array'), false);
   assert.equal(finalized.receipt.stages['browser-check'].receipt.containment.viewports.length, VISUAL_CHECK_VIEWPORTS.length);
@@ -187,7 +191,41 @@ test('finalize reuses delivery validation, runs one build, and keeps full stage 
   assert.equal(persisted.stages.validate.receipt.validation.checkCount, 9);
   const persistedSummary = JSON.parse(fs.readFileSync(summaryPath, 'utf8'));
   assert.equal(persistedSummary.ok, true);
+  assert.deepEqual(persisted.codeAnalysisOffer, finalized.summary.codeAnalysisOffer);
+  assert.deepEqual(persistedSummary.codeAnalysisOffer, finalized.summary.codeAnalysisOffer);
   assert.equal('stages' in persistedSummary, false);
+});
+
+test('finalize offers Code Analysis only for a passing repository-backed diagram and never runs it', async t => {
+  const directory = workspace(t);
+  const input = path.join(directory, 'diagram.json');
+  const output = path.join(directory, 'diagram.html');
+  const outDir = path.join(directory, 'evidence');
+  const source = '{"meta":{"quality_profile":"showcase"}}';
+  fs.writeFileSync(input, source);
+  const finalizeWith = async ({ type, repoRoot }) => {
+    const stages = [];
+    const runCommand = ({ stage }) => {
+      stages.push(stage);
+      const delivery = passingDelivery({ input, output, source, type });
+      if (stage === 'deliver') return result(delivery);
+      if (stage === 'check') return result(passingCheck({ output, artifact: delivery.artifact, deliveryReceiptId: delivery.receiptId }));
+      fs.mkdirSync(outDir, { recursive: true });
+      fs.writeFileSync(path.join(outDir, 'diagram.browser-check.json'), 'browser evidence');
+      return result(passingBrowserCheck({ output, artifact: delivery.artifact, deliveryReceiptId: delivery.receiptId, outDir }));
+    };
+    const finalized = await runFinalize({ cliPath: '/fake/archify.mjs', type, input, output, outDir, repoRoot, runCommand });
+    assert.equal(finalized.exitCode, 0);
+    assert.deepEqual(stages, ['deliver', 'check', 'browser-check']);
+    return finalized.summary;
+  };
+
+  const withoutRepository = await finalizeWith({ type: 'architecture' });
+  assert.equal('codeAnalysisOffer' in withoutRepository, false);
+
+  const workflow = await finalizeWith({ type: 'workflow', repoRoot: directory });
+  assert.deepEqual(workflow.codeAnalysisOffer.prepare.argv.slice(1, 5), ['/fake/archify.mjs', 'code-analysis', 'prepare', directory]);
+  assert.equal('alignWithDiagram' in workflow.codeAnalysisOffer, false);
 });
 
 test('finalize stops at the failed gate and persists actionable failure evidence', async t => {
@@ -201,6 +239,7 @@ test('finalize stops at the failed gate and persists actionable failure evidence
     type: 'workflow',
     input,
     output,
+    repoRoot: directory,
     runCommand: ({ stage }) => {
       calls.push(stage);
       return result({
@@ -225,6 +264,7 @@ test('finalize stops at the failed gate and persists actionable failure evidence
   assert.equal(finalized.summary.gates.deliver, 'not-run');
   assert.equal(finalized.summary.gates.check, 'not-run');
   assert.equal(finalized.summary.gates['browser-check'], 'not-run');
+  assert.equal('codeAnalysisOffer' in finalized.summary, false);
   assert.deepEqual(finalized.summary.diagnostics, [{
     code: 'composition/route-crossing',
     severity: 'error',

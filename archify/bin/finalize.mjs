@@ -684,6 +684,7 @@ export function compactFinalizeReceipt(receipt) {
     },
     evidence: receipt.evidence,
     ...(receipt.repositoryReferences ? { repositoryReferences: receipt.repositoryReferences } : {}),
+    ...(receipt.codeAnalysisOffer ? { codeAnalysisOffer: receipt.codeAnalysisOffer } : {}),
     ...(receipt.update && receipt.update.status !== 'unavailable'
       ? { update: receipt.update }
       : {}),
@@ -859,6 +860,22 @@ function repairSourceRanges(candidatePath, diagnostics, specification, expected)
   } catch {
     return null;
   }
+}
+
+// A repository-backed diagram is the moment a user can learn that the same
+// checkout supports Code Analysis. The offer is advisory: nothing runs here.
+export function codeAnalysisOffer({ cliPath, type, repoRoot, candidate, artifact }) {
+  const repository = path.resolve(repoRoot);
+  const outDir = path.join(path.dirname(artifact), 'code-analysis');
+  const prepare = [process.execPath, cliPath, 'code-analysis', 'prepare', repository, '--out', outDir];
+  return {
+    action: 'offer-code-analysis',
+    reason: 'This diagram is backed by a local repository. Code Analysis can also map that checkout\'s module coupling, cycles, layer violations, large files and complexity hotspots in an interactive workbench.',
+    instruction: 'Offer it in one line of the final response. Do not run it unless the user asks.',
+    prepare: { argv: prepare },
+    ...(type === 'architecture' ? { alignWithDiagram: { argv: [...prepare, '--ir', candidate] } } : {}),
+    reference: 'modules/code-analysis/docs/USAGE.md#agent-entry-and-investigation',
+  };
 }
 
 export async function runFinalize({
@@ -1242,6 +1259,7 @@ export async function runFinalize({
         ? { status: 'verified', revision: source.revision, count: source.references }
         : { status: 'not-declared', count: 0,
           guidance: 'For a repository diagram, pin meta.repository and cite the source ranges on its primary elements, then rerun finalize.' };
+      receipt.codeAnalysisOffer = codeAnalysisOffer({ cliPath, type, repoRoot, candidate: resolvedInput, artifact: resolvedOutput });
     }
     receipt.artifact = receipt.ok
       ? { path: resolvedOutput, ...receipt.stages.deliver.receipt.artifact }
