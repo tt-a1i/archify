@@ -253,8 +253,10 @@ test('Finder preserves search, keyboard, contextual Route selection and cleanup'
     await key('Escape', 'Escape', 27);
     await click('#route-probe-clear');
     assert.equal(await run('Archify.finder.context()'), 'route-target');
-    await run(`Archify.outline.select('api')`);
-    assert.equal(await run('Archify.focus.active()'), 'api', 'the index must focus nodes after clearing Route selection');
+    assert.equal(await run(`Archify.finder.select('api')`), true, 'Finder selection works after closing a route');
+    assert.equal(await run('Archify.focus.active()'), 'api');
+    await run(`Archify.outline.select('auth')`);
+    assert.equal(await run('Archify.focus.active()'), 'auth', 'the index must focus nodes after clearing Route selection');
     assert.equal(await run('Archify.routeProbe.active()'), null);
     await key('/', 'Slash', 191); await opened();
     assert.equal((await snapshot('route-cleared-default')).context, 'focus');
