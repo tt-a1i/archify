@@ -846,9 +846,17 @@ function chooseAutomaticPlacement() {
   if (canShorten && remainingPlacementRoutes) {
     // Judge grouped moves against the finished ordinary placement. Spending
     // this budget earlier can prevent a later branch or spacing repair.
+    const origin = ['x', 'y'].map(axis => Math.min(...[...best.scene.boxes.values()].map(box => box[axis])));
     for (const { moved } of sharedNeighborCandidates(best.scene, best.spans).slice(0, 4)) {
       if (!remainingPlacementRoutes) break;
-      consider(moved, 0, 'group', best.routingOptions);
+      // Moving the only cards on an outer band can strand leading space.
+      // Keep the existing outer inset by translating the inferred scene.
+      const [dx, dy] = ['x', 'y'].map((axis, index) =>
+        Math.max(0, Math.min(...[...moved.values()].map(box => box[axis])) - origin[index]));
+      const compact = dx || dy ? new Map([...moved].map(([id, box]) => [id, {
+        ...box, x: box.x - dx, y: box.y - dy, cx: box.cx - dx, cy: box.cy - dy,
+      }])) : moved;
+      consider(compact, 0, 'group', best.routingOptions);
     }
   }
   if (best.router !== router) {
