@@ -256,6 +256,13 @@ test('Code Analysis shows omitted TypeScript projects on the first screen in bot
   const { buildOverlay } = await import('../archify/modules/code-analysis/overlay/inject.mjs');
   const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-ts-project-coverage-browser-'));
   t.after(() => fs.rmSync(scratch, { recursive: true, force: true }));
+  const ir = { schema_version: 1, diagram_type: 'architecture', meta: { title: 'Project coverage', output: 'base.html' },
+    components: [{ id: 'app', type: 'backend', label: 'App', pos: [40, 40], size: [180, 64] }], connections: [] };
+  const irPath = path.join(scratch, 'input.json'), basePath = path.join(scratch, 'base.html');
+  fs.writeFileSync(irPath, JSON.stringify(ir));
+  execFileSync(process.execPath, [fileURLToPath(new URL('../archify/bin/archify.mjs', import.meta.url)),
+    'render', 'architecture', irPath, basePath], { encoding: 'utf8' });
+  const base = fs.readFileSync(basePath, 'utf8');
   const browser = new ChromeVisualBrowser(chrome);
   t.after(() => browser.close());
   const session = await browser.sessionPromise;
@@ -301,6 +308,25 @@ test('Code Analysis shows omitted TypeScript projects on the first screen in bot
     assert.equal(actual.notice, notice);
     assert.equal(actual.visible, incomplete);
     if (config) assert.match(actual.scope, config);
+
+    const diagramFile = path.join(scratch, `diagram-${locale}-${incomplete}.html`);
+    fs.writeFileSync(diagramFile, buildOverlay({ ir, graph, facts, html: base, map: { app: graph.modules.map(mod => mod.id) },
+      run: { rules: ['complexity/function'], locale, openAnalysis: true } }).html);
+    const diagramLoaded = browser.cdp.waitFor('Page.loadEventFired', session);
+    await send('Page.navigate', { url: pathToFileURL(diagramFile).href });
+    await diagramLoaded;
+    const firstScreen = await send('Runtime.evaluate', { expression: `(() => {
+      const stage = document.getElementById('bauify-stage');
+      const notice = stage.querySelector('.project-coverage-notice');
+      const bounds = notice?.getBoundingClientRect();
+      return { warning: notice?.querySelector('b').textContent, visible: !!bounds && bounds.height > 0 && bounds.bottom <= innerHeight,
+        hasAllClear: !!stage.querySelector('.first-empty'), scopeLink: stage.querySelector('.first-all')?.textContent.trim() };
+    })()`, returnByValue: true });
+    assert.equal(firstScreen.exceptionDetails, undefined, firstScreen.exceptionDetails?.exception?.description);
+    assert.equal(firstScreen.result.value.warning, incomplete ? status : undefined);
+    assert.equal(firstScreen.result.value.visible, incomplete);
+    assert.equal(firstScreen.result.value.hasAllClear, !incomplete);
+    if (incomplete) assert.match(firstScreen.result.value.scopeLink, /^(Analysis scope|分析范围) →$/);
   }
 });
 

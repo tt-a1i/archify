@@ -1474,7 +1474,10 @@
     if (top) rows += firstRow('component:' + top.id, 'amber', tr('{name} has the most open findings', { name: top.label }), tr('{files} files · {loc} lines', { files: fmt(top.files), loc: fmtK(top.loc) }), openOf(top).list.length);
     if (undeclared.length) rows += firstRow('code', 'red', tr('Code dependencies not drawn on the diagram'), tr('Largest: {from} → {to}', { from: compLabel(undeclared[0].from), to: compLabel(undeclared[0].to) }), undeclared.length);
     if (off) rows += firstRow('off:' + off.id, 'grey', tr('Code with no place on the diagram'), tr('{name} · {files} files', { name: off.label, files: fmt(off.files) }), off.files);
-    if (!rows) rows = '<p class="first-empty">' + esc(tr('Nothing stands out: no open findings, and the diagram matches the code dependencies.')) + '</p>';
+    var coverage = data.overview && data.overview.coverage;
+    var omittedTypeScriptFiles = coverage && coverage.files && coverage.files.unavailableTypeScriptFiles;
+    if (!rows && !omittedTypeScriptFiles) rows = '<p class="first-empty">' + esc(tr('Nothing stands out: no open findings, and the diagram matches the code dependencies.')) + '</p>';
+    var coverageNotice = omittedTypeScriptFiles ? '<p class="project-coverage-notice"><b>' + esc(tr('Incomplete project coverage')) + '</b><br>' + esc(tr('TypeScript files omitted because a base configuration is unavailable: {count}', { count: omittedTypeScriptFiles })) + '</p>' : '';
     var total = (data.findings || []).length;
     stage.innerHTML =
       '<div class="stage-tools">' +
@@ -1482,8 +1485,8 @@
         (undeclared.length ? '<div class="stage-seg"><button type="button" class="stage-code" aria-pressed="false"><i class="dot red"></i>' + esc(tr('Show code dependencies')) + '<em>' + undeclared.length + '</em></button></div>' : '') +
       '</div>' +
       '<div class="stage-depth" hidden><span class="depth-label"></span><div class="stage-seg" role="group" aria-label="' + esc(tr('Neighbourhood')) + '"><button type="button" data-depth="1" aria-pressed="true">' + esc(tr('1 hop')) + '</button><button type="button" data-depth="2" aria-pressed="false">' + esc(tr('2 hops')) + '</button><button type="button" data-depth="99" aria-pressed="false">' + esc(tr('All')) + '</button></div><button type="button" class="depth-clear" aria-label="' + esc(tr('Clear focus')) + '">×</button></div>' +
-      '<section class="stage-first" aria-label="' + esc(tr('Start here')) + '"><header><h3 title="' + esc(tr('What stands out after checking this diagram against the code')) + '">' + esc(tr('Start here')) + '</h3><button type="button" class="first-toggle" aria-expanded="true">' + esc(tr('Collapse')) + '</button></header><div class="first-body">' + rows +
-      (total ? '<button type="button" class="first-all">' + esc(tr('All {count} findings', { count: fmt(total) })) + ' →</button>' : '') +
+      '<section class="stage-first" aria-label="' + esc(tr('Start here')) + '"><header><h3 title="' + esc(tr('What stands out after checking this diagram against the code')) + '">' + esc(tr('Start here')) + '</h3><button type="button" class="first-toggle" aria-expanded="true">' + esc(tr('Collapse')) + '</button></header><div class="first-body">' + coverageNotice + rows +
+      (total || omittedTypeScriptFiles ? '<button type="button" class="first-all">' + esc(total ? tr('All {count} findings', { count: fmt(total) }) : tr('Analysis scope')) + ' →</button>' : '') +
       '<p class="stage-legend"><span><i class="ring amber"></i>' + esc(tr('Has findings')) + '</span><span><i class="ring green"></i>' + esc(tr('No findings')) + '</span><span><i class="ring grey"></i>' + esc(tr('No source mapped')) + '</span><span><i class="chip">n</i>' + esc(tr('Open findings')) + '</span><span><i class="line thick"></i>' + esc(tr('Thicker: more imports')) + '</span>' + (undeclared.length ? '<span><i class="line dash"></i>' + esc(tr('Not drawn')) + '</span>' : '') + '</p></div></section>';
     diagramContainer.appendChild(stage);
     // The canvas pans on pointer drags and zooms on wheel: keep those off the controls.
