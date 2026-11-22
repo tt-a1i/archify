@@ -483,4 +483,7 @@ test('shared long input routes can be shortened by moving their inferred cards a
   assert.deepEqual(moved.get('other'), cards[3]);
   assert.ok(first.x < second.x || first.x === second.x && first.y < second.y);
   assert.ok(gain > 300);
+
+  const invalidFrame = { x: 24, y: 24, width: 148, height: 272, wraps: ['first', 'second', 'missing'] };
+  assert.deepEqual(sharedNeighborCandidates({ boxes, routes, viewBox, titles: { boundaries: [invalidFrame] } }, spans), []);
 });

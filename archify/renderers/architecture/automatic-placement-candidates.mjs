@@ -187,6 +187,7 @@ export function sharedNeighborCandidates({ boxes, routes, viewBox, titles }, spa
     if (peerFrames.every(list => list.length === 1 && list[0] === peerFrames[0][0]) && peerFrames[0][0] !== outer) {
       const frame = peerFrames[0][0];
       const members = frame.wraps.map(id => boxes.get(id));
+      if (members.some(member => !member)) continue; // Layout validation reports the unknown member.
       const positions = [
         [outer.x - frame.width - gap, frame.y],
         [outer.x + outer.width + gap, frame.y],
