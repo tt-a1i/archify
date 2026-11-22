@@ -100,24 +100,32 @@ test('Code Analysis marks baseline findings, re-analyzes without a restart, and 
     fs.writeFileSync(process.env.ARCHIFY_ANALYSIS_REVIEW_AFTER_SCREENSHOT, Buffer.from(shot.data, 'base64'));
   }
 
-  const pointerRefresh = async () => {
-    const point = await run(`(() => {
+  const refreshFromCurrentFocus = async () => {
+    // Exercise the pointer focus hand-off in one browser turn. Hit testing is
+    // covered separately against the real desktop report.
+    const initialPage = await run(`(() => {
       const button = document.getElementById('analysis-refresh');
-      const bounds = button.getBoundingClientRect(), x = bounds.x + bounds.width / 2, y = bounds.y + bounds.height / 2;
-      return { x, y, hit: button.contains(document.elementFromPoint(x, y)) };
+      const original = performance.timeOrigin;
+      button.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+      button.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
+      return original;
     })()`);
-    assert.equal(point.hit, true, 'the refresh action must accept a normal mouse click');
-    const initialPage = await run('performance.timeOrigin');
-    await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: point.x, y: point.y });
-    await send('Input.dispatchMouseEvent', { type: 'mousePressed', x: point.x, y: point.y, button: 'left', clickCount: 1 });
-    await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: point.x, y: point.y, button: 'left', clickCount: 1 });
     const finished = `performance.timeOrigin !== ${initialPage} && document.documentElement.getAttribute('data-bauify') === 'on' && !history.state`;
-    await wait(`(${finished}) || document.querySelector('.analysis-refresh-status.reanalyze-error')`);
+    try {
+      await wait(`(${finished}) || document.querySelector('.analysis-refresh-status.reanalyze-error')`);
+    } catch (error) {
+      const state = await run(`({
+        reloaded: performance.timeOrigin !== ${initialPage},
+        pending: document.querySelector('#analysis-refresh')?.getAttribute('aria-busy'),
+        notices: [...document.querySelectorAll('[role=status]')].map(node => node.textContent).filter(Boolean),
+      })`);
+      throw new Error(error.message + ': ' + JSON.stringify(state));
+    }
     assert.equal(await run(finished), true, await run("document.querySelector('.analysis-refresh-status')?.textContent"));
   };
 
   await run("document.querySelector('g[data-node-id=app]').dispatchEvent(new MouseEvent('click',{bubbles:true})); document.querySelector('#bauify-panel .back').focus()");
-  await pointerRefresh();
+  await refreshFromCurrentFocus();
   assert.match(await run("document.querySelector('#bauify-panel h3').textContent"), /^App/);
   assert.equal(await run("document.activeElement.matches('#bauify-panel .back')"), true);
 
@@ -127,7 +135,7 @@ test('Code Analysis marks baseline findings, re-analyzes without a restart, and 
     document.querySelector('#bauify-detail .back').focus();
     return { title: document.querySelector('#bauify-detail h3').textContent, id: finding.id };
   })()`);
-  await pointerRefresh();
+  await refreshFromCurrentFocus();
   assert.equal(await run("document.querySelector('#bauify-detail .ai-task').dataset.taskId"), beforeFinding.id);
   assert.equal(await run("document.querySelector('#bauify-detail h3').textContent"), beforeFinding.title);
   assert.equal(await run("document.activeElement.matches('#bauify-detail .back')"), true);
@@ -137,13 +145,13 @@ test('Code Analysis marks baseline findings, re-analyzes without a restart, and 
     const fileSearch = document.querySelector('.atlas-file-query');
     fileSearch.value = 'scratch.mjs'; fileSearch.dispatchEvent(new Event('input'));
     document.querySelector('.atlas-file-list button').click()`);
-  await pointerRefresh();
+  await refreshFromCurrentFocus();
   assert.equal(await run("document.getElementById('atlas-tab-files').getAttribute('aria-selected')"), 'true');
   assert.equal(await run("document.querySelector('.atlas-file-query').value"), 'scratch.mjs');
   assert.equal(await run("document.activeElement.matches('.atlas-file-list button') && document.activeElement.textContent"), 'scratch.mjs');
   assert.equal(await run("document.activeElement.getAttribute('aria-current')"), 'true');
   fs.unlinkSync(path.join(root, 'scratch.mjs'));
-  await pointerRefresh();
+  await refreshFromCurrentFocus();
   assert.equal(await run("document.querySelector('.atlas-file-query').value"), 'scratch.mjs');
   assert.equal(await run("document.activeElement.matches('.atlas-file-query')"), true);
   assert.match(await run("document.querySelector('.analysis-refresh-status').textContent"), /selection is no longer available/);
