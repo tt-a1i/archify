@@ -198,6 +198,8 @@ releases, `npm run test:full` still runs the complete inventory without sharding
 
 The Windows Node 22 lane owns the complete filesystem and fault-injection
 matrices. Node 24 runs the core CLI smoke instead of repeating those matrices.
+CI starts the Windows portability runners only when the affected scope needs
+them or when classification requires an explicit failure.
 Both lanes, including tagged releases, still run the controlled case-sensitive
 NTFS, UNC, extended-path, and 8.3-path scenarios. Use
 `node scripts/run-windows-path-tests.mjs --list` (or `--smoke --list`) to inspect
@@ -249,14 +251,18 @@ suites there so both workflows keep the same coverage. `npm run test:full`
 retains optional browser skips. Real WebM decoding and site-language integration
 remain in the separate `npm run test:webm` gate used by both workflows.
 
-PR CI divides the maintained browser inventory into four disjoint file shards
-with `npm run test:browser -- --shard=1/4` through `--shard=4/4`. Atlas-only client changes run the Code Analysis browser inventory, the related
-Node suites, and package validation. Shared and mixed browser-impacting changes
-keep the full browser inventory. When WebM CI is selected, it also owns the
-Story browser file and runs it with FFmpeg. The browser shards retain that
-file when WebM CI is outside the change scope. The required `webm-artifact` check succeeds after
-every browser shard, WebM, and scope check succeeds. Tag releases and an
-unqualified `npm run test:browser` still run the complete browser inventory.
+PR CI divides broad browser coverage into four disjoint file shards. Atlas-only
+client changes run the Code Analysis browser inventory, the related Node suites,
+and package validation. Shared and mixed browser-impacting changes keep the full
+browser inventory. When a change touches only tests already in the browser
+inventory, Chrome runs the changed suites, including their Node-only cases. Up
+to four such suites share one job. Larger selections run in four shards.
+Deleted, renamed, or type-changed root test files trigger full CI.
+When WebM CI is selected, it owns the Story browser file and runs it with FFmpeg.
+The browser shards retain that file when WebM CI is outside the change scope.
+The required `webm-artifact` check depends on successful browser, WebM, and scope
+jobs. Tag releases and an unqualified `npm run test:browser` still run the complete
+browser inventory across their browser and WebM checks.
 `--list --shard=1/2` lists a shard without requiring Chrome. Shards cannot be
 combined with explicit files or test-name filtering; every maintained file runs
 in exactly one shard, and every executing shard still requires Chrome.

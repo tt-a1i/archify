@@ -46,6 +46,28 @@ async function loadArtifact(browser, artifactPath) {
   return sessionId;
 }
 
+// A new incognito context gives each visual check its own storage, cache and
+// page while avoiding a Chrome process launch for every matrix entry.
+async function isolatedVisualBrowser(browser) {
+  const { browserContextId } = await browser.cdp.send('Target.createBrowserContext');
+  try {
+    const { targetId } = await browser.cdp.send('Target.createTarget', {
+      url: 'about:blank', browserContextId,
+    });
+    const { sessionId } = await browser.cdp.send('Target.attachToTarget', { targetId, flatten: true });
+    await browser.cdp.send('Page.enable', {}, sessionId);
+    await browser.cdp.send('Runtime.enable', {}, sessionId);
+    const isolated = { cdp: browser.cdp, sessionPromise: Promise.resolve(sessionId) };
+    return {
+      inspect: (options) => ChromeVisualBrowser.prototype.inspect.call(isolated, options),
+      close: () => browser.cdp.send('Target.disposeBrowserContext', { browserContextId }),
+    };
+  } catch (error) {
+    await browser.cdp.send('Target.disposeBrowserContext', { browserContextId });
+    throw error;
+  }
+}
+
 test('visual-check binds the delivered Korean fixture to viewport and theme receipts', {
   skip: chromePath ? false : 'Set ARCHIFY_CHROME to collect artifact-bound visual-check evidence for the Korean fixture.',
 }, () => {
@@ -268,8 +290,11 @@ async function assertLocalizedViewer(browser, locale, expected) {
     // Keep every locale/type's real viewport, theme, font and capture checks.
     // The delivered fixtures above retain the public visual-check CLI receipt
     // contract; this matrix calls the same checker without another CLI process.
-    // Its default factory still creates a fresh Chrome profile for each artifact.
-    const visual = await runVisualCheck({ artifactPath: result.output, chromePath });
+    // Each artifact gets a separate browser context and page.
+    const visual = await runVisualCheck({
+      artifactPath: result.output, chromePath,
+      browserFactory: () => isolatedVisualBrowser(browser),
+    });
     assert.ok([0, 1].includes(visual.exitCode), `${locale}/${type}: ${JSON.stringify(visual.receipt)}`);
     const receipt = visual.receipt;
     assert.equal(receipt.visualReview, 'pending', `${locale}/${type}`);

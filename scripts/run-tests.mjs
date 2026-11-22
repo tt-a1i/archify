@@ -35,10 +35,16 @@ console.error(`Repository tests: ${options.files.length} files, concurrency ${op
 const updateCache = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'archify-test-update-')));
 let result;
 try {
+  const env = { ...process.env, ARCHIFY_UPDATE_CACHE_DIRECTORY: updateCache };
+  // The CLI subprocesses repeatedly import the same renderer modules. Share
+  // compiled code within this run. V8 coverage needs fresh compilation.
+  if (!env.NODE_V8_COVERAGE && !env.NODE_OPTIONS?.includes('--experimental-test-coverage')) {
+    env.NODE_COMPILE_CACHE ??= path.join(updateCache, 'compile');
+  }
   result = spawnSync(process.execPath, options.args, {
     cwd: repoRoot,
     stdio: 'inherit',
-    env: { ...process.env, ARCHIFY_UPDATE_CACHE_DIRECTORY: updateCache },
+    env,
   });
 } finally {
   fs.rmSync(updateCache, { recursive: true, force: true });

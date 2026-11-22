@@ -60,6 +60,36 @@ test('Atlas-only changes keep CLI, overlay, browser and package checks without u
   assert.equal(classifyPaths(['test/story-browser.test.mjs']).webm, true);
 });
 
+test('independent browser test edits run the exact suites once with their owned runtime', () => {
+  const i18n = 'test/i18n-browser.test.mjs';
+  const desktop = 'test/desktop-reader-browser.test.mjs';
+  const story = 'test/story-browser.test.mjs';
+  const browserGate = 'test/browser-gate.test.mjs';
+  const available = [i18n, desktop, story, browserGate];
+  for (const [files, expectedBrowser, expectedWebm] of [
+    [[i18n], [i18n], false],
+    [[story], [], true],
+    [[i18n, desktop, story], [i18n, desktop], true],
+  ]) {
+    const plan = classifyPaths(files);
+    assert.equal(plan.scope, 'core');
+    assert.equal(plan.browserProfile, expectedBrowser.length ? 'changed' : 'full');
+    assert.equal(plan.browser, expectedBrowser.length > 0);
+    assert.deepEqual(plan.browserTests, expectedBrowser);
+    assert.equal(plan.webm, expectedWebm);
+    assert.deepEqual(selectAffectedTests(plan.owners, plan.changedTests, available), [browserGate]);
+  }
+
+  for (const extra of ['archify/renderers/erd/grid.mjs', 'viewer/viewer.css', 'test/new-browser.test.mjs',
+    'test/helpers/browser.mjs', 'test/fixtures/viewer.html', 'CONTRIBUTING.md']) {
+    const plan = classifyPaths([i18n, extra]);
+    assert.equal(plan.browserProfile, 'full', extra);
+    assert.equal(plan.browser, true, extra);
+    assert.deepEqual(plan.browserTests, [], extra);
+    assert.ok(plan.changedTests.includes(i18n), extra);
+  }
+});
+
 test('five README languages and changelog use documentation checks and preserve mixed product gates', () => {
   const readmes = ['README.md', 'README_EN.md', 'README_ZH.md', 'README_JA.md', 'README_KO.md'];
   const available = ['readme-showcase', 'readme-support', 'cursor-onboarding', 'llms-txt', 'skill-metadata',
@@ -99,13 +129,20 @@ test('documentation workflow installs parser dependencies and runs the affected 
   assert.equal(steps[check].env.CI_TEST_OWNERS, '${{ steps.classify.outputs.owners }}');
 });
 
-test('Windows evidence replacement fixtures retain their native host gate', () => {
-  const plan = classifyPaths(['test/repository-evidence-replacement.test.mjs']);
-  assert.equal(plan.scope, 'core');
-  assert.equal(plan.windows, true);
-  assert.deepEqual(plan.changedTests, ['test/repository-evidence-replacement.test.mjs']);
-  assert.equal(plan.browser, false);
-  assert.equal(plan.package, false);
+test('Windows-only regressions retain native coverage and provision the package job for delivery-lock tests', () => {
+  for (const file of ['test/repository-evidence-replacement.test.mjs', 'test/cli-delivery-lock.test.mjs']) {
+    const plan = classifyPaths([file]);
+    assert.equal(plan.scope, 'core', file);
+    assert.equal(plan.windows, true, file);
+    assert.deepEqual(plan.changedTests, [file]);
+    assert.equal(plan.browser, false, file);
+    assert.equal(plan.package, false, file);
+  }
+  const steps = workflow.jobs['package-smoke'].steps;
+  for (const action of ['actions/checkout', 'actions/setup-node']) {
+    const step = steps.find(step => step.uses?.startsWith(`${action}@`));
+    assert.equal(step.if, "needs.scope.outputs.package == 'true' || (needs.scope.outputs.windows == 'true' && runner.os != 'Linux')");
+  }
 });
 
 test('Story filesystem and process owners retain full regression and Windows gates', () => {
@@ -307,7 +344,21 @@ test('real Git comparison retains rename source ownership and detects added test
     assert.equal(comparisonPlan({ event: 'pull_request', base }, git).scope, 'full');
     const renamed = git(['rev-parse', 'HEAD']).trim();
     fs.mkdirSync(path.join(root, 'test')); fs.writeFileSync(path.join(root, 'test/new.test.mjs'), '// new');
-    git(['add', '.']); git(['commit', '-qm', 'new test']);
+    const browser = 'test/i18n-browser.test.mjs';
+    fs.writeFileSync(path.join(root, browser), '// browser');
+    git(['add', '.']); git(['commit', '-qm', 'new tests']);
+    const added = git(['rev-parse', 'HEAD']).trim();
+    fs.writeFileSync(path.join(root, browser), '// modified browser');
+    git(['add', '.']); git(['commit', '-qm', 'modify browser test']);
+    const modified = git(['rev-parse', 'HEAD']).trim();
+    assert.deepEqual(comparisonPlan({ event: 'pull_request', base: added }, git).browserTests, [browser]);
+    git(['mv', browser, 'test/desktop-reader-browser.test.mjs']);
+    git(['commit', '-qm', 'rename browser test']);
+    assert.equal(comparisonPlan({ event: 'pull_request', base: modified }, git).scope, 'full');
+    const moved = git(['rev-parse', 'HEAD']).trim();
+    git(['rm', 'test/desktop-reader-browser.test.mjs']);
+    git(['commit', '-qm', 'delete browser test']);
+    assert.equal(comparisonPlan({ event: 'pull_request', base: moved }, git).scope, 'full');
     assert.deepEqual(comparisonPlan({ event: 'push', ref: 'refs/heads/dev', base: renamed }, git).changedTests, ['test/new.test.mjs']);
   } finally { fs.rmSync(root, { recursive: true, force: true }); }
 });
@@ -317,13 +368,36 @@ test('required jobs fail when classification fails or returns an unknown scope',
     const step = workflow.jobs[name].steps.find(step => step.name === 'Require successful scope checks');
     assert.ok(step, name);
     for (const [result, scope, status] of [['success', 'docs', 0], ['failure', 'docs', 1], ['success', 'core', 0], ['success', 'full', 0], ['failure', 'core', 1], ['success', '', 1], ['success', 'unknown', 1]]) {
-      const run = spawnSync('bash', ['-e', '-c', step.run], { env: { ...process.env, SCOPE_RESULT: result, CI_SCOPE: scope } });
+      const run = spawnSync('bash', ['-e', '-c', step.run], {
+        env: {
+          ...process.env,
+          SCOPE_RESULT: result,
+          CI_SCOPE: scope,
+          RUN_WINDOWS: 'true',
+          CI_BROWSER: scope === 'full' ? 'true' : 'false',
+          CI_BROWSER_PROFILE: 'full',
+        },
+      });
       assert.equal(run.status, status, `${name}: ${result}/${scope}`);
     }
   }
   const fetch = workflow.jobs.scope.steps.find(step => step.name === 'Fetch PR comparison base');
   assert.ok(fetch.run.includes('--depth=1') && fetch.run.includes('--no-tags'));
   assert.equal(fetch.if, "github.event_name == 'pull_request'");
+});
+
+test('Windows portability skips only a successful scope that explicitly excludes Windows', () => {
+  const windows = workflow.jobs['windows-test-portability'];
+  assert.equal(windows.if, "always() && !cancelled() && !(needs.scope.result == 'success' && needs.scope.outputs.windows == 'false' "
+    + "&& (needs.scope.outputs.scope == 'docs' || needs.scope.outputs.scope == 'core'))");
+  const guard = windows.steps.find(step => step.name === 'Require successful scope checks');
+  assert.equal(guard.env.RUN_WINDOWS, '${{ needs.scope.outputs.windows }}');
+  for (const flag of ['', 'false', 'true']) {
+    const run = spawnSync('bash', ['-e', '-c', guard.run], {
+      env: { ...process.env, SCOPE_RESULT: 'success', CI_SCOPE: 'full', RUN_WINDOWS: flag },
+    });
+    assert.equal(run.status, flag === 'true' ? 0 : 1, `full scope with Windows flag ${JSON.stringify(flag)}`);
+  }
 });
 
 test('canonical Node cannot pass full CI with failed, cancelled or skipped regression shards', () => {

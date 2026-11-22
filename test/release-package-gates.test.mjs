@@ -272,7 +272,7 @@ test('GitHub Pages deploys the verified website artifact only after every reposi
   assert.match(website, /name: website-dist/);
   const browser = workflowJob(workflow, 'browser-regression');
   assert.match(browser, /Run shared browser regression gate/);
-  assert.match(browser, /npm run test:browser -- --shard=\$\{\{ matrix\.shard \}\}\/4/);
+  assert.match(browser, /npm run test:browser -- --shard=\$\{\{ matrix\.shard \}\}\/\$\{\{ strategy\.job-total \}\}/);
   const media = workflowJob(workflow, 'webm-artifact');
   assert.match(media, /needs: \[scope, browser-regression, webm-decode\]/);
   assert.match(media, /test "\$BROWSER_RESULT" = success/);
@@ -1691,7 +1691,7 @@ test('CI and tagged releases keep real Windows paths on both Nodes and detailed 
     assert.ok(job.includes(label === 'CI' ? '${{ matrix.profile }}' : "matrix.node-version == 24 && '--smoke' || ''"),
       `${label} must select the maintained Windows profiles`);
     assert.match(job, label === 'CI'
-      ? /name: Provision controlled Windows path fixtures\n\s+if: needs\.scope\.outputs\.windows == 'true'\n\s+shell: pwsh/
+      ? /name: Provision controlled Windows path fixtures\n\s+id: windows-path-fixtures\n\s+if: needs\.scope\.outputs\.windows == 'true'\n\s+shell: pwsh/
       : /name: Provision controlled Windows path fixtures\n\s+shell: pwsh/);
     assert.match(
       job,
@@ -1700,7 +1700,7 @@ test('CI and tagged releases keep real Windows paths on both Nodes and detailed 
     assert.match(
       job,
       label === 'CI'
-        ? /name: Clean up controlled Windows path fixtures\n\s+if: \$\{\{ always\(\) && needs\.scope\.outputs\.windows == 'true' \}\}/
+        ? /name: Clean up controlled Windows path fixtures\n\s+if: \$\{\{ always\(\) && steps\.windows-path-fixtures\.outcome != 'skipped' \}\}/
         : /name: Clean up controlled Windows path fixtures\n\s+if: \$\{\{ always\(\) \}\}/,
     );
     assert.match(

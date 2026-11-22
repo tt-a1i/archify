@@ -20,6 +20,7 @@ jobs:
       generated: ${{ steps.classify.outputs.generated }}
       browser: ${{ steps.classify.outputs.browser }}
       browserProfile: ${{ steps.classify.outputs.browserProfile }}
+      browserTests: ${{ steps.classify.outputs.browserTests }}
       webm: ${{ steps.classify.outputs.webm }}
       package: ${{ steps.classify.outputs.package }}
       windows: ${{ steps.classify.outputs.windows }}
@@ -217,16 +218,22 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4]
+        # Keep a scope check for no browser work and share setup across up to four focused suites.
+        shard: ${{ fromJSON(needs.scope.outputs.browser == 'true' && (needs.scope.outputs.browserProfile != 'changed' || fromJSON(needs.scope.outputs.browserTests || '[]')[4]) && '[1,2,3,4]' || '[1]') }}
     steps:
       - name: Require successful scope checks
         env:
           SCOPE_RESULT: ${{ needs.scope.result }}
           CI_SCOPE: ${{ needs.scope.outputs.scope }}
+          CI_BROWSER: ${{ needs.scope.outputs.browser }}
+          CI_BROWSER_PROFILE: ${{ needs.scope.outputs.browserProfile }}
         shell: bash
         run: |
           test "$SCOPE_RESULT" = success
-          case "$CI_SCOPE" in docs|core|full) ;; *) exit 1 ;; esac
+          case "$CI_SCOPE:$CI_BROWSER:$CI_BROWSER_PROFILE" in
+            docs:false:full|core:false:full|core:true:full|core:true:atlas|core:true:changed|full:true:full) ;;
+            *) exit 1 ;;
+          esac
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         if: needs.scope.outputs.browser == 'true'
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
@@ -248,11 +255,12 @@ jobs:
           npm --prefix archify/modules/code-analysis ci --ignore-scripts --no-audit --no-fund
       - name: Run shared browser regression gate
         if: needs.scope.outputs.browser == 'true'
-        run: npm run test:browser -- --shard=${{ matrix.shard }}/4
+        run: npm run test:browser -- --shard=${{ matrix.shard }}/${{ strategy.job-total }}
         env:
           ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
           ARCHIFY_CHROME_NO_SANDBOX: '1'
           CI_BROWSER_PROFILE: ${{ needs.scope.outputs.browserProfile }}
+          CI_BROWSER_TESTS: ${{ needs.scope.outputs.browserTests }}
           CI_STORY_BROWSER_OWNER: ${{ needs.scope.outputs.webm == 'true' && 'webm' || 'browser' }}
 
   webm-decode:
@@ -462,9 +470,9 @@ jobs:
           test "$SCOPE_RESULT" = success
           case "$CI_SCOPE" in docs|core|full) ;; *) exit 1 ;; esac
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-        if: needs.scope.outputs.package == 'true'
+        if: needs.scope.outputs.package == 'true' || (needs.scope.outputs.windows == 'true' && runner.os != 'Linux')
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
-        if: needs.scope.outputs.package == 'true'
+        if: needs.scope.outputs.package == 'true' || (needs.scope.outputs.windows == 'true' && runner.os != 'Linux')
         with:
           node-version: 22
       - name: Extract packaged skill
@@ -493,13 +501,13 @@ jobs:
         run: >-
           node --test
           --test-name-pattern="cli: portable delivery lock:"
-          test/cli.test.mjs
+          test/cli-delivery-lock.test.mjs
       - name: Verify macOS opener stays behind delivery-lock release
         if: needs.scope.outputs.windows == 'true' && runner.os == 'macOS'
         run: >-
           node --test
           --test-name-pattern="cli: lock release failure does not invoke the requested opener"
-          test/cli.test.mjs
+          test/cli-delivery-lock.test.mjs
 
   website:
     needs: scope
@@ -580,7 +588,10 @@ jobs:
 
   windows-test-portability:
     needs: scope
-    if: always() && !cancelled()
+    # Reserve Windows runners for relevant changes and fail if classification is invalid.
+    if: >-
+      always() && !cancelled() && !(needs.scope.result == 'success' && needs.scope.outputs.windows == 'false'
+      && (needs.scope.outputs.scope == 'docs' || needs.scope.outputs.scope == 'core'))
     name: Windows test portability (Node ${{ matrix.node-version }})${{ matrix.suffix }}
     strategy:
       fail-fast: false
@@ -601,15 +612,16 @@ jobs:
             profile: --smoke
     runs-on: windows-latest
     steps:
-      # Keep every required matrix check present; fail closed if classification/checks fail.
       - name: Require successful scope checks
         env:
           SCOPE_RESULT: ${{ needs.scope.result }}
           CI_SCOPE: ${{ needs.scope.outputs.scope }}
+          RUN_WINDOWS: ${{ needs.scope.outputs.windows }}
         shell: bash
         run: |
           test "$SCOPE_RESULT" = success
           case "$CI_SCOPE" in docs|core|full) ;; *) exit 1 ;; esac
+          test "$RUN_WINDOWS" = true
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         if: needs.scope.outputs.windows == 'true'
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
@@ -650,6 +662,7 @@ jobs:
         if: needs.scope.outputs.windows == 'true' && (matrix.profile == '--controlled' || matrix.profile == '--smoke')
         run: node --test archify/modules/code-analysis/test/task-command-shell.test.mjs
       - name: Provision controlled Windows path fixtures
+        id: windows-path-fixtures
         if: needs.scope.outputs.windows == 'true'
         shell: pwsh
         run: scripts/windows-path-fixtures.ps1 -NodeVersion '${{ matrix.node-version }}'
@@ -660,7 +673,7 @@ jobs:
           ARCHIFY_REQUIRE_WINDOWS_8DOT3: '1'
           ARCHIFY_REQUIRE_WINDOWS_REAL_PATHS: ${{ (matrix.profile == '--controlled' || matrix.profile == '--smoke') && '1' || '0' }}
       - name: Clean up controlled Windows path fixtures
-        if: ${{ always() && needs.scope.outputs.windows == 'true' }}
+        if: ${{ always() && steps.windows-path-fixtures.outcome != 'skipped' }}
         shell: pwsh
         run: scripts/windows-path-fixtures.ps1 -NodeVersion '${{ matrix.node-version }}' -Cleanup
 

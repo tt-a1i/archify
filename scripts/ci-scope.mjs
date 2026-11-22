@@ -11,7 +11,11 @@ const renderShared = /^(geometry|utils|i18n|route-quality|diagnostics|brand-mark
 const reviewExport = /^(archify\/renderers\/shared\/svg-(?:bake|export)\.mjs|archify\/pr\/[^/]+\.mjs)$/;
 const atlasClient = /^archify\/modules\/code-analysis\/overlay\/client\/atlas\.(?:js|css)$/;
 const atlasGuide = 'archify/modules/code-analysis/docs/USAGE.md';
-const atlasBrowserTest = name => name.startsWith('test/code-analysis-') && browserTestFiles.includes(name.slice(5));
+const rootTest = /^test\/[^/]+\.test\.mjs$/;
+const maintainedBrowserTests = new Set(browserTestFiles.map(name => `test/${name}`));
+const browserGateTest = 'test/browser-gate.test.mjs';
+const storyTest = `test/${storyMediaBrowserTest}`;
+const atlasBrowserTest = name => name.startsWith('test/code-analysis-') && maintainedBrowserTests.has(name);
 const sharedSvgBaker = 'archify/renderers/shared/svg-bake.mjs';
 const gates = ['generated', 'browser', 'webm', 'package', 'windows', 'manifest', 'website'];
 const storyPresentationFiles = new Set([
@@ -20,7 +24,7 @@ const storyPresentationFiles = new Set([
   'story-container.js', 'story-export.js', 'story-stage-runtime.js', 'native-motion.js',
 ]);
 export function classifyPaths(paths) {
-  const plan = { scope: 'core', browserProfile: 'full', owners: [], changedTests: [], ...Object.fromEntries(gates.map(name => [name, false])) };
+  const plan = { scope: 'core', browserProfile: 'full', browserTests: [], owners: [], changedTests: [], ...Object.fromEntries(gates.map(name => [name, false])) };
   const full = () => ({ ...plan, scope: 'full', ...Object.fromEntries(gates.map(name => [name, true])) });
   if (!paths.length) return full();
   const own = owner => { if (!plan.owners.includes(owner)) plan.owners.push(owner); };
@@ -30,13 +34,13 @@ export function classifyPaths(paths) {
     if (/^(docs|examples|archify\/examples)\/.*\.(html|svg)$/.test(name) && !name.startsWith('docs/assets/community/')) own('artifact');
     if (/^examples\/checkout-platform-delta\.(html|receipt\.json)$/.test(name)) own('delta');
     if (name === 'archify.zip') { archiveChanged = true; plan.package = true; continue; }
-    if (/^test\/[^/]+\.test\.mjs$/.test(name)) {
+    if (rootTest.test(name)) {
       plan.changedTests.push(name);
-      if (name === 'test/repository-evidence-replacement.test.mjs') plan.windows = true;
-      if (name === `test/${storyMediaBrowserTest}`) plan.webm = true;
-      if (browserTestFiles.includes(name.slice(5)) || name.endsWith('-browser.test.mjs')) {
+      if (name === 'test/repository-evidence-replacement.test.mjs' || name === 'test/cli-delivery-lock.test.mjs') plan.windows = true;
+      if (name === storyTest) plan.webm = true;
+      if (maintainedBrowserTests.has(name) || name.endsWith('-browser.test.mjs')) {
         plan.browser = true;
-        if (!plan.changedTests.includes('test/browser-gate.test.mjs')) plan.changedTests.push('test/browser-gate.test.mjs');
+        if (!plan.changedTests.includes(browserGateTest)) plan.changedTests.push(browserGateTest);
       }
       continue;
     }
@@ -103,7 +107,13 @@ export function classifyPaths(paths) {
   }
   if (requireFull) return full();
   if (archiveChanged && !plan.owners.some(owner => ['renderer', 'viewer', 'authoring', 'schema', 'pr', 'atlas', ...modes.split('|')].includes(owner))) return full();
-  if (paths.some(name => atlasClient.test(name)) &&
+  if (paths.every(name => maintainedBrowserTests.has(name))) {
+    // These suites also run their Node-only cases with Chrome available.
+    plan.changedTests = [browserGateTest];
+    plan.browserTests = paths.filter(name => name !== storyTest); // test:webm runs Story with FFmpeg.
+    plan.browser = plan.browserTests.length > 0;
+    if (plan.browser) plan.browserProfile = 'changed';
+  } else if (paths.some(name => atlasClient.test(name)) &&
       paths.every(name => atlasClient.test(name) || name === atlasGuide || name === 'archify.zip' || atlasBrowserTest(name))) {
     plan.browserProfile = 'atlas';
   }
@@ -120,7 +130,14 @@ export function comparisonPlan({ event, ref, base }, git = args => execFileSync(
   }
   try {
     // Renames retain both source and destination owners; compare trees, not merge-base.
-    return classifyPaths(git(['diff', '--no-renames', '--name-only', '-z', base, 'HEAD']).split('\0').filter(Boolean));
+    const changes = git(['diff', '--no-renames', '--name-status', '-z', base, 'HEAD']).split('\0');
+    const paths = [];
+    for (let index = 0; index < changes.length - 1; index += 2) {
+      const [status, name] = changes.slice(index, index + 2);
+      if (rootTest.test(name) && (status === 'D' || status === 'T')) return classifyPaths([]);
+      paths.push(name);
+    }
+    return classifyPaths(paths);
   } catch (error) {
     if (event === 'push') return classifyPaths([]);
     throw error;
