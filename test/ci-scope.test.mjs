@@ -35,6 +35,18 @@ test('owned changes add their real gates without requiring every unrelated lane'
   assert.ok(classifyPaths(['docs/skill-updates/archify/stable.json']).manifest);
 });
 
+test('site content and GEO notes keep the published install brief in sync without selecting media', () => {
+  const note = 'journal/geo-2026-11/offsite-playbook-global.md';
+  const brief = classifyPaths([note, 'llms.txt']);
+  assert.equal(brief.scope, 'docs');
+  assert.deepEqual(selectAffectedTests(brief.owners, [], ['test/llms-txt.test.mjs', 'test/export-browser.test.mjs']), ['test/llms-txt.test.mjs']);
+  const site = classifyPaths([note, 'docs/llms.txt', 'website/src/data/faq-facts.mjs']);
+  assert.equal(site.scope, 'core');
+  assert.ok(site.website && !site.webm && !site.package);
+  assert.ok(classifyPaths([note, 'viewer/export.js']).webm);
+  assert.ok(classifyPaths([note, 'journal/geo-2026-11/tool.mjs']).webm);
+});
+
 test('Atlas-only changes keep CLI, overlay, browser and package checks without unrelated gates', () => {
   const paths = ['archify/modules/code-analysis/overlay/client/atlas.js',
     'archify/modules/code-analysis/docs/USAGE.md', 'archify.zip', 'test/code-analysis-browser.test.mjs'];

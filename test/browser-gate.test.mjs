@@ -165,6 +165,8 @@ test('CI and release use the same browser command and retain WebM decoding', () 
       const language = jobs.website.steps.find(step => step.run === 'node --test test/site-language-integration.mjs');
       assert.equal(language?.if, "matrix.target == 'pages'");
       assert.ok(language.env.ARCHIFY_CHROME);
+      const builders = jobs['canonical-test'].steps.find(step => step.run?.includes("--test-name-pattern='custom site builders'"));
+      assert.equal(builders?.if, "needs.scope.outputs.scope == 'core' && needs.scope.outputs.generated == 'true' && needs.scope.outputs.website == 'false'");
     } else {
       assert.ok(jobs[webmJob].steps.some(step => step.run === 'npm run test:webm'));
       assert.equal(manifest.scripts['test:webm'], 'node test/webm-artifact.smoke.mjs && node --test test/site-language-integration.mjs');

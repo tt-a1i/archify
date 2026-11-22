@@ -47,13 +47,13 @@ const chrome = executable([
   '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
 ]);
 const ffmpeg = executable([process.env.ARCHIFY_FFMPEG, 'ffmpeg']);
-const ffprobe = executable([process.env.ARCHIFY_FFPROBE, 'ffprobe']);
 
 assert.ok(chrome, 'Chrome/Chromium is required for the WebM artifact smoke test (or set ARCHIFY_CHROME)');
 assert.ok(ffmpeg, 'ffmpeg is required for the WebM artifact smoke test (or set ARCHIFY_FFMPEG)');
-assert.ok(ffprobe, 'ffprobe is required for the Story audio gate (or set ARCHIFY_FFPROBE)');
 
 function runStoryTests() {
+  const ffprobe = executable([process.env.ARCHIFY_FFPROBE, 'ffprobe']);
+  assert.ok(ffprobe, 'ffprobe is required for the Story audio gate (or set ARCHIFY_FFPROBE)');
   // The browser suite normally allows skips. A requested media check requires Chrome.
   assert.ok(findChrome({ env: { ...process.env, ARCHIFY_CHROME: chrome } }), 'Story media tests require an executable Chrome');
   execFileSync(process.execPath, ['--test', path.join(__dirname, storyMediaBrowserTest)], {

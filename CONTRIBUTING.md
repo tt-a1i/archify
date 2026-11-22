@@ -253,8 +253,9 @@ This command requires a usable Chrome/Chromium and fails when none is available.
 Its maintained file list is in `scripts/browser-test-inventory.mjs`; add new browser
 suites there so both workflows keep the same coverage. `npm run test:full`
 retains optional browser skips. `npm run test:webm` runs the Viewer artifacts,
-Story media, and checked-in site-language integration. Website CI also runs the
-site-language integration when its inputs change.
+Story media, and checked-in site-language integration. Website CI runs the
+site-language integration. When render inputs change without a website job,
+the generated-output job also exercises the site builders without Chrome.
 
 PR CI divides broad browser coverage into four disjoint file shards. Atlas-only
 client changes run the Code Analysis browser inventory, the related Node suites,

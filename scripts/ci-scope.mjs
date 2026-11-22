@@ -87,7 +87,13 @@ export function classifyPaths(paths) {
     }
     if (/^README(?:_EN|_ZH|_JA|_KO)?\.md$/.test(name)) { own('readme'); continue; }
     if (name === 'CHANGELOG.md') { own('changelog'); continue; }
-    if (/^(CONTRIBUTING|REVIEWING|AGENTS|CODE_OF_CONDUCT|SECURITY)\.md$/.test(name)) { own('policy'); continue; }
+    if (/^(CONTRIBUTING|REVIEWING|AGENTS|CODE_OF_CONDUCT|SECURITY|SECURITY_MODEL)\.md$/.test(name)) { own('policy'); continue; }
+    if (/^journal\/geo-[^/]+\/[^/]+\.md$/.test(name)) continue;
+    if (name === 'llms.txt' || name === 'docs/llms.txt') {
+      own('llms');
+      if (name.startsWith('docs/')) plan.website = true;
+      continue;
+    }
     if (/^docs\/assets\/community\/[^/]+\.(png|svg)$/.test(name)) { own('readme-assets'); continue; }
     if (/^(website\/|docs\/)/.test(name)) {
       plan.website = true;
@@ -170,7 +176,7 @@ export function classifyPaths(paths) {
       paths.every(name => atlasClient.test(name) || name === atlasGuide || name === 'archify.zip' || atlasBrowserTest(name))) {
     plan.browserProfile = 'atlas';
   }
-  if (plan.owners.every(owner => ['readme', 'changelog', 'policy', 'readme-assets'].includes(owner)) && !plan.changedTests.length && !gates.some(name => plan[name])) plan.scope = 'docs';
+  if (plan.owners.every(owner => ['readme', 'llms', 'changelog', 'policy', 'readme-assets'].includes(owner)) && !plan.changedTests.length && !gates.some(name => plan[name])) plan.scope = 'docs';
   return plan;
 }
 

@@ -263,6 +263,9 @@ jobs:
       - name: Generated outputs and representative goldens
         if: needs.scope.outputs.scope == 'core' && needs.scope.outputs.generated == 'true'
         run: npm run test:generated
+      - name: Check site builders with changed render inputs
+        if: needs.scope.outputs.scope == 'core' && needs.scope.outputs.generated == 'true' && needs.scope.outputs.website == 'false'
+        run: node --test --test-name-pattern='custom site builders' test/site-language-integration.mjs
       - name: Changed tests and owned regression suites
         if: needs.scope.outputs.scope == 'core'
         run: npm run test:affected
