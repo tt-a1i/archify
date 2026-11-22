@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "layout": {
+    "mode": "auto"
+  },
+  "meta": {
+    "title": "Fixed canvas sample 1970",
+    "output": "output.html",
+    "viewBox": [
+      572,
+      248
+    ],
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "components": [
+    {
+      "id": "n0",
+      "type": "backend",
+      "label": "Service 0",
+      "size": [
+        140,
+        68
+      ],
+      "pos": [
+        387,
+        108
+      ]
+    },
+    {
+      "id": "n1",
+      "type": "backend",
+      "label": "Service 1",
+      "size": [
+        140,
+        68
+      ]
+    },
+    {
+      "id": "n2",
+      "type": "backend",
+      "label": "Service 2",
+      "size": [
+        115,
+        72
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e0",
+      "from": "n0",
+      "to": "n1",
+      "label": "Run job"
+    }
+  ],
+  "boundaries": []
+}

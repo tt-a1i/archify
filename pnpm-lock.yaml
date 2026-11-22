@@ -204,7 +204,10 @@ importers:
         version: 16.28.0
 
   archify/modules/code-analysis:
-    dependencies:
+    devDependencies:
+      '@types/node':
+        specifier: ^18.19.130
+        version: 18.19.130
       '@xmldom/xmldom':
         specifier: 0.9.12
         version: 0.9.12
@@ -217,19 +220,15 @@ importers:
       ajv-formats:
         specifier: ^3.0.1
         version: 3.0.1(ajv@8.20.0)
+      esbuild:
+        specifier: 0.28.2
+        version: 0.28.2
       java-parser:
         specifier: 3.0.1
         version: 3.0.1
       typescript:
         specifier: 5.9.3
         version: 5.9.3
-    devDependencies:
-      '@types/node':
-        specifier: ^18.19.130
-        version: 18.19.130
-      esbuild:
-        specifier: 0.28.2
-        version: 0.28.2
 
 packages:
 

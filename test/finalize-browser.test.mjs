@@ -51,7 +51,7 @@ function relationshipRoutes(html) {
   }).filter(Boolean);
 }
 
-test('ERD finalize names co-located cardinality glyphs until a side pin separates them', {
+test('ERD finalize names co-located cardinality glyphs on authored routes until repaired', {
   skip: !process.env.ARCHIFY_CHROME,
 }, t => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-erd-browser-'));
@@ -60,7 +60,7 @@ test('ERD finalize names co-located cardinality glyphs until a side pin separate
     schema_version: 1,
     diagram_type: 'erd',
     meta: { title: 'Duplicate relationship endpoints', output: 'erd.html', quality_profile: 'standard' },
-    layout: { mode: 'grid' },
+    layout: { mode: 'grid', origin: [32, 40], gapY: 44, entityW: 240, headerH: 30, rowH: 20 },
     entities: [
       { id: 'parent', label: 'Parent', row: 0, col: 0 },
       { id: 'near', label: 'Near', row: 1, col: 0 },
@@ -68,8 +68,9 @@ test('ERD finalize names co-located cardinality glyphs until a side pin separate
     ],
     relationships: [
       { id: 'near_parent', from: 'near', to: 'parent', fromSide: 'left', toSide: 'left',
-        fromCardinality: 'many', toCardinality: 'one' },
-      { id: 'far_parent', from: 'far', to: 'parent', fromCardinality: 'many', toCardinality: 'one' },
+        fromCardinality: 'many', toCardinality: 'one', via: [[8, 168], [8, 68]] },
+      { id: 'far_parent', from: 'far', to: 'parent', fromSide: 'left', toSide: 'left',
+        fromCardinality: 'many', toCardinality: 'one', via: [[8, 268], [8, 68]] },
     ],
   };
   function finalize() {
@@ -77,9 +78,11 @@ test('ERD finalize names co-located cardinality glyphs until a side pin separate
     const input = path.join(directory, 'erd.json');
     const output = path.join(directory, 'erd.html');
     fs.writeFileSync(input, JSON.stringify(diagram));
-    const result = spawnSync(process.execPath, [cli, 'finalize', 'erd', input, output, '--json'], { encoding: 'utf8' });
+    const result = spawnSync(process.execPath, [cli, 'finalize', 'erd', input, output, '--json', '--browser-check'], { encoding: 'utf8' });
     assert.equal(result.status, 0, result.stdout + result.stderr);
-    return { output, summary: JSON.parse(result.stdout), routes: relationshipRoutes(fs.readFileSync(output, 'utf8')) };
+    const summary = JSON.parse(result.stdout);
+    assert.equal(summary.gates['browser-check'], 'pass');
+    return { output, summary, routes: relationshipRoutes(fs.readFileSync(output, 'utf8')) };
   }
 
   const original = finalize();
@@ -96,7 +99,7 @@ test('ERD finalize names co-located cardinality glyphs until a side pin separate
   assert.equal(checker.status, 0, checker.stderr);
   assert.deepEqual(JSON.parse(checker.stdout).composition.routeReview.coincidentCardinalityPorts, [port]);
 
-  Object.assign(diagram.relationships[1], { fromSide: 'right', toSide: 'right' });
+  Object.assign(diagram.relationships[1], { fromSide: 'right', toSide: 'right', via: [[296, 268], [296, 68]] });
   const repaired = finalize();
   assert.equal(repaired.summary.visualReviewRecommendation?.signals?.coincidentCardinalityPorts, undefined);
   assert.deepEqual(repaired.routes[0], original.routes[0], 'an existing authored side stays put');

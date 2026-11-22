@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "layout": {
+    "mode": "auto"
+  },
+  "meta": {
+    "title": "Canvas 1066",
+    "output": "output.html",
+    "legend": {
+      "mode": "hidden"
+    },
+    "viewBox": [
+      895,
+      273
+    ]
+  },
+  "components": [
+    {
+      "id": "n0",
+      "label": "Policy 1",
+      "type": "frontend",
+      "size": [
+        140,
+        52
+      ]
+    },
+    {
+      "id": "n1",
+      "label": "Queue 2",
+      "type": "backend",
+      "size": [
+        230,
+        52
+      ],
+      "pos": [
+        476,
+        27
+      ]
+    },
+    {
+      "id": "n2",
+      "label": "Worker 3",
+      "type": "messagebus",
+      "size": [
+        230,
+        80
+      ]
+    },
+    {
+      "id": "n3",
+      "label": "Runner 4",
+      "type": "backend",
+      "size": [
+        140,
+        70
+      ],
+      "pos": [
+        496,
+        154
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e0",
+      "from": "n0",
+      "to": "n1"
+    },
+    {
+      "id": "e1",
+      "from": "n1",
+      "to": "n2",
+      "label": "Sync",
+      "width": 2
+    },
+    {
+      "id": "e2",
+      "from": "n2",
+      "to": "n3",
+      "width": 9
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Queueing 1",
+      "wraps": [
+        "n2",
+        "n3"
+      ],
+      "pad": 12
+    },
+    {
+      "kind": "security-group",
+      "label": "Payments execution boundary 2",
+      "wraps": [
+        "n3"
+      ],
+      "pad": 0
+    },
+    {
+      "kind": "region",
+      "label": "Core 3",
+      "wraps": [
+        "n0",
+        "n3"
+      ],
+      "pad": 12
+    }
+  ]
+}

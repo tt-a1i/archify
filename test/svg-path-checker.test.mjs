@@ -183,6 +183,29 @@ test('readable-v2 仍检出圆角后可见直线上的真实交叉', async t => 
   assert.deepEqual(result.receipt.composition.issues.find(item => item.code === 'composition/proper-crossing').point, [100, 70]);
 });
 
+test('architecture checking finds a crossing at an exact rounded-corner sample', async t => {
+  const result = await check(t, arrow('M20 20H92Q100 20 100 28V120')
+    + arrow('M98 5V160', { id: 'other', from: 'c', to: 'd' }), {
+    publicCli: true, rootAttrs: 'data-diagram-type="architecture"',
+  });
+  assert.equal(result.code, 1);
+  const crossing = result.receipt.composition.issues.find(item => item.code === 'composition/proper-crossing');
+  assert.deepEqual(crossing?.point, [98, 22]);
+});
+
+test('architecture checking flags a label over a neighboring arrowhead without requiring a shaft hit', async t => {
+  const another = arrow('M60 145H160', { id: 'other', from: 'c', to: 'd', extra: 'data-edge-key="1"' });
+  const label = '<g data-edge-key="1" data-edge-from="c" data-edge-to="d" data-edge-label="Return"><rect class="c-mask" x="86.7" y="104.2" width="4" height="4"/></g>';
+  const result = await check(t, arrow('M20 100H100') + another + label, {
+    rootAttrs: 'data-diagram-type="architecture"', profile: 'standard',
+  });
+  assertPass(result);
+  assert.equal(result.receipt.composition.metrics.labelRouteClearanceIssues, 0);
+  const issue = result.receipt.composition.issues.find(item => item.code === 'composition/label-arrowhead-mask');
+  assert.equal(issue?.labelRelationship.id, 'other');
+  assert.equal(issue?.otherRelationship.id, 'route');
+});
+
 const disconnected = 'M20 20L100 20M100 100L200 100';
 const acrossGap = arrow('M80 60L120 60', { id: 'other', from: 'c', to: 'd', extra: 'data-edge-key="1"' });
 for (const rootAttrs of ['', 'data-layout-contract="readable-v2"']) {

@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Missing layout",
+    "output": "probe.html"
+  },
+  "components": [
+    {
+      "id": "a",
+      "type": "backend",
+      "label": "A"
+    },
+    {
+      "id": "b",
+      "type": "backend",
+      "label": "B"
+    }
+  ],
+  "connections": [
+    {
+      "from": "a",
+      "to": "b",
+      "label": "read"
+    }
+  ]
+}

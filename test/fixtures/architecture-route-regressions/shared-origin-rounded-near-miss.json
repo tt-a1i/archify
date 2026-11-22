@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {"title":"Separated rounded routes", "quality_profile":"showcase", "output":"out.html", "viewBox":[600,580], "legend":{"mode":"hidden"}},
+  "components": [
+    {"id":"a","type":"backend","label":"Origin","pos":[60,180],"size":[80,80]},
+    {"id":"b","type":"backend","label":"Lower","pos":[260,420],"size":[80,80]},
+    {"id":"c","type":"backend","label":"Right","pos":[375,181],"size":[80,80]}
+  ],
+  "connections":[
+    {"id":"lower","from":"a","to":"b","fromSide":"right","toSide":"top","via":[[300,220]]},
+    {"id":"upper","from":"a","to":"c","fromSide":"top","toSide":"left","via":[[100,100],[298,100],[298,221]]}
+  ]
+}

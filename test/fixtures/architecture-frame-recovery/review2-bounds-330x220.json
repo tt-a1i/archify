@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "layout": {
+    "mode": "auto"
+  },
+  "meta": {
+    "title": "Bounded frame",
+    "output": "probe.html",
+    "quality_profile": "standard",
+    "viewBox": [
+      330,
+      220
+    ]
+  },
+  "components": [
+    {
+      "id": "n0",
+      "type": "backend",
+      "label": "Card 0",
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "n1",
+      "type": "backend",
+      "label": "Card 1",
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "from": "n0",
+      "to": "n1"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Pipeline",
+      "wraps": [
+        "n0",
+        "n1"
+      ]
+    }
+  ]
+}
