@@ -8,7 +8,7 @@ export function placeAutomaticLabels({
   labels, routes, components, titles, viewBox, placementBottom = viewBox[1], fallbackRing = true, keepFallbackNearRoute = false,
   gridSweep = false, maxOwnRouteDistance = Infinity, protectedEndpoints = new Map(), onlyProtectedEndpoints = false,
   arrowheads = [], clearanceBorders = [], ownershipMargin = 0, repairOwnership = false, searchBand = false,
-  coversRouteStroke = () => false, coversOwnShaft, coversFrame, canMove = () => true,
+  coversRouteStroke = () => false, coversOwnShaft, coversFrame, preferShaftAttachment = false, canMove = () => true,
 }) {
   const preferRouteMidpoint = Boolean(coversOwnShaft);
   const placed = [...labels];
@@ -66,6 +66,22 @@ export function placeAutomaticLabels({
       return ownershipMargin ? gap + 0.0001 >= limit : gap > own;
     });
   }
+  const distanceToOwner = (rect, ownSegments) => {
+    let distance = Infinity;
+    for (const segment of ownSegments) {
+      distance = Math.min(distance, segmentRectClearanceWithin(segment, rect, distance));
+    }
+    return distance;
+  };
+  const cardDistance = (rect, limit) => {
+    let distance = limit;
+    for (const component of components) {
+      const dx = Math.max(rect.x - component.x - component.width, component.x - rect.x - rect.width, 0);
+      const dy = Math.max(rect.y - component.y - component.height, component.y - rect.y - rect.height, 0);
+      distance = Math.min(distance, Math.hypot(dx, dy));
+    }
+    return distance;
+  };
   const clear = (rect, index) => (
     inside(rect) && rect.y + rect.height <= placementBottom
     && !obstacles.some(obstacle => rectsOverlap(rect, obstacle, 2))
@@ -157,6 +173,8 @@ export function placeAutomaticLabels({
     const endReach = preferRouteMidpoint ? reach : 0;
     let best = null;
     let bestDistance = Infinity;
+    let bestGap = Infinity;
+    let bestCardGap = Infinity;
     // Permit a shaft interruption only if the current label has a hard
     // collision. A candidate that leaves the shaft clear always wins.
     let bestMasksShaft = !coversOwnShaft || needsPlacement(label, index);
@@ -169,12 +187,17 @@ export function placeAutomaticLabels({
       const dx = rect.x + rect.width / 2 - anchorX;
       const dy = rect.y + rect.height / 2 - anchorY;
       const distance = dx * dx + dy * dy;
-      if (!bestMasksShaft && distance >= bestDistance) return false;
+      const gap = preferShaftAttachment ? distanceToOwner(rect, ownSegments) : 0;
+      const cardGap = preferShaftAttachment ? Math.max(0, gap - cardDistance(rect, gap)) : 0;
+      const order = cardGap - bestCardGap || gap - bestGap || distance - bestDistance;
+      if (!bestMasksShaft && order >= 0) return false;
       const masksShaft = coversOwnShaft(rect);
-      if ((masksShaft && !bestMasksShaft) || (masksShaft === bestMasksShaft && distance >= bestDistance)
+      if ((masksShaft && !bestMasksShaft) || (masksShaft === bestMasksShaft && order >= 0)
         || !clear(rect, index) || segmentRectClearanceWithin(segment, rect, reach) > reach) return false;
       best = rect;
       bestDistance = distance;
+      bestGap = gap;
+      bestCardGap = cardGap;
       bestMasksShaft = masksShaft;
       return false;
     };

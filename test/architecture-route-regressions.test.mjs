@@ -39,7 +39,7 @@ function inferredLayout(t, components, connections, boundaries, quality = 'showc
   return receipt;
 }
 
-function renderFacingCards(t, { horizontal = true, gap, connection }) {
+function renderFacingCards(t, { horizontal = true, gap, connection, peer = false }) {
   const dir = mkdtempSync(join(tmpdir(), 'archify-facing-cards-'));
   t.after(() => rmSync(dir, { recursive: true, force: true }));
   const input = join(dir, 'input.json');
@@ -48,10 +48,18 @@ function renderFacingCards(t, { horizontal = true, gap, connection }) {
   const components = positions.map((pos, index) => ({
     id: index ? 'target' : 'source', type: 'backend', label: index ? 'Target' : 'Source', pos, size: [120, 60],
   }));
+  const connections = [{ from: 'source', to: 'target', ...connection }];
+  if (peer) {
+    components.push(
+      { id: 'producer', type: 'backend', label: 'Producer', pos: [80, 190], size: [120, 60] },
+      { id: 'consumer', type: 'backend', label: 'Consumer', pos: [232, 190], size: [120, 60] },
+    );
+    connections.push({ from: 'producer', to: 'consumer', fromSide: 'right', toSide: 'left', via: [] });
+  }
   writeFileSync(input, JSON.stringify({
     schema_version: 1, diagram_type: 'architecture',
     meta: { title: 'Facing cards', viewBox: [560, 360], output: 'output.html' },
-    components, connections: [{ from: 'source', to: 'target', ...connection }],
+    components, connections,
   }));
   const result = spawnSync(process.execPath, [renderer, input, output], { encoding: 'utf8' });
   assert.equal(result.status, 0, result.stdout + result.stderr);
@@ -82,6 +90,23 @@ test('short connections between facing cards keep a wide label beside a straight
     assert.ok(distance > 0.75 && distance <= height * 3, JSON.stringify({ distance, rect, points }));
     assert.equal(maskCoversArrowhead(rect, arrowheadTriangle(end, start, 1.5)), false);
   }
+});
+
+test('a side label in a short gap stays closer to its own shaft than to a neighboring route', t => {
+  const label = 'Fetch current metadata';
+  const { html, points } = renderFacingCards(t, { gap: 32, connection: { label }, peer: true });
+  assert.equal(points.length, 2);
+  const mask = html.match(/<rect x="([^"]+)" y="([^"]+)" width="([^"]+)" height="([^"]+)" rx="3" class="c-mask"\/>\s*<text [^>]*>Fetch current metadata<\/text>/);
+  assert.ok(mask, 'the relationship mask is rendered');
+  const [x, y, width, height] = mask.slice(1).map(Number);
+  const rect = { x, y, width, height };
+  const [start, end] = points;
+  const own = segmentRectClearance({ start, end }, rect);
+  assert.ok(own > 0.75 && own <= 2 * height, JSON.stringify({ own, rect, points }));
+  const peerPath = html.match(/<path [^>]*data-edge-from="producer"[^>]*data-composition-points="([^"]+)"/);
+  assert.ok(peerPath, 'the competing shaft is rendered');
+  const [peerStart, peerEnd] = peerPath[1].split(';').map(point => point.split(',').map(Number));
+  assert.ok(own < segmentRectClearance({ start: peerStart, end: peerEnd }, rect));
 });
 
 test('wide architecture markers respect absolute and final approach bounds', t => {

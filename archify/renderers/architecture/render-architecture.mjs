@@ -632,16 +632,24 @@ function resolveConnectionComposition(boxes, routeFor, measuredBoundaries = boun
   return { routes, labels: placed, titles, viewBox, boxes, protectedEndpoints, arrowheads };
 }
 
-function labelProblems({ routes, labels, titles, viewBox, boxes, protectedEndpoints, arrowheads }, ownershipMargin = 0) {
+function labelProblems({ routes, labels, titles, viewBox, boxes, protectedEndpoints, arrowheads }, ownershipMargin = 0, drawnOwnership = false) {
   const problems = new Map();
   // Use the same measurements as the composition gate. Compare distances
   // per label and relationship so an existing defect cannot mask a new one.
   for (const hit of collectLabelRouteClearance({ labels, routedRelations: routes, threshold: 4 })) {
     problems.set(`clearance/${hit.labelRelationIndex}/${hit.otherRelationIndex}`, 4 - hit.clearance);
   }
-  const distance = (points, rect, limit) => Math.min(...points.slice(1).map((end, index) =>
-    segmentRectClearanceWithin({ start: points[index], end }, rect, limit)));
+  const distance = (points, rect, limit) => {
+    let distance = Infinity;
+    for (let index = 1; index < points.length; index += 1) {
+      distance = Math.min(distance, segmentRectClearanceWithin({ start: points[index - 1], end: points[index] }, rect, Math.min(distance, limit)));
+    }
+    return distance;
+  };
   const byIndex = new Map(routes.map(route => [route.relationIndex, route]));
+  const drawn = drawnOwnership && new Map(routes.map(route => [
+    route.relationIndex, prepareCrossingPath(roundedPathSegments(route.points, 8)),
+  ]));
   const canvas = { x: 0, y: 0, width: viewBox[0], height: viewBox[1] };
   for (const [index, label] of labels.entries()) {
     const { relationIndex } = label;
@@ -654,11 +662,18 @@ function labelProblems({ routes, labels, titles, viewBox, boxes, protectedEndpoi
     const owner = byIndex.get(relationIndex);
     const own = distance(owner.points, label, Infinity);
     const pinned = ['labelAt', 'labelDx', 'labelDy', 'labelSegment'].some(key => label.relation[key] !== undefined);
-    const required = own + (pinned ? 0 : ownershipMargin);
+    const margin = pinned ? 0 : ownershipMargin;
+    const required = own + margin;
+    const drawnRequired = drawn && drawnPathRectClearance(drawn.get(relationIndex), label) + margin;
     for (const other of routes) {
       if (other === owner) continue;
       const gap = distance(other.points, label, required);
       if (gap + 0.0001 < required) problems.set(`ownership/${relationIndex}/${other.relationIndex}`, required - gap);
+      if (!drawn) continue;
+      const drawnGap = drawnPathRectClearance(drawn.get(other.relationIndex), label, drawnRequired);
+      if (drawnGap + 0.0001 < drawnRequired) {
+        problems.set(`drawn-ownership/${relationIndex}/${other.relationIndex}`, drawnRequired - drawnGap);
+      }
     }
     for (const box of boxes.values()) {
       if (rectsOverlap(label, box, -2)) problems.set(`component/${relationIndex}/${box.id}`, 1);
@@ -936,6 +951,7 @@ function finishAutomaticLabels(scene, repairFixedCanvas = false, { canMove, side
     ownershipMargin: automaticLabelOwnershipMargin,
     repairOwnership: true,
     searchBand: true,
+    preferShaftAttachment: sideOnly,
     keepFallbackNearRoute: true,
     // A proposed straight route can start with a label off the shaft but
     // inside a card. Search for a clear side position before rejecting it.
@@ -1107,15 +1123,20 @@ function simplifyFinishedComposition(initial, sceneRouter = router) {
   let beforeProblems;
   const borders = forRouting(initial.titles.boundaries).flatMap(frameBorderSegments);
   let outlines;
-  sceneRouter.simplifyFinishedRoutes(initial.viewBox, borders, (relation, routed, sides, clearsFrame) => {
-    const routes = current.routes.map(route => route.relation === relation ? { ...route, ...routed } : route);
-    const route = routes.find(route => route.relation === relation);
-    const path = prepareCrossingPath(roundedPathSegments(route.points, 8));
-    const halfWidth = routeStrokeWidth(relation) / 2;
+  const labelGap = (route, label) => segmentRectClearanceWithin({ start: route.points[0], end: route.points[1] }, label, Infinity);
+  const detached = new Map();
+  function acceptRoutes(changes, clearsFrame = false, reattach = false) {
+    const updates = new Map(changes.map(change => [change.conn, change]));
+    const routes = current.routes.map(route => updates.has(route.relation)
+      ? { ...route, ...updates.get(route.relation).routed } : route);
+    const changedRoutes = routes.filter(route => updates.has(route.relation));
+    const strokes = changedRoutes.map(({ points, relation }) => ({
+      path: prepareCrossingPath(roundedPathSegments(points, 8)), halfWidth: routeStrokeWidth(relation) / 2,
+    }));
+    const coversStroke = rect => strokes.some(({ path, halfWidth }) => drawnPathRectClearance(path, rect, halfWidth) < halfWidth);
     const arrowheads = routeArrowheads(routes);
     let titles = current.titles;
-    const coversTitle = title => drawnPathRectClearance(path, title, halfWidth) < halfWidth;
-    const blocked = titles.boundaries.filter(({ title }) => coversTitle(title));
+    const blocked = titles.boundaries.filter(({ title }) => coversStroke(title));
     if (blocked.length) {
       if (!clearsFrame || !auto) return false;
       const titleRouteSegments = routes.flatMap(({ points }) =>
@@ -1126,33 +1147,40 @@ function simplifyFinishedComposition(initial, sceneRouter = router) {
         slideTitleOffRoutes(frame, title, boundaries.filter(other => other !== frame).map(other => other.title), {
           boxes: current.boxes, connectionLabels: current.labels, titleRouteSegments, allowBottomRail: true,
         });
-        if (coversTitle(title) || arrowheads.some(({ marker }) => maskCoversArrowhead(title, marker))) return false;
+        if (coversStroke(title) || arrowheads.some(({ marker }) => maskCoversArrowhead(title, marker))) return false;
         boundaries[boundaries.indexOf(frame)] = { ...frame, title };
       }
       titles = { ...titles, boundaries };
     }
     const protectedEndpoints = new Map(current.protectedEndpoints);
-    if (protectedEndpoints.has(route.relationIndex)) protectedEndpoints.set(route.relationIndex, endpointLabelZones(route));
-    const labels = current.labels.map(label => label.relation === relation
-      ? { ...label, ...connectionLabelBoxAt(relation, labelPoint(relation, route.points)) } : label);
+    for (const route of changedRoutes) {
+      if (protectedEndpoints.has(route.relationIndex)) protectedEndpoints.set(route.relationIndex, endpointLabelZones(route));
+    }
+    const labels = current.labels.map(label => updates.has(label.relation)
+      ? { ...label, ...connectionLabelBoxAt(label.relation, labelPoint(label.relation, updates.get(label.relation).routed.points)) }
+      : label);
     const proposed = { ...current, routes, labels, titles, arrowheads, protectedEndpoints };
-    const candidate = relation.label ? finishAutomaticLabels(proposed, true, {
-      canMove: label => label.relation === relation, sideOnly: route.points.length === 2,
+    const candidate = changes.some(({ conn }) => conn.label) ? finishAutomaticLabels(proposed, true, {
+      canMove: label => updates.has(label.relation), sideOnly: changedRoutes.some(route => route.points.length === 2),
     }) : proposed;
-    if (candidate.labels.some(label => drawnPathRectClearance(path, label, halfWidth) < halfWidth)) return false;
-    const ownLabel = candidate.labels.find(label => label.relation === relation);
-    if (ownLabel) {
+    if (candidate.labels.some(coversStroke)) return false;
+    if (reattach && !changedRoutes.every(route => {
+      const label = candidate.labels.find(label => label.relation === route.relation);
+      const previous = current.routes.find(previous => previous.relation === route.relation);
+      return labelGap(route, label) < labelGap(previous, detached.get(route.relation)) - 0.0001;
+    })) return false;
+    for (const ownLabel of candidate.labels.filter(label => updates.has(label.relation))) {
       outlines ??= forRouting(initial.titles.boundaries).map(frameOutline);
       if (outlines.some(outline => drawnPathRectClearance(outline, ownLabel, 2) < 2 - 0.0001)
           || arrowheads.some(({ marker }) => maskCoversArrowhead(ownLabel, marker))) return false;
     }
-    beforeProblems ??= labelProblems({ ...current, arrowheads: routeArrowheads(current.routes) }, automaticLabelOwnershipMargin);
-    const afterProblems = labelProblems(candidate, automaticLabelOwnershipMargin);
+    beforeProblems ??= labelProblems({ ...current, arrowheads: routeArrowheads(current.routes) }, automaticLabelOwnershipMargin, true);
+    const afterProblems = labelProblems(candidate, automaticLabelOwnershipMargin, true);
     if (!preservesLabels(beforeProblems, afterProblems)) return false;
     const proposedRouter = {
-      pathFor: other => other === relation ? routed : sceneRouter.pathFor(other),
-      connectionEndpointSide: (other, end) => other === relation
-        ? sides[end === 'source' ? 'fromSide' : 'toSide'] : sceneRouter.connectionEndpointSide(other, end),
+      pathFor: other => updates.get(other)?.routed ?? sceneRouter.pathFor(other),
+      connectionEndpointSide: (other, end) => updates.get(other)?.sides[end === 'source' ? 'fromSide' : 'toSide']
+        ?? sceneRouter.connectionEndpointSide(other, end),
     };
     try {
       withIsolatedDiagnosticRecording(() => validateArchitecture(candidate, proposedRouter));
@@ -1163,7 +1191,30 @@ function simplifyFinishedComposition(initial, sceneRouter = router) {
     beforeProblems = afterProblems;
     current = candidate;
     return true;
-  });
+  }
+  sceneRouter.simplifyFinishedRoutes(initial.viewBox, borders, (conn, routed, sides, clearsFrame) =>
+    acceptRoutes([{ conn, routed, sides }], clearsFrame));
+  const labelsByRelation = new Map(current.labels.map(label => [label.relation, label]));
+  for (const route of current.routes) {
+    if (route.points.length !== 2) continue;
+    const label = labelsByRelation.get(route.relation);
+    if (label && labelGap(route, label) > label.height * 2) detached.set(route.relation, label);
+  }
+  if (detached.size) sceneRouter.simplifyFinishedRoutes(initial.viewBox, borders, (conn, routed, sides) =>
+    acceptRoutes([{ conn, routed, sides }], false, true), detached);
+  const routeBounds = [...current.viewBox];
+  if (arch.meta?.viewBox) {
+    // A fixed canvas may have empty space reserved by the author. Do not
+    // open a new bottom corridor beyond the routed scene on that canvas.
+    let bottom = 0;
+    for (const { y, height } of current.boxes.values()) bottom = Math.max(bottom, y + height);
+    for (const { y, height } of current.titles.boundaries) bottom = Math.max(bottom, y + height);
+    for (const { points } of current.routes) {
+      for (const [, y] of points) bottom = Math.max(bottom, y);
+    }
+    routeBounds[1] = Math.min(routeBounds[1], bottom);
+  }
+  sceneRouter.repairFinishedRoutes(routeBounds, borders, acceptRoutes);
   return current;
 }
 

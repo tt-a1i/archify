@@ -32,8 +32,11 @@ import { changeEdgeLabelExtraWidth } from '../shared/change-marks.mjs';
 import { prepareCrossingPath, visibleCrossings } from '../shared/route-crossings.mjs';
 
 function labelDistance(points, rect, limit) {
-  return Math.min(...points.slice(1).map((end, index) =>
-    segmentRectClearanceWithin({ start: points[index], end }, rect, limit)));
+  let distance = Infinity;
+  for (let index = 1; index < points.length; index += 1) {
+    distance = Math.min(distance, segmentRectClearanceWithin({ start: points[index - 1], end: points[index] }, rect, Math.min(limit, distance)));
+  }
+  return distance;
 }
 
 function labelFollowsRoute(rect, points, others) {
@@ -2335,20 +2338,21 @@ export function createRouter(components, connections = [], {
     return true;
   }
 
+  const jogs = points => points.slice(3).flatMap((d, offset) => {
+    const [a, b, c] = points.slice(offset, offset + 3);
+    const axis = a[0] === b[0] ? 1 : 0;
+    return b[axis] === c[axis] && c[1 - axis] === d[1 - axis]
+      && (b[axis] - a[axis]) * (d[axis] - c[axis]) > 0
+      && Math.abs(c[1 - axis] - b[1 - axis]) < 28 ? [{ offset, axis }] : [];
+  });
+
   // Work on the finished plan. Changing a port during the greedy pass can
   // steal a later route's corridor or change an authored route's fallback.
-  function simplifyFinishedRoutes(viewBox, borders, accept) {
+  function simplifyFinishedRoutes(viewBox, borders, accept, detachedLabels) {
     const entries = routedEntries();
     const withLane = (point, axis, lane) => axis ? [point[0], lane] : [lane, point[1]];
     const frameRuns = points => borders.flatMap(border => [...closeParallelRuns(points, [border.start, border.end], 8)]
       .filter(run => run.overlap >= 8));
-    const jogs = points => points.slice(3).flatMap((d, offset) => {
-      const [a, b, c] = points.slice(offset, offset + 3);
-      const axis = a[0] === b[0] ? 1 : 0;
-      return b[axis] === c[axis] && c[1 - axis] === d[1 - axis]
-        && (b[axis] - a[axis]) * (d[axis] - c[axis]) > 0
-        && Math.abs(c[1 - axis] - b[1 - axis]) < 28 ? [{ offset, axis }] : [];
-    });
     let compositions = 48;
     for (const entry of entries) {
       const { conn, points } = entry;
@@ -2356,7 +2360,8 @@ export function createRouter(components, connections = [], {
       if (conn.from === conn.to || hasAuthoredRouteGeometry(conn) || hasAuthoredLabelPlacement(conn)
           || [conn.fromSide, conn.toSide].some(side => side && side !== 'auto')) continue;
       const runs = frameRuns(points);
-      if (points.length <= 2 && !runs.length) continue;
+      const detached = points.length === 2 ? detachedLabels?.get(conn) : null;
+      if (detachedLabels ? !detached : points.length <= 2 && !runs.length) continue;
       const wiggles = jogs(points);
       const oldSides = selectedSides.get(conn);
       const from = components.get(conn.from);
@@ -2396,6 +2401,10 @@ export function createRouter(components, connections = [], {
           }
           lanes.push(...cuts.filter(lane => lane > low && lane < high)
             .sort((a, b) => Math.abs(a - mid) - Math.abs(b - mid) || a - b).slice(0, 12));
+          if (detached) {
+            const center = axis ? detached.y + detached.height / 2 : detached.x + detached.width / 2;
+            lanes.sort((a, b) => Math.abs(a - center) - Math.abs(b - center));
+          }
           for (const lane of new Set(lanes.map(value => Math.max(low, Math.min(high, value))))) {
             add([withLane(start, axis, lane), withLane(end, axis, lane)], { fromSide, toSide });
           }
@@ -2462,11 +2471,200 @@ export function createRouter(components, connections = [], {
         attempts -= 1;
         compositions -= 1;
         const routed = { points: next, d: roundedPath(next, 8) };
-        if (!accept(conn, routed, sides, runs.length > 0)) continue;
+        if (!accept(conn, routed, sides, runs.length > 0, Boolean(detached))) continue;
         cachePath(conn, routed, sides);
         entry.points = next;
         break;
       }
+    }
+  }
+
+  // Compare finished geometry with the complete scene. Each accepted change
+  // removes a counted signal and preserves bend counts, jogs and previously
+  // uncrossed pairs. A pair can exchange space before either route is installed.
+  function repairFinishedRoutes(viewBox, borders, accept) {
+    const entries = routedEntries();
+    const movable = entry => entry.conn.from !== entry.conn.to
+      && !hasAuthoredRouteGeometry(entry.conn) && !hasAuthoredLabelPlacement(entry.conn)
+      && [entry.conn.fromSide, entry.conn.toSide].every(side => !side || side === 'auto');
+    const crossing = (a, b) => crossingPoints(a.points, b, 1);
+    const budget = entry => routeBudgetMetrics({ routedRelations: [entry] });
+    const budgets = new Map(entries.map(entry => [entry.conn, budget(entry)]));
+    const crossingPeers = entry => entries.filter(peer => peer !== entry && crossing(entry, peer));
+    const flagged = entries.filter(entry => {
+      if (!movable(entry)) return false;
+      const { routesOverSuggestedBends, routesOverSuggestedStretch } = budgets.get(entry.conn);
+      return routesOverSuggestedBends || routesOverSuggestedStretch || crossingPeers(entry).length;
+    });
+    if (!flagged.length) return;
+
+    const terminal = points => routeLength(points.slice(-2));
+    const axisOf = side => Number(side === 'left' || side === 'right');
+    const onLane = (port, axis, lane) => axis ? [port[0], lane] : [lane, port[1]];
+    let probes = 12_000;
+    let compositions = 40;
+    function alternatives(entry, peers, limit, joint) {
+      const { conn, points: before } = entry;
+      const oldSides = selectedSides.get(conn);
+      const { routesOverSuggestedBends: bends, routesOverSuggestedStretch: stretch } = budgets.get(conn);
+      const crossed = new Set(peers.filter(peer => crossing(entry, peer)));
+      const minimumApproach = Math.min(terminal(before), Math.max(16, 9 * relationshipStroke(conn)));
+      const oldLength = routeLength(before);
+      const maxPoints = before.length;
+      const oldJogs = jogs(before).length;
+      const fromBox = components.get(conn.from);
+      const toBox = components.get(conn.to);
+      const seen = new Set([JSON.stringify(before)]);
+      const candidates = [];
+      function consider(raw, sides, from, to) {
+        if (!limit || !probes) return;
+        limit -= 1;
+        probes -= 1;
+        const points = normalizeRoutePoints(raw);
+        if (points.length < 2 || points.length > maxPoints || terminal(points) < minimumApproach
+          || points.slice(1).some((end, index) => end[0] !== points[index][0] && end[1] !== points[index][1])
+          || points.some(([x, y]) => x < 0 || y < 0 || x > viewBox[0] || y > viewBox[1])) return;
+        if (!joint && !crossed.size && !stretch && points.length > 4) return;
+        const length = routeLength(points);
+        const metrics = budget({ points });
+        const bendGain = bends - metrics.routesOverSuggestedBends;
+        const stretchGain = stretch - metrics.routesOverSuggestedStretch;
+        if (bendGain < 0 || stretchGain < 0 || jogs(points).length > oldJogs || parallelFrameRunLength(points, borders)) return;
+        const key = JSON.stringify(points);
+        if (seen.has(key)) return;
+        seen.add(key);
+        const next = { conn, points, sides };
+        if (!portHasCornerClearance(from, sides.fromSide, points[0])
+          || !portHasCornerClearance(to, sides.toSide, points.at(-1))
+          || !endpointSlotsClear([next], peers, other => other === conn ? sides : selectedSides.get(other), { points: before, sides: oldSides })
+          || !routeIsClear(conn, next, { from, to, ...sides }, peers, [])) return;
+        let removed = crossed.size;
+        for (const peer of peers) {
+          if (!crossing(next, peer)) continue;
+          if (!crossed.has(peer)) return;
+          removed -= 1;
+        }
+        const gain = bendGain + stretchGain + removed;
+        if ((!joint && !gain) || (!gain && length > oldLength + interiorSegmentPx)) return;
+        candidates.push({ ...next, metrics, gain, length });
+      }
+      function ports(box, side, axis, preferred, oldPort) {
+        const [low, high] = portLaneLimits(box, axis);
+        const values = [preferred[axis], oldPort[axis], low, high, (low + high) / 2];
+        for (const { conn: other, field, sideField } of incidentEndpoints.get(box.id) || []) {
+          if (other === conn || selectedSides.get(other)[sideField] !== side) continue;
+          const value = pathCache.get(other).points.at(field === 'from' ? 0 : -1)[axis];
+          const gap = portSpacing(conn, other);
+          values.push(value - gap, value + gap);
+        }
+        return [...new Set(values.filter(value => value >= low && value <= high))].slice(0, 8);
+      }
+      for (let index = 1; index + 1 < before.length; index += 1) {
+        const first = before[index - 1];
+        const last = before[index];
+        const axis = Number(first[1] === last[1]);
+        const lane = first[axis];
+        // Sliding a whole leg keeps the neighbouring legs perpendicular.
+        const offsets = [-READABLE_FRAME_GAP, -4, 4, READABLE_FRAME_GAP];
+        const cuts = [before[index - 2]?.[axis], before[index + 1][axis], ...offsets.map(offset => lane + offset)];
+        for (const cut of cuts) {
+          if (cut === undefined) continue;
+          consider(before.map((point, i) => i === index - 1 || i === index ? onLane(point, axis, cut) : point),
+            oldSides, fromBox, toBox);
+        }
+      }
+      for (const sides of candidateSidePairs(conn)) {
+        if (!limit || !probes) break;
+        const { from, to, start, end, fromSide, toSide } = connectionGeometry(conn, sides);
+        const sourceAxis = axisOf(fromSide);
+        const targetAxis = axisOf(toSide);
+        const along = 1 - sourceAxis;
+        const starts = ports(from, fromSide, sourceAxis, start, before[0]);
+        const ends = ports(to, toSide, targetAxis, end, before.at(-1));
+        if (sourceAxis === targetAxis) {
+          const [low, high] = portLaneLimits(to, targetAxis);
+          for (const lane of starts) if (lane >= low && lane <= high) {
+            consider([onLane(start, sourceAxis, lane), onLane(end, targetAxis, lane)], sides, from, to);
+          }
+        }
+        const launch = outwardStub(start, fromSide, interiorSegmentPx);
+        const land = outwardStub(end, toSide, Math.max(interiorSegmentPx, minimumApproach));
+        const channels = [...new Set([(start[along] + end[along]) / 2, launch[along], land[along],
+          ...before.map(point => point[along])])];
+        // Start with the geometry chosen by the ordinary router, then look
+        // beyond its first bridge without reopening the full obstacle grid.
+        consider(routedForGeometryWithoutGrid(conn, peers, { from, to, start, end, ...sides }).points, sides, from, to);
+        for (const source of starts) for (const target of ends) {
+          const first = onLane(start, sourceAxis, source);
+          const last = onLane(end, targetAxis, target);
+          if (sourceAxis !== targetAxis) {
+            consider([first, onLane(first, along, last[along]), last], sides, from, to);
+            if (maxPoints >= 5 && (crossed.size || stretch || joint)) {
+              const firstStub = outwardStub(first, fromSide, interiorSegmentPx);
+              const lastStub = outwardStub(last, toSide, Math.max(interiorSegmentPx, minimumApproach));
+              for (const distance of [0, interiorSegmentPx]) {
+                const firstTurn = outwardStub(firstStub, fromSide, distance);
+                const lastTurn = outwardStub(lastStub, toSide, distance);
+                consider([first, firstTurn, onLane(firstTurn, sourceAxis, lastTurn[sourceAxis]), lastTurn, last], sides, from, to);
+              }
+            }
+          } else {
+            for (const channel of channels) {
+              consider([first, onLane(first, along, channel), onLane(last, along, channel), last], sides, from, to);
+            }
+          }
+        }
+      }
+      return candidates.sort((a, b) => b.gain - a.gain || a.points.length - b.points.length || a.length - b.length);
+    }
+
+    function install(candidates) {
+      if (!compositions) return false;
+      compositions -= 1;
+      const changes = candidates.map(({ conn, points, sides }) => ({ conn, sides, routed: { points, d: roundedPath(points, 8) } }));
+      if (!accept(changes)) return false;
+      for (const [index, { conn, sides, routed }] of changes.entries()) {
+        cachePath(conn, routed, sides);
+        entries.find(entry => entry.conn === conn).points = routed.points;
+        budgets.set(conn, candidates[index].metrics);
+      }
+      return true;
+    }
+
+    for (const entry of flagged) {
+      if (!compositions || !probes) break;
+      const peers = entries.filter(peer => peer !== entry);
+      const { routesOverSuggestedBends, routesOverSuggestedStretch } = budgets.get(entry.conn);
+      if (!routesOverSuggestedBends && !routesOverSuggestedStretch && !peers.some(peer => crossing(entry, peer))) continue;
+      for (const candidate of alternatives(entry, peers, 1550, false).slice(0, 5)) {
+        if (install([candidate])) break;
+      }
+    }
+    let pairProbes = 6;
+    for (const entry of flagged) {
+      for (const peer of crossingPeers(entry)) {
+        if (!pairProbes || !compositions || !probes) return;
+        if (!movable(peer) || flagged.indexOf(peer) < flagged.indexOf(entry)) continue;
+        pairProbes -= 1;
+        const others = entries.filter(other => other !== entry && other !== peer);
+        const first = alternatives(entry, others, 950, true).slice(0, 12);
+        const second = alternatives(peer, others, 950, true).slice(0, 12);
+        pairs: for (const a of first) for (const b of second) {
+          const sidesOf = conn => conn === a.conn ? a.sides : conn === b.conn ? b.sides : selectedSides.get(conn);
+          if (crossing(a, b) || routeOverlapsResolved(a.conn, a.points, [b])
+            || routeOverlapsResolved(b.conn, b.points, [a]) || !endpointSlotsClear([a, b], others, sidesOf)) continue;
+          if (install([a, b])) break pairs;
+        }
+      }
+    }
+  }
+
+  function routedForGeometryWithoutGrid(conn, peers, geometry) {
+    allowGridSearch = false;
+    try {
+      return routedForGeometry(conn, peers, geometry);
+    } finally {
+      allowGridSearch = true;
     }
   }
 
@@ -2562,5 +2760,5 @@ export function createRouter(components, connections = [], {
     return { ...planningMetrics };
   }
 
-  return { ports: automaticPorts, pathFor, connectionSides, inferredSides, connectionEndpointSide, routingMetrics, crossingPairs, planIsClear, repairMaskedApproach, simplifyFinishedRoutes };
+  return { ports: automaticPorts, pathFor, connectionSides, inferredSides, connectionEndpointSide, routingMetrics, crossingPairs, planIsClear, repairMaskedApproach, simplifyFinishedRoutes, repairFinishedRoutes };
 }
