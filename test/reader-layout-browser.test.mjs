@@ -71,7 +71,12 @@ test('Reader Layout preserves final-artifact behavior across its ownership bound
     }
     async function stable() {
       await evaluate(`(async function () {
-        // Font completion can schedule another Reader measure after load.
+        // Wait for both current layout owners together. Older recorded
+        // baselines may predate the joint readiness API.
+        if (Archify.layoutStability) {
+          await Archify.layoutStability.whenStable();
+          return;
+        }
         if (document.fonts && document.fonts.ready) await document.fonts.ready;
         for (var i = 0; i < 2; i += 1) {
           await Archify.readerLayout.whenStable();
