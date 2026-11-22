@@ -24,7 +24,6 @@ import { fileURLToPath } from 'node:url';
 import { DiagnosticError, fail } from '../core/index.mjs';
 import { analysisStartCommand } from '../lib/task-command.mjs';
 import { standaloneShell } from '../overlay/standalone.mjs';
-import { withInstallLock } from '../lib/install-lock.mjs';
 import { clientAsset } from '../overlay/client-assets.mjs';
 import { preparePullRequest } from '../lib/pull-request.mjs';
 
@@ -55,34 +54,10 @@ export function runWorker(options) {
   });
 }
 
+// Parser and schema packages ship pre-bundled in vendor/ (scripts/build-vendor.mjs),
+// so a plain copy of the Skill needs no install. Only a damaged copy lacks them.
 export function missingAnalysisDependencies(root = moduleRoot) {
-  return ['typescript', 'ajv', 'ajv-draft-04', 'ajv-formats', 'java-parser', '@xmldom/xmldom']
-    .filter(name => !fs.existsSync(path.join(root, 'node_modules', name, 'package.json')));
-}
-
-// Parser and schema dependencies live in the module's own package. Archify itself needs no install, and
-// the skill is often used from a plain copy of the folder, so the first `serve`
-// installs them on demand instead of asking for a separate setup step.
-export async function ensureDependencies(root = moduleRoot) {
-  root = fs.realpathSync(root);
-  // Installed, read-only copies need no lock file. An active installer must
-  // finish even if its package manifests have already appeared.
-  if (!missingAnalysisDependencies(root).length && !fs.existsSync(path.join(root, '.code-analysis-install.lock'))) return false;
-  return withInstallLock(root, async () => {
-    const missing = missingAnalysisDependencies(root);
-    if (!missing.length) return false;
-    const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-    const lock = fs.existsSync(path.join(root, 'package-lock.json'));
-    console.error(`Code Analysis: installing ${missing.join(' and ')} into ${path.relative(process.cwd(), root) || '.'} (first run only)…`);
-    try {
-      // Pass the directory as cwd: on Windows npm.cmd needs a shell, and the
-      // shell would split an unquoted --prefix path that contains spaces.
-      await execute(npm, [lock ? 'ci' : 'install', '--no-audit', '--no-fund'], { cwd: root, shell: process.platform === 'win32', maxBuffer: 16 * 1024 * 1024 });
-    } catch (error) {
-      throw new Error(`Code Analysis needs ${missing.join(' and ')} and could not install them automatically (${error.message.split('\n')[0]}). Run \`npm ci\` in ${root} once, then retry.`);
-    }
-    return true;
-  });
+  return ['typescript.cjs', 'deps.cjs'].filter(name => !fs.existsSync(path.join(root, 'vendor', name)));
 }
 
 export const USAGE = `Usage:
@@ -125,7 +100,6 @@ export async function prepareAnalysisSession(argv) {
   const locale = analysisLocale(options['--locale'] || input?.meta?.locale);
   const doc = input ? { ...input, meta: { ...input.meta, locale } } : null;
   const pullRequest = options['--pr'] ? await (await import('../lib/pull-request.mjs')).resolvePullRequest(root, options['--pr'], options['--repository'], options['--scope']) : null;
-  await ensureDependencies();
   fs.mkdirSync(out, { recursive: true });
 
   // 1. Archify delivers the diagram. Repository evidence is checked when the IR pins a repository.

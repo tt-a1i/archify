@@ -117,6 +117,10 @@ jobs:
         if: matrix.module-shard == 1
         run: pnpm run check:python
         working-directory: archify/modules/code-analysis
+      - name: Verify vendored Code Analysis packages
+        if: matrix.module-shard == 1
+        run: pnpm run check:vendor
+        working-directory: archify/modules/code-analysis
       - name: Code Analysis module suite
         if: matrix.module-shard
         run: node --test --test-shard=${{ matrix.module-shard }}/2 test/*.test.mjs
