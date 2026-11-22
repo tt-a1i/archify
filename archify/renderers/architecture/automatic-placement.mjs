@@ -1,4 +1,4 @@
-import { asArray, properSegmentIntersection, segmentIntersectsRect } from '../shared/geometry.mjs';
+import { asArray, properSegmentIntersection, rectsOverlap, segmentIntersectsRect } from '../shared/geometry.mjs';
 import { textUnits } from '../shared/utils.mjs';
 import { placeFrameAttachments } from './frame-attachment-placement.mjs';
 import { layOutParallelPaths } from './parallel-path-placement.mjs';
@@ -10,6 +10,7 @@ const horizontalGap = 92;
 const verticalGap = 96;
 const islandGap = 72;
 const comfortableWidth = 1040;
+const emphasisPriority = 2;
 
 function isPoint(value) {
   return Array.isArray(value) && value.length === 2 && value.every(Number.isFinite);
@@ -35,7 +36,7 @@ function membersOf(items, neighbors) {
 }
 
 function edgePriority(edge) {
-  if (edge.variant === 'emphasis') return 2;
+  if (edge.variant === 'emphasis') return emphasisPriority;
   if (edge.variant === 'dashed') return 0;
   return 1;
 }
@@ -98,7 +99,7 @@ function forwardOrder(items, incoming, outgoing) {
   return { order: finished.reverse(), backward };
 }
 
-function layOutIsland(items, edges, incoming, outgoing, vertical, alternateTies = false) {
+function layOutIsland(items, edges, incoming, outgoing, vertical, { alternateTies = false, centerDependency = false } = {}) {
   const { order, backward } = forwardOrder(items, incoming, outgoing);
   const parents = new Map();
   const rank = new Map();
@@ -183,7 +184,29 @@ function layOutIsland(items, edges, incoming, outgoing, vertical, alternateTies 
     right = columnX + columnWidth;
     columnX = right + gaps[index];
   }
+  const emphasizedSpine = pathWeight.get(last) === emphasisPriority * rank.get(last);
+  if (centerDependency && emphasizedSpine) placeSharedDependency(items, edges, spine, rank, right);
   return { items, width: right, height: bottom - top, top };
+}
+
+function placeSharedDependency(items, edges, spine, rank, width) {
+  if (spine.size !== items.length - 1) return;
+  const dependency = items.find((item) => !spine.has(item));
+  if (edges.some((edge) => edge.from === dependency)) return;
+  const links = edges.filter((edge) => edge.to === dependency);
+  if (links.length < 2 || links.some((edge) => edge.variant === 'emphasis')) return;
+
+  // A single shared dependency can sit beside the phases that use it,
+  // instead of extending the time-ordered path after the last phase.
+  const ranks = links.map(({ from }) => rank.get(from));
+  if (Math.max(...ranks) - Math.min(...ranks) < 2) return;
+  const centers = links.map(({ from }) => from.x + from.width / 2);
+  const x = (Math.min(...centers) + Math.max(...centers) - dependency.width) / 2;
+  if (x < 0 || x + dependency.width > width) return;
+  const clearance = 24;
+  const space = { x: x - clearance, y: dependency.y - clearance,
+    width: dependency.width + clearance * 2, height: dependency.height + clearance * 2 };
+  if (items.every((item) => item === dependency || !rectsOverlap(item, space))) dependency.x = x;
 }
 
 function directRouteInterference(items, edges) {
@@ -206,15 +229,16 @@ function directRouteInterference(items, edges) {
 }
 
 function chooseIslandLayout(items, edges, incoming, outgoing, vertical, allowAlternate) {
-  const layout = layOutIsland(items, edges, incoming, outgoing, vertical);
+  const smallUnframed = allowAlternate && items.length >= 4 && items.length <= 24 && edges.length <= 36
+    && items.every((item) => !item.children && !item.parent.members);
+  const layout = layOutIsland(items, edges, incoming, outgoing, vertical, { centerDependency: smallUnframed });
   // Two bounded attempts for small unframed drafts. Explicit geometry and
   // frame membership can influence routes in ways this estimate does not see.
-  if (!allowAlternate || items.length < 4 || items.length > 24 || edges.length > 36
-    || items.some((item) => item.children || item.parent.members)) return layout;
+  if (!smallUnframed) return layout;
   const score = directRouteInterference(items, edges);
   if (score < 2) return layout;
   const positions = items.map(({ x, y }) => [x, y]);
-  const alternate = layOutIsland(items, edges, incoming, outgoing, vertical, true);
+  const alternate = layOutIsland(items, edges, incoming, outgoing, vertical, { alternateTies: true, centerDependency: true });
   if (alternate.width <= layout.width && alternate.height <= layout.height
     && directRouteInterference(items, edges) <= score - 2) return alternate;
   for (const [index, item] of items.entries()) [item.x, item.y] = positions[index];

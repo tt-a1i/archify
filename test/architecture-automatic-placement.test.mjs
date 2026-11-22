@@ -128,3 +128,29 @@ test('automatic architecture placement fits a detached pair across its own row b
   assert.ok(consoleNode.x + consoleNode.width < help.x);
   assert.ok(help.x + help.width <= Math.max(...pipelineBoxes.map(({ x, width }) => x + width)));
 });
+
+test('automatic architecture places a single shared dependency between the phases that use it', () => {
+  const path = ['request', 'search', 'review', 'read', 'output'];
+  const components = [...path, 'storage'].map(id => ({ id, size: [150, 60] }));
+  const connections = [
+    ...path.slice(1).map((to, index) => ({ from: path[index], to, variant: 'emphasis' })),
+    { from: 'search', to: 'storage' },
+    { from: 'read', to: 'storage' },
+  ];
+  const positions = automaticComponentPositions({ components, connections });
+  const [, search, , read, output, storage] = boxes(components, positions);
+  assert.equal(search.x, output.x);
+  assert.ok(storage.y > search.y && storage.y < read.y);
+  assert.ok(storage.x + storage.width < search.x || storage.x > search.x + search.width);
+  assert.ok(output.y > read.y);
+
+  const emphasizedBranches = connections.map(edge => edge.to === 'storage' ? { ...edge, variant: 'emphasis' } : edge);
+  const positionsWithEmphasis = automaticComponentPositions({ components, connections: emphasizedBranches });
+  const [, , , emphasizedRead, , emphasizedStorage] = boxes(components, positionsWithEmphasis);
+  assert.ok(emphasizedStorage.y > emphasizedRead.y);
+
+  const ordinaryConnections = connections.map(({ from, to }) => ({ from, to }));
+  const ordinaryPositions = automaticComponentPositions({ components, connections: ordinaryConnections });
+  const [, , , ordinaryRead, , ordinaryStorage] = boxes(components, ordinaryPositions);
+  assert.ok(ordinaryStorage.y > ordinaryRead.y);
+});
