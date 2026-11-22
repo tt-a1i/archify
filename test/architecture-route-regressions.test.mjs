@@ -120,3 +120,79 @@ test('automatic placement can exchange equal terminal slots to clear crossed bra
   assert.ok(save.slice(1).every((end, index) => write.slice(1).every((otherEnd, otherIndex) =>
     !properSegmentIntersection(save[index], end, write[otherIndex], otherEnd))));
 });
+
+function assertRoutesDoNotCross(routes, first, second) {
+  const { points: a } = routes.get(first);
+  const { points: b } = routes.get(second);
+  assert.ok(a.slice(1).every((end, index) => b.slice(1).every((otherEnd, otherIndex) =>
+    !properSegmentIntersection(a[index], end, b[otherIndex], otherEnd))), JSON.stringify({ a, b }));
+}
+
+test('simplification keeps shared-endpoint routes clear of an arrow with a pinned label', () => {
+  assertRoutesDoNotCross(measuredLayout('small-excluded-369'), 'r7', 'r8');
+});
+
+test('an automatic arrow can follow its pinned label and open a crossing-free corridor', () => {
+  const routes = measuredLayout('small-regressed-603');
+  assertRoutesDoNotCross(routes, 'r0', 'r1');
+  assertRoutesDoNotCross(routes, 'r0', 'r10');
+  assertRoutesDoNotCross(routes, 'r1', 'r10');
+  const { points, labelAt, ...labelled } = routes.get('r10');
+  assert.deepEqual(labelAt, [148, 50]);
+  const rect = connectionLabelBoxAt(labelled, labelAt);
+  assert.ok(points.slice(1).some((end, index) => segmentRectClearance({ start: points[index], end }, rect) <= 20));
+});
+
+test('the bounded channel search considers gaps at the ends of the feasible interval', () => {
+  const routes = measuredLayout('corridor-end-cuts');
+  assertRoutesDoNotCross(routes, 'r0', 'r1');
+  assertRoutesDoNotCross(routes, 'r0', 'r3');
+});
+
+test('a fully inferred frame fits a viable authored canvas', () => {
+  const { status, receipt } = validate(fileURLToPath(fixtureUrl('frame-full-auto')), 'standard', '--layout-json');
+  assert.equal(status, 0, JSON.stringify(receipt.diagnostics));
+  assert.deepEqual(receipt.viewBox, [330, 250]);
+  const [frame] = receipt.boundaries;
+  assert.ok(frame.y + frame.height <= 250);
+});
+
+test('same-side self-loop recovery can move both inferred ports', () => {
+  const { points } = measuredLayout('loop-60').get('retry');
+  const [start, end] = [points[0], points.at(-1)];
+  assert.equal(start[0], 320);
+  assert.equal(end[0], 320);
+  assert.ok(Math.abs(start[1] - end[1]) >= 24);
+});
+
+test('a frame with an unplaced member reports only the typed placement error', () => {
+  const { status, receipt } = validate(fileURLToPath(fixtureUrl('missing-frame')), 'showcase', '--json');
+  assert.equal(status, 1);
+  assert.deepEqual(receipt.diagnostics.map(d => d.code), ['architecture/non-finite-component-geometry']);
+  assert.match(receipt.diagnostics[0].message, /Component "a" must include pos/);
+});
+
+test('automatic placement keeps non-members out of overlapping frames', () => {
+  const name = 'overlapping-frames';
+  const { status, receipt } = validate(fileURLToPath(fixtureUrl(name)), 'showcase', '--layout-json');
+  assert.equal(status, 0, JSON.stringify(receipt.diagnostics));
+  assert.deepEqual(receipt.boundaries.map(frame => frame.wraps), load(name).boundaries.map(frame => frame.wraps));
+  const support = receipt.boundaries.find(frame => frame.label === 'Support');
+  const other = receipt.components.find(box => box.id === 'b');
+  assert.ok(other.x >= support.x + support.width || other.x + other.width <= support.x
+    || other.y >= support.y + support.height || other.y + other.height <= support.y);
+});
+
+for (const [name, description] of [
+  ['layers-with-dashed-branch', 'a dashed branch competing with a frame entrance'],
+  ['shared-frame-attachment', 'shared dependencies leaving the same framed layer'],
+  ['skip-layer-branch', 'a branch crossing a route that skips a layer'],
+]) {
+  test(`automatic placement clears ${description}`, () => {
+    const routes = measuredLayout(name);
+    const ids = [...routes.keys()];
+    for (const [index, first] of ids.entries()) {
+      for (const second of ids.slice(index + 1)) assertRoutesDoNotCross(routes, first, second);
+    }
+  });
+}

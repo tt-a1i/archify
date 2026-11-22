@@ -14,6 +14,7 @@ import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeFrameAttrs, changeLeg
 import { gridLayout, resolveComponentPos, validateGridPlacement } from './grid.mjs';
 import { automaticComponentPositions } from './automatic-placement.mjs';
 import { placeCrossedLeaf, placeCrossedSinks, facingFramePlacements } from './crossed-leaf-placement.mjs';
+import { crossingPlacementCandidates, frameAttachmentCandidates, frameEnclosureCandidates, measuredCrossingPairs } from './automatic-placement-candidates.mjs';
 import { createArchitectureRouter, connectionLabelBoxAt } from './routing.mjs';
 import { placeAutomaticLabels } from '../shared/automatic-labels.mjs';
 import { cleanRouteDetourProblems } from '../shared/route-quality.mjs';
@@ -148,7 +149,7 @@ for (const [index, c] of asArray(arch.components).entries()) {
 // ---- Boundaries computed from the `wraps` id list ---------------------------
 function boundaryRect(boundary, boxes) {
   const members = asArray(boundary.wraps).map((id) => boxes.get(id)).filter(Boolean);
-  if (!members.length) return null;
+  if (!members.length || members.some(({ x, y, width, height }) => !isFinitePoint(x, y, width, height))) return null;
   let minX = Infinity;
   let minY = Infinity;
   let maxX = -Infinity;
@@ -237,6 +238,7 @@ function autoViewBoxFor(boxes, candidateBoundaries, extraRects) {
   let maxY = 0;
   for (const rects of [boxes.values(), candidateBoundaries, extraRects]) {
     for (const rect of rects) {
+      if (!isFinitePoint(rect.x, rect.y, rect.width, rect.height)) continue;
       maxX = Math.max(maxX, rect.x + rect.width);
       maxY = Math.max(maxY, rect.y + rect.height);
     }
@@ -462,7 +464,6 @@ if (automaticPositions && !arch.meta?.viewBox) {
 }
 const routedEndpointIds = new Set(routable.keys());
 const canRoute = conn => routedEndpointIds.has(conn.from) && routedEndpointIds.has(conn.to);
-const { connectionSides, connectionEndpointSide } = router;
 const pathFor = conn => canRoute(conn) ? router.pathFor(conn) : { points: [] };
 function hasAutomaticRouteGeometry(connection) {
   return !Array.isArray(connection?.via)
@@ -580,18 +581,84 @@ function preservesLabels(before, after) {
   return [...after].every(([pair, severity]) => severity <= (before.get(pair) ?? 0) + 0.0001);
 }
 
+function frameEnclosures(boxes, boundaries) {
+  return boundaries.flatMap(frame => [...boxes.values()].filter(box => !frame.wraps.includes(box.id) && rectContains(frame, box))
+    .map(box => ({ frame, box })));
+}
+
+function chooseAutomaticPlacement() {
+  if (!auto || components.size > 24 || connections.length > 36 || rawBoundaries.length > 24
+      || [...components.values()].some(box => box.pos)
+      || connections.some(conn => !canRoute(conn) || !hasAutomaticRouteGeometry(conn)
+        || ['fromSide', 'toSide'].some(key => conn[key] && conn[key] !== 'auto')
+        || ['labelAt', 'labelDx', 'labelDy', 'labelSegment'].some(key => conn[key] !== undefined))) return null;
+  const initial = resolveConnectionComposition(components, pathFor, rawBoundaries);
+  const enclosures = arch.meta?.quality_profile === 'showcase'
+    ? frameEnclosures(components, initial.titles.boundaries) : [];
+  const crossings = !arch.meta?.viewBox || enclosures.length ? measuredCrossingPairs(initial.routes) : [];
+  if (!enclosures.length && !crossings.length) return initial;
+  const labels = labelProblems(initial);
+  function measure(scene) {
+    const { routesOverSuggestedBends: bends, routesOverSuggestedStretch: stretch } =
+      routeBudgetMetrics({ routedRelations: scene.routes });
+    const length = scene.routes.reduce((total, { points }) => total + points.slice(1).reduce((sum, [x, y], index) =>
+      sum + Math.abs(x - points[index][0]) + Math.abs(y - points[index][1]), 0), 0);
+    return { bends, stretch, length, area: scene.viewBox[0] * scene.viewBox[1] };
+  }
+  const baseline = measure(initial);
+  let best = { ...baseline, crossings, scene: initial, router };
+  function consider(moved) {
+    const bounds = boundsFor(moved);
+    const candidate = makeRouter(moved, bounds);
+    const scene = resolveConnectionComposition(moved, candidate.pathFor, bounds);
+    const nextCrossings = measuredCrossingPairs(scene.routes);
+    const next = measure(scene);
+    if (next.bends > baseline.bends || next.stretch > baseline.stretch) return;
+    const order = nextCrossings.length - best.crossings.length || next.bends - best.bends
+      || next.length - best.length || next.area - best.area;
+    if (enclosures.length) {
+      if (nextCrossings.length > crossings.length || frameEnclosures(moved, scene.titles.boundaries).length
+          || (best.router !== router && order >= 0)) return;
+    } else if (order >= 0 || nextCrossings.length >= crossings.length || next.length > baseline.length + 0.0001
+        || scene.viewBox.some((size, axis) => size > initial.viewBox[axis])) return;
+    if (!candidate.planIsClear(scene.viewBox, { checkProvisionalLabels: false })
+        || !preservesLabels(labels, labelProblems(scene))) return;
+    try {
+      validateArchitecture(scene, candidate);
+    } catch (error) {
+      if (!error.archifyDiagnostics?.length) throw error;
+      return;
+    }
+    best = { ...next, crossings: nextCrossings, scene, router: candidate };
+  }
+  let remaining = 12;
+  const candidates = enclosures.length ? frameEnclosureCandidates(components, enclosures)
+    : crossingPlacementCandidates(components, connections, rawBoundaries, crossings);
+  for (const moved of candidates) {
+    if (remaining <= 0) break;
+    remaining -= 1;
+    consider(moved);
+  }
+  if (!enclosures.length && best.crossings.length) {
+    for (const moved of frameAttachmentCandidates(best.scene.boxes, connections, best.scene.titles.boundaries, best.crossings)) {
+      if (remaining <= 0) break;
+      remaining -= 1;
+      consider(moved);
+    }
+  }
+  if (best.router !== router) {
+    router = best.router;
+    for (const [id, box] of best.scene.boxes) components.set(id, box);
+  }
+  return best.scene;
+}
+
+const composition = chooseAutomaticPlacement() ?? resolveConnectionComposition(components, pathFor, rawBoundaries);
 const {
-  titles: resolvedBoundaryTitles, labels: connectionLabels, viewBox,
-} = resolveConnectionComposition(components, pathFor, rawBoundaries);
-const boundaries = resolvedBoundaryTitles.boundaries;
+  titles: { boundaries }, labels: connectionLabels, viewBox,
+} = composition;
 const labelBoxes = new Map(connectionLabels.map(rect => [rect.relation, rect]));
 const legendY = () => viewBox[1] - 16;
-const compositionFrames = boundaries.map((boundary, index) => ({
-  ...boundary,
-  id: boundary.id || index,
-  kind: boundary.kind || 'boundary',
-  radius: boundary.kind === 'security-group' ? 8 : 12,
-}));
 
 function componentContext(component) {
   const scopes = boundaries
@@ -611,7 +678,18 @@ function componentDiagnosticBox(component) {
   };
 }
 
-function validateArchitecture() {
+function validateArchitecture({
+  boxes: components, labels: connectionLabels, titles: resolvedBoundaryTitles, viewBox,
+} = composition, candidate = router) {
+  const { boundaries } = resolvedBoundaryTitles;
+  const { connectionEndpointSide } = candidate;
+  const pathFor = conn => canRoute(conn) ? candidate.pathFor(conn) : { points: [] };
+  const compositionFrames = boundaries.map((boundary, index) => ({
+    ...boundary,
+    id: boundary.id || index,
+    kind: boundary.kind || 'boundary',
+    radius: boundary.kind === 'security-group' ? 8 : 12,
+  }));
   const problems = [];
   const diagnostics = [];
   const quality = process.env.ARCHIFY_QUALITY_PROFILE || arch.meta?.quality_profile;
@@ -621,17 +699,13 @@ function validateArchitecture() {
   if (components.size !== asArray(arch.components).length) problems.push('Component ids must be unique.');
   if (grid) {
     validateGridPlacement(arch, grid, problems);
-  } else if (!automaticPositions) {
-    for (const c of asArray(arch.components)) {
-      if (!Array.isArray(c.pos) || c.pos.length !== 2) {
-        problems.push(`Component "${c.id}" must include pos [x, y] when layout.mode is omitted (free placement).`);
-      }
-    }
   }
 
   for (const c of components.values()) {
     if (!isFinitePoint(c.x, c.y, c.width, c.height)) {
-      const message = `Component "${c.id}" has non-finite pos/size — pos and size must be [number, number].`;
+      const message = !grid && !automaticPositions && (!Array.isArray(c.pos) || c.pos.length !== 2)
+        ? `Component "${c.id}" must include pos [x, y] when layout.mode is omitted (free placement).`
+        : `Component "${c.id}" has non-finite pos/size — pos and size must be [number, number].`;
       diagnostics.push({
         code: 'architecture/non-finite-component-geometry', severity: 'error', message,
         subject: { diagramType: 'architecture', nodeId: c.id },
@@ -917,28 +991,24 @@ function validateArchitecture() {
   // This new composition gate applies to showcase; standard keeps its existing
   // acceptance contract while authors can opt into the stricter check.
   if (arch.meta?.quality_profile === 'showcase') {
-    for (const b of boundaries) {
-      const members = new Set(asArray(b.wraps));
-      for (const component of components.values()) {
-        if (members.has(component.id) || !rectContains(b, component)) continue;
-        const message = `Component "${component.id}" is not wrapped by boundary "${b.label}" but sits inside its frame — `
-          + 'move it outside the frame, place the wrapped members in one compact axis-aligned cluster (no empty bay for a non-member), or add it to wraps only when it truly belongs there.';
-        problems.push(message);
-        diagnostics.push({
-          code: 'layout/boundary-encloses-non-member',
-          severity: 'error',
-          message,
-          subject: { diagramType: 'architecture', boundary: { kind: b.kind, label: b.label, wraps: b.wraps }, component: component.id },
-          evidence: {
-            bounds: { x: b.x, y: b.y, width: b.width, height: b.height },
-            component: componentBox(component),
-          },
-          supportedFixes: [
-            `move "${component.id}" outside the boundary frame`,
-            'reposition the wrapped members into one compact axis-aligned cluster (no empty bay) that leaves non-members outside',
-          ],
-        });
-      }
+    for (const { frame: b, box: component } of frameEnclosures(components, boundaries)) {
+      const message = `Component "${component.id}" is not wrapped by boundary "${b.label}" but sits inside its frame — `
+        + 'move it outside the frame, place the wrapped members in one compact axis-aligned cluster (no empty bay for a non-member), or add it to wraps only when it truly belongs there.';
+      problems.push(message);
+      diagnostics.push({
+        code: 'layout/boundary-encloses-non-member',
+        severity: 'error',
+        message,
+        subject: { diagramType: 'architecture', boundary: { kind: b.kind, label: b.label, wraps: b.wraps }, component: component.id },
+        evidence: {
+          bounds: { x: b.x, y: b.y, width: b.width, height: b.height },
+          component: componentBox(component),
+        },
+        supportedFixes: [
+          `move "${component.id}" outside the boundary frame`,
+          'reposition the wrapped members into one compact axis-aligned cluster (no empty bay) that leaves non-members outside',
+        ],
+      });
     }
   }
 

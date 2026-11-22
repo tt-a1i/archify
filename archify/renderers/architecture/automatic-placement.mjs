@@ -596,7 +596,14 @@ function avoidPinnedComponents(byId, connections, boundaries, viewBox) {
         item.y += dy;
       }
     }
-    return;
+    if (!viewBox) return;
+    const [right, bottom] = viewBox;
+    const cardsFit = items.every(item => item.x + item.width <= right && item.y + item.height <= bottom);
+    const framesFit = boundaries.every(boundary => asArray(boundary.wraps).every(id => {
+      const item = byId.get(id);
+      return !item || (item.x + item.width + (boundary.pad ?? 30) <= right && item.y + item.height + 20 <= bottom);
+    }));
+    if (cardsFit && framesFit) return;
   }
 
   // Let each inferred box follow the nearest anchor along the relationship

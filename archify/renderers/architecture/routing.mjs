@@ -862,7 +862,7 @@ export function createRouter(components, connections = [], {
   // A route can change sides after the initial port spread. Reserve slots on
   // the final side as well: falling back to its midpoint can put an arrow
   // between two existing slots, or directly on another incoming arrow.
-  function automaticEndpoint(conn, endpoint, rect, side, inferredSide, loopSource) {
+  function automaticEndpoint(conn, endpoint, rect, side, inferredSide, loopSource, findAlternates = false) {
     const initial = side === inferredSide ? automaticPorts.get(conn)?.[endpoint] : null;
     const preferred = initial || anchor(rect, side);
     if (hasAuthoredRouteGeometry(conn) || conn.labelAt) return { point: preferred, spread: Boolean(initial) };
@@ -879,23 +879,30 @@ export function createRouter(components, connections = [], {
         : automaticPorts.get(other)?.[field] || anchor(rect, side);
       occupied.push({ value: point[axis], spacing: portSpacing(conn, other) });
     }
-    if (!occupied.length) return { point: preferred, spread: Boolean(initial) };
+    if (!occupied.length && !findAlternates) return { point: preferred, spread: Boolean(initial) };
     // On an alternate side, equally close slots should approach the other
     // node rather than pass its neighbours just because a coordinate is lower.
     // Keep the established spread order on the inferred side unchanged.
     const counterpart = components.get(endpoint === 'from' ? conn.to : conn.from);
     const toward = side === inferredSide ? preferred[axis] : (axis === 1 ? counterpart.cy : counterpart.cx);
-    const candidates = [preferred[axis], ...occupied.flatMap(({ value, spacing }) => [value - spacing, value + spacing])]
+    const origin = axis ? rect.y : rect.x;
+    const size = axis ? rect.height : rect.width;
+    const inset = Math.min(AUTOMATIC_PORT_CORNER_GUTTER, size / 2);
+    const bounds = findAlternates ? [origin + inset, origin + size - inset] : [];
+    const candidates = [preferred[axis], ...occupied.flatMap(({ value, spacing }) => [value - spacing, value + spacing]), ...bounds]
       .sort((a, b) => Math.abs(a - preferred[axis]) - Math.abs(b - preferred[axis])
         || Math.abs(a - toward) - Math.abs(b - toward) || a - b);
+    const alternates = [];
     for (const value of candidates) {
       const point = [...preferred];
       point[axis] = value;
       if (portHasCornerClearance(rect, side, point)
           && occupied.every((other) => Math.abs(value - other.value) >= other.spacing - 0.0001)) {
-        return { point, spread: true };
+        if (!findAlternates) return { point, spread: true };
+        alternates.push(point);
       }
     }
+    if (findAlternates) return { point: preferred, spread: true, alternates };
     return { point: preferred, spread: true, crowded: true };
   }
 
@@ -905,13 +912,23 @@ export function createRouter(components, connections = [], {
     const inferred = inferredConnectionSides(conn);
     const { fromSide, toSide } = sides;
     const legacyPorts = fromSide === inferred.fromSide && toSide === inferred.toSide ? automaticPorts.get(conn) : null;
-    const source = reserveAutomaticPorts
+    let source = reserveAutomaticPorts
       ? automaticEndpoint(conn, 'from', from, fromSide, inferred.fromSide)
       : { point: legacyPorts?.from || anchor(from, fromSide), spread: Boolean(legacyPorts?.from) };
     const loopSource = repairAutomaticPorts && from === to && fromSide === toSide ? source.point : null;
-    const target = reserveAutomaticPorts
+    let target = reserveAutomaticPorts
       ? automaticEndpoint(conn, 'to', to, toSide, inferred.toSide, loopSource)
       : { point: legacyPorts?.to || anchor(to, toSide), spread: Boolean(legacyPorts?.to) };
+    if (loopSource && target.crowded) {
+      const { alternates } = automaticEndpoint(conn, 'from', from, fromSide, inferred.fromSide, null, true);
+      for (const point of alternates) {
+        const options = automaticEndpoint(conn, 'to', to, toSide, inferred.toSide, point, true);
+        if (!options.alternates.length) continue;
+        source = { point, spread: true };
+        target = { point: options.alternates[0], spread: true };
+        break;
+      }
+    }
     const ports = { from: source.spread, to: target.spread };
     const { start, end } = alignFacingPorts(
       conn,
@@ -988,9 +1005,7 @@ export function createRouter(components, connections = [], {
       && !routeOverlapsResolved(conn, routed.points, resolvedRoutes);
   }
 
-  function crossingPoints(conn, points, other, limit = Infinity) {
-    if (relationshipsShareEndpoint(conn, other.conn)
-        && (!distinctAutomaticPorts || hasAuthoredRouteGeometry(other.conn) || other.conn.labelAt || conn.labelAt)) return 0;
+  function crossingPoints(points, other, limit = Infinity) {
     let count = 0;
     for (let index = 1; index < points.length; index += 1) {
       for (let otherIndex = 1; otherIndex < other.points.length; otherIndex += 1) {
@@ -1002,7 +1017,11 @@ export function createRouter(components, connections = [], {
   }
 
   function crossingCount(conn, points, resolvedRoutes) {
-    return resolvedRoutes.reduce((count, other) => count + crossingPoints(conn, points, other, 1), 0);
+    return resolvedRoutes.reduce((count, other) => {
+      if (relationshipsShareEndpoint(conn, other.conn)
+          && (!distinctAutomaticPorts || hasAuthoredRouteGeometry(other.conn) || other.conn.labelAt || conn.labelAt)) return count;
+      return count + crossingPoints(points, other, 1);
+    }, 0);
   }
 
   function routeLength(points) {
@@ -1519,13 +1538,23 @@ export function createRouter(components, connections = [], {
         // The SVG origin is fixed. A label in blank space above or left of
         // the scene can still fit in the same viewBox.
         const labelInBounds = ([x, y]) => x >= 0 && x <= bounds.right && y >= 0 && y <= bounds.bottom;
-        for (const entry of resolvedRoutes) {
+        const hasPinnedLabel = ({ conn }) => Boolean(conn.label && Array.isArray(conn.labelAt));
+        // A detached pinned label can block the short path for another
+        // relationship. Repair its own automatic arrow first when possible.
+        const entries = [
+          ...resolvedRoutes.filter(hasPinnedLabel),
+          ...resolvedRoutes.filter(entry => !hasPinnedLabel(entry)),
+        ];
+        for (const entry of entries) {
           const { conn } = entry;
+          const pinned = hasPinnedLabel(entry) ? connectionLabelBoxAt(conn, conn.labelAt) : null;
           if (entry.points.length <= 4 || jointlyImproved.has(conn) || typeOwned.has(conn) || hasAuthoredRouteGeometry(conn)
-              || hasAuthoredLabelPlacement(conn) || conn.from === conn.to) continue;
+              || (hasAuthoredLabelPlacement(conn) && !pinned) || conn.from === conn.to) continue;
           const others = resolvedRoutes.filter(other => other !== entry);
-          const previousCrossings = others.map(other => crossingPoints(conn, entry.points, other));
-          const length = routeLength(entry.points);
+          const previousCrossings = others.map(other => crossingPoints(entry.points, other));
+          const crossingTotal = previousCrossings.reduce((total, count) => total + count, 0);
+          if (pinned && (!crossingTotal || labelDistance(entry.points, pinned, 20) <= 20)) continue;
+          const length = routeLength(entry.points) + (pinned ? 3 * interiorSegmentPx : 0);
           const labels = reservedLabels.filter(label => label.conn !== conn);
           const routes = others.map(other => other.points);
           const fromBox = components.get(conn.from);
@@ -1555,6 +1584,7 @@ export function createRouter(components, connections = [], {
             const low = origin + inset;
             const high = origin + size - inset;
             const values = [preferred[axis], low, high];
+            if (pinned) values.push(low + portSpacing(conn, conn), high - portSpacing(conn, conn));
             for (const { conn: other, field, sideField } of incidentEndpoints.get(rect.id) || []) {
               if (other === conn || selectedSides.get(other)[sideField] !== side) continue;
               const port = pathCache.get(other).points.at(field === 'from' ? 0 : -1);
@@ -1582,6 +1612,10 @@ export function createRouter(components, connections = [], {
             const startLimit = start[axis] + step * stub;
             const endLimit = end[axis] + lastStep * stub;
             const coordinates = [(startLimit + endLimit) / 2, startLimit, endLimit, ...entry.points.map(point => point[axis])];
+            if (pinned) {
+              const [origin, span] = axis ? [pinned.y, pinned.height] : [pinned.x, pinned.width];
+              coordinates.push(origin - 8, origin + span + 8);
+            }
             if (sourceAxis === targetAxis) {
               // A two-turn route spends its transverse span plus the two
               // approach legs. Ignore cuts outside the union of feasible
@@ -1599,7 +1633,7 @@ export function createRouter(components, connections = [], {
                 step > 0 ? startLimit : -Infinity, lastStep > 0 ? endLimit : -Infinity);
               const high = Math.min((from + to + alongBudget) / 2,
                 step < 0 ? startLimit : Infinity, lastStep < 0 ? endLimit : Infinity);
-              const cuts = [startLimit, endLimit];
+              const cuts = [startLimit, endLimit, low, high];
               const collectCuts = ([x1, y1], [x2, y2]) => {
                 const [axisStart, axisEnd, acrossStart, acrossEnd] = axis ? [y1, y2, x1, x2] : [x1, x2, y1, y2];
                 if (Math.max(acrossStart, acrossEnd) < acrossLow || Math.min(acrossStart, acrossEnd) > acrossHigh
@@ -1620,7 +1654,10 @@ export function createRouter(components, connections = [], {
               planningMetrics.residualCandidateCount += 1;
               const span = routeLength(points);
               if (span > length + 0.0001 || !points.every(withinScene)) return;
+              const labelGap = pinned ? labelDistance(points,
+                { x: pinned.lx, y: pinned.ly, width: 0, height: 0 }, Infinity) : 0;
               const order = best ? points.length - best.points.length
+                || labelGap - best.labelGap
                 || (Math.abs(span - best.length) > 0.0001 ? span - best.length : drift - best.drift) : -1;
               if (best?.crossings === 0 && order >= 0) return;
               if (!endpointSlotsClear([{ conn, points }], others, sidesOf)
@@ -1628,16 +1665,17 @@ export function createRouter(components, connections = [], {
               let crossings = 0;
               for (const [index, other] of others.entries()) {
                 const previous = previousCrossings[index];
-                const current = crossingPoints(conn, points, other, previous + 1);
+                const current = crossingPoints(points, other, previous + 1);
                 if (current > previous) return;
                 crossings += current;
               }
+              if (pinned && crossings >= crossingTotal) return;
               if (best && (crossings - best.crossings || order) >= 0) return;
-              const rect = labelRectFor?.(conn, points, { routes: [...routes, points], labels: labels.map(label => label.rect) });
+              const rect = pinned ?? labelRectFor?.(conn, points, { routes: [...routes, points], labels: labels.map(label => label.rect) });
               if (!labelClears(rect, conn, others, labels, labelInBounds)
                   || (rect && !labelFollowsRoute(rect, points, others))
                   || ownedLabels.some(({ rect, distance }) => labelDistance(points, rect, distance) <= distance)) return;
-              best = { points, sides, rect, length: span, drift, crossings };
+              best = { points, sides, rect, length: span, drift, crossings, labelGap };
             };
             for (const fromValue of new Set(starts)) {
               for (const toValue of new Set(ends)) {
@@ -1715,7 +1753,7 @@ export function createRouter(components, connections = [], {
                 shifted[portIndex][coordinate] = shifted[elbowIndex][coordinate] = [rightPort, leftPort][entryIndex][coordinate];
                 return { conn, points: normalizeRoutePoints(shifted) };
               });
-              if (crossingCount(left.conn, candidates[0].points, [candidates[1]]) > 0
+              if (crossingPoints(candidates[0].points, candidates[1], 1)
                   || routeLength(candidates[0].points) + routeLength(candidates[1].points)
                     > routeLength(left.points) + routeLength(right.points) + 0.0001) continue;
               const others = resolvedRoutes.filter(entry => !entries.includes(entry));
@@ -1727,8 +1765,8 @@ export function createRouter(components, connections = [], {
                 if (!points.every(withinScene)
                     || !routeIsClear(conn, { points }, { ...geometry, start: points[0], end: points.at(-1), crowded: false },
                       routes.filter(entry => entry.conn !== conn), labels)
-                    || others.some(entry => crossingCount(conn, points, [entry])
-                      > crossingCount(conn, entries[entryIndex].points, [entry]))) return false;
+                    || others.some(entry => crossingPoints(points, entry)
+                      > crossingPoints(entries[entryIndex].points, entry))) return false;
                 const rect = labelRectFor?.(conn, points, {
                   routes: routes.map(entry => entry.points),
                   labels: labels.map(label => label.rect),
