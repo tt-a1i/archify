@@ -7478,6 +7478,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var vb = svg.viewBox.baseVal;
         var scale = Math.min(1, 1280 / vb.width);
         var data = serializeSvg(scale);
+        var sequence = Archify.motionGovernor && Archify.motionGovernor.sequenceRecordingPlan
+          ? Archify.motionGovernor.sequenceRecordingPlan() : null;
+        // Keep the requested WebM duration. Scale the complete live Sequence
+        // cycle into it so handoffs and the final arrival remain visible.
+        var secondsPerPlanSecond = sequence ? duration / (1000 * sequence.cycle) : 1;
 
         function createMotionScene(root) {
           var rootMatrix = root.getCTM ? root.getCTM() : null;
@@ -7519,27 +7524,33 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           }
 
           var edges = Array.prototype.slice.call(root.querySelectorAll('[data-animate="edge"]')).map(function (element, index) {
+            var cue = sequence && sequence.edges.get(element);
+            if (sequence && !cue) return null;
             var computed = getComputedStyle(element);
             return {
               points: samplesFor(element),
               color: computed.stroke && computed.stroke !== 'none' ? computed.stroke : '#22d3ee',
               width: Math.max(1.5, parseFloat(computed.strokeWidth) || 1.5),
-              delay: Math.min(12, authoredStep(element, index)) * 0.16
+              delay: cue ? cue.depart * secondsPerPlanSecond : Math.min(12, authoredStep(element, index)) * 0.16,
+              travel: cue ? cue.travel * secondsPerPlanSecond : 1.75
             };
-          }).filter(function (edge) { return edge.points.length > 1; });
+          }).filter(function (edge) { return edge && edge.points.length > 1; });
 
           var nodes = Array.prototype.slice.call(root.querySelectorAll('[data-node-id][data-animate="node"]')).map(function (element, index) {
             var box;
             try { box = element.getBBox(); } catch (_) { return null; }
             var painted = element.querySelector('[class*="c-"]') || element;
             var computed = getComputedStyle(painted);
+            var windows = sequence && sequence.nodes[element.getAttribute('data-node-id')];
             return {
               x: box.x,
               y: box.y,
               width: box.width,
               height: box.height,
               color: computed.stroke && computed.stroke !== 'none' ? computed.stroke : '#22d3ee',
-              delay: Math.min(12, authoredStep(element, index)) * 0.16
+              pulses: sequence ? (windows || []).map(function (window) {
+                return { delay: window.start * secondsPerPlanSecond, duration: 0.35 * secondsPerPlanSecond };
+              }) : [{ delay: Math.min(12, authoredStep(element, index)) * 0.16, duration: 2.6 }]
             };
           }).filter(Boolean);
 
@@ -7579,8 +7590,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           ctx.translate(-motionScene.x, -motionScene.y);
 
           motionScene.edges.forEach(function (edge) {
-            var duration = 1.75;
-            var progress = (elapsed - edge.delay) / duration;
+            var progress = (elapsed - edge.delay) / edge.travel;
             if (progress < 0 || progress > 1) return;
             var head = Math.max(0, Math.min(1, progress));
             var tail = Math.max(0, head - 0.24);
@@ -7612,9 +7622,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           });
 
           motionScene.nodes.forEach(function (node) {
-            var progress = (elapsed - node.delay) / 2.6;
-            if (progress < 0 || progress > 1) return;
-            var pulse = Math.sin(Math.PI * progress);
+            var pulse = node.pulses.reduce(function (peak, window) {
+              var progress = (elapsed - window.delay) / window.duration;
+              return progress < 0 || progress > 1 ? peak : Math.max(peak, Math.sin(Math.PI * progress));
+            }, 0);
             if (pulse <= 0.02) return;
             ctx.save();
             ctx.strokeStyle = node.color;
@@ -8127,6 +8138,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var entryStarted = false;
       var entryPending = new Set();
       var flowCount = 0;
+      var sequencePlan = null;
 
       // Runtime decoration carries geometry and tree visibility only. Keep each
       // flow beside its authored edge so transforms, clipping and crossover
@@ -8480,6 +8492,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           }
           var record = {
             index: records.length,
+            shape: shape,
             len: len,
             from: shape.getAttribute('data-edge-from') || shape.getAttribute('data-composition-edge-from') || '',
             to: shape.getAttribute('data-edge-to') || shape.getAttribute('data-composition-edge-to') || '',
@@ -8560,6 +8573,15 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var active = records.filter(function (record) { return record.active; });
         if (!active.length && !extras.length) return;
         var cycle = Math.max(RELAY.minCycle, span + RELAY.land + RELAY.rest);
+        if (choreography === 'sequence') {
+          sequencePlan = {
+            cycle: cycle,
+            edges: new Map(active.map(function (record) {
+              return [record.shape, { depart: record.depart, travel: record.travel }];
+            })),
+            nodes: windows
+          };
+        }
         writeKeyframes(active, windows, extras, cycle);
         svg.style.setProperty('--flow-cycle', cycle.toFixed(3) + 's');
         html.style.setProperty('--flow-cycle-chrome', cycle.toFixed(3) + 's');
@@ -8803,6 +8825,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
       return {
         capable: true,
+        sequenceRecordingPlan: function () { return sequencePlan; },
         pause: function () { return setPaused(true); },
         resume: function () { return setPaused(false); },
         toggle: function () { return setPaused(!readerPaused); },
