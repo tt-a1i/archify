@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { formatText } from '../bin/check.mjs';
 
 const CHECK = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'bin', 'check.mjs');
+const ARCHIFY = fileURLToPath(new URL('../../../bin/archify.mjs', import.meta.url));
 
 function fixture(t, files) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-check-coverage-'));
@@ -25,6 +26,66 @@ function fixture(t, files) {
 function check(root, args) {
   return spawnSync(process.execPath, [CHECK, root, ...args], { encoding: 'utf8', timeout: 60000 });
 }
+
+function prepare(root, out, args = []) {
+  return spawnSync(process.execPath, [ARCHIFY, 'code-analysis', 'prepare', root, '--out', out, ...args],
+    { encoding: 'utf8', timeout: 60000 });
+}
+
+test('prepare: a dominant adapter is selected and the workbench discloses other languages', (t) => {
+  const root = fixture(t, {
+    ...Object.fromEntries(Array.from({ length: 38 }, (_, i) => [`src/file${i}.ts`, 'export const value = 1;'])),
+    'helpers/script.py': 'value = 1',
+    'helpers/tool.rs': 'fn main() {}',
+  });
+  const out = path.join(root, 'out');
+  const automatic = prepare(root, out);
+  assert.equal(automatic.status, 0, automatic.stdout + automatic.stderr);
+  const receipt = JSON.parse(automatic.stdout);
+  const expected = [{ adapter: 'py', files: 1 }, { adapter: 'rust', files: 1 }];
+  assert.deepEqual(receipt.summary.coverage.otherLanguages, expected);
+  const facts = JSON.parse(fs.readFileSync(path.join(out, 'analysis', 'raw-facts.json'), 'utf8'));
+  assert.equal(facts.repository.language, 'ts');
+  const overview = JSON.parse(fs.readFileSync(path.join(out, 'analysis', 'overview.json'), 'utf8'));
+  assert.deepEqual(overview.coverage.otherLanguages, expected);
+
+  const explicit = check(root, ['--language', 'py', '--json']);
+  assert.equal(explicit.status, 0, explicit.stdout + explicit.stderr);
+  assert.deepEqual(JSON.parse(explicit.stdout).coverage.otherLanguages, [
+    { adapter: 'ts', files: 38 }, { adapter: 'rust', files: 1 },
+  ]);
+
+  fs.unlinkSync(path.join(root, 'src/file37.ts'));
+  const mixed = check(root, ['--json']);
+  assert.equal(mixed.status, 2, mixed.stdout + mixed.stderr);
+  assert.equal(JSON.parse(mixed.stdout).diagnostics[0].code, 'extract/adapter-ambiguous');
+});
+
+test('prepare: an unresolved TypeScript config names the dependency and a working exclusion', (t) => {
+  const root = fixture(t, {
+    'src/main.ts': 'export const main = 1;',
+    'website/index.ts': 'export const website = 1;',
+    'website/tsconfig.json': '{"extends":"missing-framework/tsconfigs/strict"}',
+    'analysis-config.json': '{"exclude":["website/**"]}',
+  });
+  const out = path.join(root, 'out');
+  const result = prepare(root, out);
+  assert.equal(result.status, 2, result.stdout + result.stderr);
+  const [diagnostic] = JSON.parse(result.stdout).diagnostics;
+  assert.equal(diagnostic.code, 'extract/tsconfig-invalid');
+  assert.equal(diagnostic.subject.file, path.join(root, 'website/tsconfig.json'));
+  assert.match(diagnostic.message, /website\/tsconfig\.json.*missing-framework\/tsconfigs\/strict/);
+  assert.ok(diagnostic.evidence.errors.some(error => error.includes('missing-framework/tsconfigs/strict')));
+  assert.ok(diagnostic.supportedFixes.some(fix => fix.includes("install the target project's dependencies")));
+  assert.ok(diagnostic.supportedFixes.some(fix => fix.includes('exclude') && fix.includes('"website/**"') && fix.includes('--config')));
+  assert.ok(diagnostic.supportedFixes.some(fix => fix.includes('<repo-root>')));
+  assert.ok(!fs.existsSync(path.join(out, 'analysis')));
+
+  const repaired = prepare(root, out, ['--config', path.join(root, 'analysis-config.json')]);
+  assert.equal(repaired.status, 0, repaired.stdout + repaired.stderr);
+  const facts = JSON.parse(fs.readFileSync(path.join(out, 'analysis', 'raw-facts.json'), 'utf8'));
+  assert.deepEqual(facts.files.map(file => file.path), ['src/main.ts']);
+});
 
 test('check: the summary shows a parse failure and a language that was not analyzed', (t) => {
   const root = fixture(t, {
@@ -262,7 +323,7 @@ test('check: role exclusions and ambiguous-language file counts are visible on f
     { adapter: 'py', files: 4 },
     { adapter: 'ts', files: 1 },
   ]);
-  assert.equal(err.diagnostics[0].supportedFixes[0], 'pass --language py (4 files)');
+  assert.deepEqual(err.diagnostics[0].supportedFixes, ['pass --language py (4 files)', 'pass --language ts (1 file)']);
 
   const pyJson = check(root, ['--language', 'py', '--json']);
   assert.equal(pyJson.status, 0, pyJson.stdout + pyJson.stderr);

@@ -193,7 +193,7 @@ Run `check` without a diagram (or pass `--ir architecture.json [--map overlay-ma
 node bin/archify.mjs code-analysis check /path/to/repo --language ts --out out/first-look --json
 ```
 
-Choose `--language` when the repository contains more than one language; without it, `check` stops with `extract/adapter-ambiguous` and lists per-adapter file counts (`evidence.counts`) so the dominant language is visible on first contact. Each run analyzes one language and reports the others under `coverage.otherLanguages`.
+Archify selects an adapter automatically when it is the only eligible choice or accounts for at least 95% of files matched by eligible adapters. The [Java detection rules](JAVA.md) still apply, and the C++ adapter also covers C when both match. If several eligible adapters remain and none reaches 95%, `extract/adapter-ambiguous` reports their file counts and the corresponding `--language` flags. An explicit `--language` takes precedence. Each run reports the other languages and their file counts in `coverage.otherLanguages`.
 
 Start from the JSON receipt, not the full finding list:
 

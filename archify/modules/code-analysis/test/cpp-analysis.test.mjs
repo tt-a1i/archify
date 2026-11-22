@@ -351,5 +351,10 @@ test('C/C++ only participates in automatic language selection with a configured 
   assert.equal(selectAdapter(root, config).id, 'ts');
   assert.deepEqual(otherLanguageFiles(root, config, 'ts'), [{ adapter: 'c', files: 1 }, { adapter: 'cpp', files: 1 }]);
   assert.deepEqual(otherLanguageFiles(root, mergeConfig(config, { include: ['**/*.ts'] }), 'ts'), []);
-  assert.throws(() => selectAdapter(root, configured), error => error.diagnostics?.[0]?.code === 'extract/adapter-ambiguous');
+  assert.throws(() => selectAdapter(root, configured), error => {
+    const diagnostic = error.diagnostics?.[0];
+    assert.equal(diagnostic?.code, 'extract/adapter-ambiguous');
+    assert.deepEqual(diagnostic.evidence.counts, [{ adapter: 'cpp', files: 2 }, { adapter: 'ts', files: 1 }]);
+    return true;
+  });
 });
