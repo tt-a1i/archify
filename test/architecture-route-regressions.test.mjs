@@ -728,3 +728,43 @@ for (const [fixture, texts] of [
     }
   });
 }
+
+test('external readers face their own frame members without crossing a separate lookup', t => {
+  const components = [
+    ['client', 128], ['entry', 128], ['starter', 156], ['listener', 147], ['queue', 171],
+    ['scanner', 160], ['cache', 128], ['journal', 164], ['flags', 156],
+  ].map(([id, width]) => ({ id, type: 'backend', label: id, size: [width, 60] }));
+  const connections = [
+    ['client', 'entry', 'Local RPC', 'emphasis'],
+    ['entry', 'queue', 'Read and update'],
+    ['entry', 'starter', 'Start listener'],
+    ['starter', 'listener', 'Bind if needed'],
+    ['listener', 'queue', 'Submit work'],
+    ['queue', 'scanner', 'Index jobs'],
+    ['scanner', 'cache', 'Read local cache'],
+    ['scanner', 'journal', 'Read history', 'dashed'],
+    ['queue', 'flags', 'Read flags'],
+  ].map(([from, to, label, variant]) => ({ from, to, label, variant }));
+  const boundaries = [{
+    kind: 'region', label: 'Job service', wraps: ['entry', 'starter', 'listener', 'queue', 'scanner'],
+  }];
+
+  const dir = mkdtempSync(join(tmpdir(), 'archify-frame-lanes-'));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const input = join(dir, 'input.json');
+  const output = join(dir, 'chart.html');
+  writeFileSync(input, JSON.stringify({
+    schema_version: 1, diagram_type: 'architecture', layout: { mode: 'auto' },
+    meta: { title: 'Job preview and local storage', output: 'chart.html', quality_profile: 'standard' },
+    components, connections, boundaries,
+  }));
+
+  const render = spawnSync(process.execPath, [renderer, input, output], { encoding: 'utf8' });
+  assert.equal(render.status, 0, render.stdout + render.stderr);
+  const check = spawnSync(process.execPath, [cli, 'check', output, '--json'], { encoding: 'utf8' });
+  assert.equal(check.status, 0, check.stdout + check.stderr);
+  const { metrics } = JSON.parse(check.stdout).composition;
+  assert.equal(metrics.resolvedCrossovers, 0);
+  assert.equal(metrics.routesOverSuggestedBends, 0);
+  assert.equal(metrics.routesOverSuggestedStretch, 0);
+});

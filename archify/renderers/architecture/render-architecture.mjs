@@ -13,6 +13,7 @@ import { translateMessage as i18nText } from '../shared/i18n.mjs';
 import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeFrameAttrs, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeNodeAttrs, changeReviewFor, nodeChangeBadgePos, renderChangeBadge, renderChangeEdgePrefix, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
 import { gridLayout, resolveComponentPos, validateGridPlacement } from './grid.mjs';
 import { automaticComponentPositions, boundaryInsets } from './automatic-placement.mjs';
+import { frameLanePlacements } from './frame-lane-placement.mjs';
 import { placeCrossedLeaf, placeCrossedSinks, facingFramePlacements } from './crossed-leaf-placement.mjs';
 import { centeredFanOutCandidates, crossingPlacementCandidates, foldedChain, frameAttachmentCandidates, frameEnclosureCandidates, groupMoveCanPreserveRoutes, groupMovePreservesRoutes, measuredCrossingPairs, nearAlignmentCandidates, routeSpanMeasures, sharedNeighborCandidates, strongestLayerOrder, terminalBranchCandidates } from './automatic-placement-candidates.mjs';
 import {
@@ -437,10 +438,11 @@ const makeRouter = (boxes, boundaries = rawBoundaries, routingOptions = {}) => {
 };
 const routable = new Map([...components].filter(([, box]) => isFinitePoint(box.x, box.y, box.width, box.height)));
 let router = makeRouter(routable);
-// Every routed placement shares this allowance, including the early
-// specialist passes. Larger scenes already spend more on each routing call.
+// The ordinary placement passes share this allowance. Larger scenes
+// already spend more on each routing call.
 const placementRouteLimit = components.size >= 24 || connections.length >= 28 ? 4 : 12;
 let remainingPlacementRoutes = placementRouteLimit;
+let routedFrameLaneCandidates = 0;
 function routePlacement(boxes, bounds, options) {
   if (!remainingPlacementRoutes) return null;
   remainingPlacementRoutes -= 1;
@@ -1364,8 +1366,86 @@ function drawnLabelProblems(scene) {
   return problems;
 }
 
-const composition = alignNearlyFacingCards(simplifyFinishedComposition(automaticComposition ? finishAutomaticLabels(automaticComposition)
-  : repairFixedCanvasLabels(fixedCanvasComposition(resolveConnectionComposition(components, pathFor, rawBoundaries)))));
+function improveFrameLanes(initial) {
+  const frames = initial.titles.boundaries;
+  if (!automaticComposition || !frames.length || frames.length > 4
+      || components.size > 12 || connections.length > 18) return initial;
+  const budget = routes => routeBudgetMetrics({ routedRelations: routes });
+  const baseline = budget(initial.routes);
+  const pairs = measuredCrossingPairs(initial.routes);
+  if (!pairs.length && !baseline.routesOverSuggestedBends) return initial;
+  const affected = new Set(pairs.flat().flatMap(({ from, to }) => [from, to]));
+  for (const route of initial.routes) {
+    if (budget([route]).routesOverSuggestedBends) {
+      const { relation } = route;
+      affected.add(relation.from);
+      affected.add(relation.to);
+    }
+  }
+  // A detour can be caused by the position of an adjacent external card.
+  const framed = new Set(frames.flatMap(frame => frame.wraps));
+  for (const { from, to } of connections) {
+    if (framed.has(from) && !framed.has(to) && affected.has(from)) affected.add(to);
+    if (framed.has(to) && !framed.has(from) && affected.has(to)) affected.add(from);
+  }
+  const spans = scene => routeSpanMeasures(scene.routes, scene.boxes, scene.viewBox);
+  const before = spans(initial);
+  const incoming = new Map();
+  const outgoing = new Map();
+  for (const { from, to } of connections) {
+    incoming.set(to, (incoming.get(to) ?? 0) + 1);
+    outgoing.set(from, (outgoing.get(from) ?? 0) + 1);
+  }
+  const isChainStep = id => incoming.get(id) === 1 && outgoing.get(id) === 1;
+  const straightChainLinks = initial.routes.flatMap(({ relation: { from, to } }, index) =>
+    !before.spans[index].bends && (isChainStep(from) || isChainStep(to)) ? [index] : []);
+  let best = initial;
+  let bestRouter;
+  let score = [pairs.length, baseline.routesOverSuggestedBends, before.length];
+  let labels;
+  // Compare with the finished ordinary layout. Keep this additional allowance
+  // for small framed scenes so earlier repairs can still finish as before.
+  for (const boxes of frameLanePlacements(initial, connections, affected, boundsFor).slice(0, 4)) {
+    routedFrameLaneCandidates += 1;
+    const bounds = boundsFor(boxes);
+    const candidate = makeRouter(boxes, bounds);
+    const composed = resolveConnectionComposition(boxes, candidate.pathFor, bounds);
+    const next = simplifyFinishedComposition(finishAutomaticLabels(composed), candidate);
+    if (next.viewBox[0] * next.viewBox[1] > initial.viewBox[0] * initial.viewBox[1]
+        || next.viewBox.some((size, axis) => size > initial.viewBox[axis] * 1.025)) continue;
+    const nextBudget = budget(next.routes);
+    const { length, spans: nextSpans } = spans(next);
+    if (straightChainLinks.some(index => nextSpans[index].bends
+        || nextSpans[index].length > before.spans[index].length + 0.0001)) continue;
+    const crossings = measuredCrossingPairs(next.routes).length;
+    const order = crossings - score[0] || nextBudget.routesOverSuggestedBends - score[1] || length - score[2];
+    if (order >= 0 || crossings > pairs.length || length > before.length
+        || nextBudget.routesOverSuggestedBends > baseline.routesOverSuggestedBends
+        || nextBudget.routesOverSuggestedStretch > baseline.routesOverSuggestedStretch
+        || !candidate.planIsClear(next.viewBox, { checkProvisionalLabels: false })
+        || frameEnclosures(boxes, next.titles.boundaries).length) continue;
+    labels ??= labelProblems(initial);
+    if (!preservesLabels(labels, labelProblems(next))) continue;
+    try {
+      withIsolatedDiagnosticRecording(() => validateArchitecture(next, candidate));
+    } catch (error) {
+      if (!error.archifyDiagnostics?.length) throw error;
+      continue;
+    }
+    best = next;
+    bestRouter = candidate;
+    score = [crossings, nextBudget.routesOverSuggestedBends, length];
+  }
+  if (bestRouter) {
+    router = bestRouter;
+    for (const [id, box] of best.boxes) components.set(id, box);
+  }
+  return best;
+}
+
+const placedComposition = automaticComposition ? finishAutomaticLabels(automaticComposition)
+  : repairFixedCanvasLabels(fixedCanvasComposition(resolveConnectionComposition(components, pathFor, rawBoundaries)));
+const composition = improveFrameLanes(alignNearlyFacingCards(simplifyFinishedComposition(placedComposition)));
 const {
   titles: { boundaries }, labels: connectionLabels, viewBox,
 } = composition;
@@ -1960,7 +2040,7 @@ function buildLayoutReport() {
     ok: true,
     diagram_type: 'architecture',
     layout: grid ?? { mode: automaticPositions ? 'auto' : 'free' },
-    ...(automaticPositions ? { routedPlacementCandidates: placementRouteLimit - remainingPlacementRoutes } : {}),
+    ...(automaticPositions ? { routedPlacementCandidates: placementRouteLimit - remainingPlacementRoutes + routedFrameLaneCandidates } : {}),
     viewBox,
     components: [...components.values()].map(componentBox),
     boundaries: boundaries.map(boundaryBox),
