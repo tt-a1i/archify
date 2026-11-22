@@ -4,7 +4,7 @@ import { esc, renderDefinitions, renderSemanticSigil, textUnits } from '../share
 import { NODE_CARD_ATTR, nodeCardStyle } from '../shared/node-card-style.mjs';
 import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagramWithBrandMarks, renderDrilldownMark, resolveNodeDrilldowns, wrapSingleChildAnchor, writeDiagram, svgAccessibleText, svgRootAttrs } from '../shared/cli.mjs';
 import { componentBox, boundaryBox, connectionPath } from '../shared/layout-report.mjs';
-import { rendererFailure, throwDiagnosticProblems } from '../shared/diagnostics.mjs';
+import { rendererFailure, throwDiagnosticProblems, withIsolatedDiagnosticRecording } from '../shared/diagnostics.mjs';
 import { legendFootprint, relationshipLegendObstacles, resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth, nodeTextFit } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
@@ -12,9 +12,9 @@ import { minimumReadableSourceTextPx } from '../shared/desktop-readability.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
 import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeFrameAttrs, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeNodeAttrs, changeReviewFor, nodeChangeBadgePos, renderChangeBadge, renderChangeEdgePrefix, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
 import { gridLayout, resolveComponentPos, validateGridPlacement } from './grid.mjs';
-import { automaticComponentPositions } from './automatic-placement.mjs';
+import { automaticComponentPositions, boundaryInsets } from './automatic-placement.mjs';
 import { placeCrossedLeaf, placeCrossedSinks, facingFramePlacements } from './crossed-leaf-placement.mjs';
-import { crossingPlacementCandidates, frameAttachmentCandidates, frameEnclosureCandidates, measuredCrossingPairs } from './automatic-placement-candidates.mjs';
+import { crossingPlacementCandidates, frameAttachmentCandidates, frameEnclosureCandidates, measuredCrossingPairs, strongestLayerOrder } from './automatic-placement-candidates.mjs';
 import { createArchitectureRouter, connectionLabelBoxAt } from './routing.mjs';
 import { placeAutomaticLabels } from '../shared/automatic-labels.mjs';
 import { cleanRouteDetourProblems } from '../shared/route-quality.mjs';
@@ -75,11 +75,6 @@ const layout = {
   defaultW: 120,
   defaultH: 60,
   margin: 40,
-  // Boundary padding — the 30/50 rule that was a hand-arithmetic footgun
-  // (CHANGELOG v2.2.1): 30px on top/left/right, plus 20px extra at the bottom.
-  boundaryPad: 30,
-  boundaryExtraBottom: 20,
-  boundaryLabelBaseline: 18,
   boundaryLabelClearance: 4,
   boundaryLabelFontPreferred: 9,
   boundaryLabelFontMinimum: 6,
@@ -160,21 +155,13 @@ function boundaryRect(boundary, boxes) {
     maxX = Math.max(maxX, member.x + member.width);
     maxY = Math.max(maxY, member.y + member.height);
   }
-  const pad = boundary.pad ?? layout.boundaryPad;
-  const topPad = Math.max(
-    pad,
-    layout.boundaryLabelBaseline + layout.boundaryLabelClearance,
-    // Routes must avoid the title rail that the final frame will contain.
-    enforcesBoundaryTitleComposition
-      ? layout.boundaryLabelMaskHeight + layout.boundaryLabelClearance + layout.boundaryLabelFrameInset
-      : 0,
-  );
+  const { side: pad, top: topPad, bottom } = boundaryInsets(boundary.pad, enforcesBoundaryTitleComposition);
   return {
     ...boundary,
     x: minX - pad,
     y: minY - topPad,
     width: maxX - minX + pad * 2,
-    height: maxY - minY + topPad + layout.boundaryExtraBottom,
+    height: maxY - minY + topPad + bottom,
     memberTop: minY,
   };
 }
@@ -587,7 +574,7 @@ function frameEnclosures(boxes, boundaries) {
 }
 
 function chooseAutomaticPlacement() {
-  if (!auto || components.size > 24 || connections.length > 36 || rawBoundaries.length > 24
+  if (!auto || components.size > 40 || connections.length > 64 || rawBoundaries.length > 24
       || [...components.values()].some(box => box.pos)
       || connections.some(conn => !canRoute(conn) || !hasAutomaticRouteGeometry(conn)
         || ['fromSide', 'toSide'].some(key => conn[key] && conn[key] !== 'auto')
@@ -595,6 +582,7 @@ function chooseAutomaticPlacement() {
   const initial = resolveConnectionComposition(components, pathFor, rawBoundaries);
   const enclosures = arch.meta?.quality_profile === 'showcase'
     ? frameEnclosures(components, initial.titles.boundaries) : [];
+  const small = components.size <= 24 && connections.length <= 36;
   const crossings = !arch.meta?.viewBox || enclosures.length ? measuredCrossingPairs(initial.routes) : [];
   if (!enclosures.length && !crossings.length) return initial;
   const labels = labelProblems(initial);
@@ -606,8 +594,8 @@ function chooseAutomaticPlacement() {
     return { bends, stretch, length, area: scene.viewBox[0] * scene.viewBox[1] };
   }
   const baseline = measure(initial);
-  let best = { ...baseline, crossings, scene: initial, router };
-  function consider(moved) {
+  let best = { ...baseline, crossings, enclosures, scene: initial, router };
+  function consider(moved, enclosureLimit = 0) {
     const bounds = boundsFor(moved);
     const candidate = makeRouter(moved, bounds);
     const scene = resolveConnectionComposition(moved, candidate.pathFor, bounds);
@@ -616,34 +604,55 @@ function chooseAutomaticPlacement() {
     if (next.bends > baseline.bends || next.stretch > baseline.stretch) return;
     const order = nextCrossings.length - best.crossings.length || next.bends - best.bends
       || next.length - best.length || next.area - best.area;
-    if (enclosures.length) {
-      if (nextCrossings.length > crossings.length || frameEnclosures(moved, scene.titles.boundaries).length
-          || (best.router !== router && order >= 0)) return;
+    const nextEnclosures = enclosureLimit ? frameEnclosures(moved, scene.titles.boundaries) : [];
+    if (enclosureLimit) {
+      if (nextCrossings.length > crossings.length || nextEnclosures.length >= enclosureLimit
+          || (nextEnclosures.length - best.enclosures.length || order) >= 0) return;
     } else if (order >= 0 || nextCrossings.length >= crossings.length || next.length > baseline.length + 0.0001
         || scene.viewBox.some((size, axis) => size > initial.viewBox[axis])) return;
     if (!candidate.planIsClear(scene.viewBox, { checkProvisionalLabels: false })
         || !preservesLabels(labels, labelProblems(scene))) return;
     try {
-      validateArchitecture(scene, candidate);
+      withIsolatedDiagnosticRecording(() => validateArchitecture(scene, candidate));
     } catch (error) {
       if (!error.archifyDiagnostics?.length) throw error;
-      return;
+      if (!nextEnclosures.length || error.archifyDiagnostics.some(d => d.code !== 'layout/boundary-encloses-non-member')) return;
     }
-    best = { ...next, crossings: nextCrossings, scene, router: candidate };
+    best = { ...next, crossings: nextCrossings, enclosures: nextEnclosures, scene, router: candidate };
   }
   let remaining = 12;
-  const candidates = enclosures.length ? frameEnclosureCandidates(components, enclosures)
-    : crossingPlacementCandidates(components, connections, rawBoundaries, crossings);
-  for (const moved of candidates) {
-    if (remaining <= 0) break;
-    remaining -= 1;
-    consider(moved);
-  }
-  if (!enclosures.length && best.crossings.length) {
-    for (const moved of frameAttachmentCandidates(best.scene.boxes, connections, best.scene.titles.boundaries, best.crossings)) {
-      if (remaining <= 0) break;
-      remaining -= 1;
-      consider(moved);
+  if (!small) {
+    // Route only the strongest projected order on larger scenes. The same
+    // composition and validation checks decide whether it is kept.
+    if (!enclosures.length && crossings.length) {
+      const moved = strongestLayerOrder(components, connections, rawBoundaries);
+      if (moved) consider(moved);
+    }
+  } else if (enclosures.length) {
+    while (remaining > 0 && best.enclosures.length) {
+      const start = best;
+      // Rank moves on frame geometry before spending any routing work.
+      const proposals = [...frameEnclosureCandidates(start.scene.boxes, start.enclosures)]
+        .map(moved => ({ moved, count: frameEnclosures(moved, boundsFor(moved)).length }))
+        .sort((a, b) => a.count - b.count);
+      for (const { moved } of proposals.slice(0, Math.min(remaining, 4))) {
+        remaining -= 1;
+        consider(moved, start.enclosures.length);
+      }
+      if (start === best) break;
+    }
+    if (best.enclosures.length) return initial;
+  } else {
+    function tryCrossingMoves(candidates) {
+      for (const moved of candidates) {
+        if (remaining <= 0) break;
+        remaining -= 1;
+        consider(moved);
+      }
+    }
+    tryCrossingMoves(crossingPlacementCandidates(components, connections, rawBoundaries, crossings));
+    if (remaining && best.crossings.length) {
+      tryCrossingMoves(frameAttachmentCandidates(best.scene.boxes, connections, best.scene.titles.boundaries, best.crossings));
     }
   }
   if (best.router !== router) {

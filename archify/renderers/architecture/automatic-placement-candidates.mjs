@@ -1,10 +1,63 @@
 import { properSegmentIntersection, rectsOverlap } from '../shared/geometry.mjs';
 import { analyzeSvgPath } from '../shared/svg-path-analysis.mjs';
 
+function pointOnSegment(point, { start, end }) {
+  const [x, y] = point;
+  return x >= Math.min(start[0], end[0]) && x <= Math.max(start[0], end[0])
+    && y >= Math.min(start[1], end[1]) && y <= Math.max(start[1], end[1])
+    && Math.abs((end[0] - start[0]) * (y - start[1])
+      - (end[1] - start[1]) * (x - start[0])) <= 0.0001;
+}
+
+function samePoint(a, b) {
+  return a[0] === b[0] && a[1] === b[1];
+}
+
+function raysAlternate(point, a, b, c, d) {
+  const rays = [a, b, c, d].map(([x, y], index) => ({
+    angle: Math.atan2(y - point[1], x - point[0]), path: index < 2,
+  })).sort((left, right) => left.angle - right.angle);
+  return rays.every((ray, index) => {
+    const next = rays[(index + 1) % rays.length];
+    const angle = next.angle - ray.angle + (index === rays.length - 1 ? 2 * Math.PI : 0);
+    return ray.path !== next.path && angle > 1e-9;
+  });
+}
+
+function crossesAtInteriorVertex(points, other) {
+  for (let i = 1; i < points.length - 1; i += 1) {
+    const point = points[i];
+    for (let j = 1; j < other.length; j += 1) {
+      const start = other[j - 1];
+      const end = other[j];
+      if (!pointOnSegment(point, { start, end }) || samePoint(point, end)) continue;
+      // Inspect an interior vertex of the other path only on its outgoing
+      // segment. True endpoints have one ray and cannot form a crossing.
+      const before = samePoint(point, start) ? other[j - 2] : start;
+      if (before && raysAlternate(point, points[i - 1], points[i + 1], before, end)) return true;
+    }
+  }
+  return false;
+}
+
+function pathsCross(left, right) {
+  if (left.maxX < right.minX || right.maxX < left.minX || left.maxY < right.minY || right.maxY < left.minY) return false;
+  return left.segments.some(a => right.segments.some(b => properSegmentIntersection(a.start, a.end, b.start, b.end)))
+    || crossesAtInteriorVertex(left.points, right.points) || crossesAtInteriorVertex(right.points, left.points);
+}
+
 export function measuredCrossingPairs(routes) {
-  const paths = routes.map(({ d }) => analyzeSvgPath(d).subpaths.flatMap(part => part.segments));
+  const paths = routes.map(({ d }) => analyzeSvgPath(d).subpaths.map(part => {
+    const points = part.points.filter((point, index, points) => !index || !samePoint(points[index - 1], point));
+    const xs = points.map(([x]) => x);
+    const ys = points.map(([, y]) => y);
+    return {
+      segments: part.segments, points,
+      minX: Math.min(...xs), maxX: Math.max(...xs), minY: Math.min(...ys), maxY: Math.max(...ys),
+    };
+  }));
   return routes.flatMap(({ relation }, index) => routes.slice(index + 1).flatMap(({ relation: other }, offset) =>
-    paths[index].some(a => paths[index + offset + 1].some(b => properSegmentIntersection(a.start, a.end, b.start, b.end)))
+    paths[index].some(a => paths[index + offset + 1].some(b => pathsCross(a, b)))
       ? [[relation, other]] : []));
 }
 
@@ -12,7 +65,7 @@ function move(box, x, y) {
   return { ...box, x, y, cx: x + box.width / 2, cy: y + box.height / 2 };
 }
 
-function layerOrder(components, connections, frames, vertical) {
+function layerOrder(components, connections, frames, vertical, bestOnly = false) {
   const [along, depth, across, span] = vertical
     ? ['y', 'height', 'x', 'width'] : ['x', 'width', 'y', 'height'];
   const alongCenter = box => box[along] + box[depth] / 2;
@@ -71,14 +124,24 @@ function layerOrder(components, connections, frames, vertical) {
       properSegmentIntersection(position(from), position(to), position(other.from), position(other.to))).length, 0);
   }
   const candidates = [];
+  const initial = bestOnly ? score() : 0;
+  let best = initial;
   function snapshot() {
+    const crossings = bestOnly ? score() : 0;
+    if (bestOnly && crossings >= best) return;
     const moved = new Map(components);
     for (const [id, center] of cross) {
       if (center === baseline.get(id)) continue;
       const box = components.get(id);
       moved.set(id, vertical ? move(box, center - box.width / 2, box.y) : move(box, box.x, center - box.height / 2));
     }
-    if ([...moved].some(([id, box]) => box !== components.get(id))) candidates.push(moved);
+    if ([...moved].some(([id, box]) => box !== components.get(id))) {
+      if (bestOnly) {
+        candidates.length = 0;
+        best = crossings;
+      }
+      candidates.push({ moved, improvement: initial - best });
+    }
   }
 
   for (const direction of [1, -1, 1, -1]) {
@@ -157,8 +220,8 @@ function* alignedLeafPositions(components, connections, frames, crossingPairs) {
 export function* crossingPlacementCandidates(components, connections, frames, crossingPairs) {
   const seen = new Set();
   for (const candidates of [
-    layerOrder(components, connections, frames, true),
-    layerOrder(components, connections, frames, false),
+    layerOrder(components, connections, frames, true).map(({ moved }) => moved),
+    layerOrder(components, connections, frames, false).map(({ moved }) => moved),
     alignedLeafPositions(components, connections, frames, crossingPairs),
   ]) {
     for (const moved of candidates) {
@@ -168,6 +231,11 @@ export function* crossingPlacementCandidates(components, connections, frames, cr
       yield moved;
     }
   }
+}
+
+export function strongestLayerOrder(components, connections, frames) {
+  return [true, false].flatMap(vertical => layerOrder(components, connections, frames, vertical, true))
+    .sort((a, b) => b.improvement - a.improvement)[0]?.moved;
 }
 
 export function* frameAttachmentCandidates(components, connections, frames, crossingPairs) {
@@ -198,17 +266,52 @@ export function* frameAttachmentCandidates(components, connections, frames, cros
 }
 
 export function* frameEnclosureCandidates(components, enclosures) {
+  const gap = 24;
+  const seen = new Set();
+  const clear = (box, x, y) => {
+    const key = JSON.stringify([box.id, x, y]);
+    if (seen.has(key)) return null;
+    seen.add(key);
+    const candidate = move(box, x, y);
+    return x >= 0 && y >= 0 && (x !== box.x || y !== box.y)
+      && [...components.values()].every(other => other === box || !rectsOverlap(candidate, other, gap))
+      ? new Map(components).set(box.id, candidate) : null;
+  };
   for (const { frame, box } of enclosures) {
-    const gap = 24;
-    for (const candidate of [
-      move(box, frame.x - box.width - gap, box.y),
-      move(box, frame.x + frame.width + gap, box.y),
-      move(box, box.x, frame.y - box.height - gap),
-      move(box, box.x, frame.y + frame.height + gap),
+    for (const [x, y] of [
+      [frame.x - box.width - gap, box.y],
+      [frame.x + frame.width + gap, box.y],
+      [box.x, frame.y - box.height - gap],
+      [box.x, frame.y + frame.height + gap],
     ]) {
-      if (candidate.x < 0 || candidate.y < 0
-          || [...components.values()].some(other => other !== box && rectsOverlap(candidate, other, gap))) continue;
-      yield new Map(components).set(box.id, candidate);
+      const moved = clear(box, x, y);
+      if (moved) yield moved;
+    }
+  }
+
+  for (const frame of new Set(enclosures.map(({ frame }) => frame))) {
+    const members = frame.wraps.map(id => components.get(id)).filter(Boolean);
+    if (members.length < 2) continue;
+    // Bringing an outer member beside its nearest sibling can remove an
+    // entire empty bay from the frame, including several enclosed outsiders.
+    const extremes = new Set([
+      (a, b) => a.x - b.x,
+      (a, b) => b.x + b.width - a.x - a.width,
+      (a, b) => a.y - b.y,
+      (a, b) => b.y + b.height - a.y - a.height,
+    ].map(order => [...members].sort(order)[0]));
+    for (const box of extremes) {
+      const distance = other => Math.abs(other.cx - box.cx) + Math.abs(other.cy - box.cy);
+      const peer = members.filter(other => other !== box).sort((a, b) => distance(a) - distance(b))[0];
+      for (const [x, y] of [
+        [peer.x - box.width - gap, peer.y],
+        [peer.x + peer.width + gap, peer.y],
+        [peer.x, peer.y - box.height - gap],
+        [peer.x, peer.y + peer.height + gap],
+      ]) {
+        const moved = clear(box, x, y);
+        if (moved) yield moved;
+      }
     }
   }
 }

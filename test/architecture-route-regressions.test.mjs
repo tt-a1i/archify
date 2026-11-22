@@ -6,8 +6,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { automaticComponentPositions } from '../archify/renderers/architecture/automatic-placement.mjs';
+import { measuredCrossingPairs } from '../archify/renderers/architecture/automatic-placement-candidates.mjs';
 import { connectionLabelBoxAt, createArchitectureRouter } from '../archify/renderers/architecture/routing.mjs';
-import { properSegmentIntersection, segmentRectClearance } from '../archify/renderers/shared/geometry.mjs';
+import { properSegmentIntersection, roundedPath, segmentRectClearance } from '../archify/renderers/shared/geometry.mjs';
 
 const fixtureUrl = name => new URL(`fixtures/architecture-route-regressions/${name}.json`, import.meta.url);
 const load = name => JSON.parse(readFileSync(fixtureUrl(name), 'utf8'));
@@ -196,3 +197,72 @@ for (const [name, description] of [
     }
   });
 }
+
+test('a rounded corner crossing counts at its exact sample point', () => {
+  const corner = { relation: { id: 'corner' }, d: roundedPath([[0, 100], [100, 100], [100, 200]], 8) };
+  const crosses = d => measuredCrossingPairs([corner, { relation: { id: 'other' }, d }]).length;
+  for (const x of [97.99, 98, 98.01]) assert.equal(crosses(`M ${x} 0 L ${x} 300`), 1);
+  assert.equal(crosses('M 98 0 L 98 102 L 98 300'), 1, 'both paths can have an interior vertex there');
+  assert.equal(crosses('M 98 0 L 98 102'), 0, 'touching a true endpoint is not a crossing');
+  assert.equal(crosses('M 95 105 L 98 102 L 97 106'), 0, 'a route that turns back at the contact only touches');
+});
+
+test('router and delivered artifact count crossings with a shared endpoint and a pinned label', t => {
+  const name = 'shared-pinned-crossing';
+  const { components, connections } = load(name);
+  const boxes = new Map(components.map(({ id, pos: [x, y], size: [width, height] }) =>
+    [id, { id, x, y, width, height, cx: x + width / 2, cy: y + height / 2 }]));
+  const pairs = createArchitectureRouter(boxes, connections).crossingPairs();
+  assert.ok(pairs.some(pair => pair.some(conn => conn.id === 'r1') && pair.some(conn => conn.id === 'r10')));
+
+  const dir = mkdtempSync(join(tmpdir(), 'archify-pinned-crossing-'));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const output = join(dir, 'chart.html');
+  const result = spawnSync(process.execPath, [cli, 'finalize', 'architecture', fileURLToPath(fixtureUrl(name)), output, '--json'],
+    { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const { signals, affectedRoutes } = JSON.parse(result.stdout).visualReviewRecommendation;
+  assert.equal(signals.resolvedCrossovers, 3);
+  assert.ok(affectedRoutes.crossings.some(({ left, right }) => left.id === 'r1' && right.id === 'r10'));
+  assert.deepEqual(measuredLayout(name).get('r10').labelAt, [148, 50]);
+});
+
+test('a tight fixed canvas allows an inferred card to use the frame padding as its lower bound', () => {
+  const { status, receipt } = validate(fileURLToPath(fixtureUrl('tight-fixed-frame')), 'standard', '--layout-json');
+  assert.equal(status, 0, JSON.stringify(receipt.diagnostics));
+  assert.deepEqual(receipt.viewBox, [320, 240]);
+  const [frame] = receipt.boundaries;
+  assert.ok(frame.x >= 0 && frame.x + frame.width <= receipt.viewBox[0]);
+  assert.ok(frame.y >= 0 && frame.y + frame.height <= receipt.viewBox[1]);
+});
+
+test('an inferred frame can compact its members to clear two falsely enclosed cards', () => {
+  const name = 'two-frame-outsiders';
+  const { status, receipt } = validate(fileURLToPath(fixtureUrl(name)), 'showcase', '--layout-json');
+  assert.equal(status, 0, JSON.stringify(receipt.diagnostics));
+  assert.deepEqual(receipt.boundaries.map(frame => frame.wraps), load(name).boundaries.map(frame => frame.wraps));
+  const frame = receipt.boundaries.find(frame => frame.label === 'Support');
+  for (const { x, y, width, height } of receipt.components.filter(box => ['b', 'e'].includes(box.id))) {
+    assert.ok(x >= frame.x + frame.width || x + width <= frame.x || y >= frame.y + frame.height || y + height <= frame.y);
+  }
+});
+
+test('automatic enclosure recovery can keep a partial improvement and fix another scope next', t => {
+  const source = load('two-frame-outsiders');
+  const diagram = { ...source, components: [], connections: [], boundaries: [] };
+  for (const zone of ['First', 'Second']) {
+    const id = name => `${zone.toLowerCase()}-${name}`;
+    diagram.components.push(...source.components.map(box => ({ ...box, id: id(box.id) })));
+    diagram.connections.push(...source.connections.map(conn => ({ ...conn, from: id(conn.from), to: id(conn.to) })));
+    diagram.boundaries.push(...source.boundaries.map(frame =>
+      ({ ...frame, label: `${zone} ${frame.label}`, wraps: frame.wraps.map(id) })));
+    diagram.boundaries.push({ kind: 'region', label: `${zone} zone`, wraps: source.components.map(box => id(box.id)) });
+  }
+  const dir = mkdtempSync(join(tmpdir(), 'archify-two-scopes-'));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const input = join(dir, 'architecture.json');
+  writeFileSync(input, JSON.stringify(diagram));
+  const { status, receipt } = validate(input, 'showcase', '--layout-json');
+  assert.equal(status, 0, JSON.stringify(receipt.diagnostics));
+  assert.deepEqual(receipt.boundaries.map(frame => frame.wraps), diagram.boundaries.map(frame => frame.wraps));
+});

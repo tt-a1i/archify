@@ -404,6 +404,7 @@ if (svgBlocks.length === 1) {
     diagramType: svgAttrs['data-diagram-type'] || null,
   });
   const arrows = collectArrows(beforeLegend, workflowV2);
+  const architecture = svgAttrs['data-diagram-type'] === 'architecture' || svgAttrs['data-reader-primary-text'] === '14';
   const diagonal = arrows.flatMap((arrow) => diagonalStraightSegments(arrow).map((segment) => ({ arrow, ...segment })));
   addCheck(
     'orthogonal_arrows',
@@ -415,6 +416,7 @@ if (svgBlocks.length === 1) {
     workflowV2,
     maxCrossingPairChecks,
     maxCrossingSegmentPairChecks,
+    architecture,
   );
   const measuredRelationshipCrossings = crossingAnalysis.crossings;
   const resolvedCrossovers = measuredRelationshipCrossings.filter((hit) => (
@@ -440,8 +442,7 @@ if (svgBlocks.length === 1) {
   const nodeRects = svgAttrs.transform ? [] : collectUntransformedNodeRects(beforeLegend);
   const routeMetrics = subpathBudgetMetrics(routedRelationships);
   // Architecture marks only one of its two Reader fits with its type.
-  const crowdedSides = svgAttrs['data-diagram-type'] === 'architecture' || svgAttrs['data-reader-primary-text'] === '14'
-    ? crowdedNodeSides(arrows, nodeRects) : [];
+  const crowdedSides = architecture ? crowdedNodeSides(arrows, nodeRects) : [];
   const routeRhythmIssues = subpathRhythmIssues(routedRelationships);
   const ambiguousCorridors = subpathCorridors({
     routedRelations: routedRelationships,
@@ -1029,6 +1030,7 @@ function collectRelationshipCrossings(
   includeSharedEndpoints = false,
   pairLimit = DEFAULT_MAX_CROSSING_PAIR_CHECKS,
   segmentPairLimit = DEFAULT_MAX_CROSSING_SEGMENT_PAIR_CHECKS,
+  architecture = false,
 ) {
   const relationships = arrows.filter((arrow) => arrow.from && arrow.to).map(arrow => ({
     ...arrow,
@@ -1043,10 +1045,11 @@ function collectRelationshipCrossings(
     const left = relationships[leftIndex];
     for (let rightIndex = leftIndex + 1; rightIndex < relationships.length; rightIndex += 1) {
       const right = relationships[rightIndex];
-      // A shared semantic endpoint does not make an interior X a junction
-      // when both paths opt into automatic workflow or independent-port checks.
+      // Architecture counts interior crossings even when arrows share a
+      // card. Other legacy layouts can opt in through their own contracts.
       if ([left.from, left.to].some((id) => id === right.from || id === right.to)
           && !includeSharedEndpoints
+          && !architecture
           && !(left.independentPorts && right.independentPorts)
           && !(left.automaticWorkflowRoute && right.automaticWorkflowRoute)) continue;
       if (attemptedPairs >= pairLimit) {

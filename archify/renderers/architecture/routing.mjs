@@ -53,6 +53,7 @@ export function createArchitectureRouter(components, connections, {
 } = {}) {
   return createRouter(components, connections, {
     distinctAutomaticPorts: true,
+    countSharedEndpointCrossings: true,
     preferReadableRoutes: true,
     repairAutomaticPorts: automaticPlacement,
     acceptSimplification,
@@ -122,6 +123,8 @@ export function createArchitectureRouter(components, connections, {
  * @param {boolean} [options.repairAutomaticPorts = false] allow automatic
  *   architecture layouts to reuse approach segments or exchange endpoint slots
  *   without altering authored controls or using a new routing corridor.
+ * @param {boolean} [options.countSharedEndpointCrossings = false] include
+ *   all route pairs in architecture crossing counts and acceptance checks.
  */
 export function createRouter(components, connections = [], {
   frames = [],
@@ -129,6 +132,7 @@ export function createRouter(components, connections = [], {
   microSegmentPx = 8,
   labelRectFor = null,
   distinctAutomaticPorts = false,
+  countSharedEndpointCrossings = false,
   preferReadableRoutes = false,
   sideFor = null,
   maxPortSpacing = null,
@@ -1018,7 +1022,7 @@ export function createRouter(components, connections = [], {
 
   function crossingCount(conn, points, resolvedRoutes) {
     return resolvedRoutes.reduce((count, other) => {
-      if (relationshipsShareEndpoint(conn, other.conn)
+      if (!countSharedEndpointCrossings && relationshipsShareEndpoint(conn, other.conn)
           && (!distinctAutomaticPorts || hasAuthoredRouteGeometry(other.conn) || other.conn.labelAt || conn.labelAt)) return count;
       return count + crossingPoints(points, other, 1);
     }, 0);
@@ -1031,9 +1035,15 @@ export function createRouter(components, connections = [], {
 
   function readabilityCost(conn, routed, resolvedRoutes) {
     const points = routed.points;
+    // Keep the established cost for approaching a shared endpoint with a
+    // pinned label. Pricing the X here can leave two arrows on the same
+    // track. The crossing report and acceptance guards still see it.
+    const costPeers = countSharedEndpointCrossings && resolvedRoutes.some(entry => entry.conn.labelAt)
+      ? resolvedRoutes.filter(entry => !((conn.labelAt || entry.conn.labelAt) && relationshipsShareEndpoint(conn, entry.conn)))
+      : resolvedRoutes;
     // A crossover is a reading cost even with a halo. Keep it finite: avoiding
     // one crossing must not justify an arbitrarily long perimeter excursion.
-    return routeLength(points) + Math.max(0, points.length - 2) * 48 + crossingCount(conn, points, resolvedRoutes) * 160;
+    return routeLength(points) + Math.max(0, points.length - 2) * 48 + crossingCount(conn, points, costPeers) * 160;
   }
 
   function computePath(conn, resolvedRoutes) {
