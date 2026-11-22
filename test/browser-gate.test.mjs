@@ -163,7 +163,7 @@ test('CI and release use the same browser command and retain WebM decoding', () 
       assert.equal(media?.env.CI_WEBM_PROFILE, '${{ needs.scope.outputs.webmProfile }}');
       assert.equal(media.run, 'node test/webm-artifact.smoke.mjs "$CI_WEBM_PROFILE"');
       const language = jobs.website.steps.find(step => step.run === 'node --test test/site-language-integration.mjs');
-      assert.equal(language?.if, "matrix.target == 'pages'");
+      assert.equal(language?.if, "matrix.target == 'cloudflare'");
       assert.ok(language.env.ARCHIFY_CHROME);
       const builders = jobs['canonical-test'].steps.find(step => step.run?.includes("--test-name-pattern='custom site builders'"));
       assert.equal(builders?.if, "needs.scope.outputs.scope == 'core' && needs.scope.outputs.generated == 'true' && needs.scope.outputs.website == 'false'");
@@ -190,6 +190,7 @@ test('browser shards are deterministic, nonempty, disjoint and cover the full ma
   assert.deepEqual(shards.flat().sort(), [...full].sort());
   const owner = file => shards.findIndex(files => files.some(entry => path.basename(entry) === file));
   assert.notEqual(owner('desktop-reader-browser.test.mjs'), owner('i18n-browser.test.mjs'));
+  assert.notEqual(owner('desktop-reader-browser.test.mjs'), owner('packaged-examples-browser.test.mjs'));
   assert.notEqual(owner('viewer-chrome-layout.test.mjs'), owner('reader-layout-browser.test.mjs'));
 });
 
@@ -214,6 +215,13 @@ test('CI browser profiles preserve the exact Atlas and media test inventories ac
     assert.deepEqual(selected.sort(), expected.sort());
   }
   assert.ok(full.includes('test/story-browser.test.mjs'));
+  const mediaShards = [1, 2, 3, 4].map(index => list(
+    { CI_STORY_BROWSER_OWNER: 'webm' }, [`--shard=${index}/4`],
+  ).stdout.trim().split('\n'));
+  assert.notEqual(
+    mediaShards.findIndex(files => files.includes('test/desktop-reader-browser.test.mjs')),
+    mediaShards.findIndex(files => files.includes('test/packaged-examples-browser.test.mjs')),
+  );
   for (const env of [{ CI_BROWSER_PROFILE: 'atals' }, { CI_STORY_BROWSER_OWNER: 'unknown' }]) {
     assert.notEqual(list(env).status, 0);
   }

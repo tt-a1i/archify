@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { ChromeVisualBrowser, findChrome, runVisualCheck } from '../archify/bin/visual-check.mjs';
+import { isolatedVisualBrowser } from './helpers/isolated-visual-browser.mjs';
 import {
   skillRoot, cli, EXAMPLES, example, localeDocument, FR_PARTIAL_TRANSLATIONS, createLocaleFixture,
 } from './helpers/i18n-fixture.mjs';
@@ -44,28 +45,6 @@ async function loadArtifact(browser, artifactPath) {
     requestAnimationFrame(function () { requestAnimationFrame(function () { resolve(true); }); });
   })`, true);
   return sessionId;
-}
-
-// A new incognito context gives each visual check its own storage, cache and
-// page while avoiding a Chrome process launch for every matrix entry.
-async function isolatedVisualBrowser(browser) {
-  const { browserContextId } = await browser.cdp.send('Target.createBrowserContext');
-  try {
-    const { targetId } = await browser.cdp.send('Target.createTarget', {
-      url: 'about:blank', browserContextId,
-    });
-    const { sessionId } = await browser.cdp.send('Target.attachToTarget', { targetId, flatten: true });
-    await browser.cdp.send('Page.enable', {}, sessionId);
-    await browser.cdp.send('Runtime.enable', {}, sessionId);
-    const isolated = { cdp: browser.cdp, sessionPromise: Promise.resolve(sessionId) };
-    return {
-      inspect: (options) => ChromeVisualBrowser.prototype.inspect.call(isolated, options),
-      close: () => browser.cdp.send('Target.disposeBrowserContext', { browserContextId }),
-    };
-  } catch (error) {
-    await browser.cdp.send('Target.disposeBrowserContext', { browserContextId });
-    throw error;
-  }
 }
 
 test('visual-check binds the delivered Korean fixture to viewport and theme receipts', {
