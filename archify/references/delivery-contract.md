@@ -422,9 +422,10 @@ Passing one claim never implies the others. Never claim that the deterministic r
 
 After a passing `finalize architecture` with `--repo-root`, the full receipt
 and compact summary include `codeAnalysisOffer` if a bounded scan finds
-sources eligible for the default analysis. The offer includes `start.argv`
-and a `dependencies` status of `installed` or `missing`. Finalize performs
-these checks without starting analysis or installing anything.
+sources eligible for the default analysis. The offer includes the effective
+finalize `quality`, passes it in `start.argv`, and records a `dependencies`
+status of `installed` or `missing`. Finalize performs these checks without
+starting analysis or installing anything.
 
 Ask once per repository in the task after delivering the diagram. Skip the
 offer if the user already asked for or declined analysis. Use the user's

@@ -177,7 +177,10 @@ test('finalize reuses delivery validation, runs one build, and keeps full stage 
   assert.equal(finalized.summary.repositoryReferences.count, 0);
   assert.equal(finalized.summary.codeAnalysisOffer.action, 'offer-code-analysis');
   assert.equal(finalized.summary.codeAnalysisOffer.dependencies, 'installed');
-  assert.deepEqual(finalized.summary.codeAnalysisOffer.start.argv, [process.execPath, '/fake/archify.mjs', 'start', directory, '--ir', input]);
+  assert.equal(finalized.summary.codeAnalysisOffer.quality, 'showcase');
+  assert.deepEqual(finalized.summary.codeAnalysisOffer.start.argv, [
+    process.execPath, '/fake/archify.mjs', 'start', directory, '--ir', input, '--quality', 'showcase',
+  ]);
   assert.equal('linkedDiagrams' in finalized.summary.codeAnalysisOffer, false);
   assert.equal('stages' in finalized.summary, false);
   assert.equal(JSON.stringify(finalized.summary).includes('large-stage-array'), false);
@@ -208,21 +211,21 @@ test('finalize offers Architecture Diagnosis only for supported repository-backe
     dependencyChecks += 1;
     return ['typescript'];
   };
-  const finalizeWith = async ({ type, repoRoot, navigation }) => {
+  const finalizeWith = async ({ type, repoRoot, navigation, quality = 'showcase' }) => {
     const source = JSON.stringify({ meta: { quality_profile: 'showcase' }, ...navigation });
     fs.writeFileSync(input, source);
     const stages = [];
     const runCommand = ({ stage }) => {
       stages.push(stage);
-      const delivery = passingDelivery({ input, output, source, type });
+      const delivery = passingDelivery({ input, output, source, type, quality });
       if (stage === 'deliver') return result(delivery);
-      if (stage === 'check') return result(passingCheck({ output, artifact: delivery.artifact, deliveryReceiptId: delivery.receiptId }));
+      if (stage === 'check') return result(passingCheck({ output, artifact: delivery.artifact, deliveryReceiptId: delivery.receiptId, quality }));
       fs.mkdirSync(outDir, { recursive: true });
       fs.writeFileSync(path.join(outDir, 'diagram.browser-check.json'), 'browser evidence');
       return result(passingBrowserCheck({ output, artifact: delivery.artifact, deliveryReceiptId: delivery.receiptId, outDir }));
     };
     const finalized = await runFinalize({
-      cliPath: '/fake/archify.mjs', type, input, output, outDir, repoRoot, runCommand, checkMissingAnalysisDependencies,
+      cliPath: '/fake/archify.mjs', type, input, output, outDir, repoRoot, quality, runCommand, checkMissingAnalysisDependencies,
     });
     assert.equal(finalized.exitCode, 0);
     assert.deepEqual(stages, ['deliver', 'check', 'browser-check']);
@@ -252,10 +255,13 @@ test('finalize offers Architecture Diagnosis only for supported repository-backe
   fs.mkdirSync(path.join(directory, 'src'));
   fs.writeFileSync(path.join(directory, 'src', 'server.js'), 'export const port = 3000;');
   fs.writeFileSync(path.join(directory, 'src', 'worker.py'), 'pass');
-  const architecture = await finalizeWith({ type: 'architecture', repoRoot: directory });
+  const architecture = await finalizeWith({ type: 'architecture', repoRoot: directory, quality: 'standard' });
   assert.equal(dependencyChecks, 1);
   assert.equal(architecture.codeAnalysisOffer.dependencies, 'missing');
-  assert.deepEqual(architecture.codeAnalysisOffer.start.argv, [process.execPath, '/fake/archify.mjs', 'start', directory, '--ir', input]);
+  assert.equal(architecture.codeAnalysisOffer.quality, 'standard');
+  assert.deepEqual(architecture.codeAnalysisOffer.start.argv, [
+    process.execPath, '/fake/archify.mjs', 'start', directory, '--ir', input, '--quality', 'standard',
+  ]);
   assert.equal('prepare' in architecture.codeAnalysisOffer, false);
   assert.equal('alignWithDiagram' in architecture.codeAnalysisOffer, false);
 

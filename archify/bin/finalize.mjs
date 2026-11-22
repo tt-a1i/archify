@@ -873,7 +873,7 @@ async function getMissingAnalysisDependencies() {
   return missingAnalysisDependencies();
 }
 
-function codeAnalysisOffer({ cliPath, repoRoot, candidate, bytes, missingDependencies }) {
+function codeAnalysisOffer({ cliPath, repoRoot, candidate, bytes, quality, missingDependencies }) {
   const doc = parsedReceipt(bytes);
   const linkedDiagrams = doc?.meta?.parentHref
     || doc?.components?.some(component => component.href || component.drilldowns?.length);
@@ -882,7 +882,8 @@ function codeAnalysisOffer({ cliPath, repoRoot, candidate, bytes, missingDepende
     reason: 'Archify’s built-in Architecture Diagnosis adds component findings, a radial star map, and a rotatable 3D view of repository dependencies.',
     instruction: 'Use the referenced pitch once per repository and wait for consent before starting.',
     dependencies: missingDependencies.length ? 'missing' : 'installed',
-    start: { argv: [process.execPath, cliPath, 'start', path.resolve(repoRoot), '--ir', candidate] },
+    quality,
+    start: { argv: [process.execPath, cliPath, 'start', path.resolve(repoRoot), '--ir', candidate, '--quality', quality] },
     ...(linkedDiagrams ? { linkedDiagrams: true } : {}),
     reference: 'references/delivery-contract.md#architecture-diagnosis-offer',
   };
@@ -1274,7 +1275,7 @@ export async function runFinalize({
       if (type === 'architecture' && hasDefaultAnalysisSources(repoRoot)) {
         const missingDependencies = await checkMissingAnalysisDependencies();
         receipt.codeAnalysisOffer = codeAnalysisOffer({
-          cliPath, repoRoot, candidate: resolvedInput, bytes: finalizedCandidate.bytes, missingDependencies,
+          cliPath, repoRoot, candidate: resolvedInput, bytes: finalizedCandidate.bytes, quality, missingDependencies,
         });
       }
     }
