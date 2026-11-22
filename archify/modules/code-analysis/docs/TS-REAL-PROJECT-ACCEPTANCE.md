@@ -1,12 +1,20 @@
 # 真实 TypeScript 项目验收：ts-pattern
 
-2026-11-17，macOS arm64，最近实跑使用 Node 24.20.0，提取器 revision 28。样本为 [ts-pattern v5.9.2](https://github.com/gvergnaud/ts-pattern/tree/v5.9.2)，源码提交 **f11be73acb18e1d653d4f252e7d75981d873a2e6**；v5.9.2 是注解标签，标签对象 22cc83a7 不是源码提交。项目采用 MIT 许可，包含泛型、重载、ESM 转发、TSX 和多份配置。
+2026-11-17，macOS arm64，归档快照使用 Node 24.20.0，提取器 revision 28。样本为 [ts-pattern v5.9.2](https://github.com/gvergnaud/ts-pattern/tree/v5.9.2)，源码提交 **f11be73acb18e1d653d4f252e7d75981d873a2e6**；v5.9.2 是注解标签，标签对象 22cc83a7 不是源码提交。项目采用 MIT 许可，包含泛型、重载、ESM 转发、TSX 和多份配置。
 
 **结论：项目/模块/范围/调用库存及现有已归属目标的验收通过；完整语言服务导航覆盖仍有差距，不能据此宣称与官方全部对齐。**
 
 2026-11-17 16:02（Asia/Tokyo）再次实跑同一样本及项目 TypeScript 5.9.2，使用 Node 24.20.0。结果仍为 88 个文件、214 条导入、475 个函数、5618 个调用位置全部一致，1096 个已知目标全部匹配，其中共享成员目标 497 个；与上次 revision 28 的完整原始事实摘要相同，目标新增、丢失、改指均为 0。本次官方对照 83 项及共享成员等项目回归 15 项，共 98/98 通过、无跳过。新证据保存在原验收目录的 `rerun-20261117-160132/`，未覆盖上一轮产物。
 
 提交准备以最新 Labs `772b2dea12381ed87916dc811b3767f1d8bc3eb5` 为基线，关联 [议题 #1394](https://github.com/tt-a1i/archify/issues/1394)。删除了没有调用方的 bundled SDK helper 导出，保留历史读取所需的 measureFunctions 入口；67 项相关回归通过，随后真实仓库重跑的完整原始事实摘要与整理前相同。机器摘要使用整理后的源码指纹，并分别保留旧运行身份。TypeScript 5.6.3 / 6.0.3 的 83 项官方对照已在 Node 22.23.2 上重新通过；默认 5.9.3 的官方对照随完整模块套件通过。提交准备的原始证据在 `pr-final/`。
+
+## PR #1435 评审修正后的复跑
+
+机器摘要中的 `candidate.sourceSha256` 对应 Archify 提交 `249a3999cdaa19b76b206ded893078fe614e6b8b` 的 revision 28 源码，样本提交仍是 ts-pattern 的 `f11be73acb18e1d653d4f252e7d75981d873a2e6`。归档运行使用 `capturedOnly: false` 和显式 SDK 选择 `auto + requireProjectSdk`。
+
+在评审修正后的 revision 30 工作树，使用 macOS arm64、官方 Node 22.23.2 和项目 TypeScript 5.9.2 复跑同一提交。88 个文件、6 个项目、214 条字面量导入、475 个函数、5618 个调用位置以及 1096 个已知目标通过对照，无未解释差异。样本没有计算导入。重复捕获的原始事实摘要一致。机器摘要在 `postReviewReplay` 记录本次源码和运行器指纹。
+
+这次复跑显式加载了项目 SDK。默认 bundled、固定 Git 树隔离、跨 SDK 共享配置、混合 SDK 引用、源文件增删时的可比性、NodeNext 运行时依赖、计算导入和 `createRequire` 绑定由定向夹具验证。上游批量语法探针的空输入检查也由定向夹具验证。
 
 ## 输入与对照
 

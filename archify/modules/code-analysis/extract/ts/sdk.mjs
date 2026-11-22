@@ -5,7 +5,7 @@ import bundledTs from 'typescript';
 import { fail } from '../shared/diagnostics.mjs';
 
 const load = createRequire(import.meta.url);
-const REQUIRED_API = ['createProgram', 'createCompilerHost', 'createSourceFile', 'parseJsonConfigFileContent', 'resolveModuleName', 'resolveProjectReferencePath', 'matchFiles', 'isIdentifier'];
+const REQUIRED_API = ['createProgram', 'createCompilerHost', 'createSourceFile', 'parseJsonConfigFileContent', 'resolveModuleName', 'getEmitModuleResolutionKind', 'resolveProjectReferencePath', 'matchFiles', 'isIdentifier'];
 
 function declaredTypeScript(data, relative) {
   if (!data) return false;
@@ -14,17 +14,6 @@ function declaredTypeScript(data, relative) {
   catch { fail('extract/typescript-manifest-invalid', 'Cannot inspect a package.json for its TypeScript version.', { subject: { file: relative } }); }
   return ['dependencies', 'devDependencies', 'optionalDependencies', 'peerDependencies']
     .some(key => Object.hasOwn(manifest?.[key] || {}, 'typescript'));
-}
-
-function packageRoot(entry) {
-  for (let dir = path.dirname(entry); dir !== path.dirname(dir); dir = path.dirname(dir)) {
-    const manifestPath = path.join(dir, 'package.json');
-    if (!fs.existsSync(manifestPath)) continue;
-    try {
-      if (JSON.parse(fs.readFileSync(manifestPath, 'utf8')).name === 'typescript') return dir;
-    } catch { /* A parent package is not the selected SDK. */ }
-  }
-  return null;
 }
 
 function loadSdk(root, source) {
@@ -40,7 +29,7 @@ function loadSdk(root, source) {
     || Number(version[1]) > 6 || (Number(version[1]) === 6 && Number(version[2]) > 0)) {
     fail('extract/typescript-sdk-unsupported', 'This TypeScript SDK version is outside the validated 5.6–6.0 range.', {
       subject: { file: root }, evidence: { version: manifest.version },
-      supportedFixes: ['use a project with TypeScript 5.6–6.0', 'choose a validated SDK with typescript.sdk'],
+      supportedFixes: ['use a project with TypeScript 5.6–6.0', 'set typescript.sdk to "bundled" or to a validated package path you trust'],
     });
   }
   const physicalRoot = fs.realpathSync(root);
@@ -79,56 +68,64 @@ export function selectTypeScripts(root, snapshot, config, selected, { capturedOn
     || (settings.sdk !== undefined && typeof settings.sdk !== 'string')
     || (settings.requireProjectSdk !== undefined && typeof settings.requireProjectSdk !== 'boolean')) {
     fail('extract/typescript-settings-invalid', 'The TypeScript SDK settings are invalid.', {
-      subject: { option: 'typescript' }, supportedFixes: ['set typescript.sdk to "auto" or a package path and requireProjectSdk to a boolean'],
+      subject: { option: 'typescript' }, supportedFixes: ['set typescript.sdk to "bundled", "auto", or a package path and requireProjectSdk to a boolean'],
     });
   }
-  const sdkPath = settings.sdk === undefined ? 'auto' : settings.sdk;
+  const sdkPath = settings.sdk ?? 'bundled';
   if (!sdkPath.trim()) fail('extract/typescript-settings-invalid', 'The TypeScript SDK path must not be empty.', { subject: { option: 'typescript.sdk' } });
+  if (sdkPath === 'bundled') {
+    if (settings.requireProjectSdk) fail('extract/typescript-sdk-required', 'Bundled mode cannot satisfy typescript.requireProjectSdk.', {
+      subject: { option: 'typescript.sdk' },
+      supportedFixes: ['set typescript.sdk to "auto" for a trusted checkout', 'set typescript.sdk to a validated package path you trust', 'disable typescript.requireProjectSdk to use the bundled SDK'],
+    });
+    return [{ sdk: bundled, files: sourceFiles }];
+  }
   if (sdkPath !== 'auto') {
     const explicitRoot = path.resolve(root, sdkPath);
     return [{ sdk: loadSdk(explicitRoot, 'explicit'), files: sourceFiles }];
   }
 
+  if (!sourceFiles.length) return [{ sdk: bundled, files: sourceFiles }];
+
   const lookup = new Map();
-  const loaded = new Map();
+  const projectSdk = boundary => {
+    if (lookup.has(boundary)) return lookup.get(boundary);
+    // Search only the checkout/ancestor node_modules chain. A local package
+    // symlink can still point to a package store outside that chain.
+    let installed = null, declared = false;
+    for (let directory = boundary; ; directory = path.dirname(directory)) {
+      const pkg = path.join(directory, 'node_modules', 'typescript');
+      if (fs.existsSync(path.join(pkg, 'package.json'))) {
+        installed = fs.realpathSync(pkg);
+        break;
+      }
+      if (!declared) {
+        const manifest = path.join(directory, 'package.json');
+        const relative = path.relative(root, manifest).split(path.sep).join('/');
+        const inside = relative !== '..' && !relative.startsWith('../') && !path.isAbsolute(relative);
+        const data = inside ? snapshot.contents.get(relative) : fs.existsSync(manifest) ? fs.readFileSync(manifest) : undefined;
+        declared = declaredTypeScript(data, manifest);
+      }
+      if (path.dirname(directory) === directory) break;
+    }
+    const result = { installed, declared };
+    lookup.set(boundary, result);
+    return result;
+  };
+
   const groups = new Map();
-  for (const source of sourceFiles.length ? sourceFiles : ['']) {
-    const boundary = source ? path.dirname(path.join(root, source)) : root;
-    let directory = boundary;
-    while (true) {
-      const manifest = path.join(directory, 'package.json');
-      const relative = path.relative(root, manifest).split(path.sep).join('/');
-      const inside = relative !== '..' && !relative.startsWith('../') && !path.isAbsolute(relative);
-      const data = inside ? snapshot.contents.get(relative) : fs.existsSync(manifest) ? fs.readFileSync(manifest) : undefined;
-      const installed = path.join(directory, 'node_modules/typescript/package.json');
-      if (declaredTypeScript(data, manifest) || fs.existsSync(installed)) break;
-      const parent = path.dirname(directory);
-      if (parent === directory) { directory = null; break; }
-      directory = parent;
+  for (const source of sourceFiles) {
+    const boundary = path.dirname(path.join(root, source));
+    const { installed, declared } = projectSdk(boundary);
+    if (!groups.has(installed)) {
+      const sdk = installed ? loadSdk(installed, 'project') : { ...bundled, limitations: [] };
+      groups.set(installed, { sdk, files: [] });
     }
-    let sdk = bundled;
-    if (directory !== null) {
-      if (!lookup.has(boundary)) {
-        const resolver = createRequire(path.join(boundary, 'package.json'));
-        const installed = (resolver.resolve.paths('typescript') || []).map(base => path.join(base, 'typescript'))
-          .find(base => fs.existsSync(path.join(base, 'package.json')));
-        let sdkRoot = installed ? fs.realpathSync(installed) : null;
-        try { sdkRoot ||= packageRoot(resolver.resolve('typescript')); }
-        catch { /* A declared project SDK can be absent. */ }
-        lookup.set(boundary, sdkRoot);
-      }
-      const sdkRoot = lookup.get(boundary);
-      if (!sdkRoot) {
-        sdk = { ...bundled, limitations: ['Project TypeScript is declared but unavailable; analysis used the bundled version.'] };
-      } else {
-        if (!loaded.has(sdkRoot)) loaded.set(sdkRoot, loadSdk(sdkRoot, 'project'));
-        sdk = loaded.get(sdkRoot);
-      }
+    const group = groups.get(installed);
+    if (!installed && declared && !group.sdk.limitations.length) {
+      group.sdk.limitations.push('Project TypeScript is declared but unavailable; analysis used the bundled version.');
     }
-    const key = sdk.packagePath || 'bundled';
-    if (!groups.has(key)) groups.set(key, { sdk: { ...sdk, limitations: [...sdk.limitations] }, files: [] });
-    else for (const limitation of sdk.limitations) if (!groups.get(key).sdk.limitations.includes(limitation)) groups.get(key).sdk.limitations.push(limitation);
-    if (source) groups.get(key).files.push(source);
+    group.files.push(source);
   }
   return [...groups.values()];
 }

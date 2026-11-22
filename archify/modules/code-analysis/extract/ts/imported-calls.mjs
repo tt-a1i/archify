@@ -116,7 +116,7 @@ function commonJsCallTarget(node, source, callerFile, checker, importTargets, so
   const declaration = pattern.parent, list = declaration.parent;
   if (!ts.isVariableDeclaration(declaration) || !ts.isVariableDeclarationList(list)
     || !(list.flags & ts.NodeFlags.Const) || !ts.isVariableStatement(list.parent)
-    || list.parent.parent !== source || !ts.isCallExpression(declaration.initializer)) return null;
+    || list.parent.parent !== source || !declaration.initializer || !isRequireCall(declaration.initializer, checker)) return null;
   const file = importTargets.get(declaration.initializer), info = sources.get(file);
   if (!info?.valid || !sources.get(callerFile)?.valid || !stable(sources.get(callerFile), checker, checker.getSymbolAtLocation(node.expression))) return null;
   // A captured loader alias, dynamic load or cache access can mutate a module
@@ -124,7 +124,7 @@ function commonJsCallTarget(node, source, callerFile, checker, importTargets, so
   // that escape is visible in this project.
   for (const captured of sources.values()) {
     captured.referenceEffects ||= referenceEffects(captured.source, checker);
-    if (captured.referenceEffects.commonJsOpaque) return null;
+    if (captured.referenceEffects.commonJsOpaque || captured.referenceEffects.opaque) return null;
   }
   // A namespace result can expose the mutable exports object to a write or an
   // arbitrary consumer. Admit only named destructuring and side-effect loads
@@ -211,11 +211,12 @@ function referenceEffects(source, checker) {
     // Property writes mutate an object, not the local function binding.
   };
   for (const node of syntaxNodes(ts, source)) {
-    if (ts.isIdentifier(node) && node.text === 'require' && isModuleRequire(node, checker)
-      && !(ts.isPropertyAccessExpression(node.parent) && node.parent.name === node)) {
+    if (ts.isIdentifier(node) && !(ts.isPropertyAccessExpression(node.parent) && node.parent.name === node)
+      && isModuleRequire(node, checker)) {
       const parent = node.parent;
       const direct = ts.isCallExpression(parent) && parent.expression === node
-        && parent.arguments.length === 1 && ts.isStringLiteralLike(parent.arguments[0]);
+        && parent.arguments.length === 1 && ts.isStringLiteralLike(parent.arguments[0])
+        && isModuleRequire(node, checker, true);
       const declaration = ts.isVariableDeclaration(parent) && parent.name === node;
       const resolve = ts.isPropertyAccessExpression(parent) && parent.expression === node && parent.name.text === 'resolve'
         && ts.isCallExpression(parent.parent) && parent.parent.expression === parent;
@@ -240,15 +241,25 @@ function referenceEffects(source, checker) {
   return { writes, opaque, commonJsOpaque };
 }
 
+function isRequireCall(node, checker) {
+  return ts.isCallExpression(node) && ts.isIdentifier(node.expression) && isModuleRequire(node.expression, checker, true);
+}
+
 // Native CommonJS require has no source declaration. Also preserve the common
 // ESM createRequire pattern, but never infer an arbitrary local function is a loader.
-function isModuleRequire(identifier, checker) {
-  const declarations = checker.getSymbolAtLocation(identifier)?.declarations || [];
-  if (!declarations.length) return true;
+function isModuleRequire(identifier, checker, forDependency = false) {
+  const parent = identifier.parent;
+  const symbol = ts.isShorthandPropertyAssignment(parent) && parent.name === identifier
+    ? checker.getShorthandAssignmentValueSymbol(parent) : checker.getSymbolAtLocation(identifier);
+  const declarations = symbol?.declarations || [];
+  if (!declarations.length) return identifier.text === 'require';
   if (declarations.length !== 1) return false;
   const declaration = declarations[0];
   if (!ts.isVariableDeclaration(declaration) || !declaration.initializer
     || !ts.isCallExpression(declaration.initializer)) return false;
+  // Mutable aliases can still expose the require cache, but cannot establish
+  // a dependency because a later call may use a replacement function.
+  if (forDependency && !(declaration.parent.flags & ts.NodeFlags.Const)) return false;
   const args = declaration.initializer.arguments;
   const base = args[0];
   if (args.length !== 1 || !ts.isPropertyAccessExpression(base) || base.name.text !== 'url'
@@ -263,5 +274,5 @@ function isModuleRequire(identifier, checker) {
     && ['node:module', 'module'].includes(statement.moduleSpecifier.text);
 }
 
-return { importedCallTarget, commonJsCallTarget, isModuleRequire };
+return { importedCallTarget, commonJsCallTarget, isRequireCall };
 }

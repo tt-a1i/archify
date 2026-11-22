@@ -1,5 +1,9 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import { PROJECT_CASES, MODULE_CASES, SYNTAX_CASES, DEFINITION_CASES } from './ts-official-cases.mjs';
 
@@ -24,4 +28,23 @@ test('official engine differential probes have unique independent observations',
   const observations = [...PROJECT_CASES, ...MODULE_CASES, ...SYNTAX_CASES, ...DEFINITION_CASES];
   assert.equal(new Set(observations.map(item => item.id)).size, observations.length);
   process.stdout.write(`# TypeScript official peer scenarios: projects ${PROJECT_CASES.length}, modules ${MODULE_CASES.length}, syntax ${SYNTAX_CASES.length}, definitions ${DEFINITION_CASES.length}; total ${observations.length}\n`);
+});
+
+test('upstream syntax probe rejects missing fixture directories and empty projections', t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-empty-upstream-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const runner = fileURLToPath(new URL('./ts-upstream-syntax-probe.mjs', import.meta.url));
+  const report = path.join(root, 'report.json');
+  const run = () => spawnSync(process.execPath, [runner, root, report], { encoding: 'utf8' });
+  fs.mkdirSync(path.join(root, 'tests/cases/compiler'), { recursive: true });
+  const missing = run();
+  assert.equal(missing.status, 1);
+  assert.match(missing.stderr, /Missing required upstream fixture directory: tests\/cases\/conformance/);
+
+  fs.mkdirSync(path.join(root, 'tests/cases/conformance'));
+  fs.writeFileSync(path.join(root, 'tests/cases/compiler/types-only.ts'), 'type Example = string;');
+  const empty = run();
+  assert.equal(empty.status, 1);
+  assert.match(empty.stderr, /No upstream fixtures projected to JavaScript cases/);
+  assert.equal(fs.existsSync(report), false);
 });

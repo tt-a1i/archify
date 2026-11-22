@@ -17,7 +17,6 @@ const require = createRequire(import.meta.url);
 const [, , checkout, reportFile] = process.argv;
 if (!checkout || !reportFile) throw new Error('Pass a TypeScript checkout and report path.');
 const upstream = path.resolve(checkout);
-const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-upstream-syntax-'));
 const inputs = [];
 const collect = directory => {
   for (const entry of fs.readdirSync(path.join(upstream, directory), { withFileTypes: true })) {
@@ -26,7 +25,13 @@ const collect = directory => {
     else if (/\.(?:[mc]?[jt]s|[jt]sx)$/.test(entry.name)) inputs.push(file);
   }
 };
-for (const directory of ['tests/cases/compiler', 'tests/cases/conformance']) if (fs.existsSync(path.join(upstream, directory))) collect(directory);
+const directories = ['tests/cases/compiler', 'tests/cases/conformance'];
+for (const directory of directories) {
+  if (!fs.statSync(path.join(upstream, directory), { throwIfNoEntry: false })?.isDirectory()) {
+    throw new Error(`Missing required upstream fixture directory: ${directory}`);
+  }
+}
+directories.forEach(collect);
 const config = { ...loadConfig(null), exclude: [], typescript: { sdk: path.dirname(require.resolve('typescript/package.json')) } };
 const results = [];
 const point = (source, node) => {
@@ -37,6 +42,7 @@ const point = (source, node) => {
 const key = range => JSON.stringify(range);
 const sort = values => values.sort((a, b) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2] || a[3] - b[3]);
 
+const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-upstream-syntax-'));
 try {
   for (const upstreamFile of inputs.sort()) {
     const input = fs.readFileSync(path.join(upstream, upstreamFile), 'utf8');
@@ -99,6 +105,7 @@ try {
     results.push(result);
     if (results.length % 100 === 0) process.stdout.write(`Checked ${results.length} upstream JS fixtures; failures ${results.filter(result => result.status === '待修复').length}\n`);
   }
+  assert.ok(results.length, 'No upstream fixtures projected to JavaScript cases');
   const revision = spawnSync('git', ['-C', upstream, 'rev-parse', 'HEAD'], { encoding: 'utf8' });
   const summary = { upstreamCommit: revision.stdout.trim(), sdk: ts.version, node: process.version,
     adapterRevision: REVISION,

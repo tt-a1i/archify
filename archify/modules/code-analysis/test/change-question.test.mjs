@@ -27,8 +27,7 @@ function setup(t, a = { 'entry.mjs': source, 'caller.mjs': caller }, b = { 'entr
   }
   return { dir, baseRoot: path.join(dir, 'base'), root: path.join(dir, 'head'), entry: 'entry.mjs', question: 'What changed and where should I read next?' };
 }
-function capture(args) {
-  const config = loadConfig(null);
+function capture(args, config = loadConfig(null)) {
   return { ...args, config, base: captureChangeSide(args.baseRoot, config, changeEntryLanguage(args.entry)), head: captureChangeSide(args.root, config, changeEntryLanguage(args.entry)) };
 }
 function run(args, extra = []) {
@@ -51,11 +50,25 @@ test('paired multi-SDK captures disclose a changed subproject version', t => {
       fs.writeFileSync(path.join(sdk, 'index.cjs'), `module.exports = { ...require(${JSON.stringify(require.resolve('typescript'))}), version: ${JSON.stringify(installed)} };`);
     }
   }
-  const brief = buildChangeQuestion(capture(args));
+  const brief = buildChangeQuestion(capture(args, { ...loadConfig(null), typescript: { sdk: 'auto' } }));
   assert.equal(brief.comparison.bindingAttribution, 'limited');
   assert.ok(brief.comparison.reasons.some(reason => reason.code === 'resolution-settings-differ'));
   assert.equal(brief.sides.base.languageScope.projects.find(project => project.config === null && project.files.includes('b/other.mjs')).sdkVersion, '5.9.72');
   assert.equal(brief.sides.head.languageScope.projects.find(project => project.config === null && project.files.includes('b/other.mjs')).sdkVersion, '5.9.73');
+});
+
+test('a source added ahead of the first project preserves paired compiler settings', t => {
+  const files = {
+    'tsconfig.json': '{"include":["*.ts"]}',
+    'app/tsconfig.json': '{"compilerOptions":{"strict":true}}',
+    'app/page.ts': 'export function page() {}',
+    'entry.ts': 'export function entry() {}',
+  };
+  const args = { ...setup(t, files, { ...files, 'aaa.ts': 'export const added = 1;' }), entry: 'entry.ts' };
+  const brief = buildChangeQuestion(capture(args));
+  assert.equal(brief.comparison.bindingAttribution, 'same-observed-settings');
+  assert.equal(brief.sides.base.resolution.digest, brief.sides.head.resolution.digest);
+  assert.ok(!brief.comparison.reasons.some(reason => reason.code === 'resolution-settings-differ'));
 });
 
 test('Python BOM decoding preserves fresh paired definition bodies and known callers', t => {

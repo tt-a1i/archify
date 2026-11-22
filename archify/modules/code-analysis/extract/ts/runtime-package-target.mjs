@@ -15,7 +15,7 @@ export function runtimePackageTools(ts) {
 
 function runtimePackageTarget(record, file, root, options, inputs, resolutionMode) {
   if (record.typeOnly || !/\.[cm]?js$/.test(file)
-    || ![ts.ModuleResolutionKind.Node16, ts.ModuleResolutionKind.NodeNext].includes(options.moduleResolution)) return null;
+    || ![ts.ModuleResolutionKind.Node16, ts.ModuleResolutionKind.NodeNext].includes(ts.getEmitModuleResolutionKind(options))) return null;
   const internal = record.specifier.startsWith('#');
   if (!internal && (record.specifier.startsWith('.') || record.specifier.startsWith('/') || record.specifier.includes(':'))) return null;
   if (internal ? options.resolvePackageJsonImports === false : options.resolvePackageJsonExports === false) return null;

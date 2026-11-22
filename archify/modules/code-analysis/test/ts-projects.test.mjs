@@ -153,6 +153,65 @@ test('adding and deleting source files preserves comparison under the same proje
   assert.deepEqual(comparability(added.context, deleted.context), { comparable: true, reasons: [] });
 });
 
+test('adding and deleting an importer preserves comparison when it changes another project member', t => {
+  const root = project(t, {
+    'jsconfig.json': '{"include":["*.js"]}',
+    'main.js': 'export const main = true;',
+    'lib/jsconfig.json': '{}',
+    'lib/run.js': 'export function run() {}',
+  });
+  const before = capture(root);
+  const newFile = path.join(root, 'added.js');
+  fs.writeFileSync(newFile, 'import { run } from "./lib/run.js"; run();');
+  const after = capture(root);
+  const members = run => run.facts.languageScope.projects.find(item => item.config === 'jsconfig.json').members;
+  assert.deepEqual(members(before), ['main.js']);
+  assert.deepEqual(members(after), ['added.js', 'lib/run.js', 'main.js']);
+  assert.deepEqual(comparability(before.context, after.context), { comparable: true, reasons: [] });
+  assert.deepEqual(comparability(after.context, before.context), { comparable: true, reasons: [] });
+});
+
+test('changing inherited include with noResolve changes comparison scope even with a source addition', t => {
+  const root = project(t, {
+    'jsconfig.json': '{"extends":"./base.json","compilerOptions":{"noResolve":true}}',
+    'base.json': '{"include":["*.js","nested/run.js"]}',
+    'main.js': 'import { run } from "./nested/run.js"; run();',
+    'nested/jsconfig.json': '{}',
+    'nested/run.js': 'export function run() {}',
+  });
+  const before = capture(root);
+  fs.writeFileSync(path.join(root, 'base.json'), '{"include":["*.js"]}');
+  fs.writeFileSync(path.join(root, 'added.js'), 'export const added = true;');
+  const after = capture(root);
+  const rootProject = run => run.facts.languageScope.projects.find(item => item.config === 'jsconfig.json');
+  assert.deepEqual(rootProject(before).members, ['main.js', 'nested/run.js']);
+  assert.deepEqual(rootProject(after).members, ['added.js', 'main.js']);
+  assert.equal(rootProject(before).optionsDigest, rootProject(after).optionsDigest);
+  assert.notEqual(rootProject(before).selectionDigest, rootProject(after).selectionDigest);
+  assert.ok(comparability(before.context, after.context).reasons.some(reason => reason.code === 'typescript-project-scope-changed'));
+});
+
+test('removing a shared file from a caller Program changes comparison scope', t => {
+  const root = project(t, {
+    'jsconfig.json': '{"files":["main.js"]}',
+    'main.js': 'import { run } from "./nested/run.js"; run();',
+    'nested/jsconfig.json': '{}',
+    'nested/run.js': 'export function run() {}',
+  });
+  const before = capture(root);
+  const rootProject = facts => facts.languageScope.projects.find(item => item.config === 'jsconfig.json');
+  assert.deepEqual(rootProject(before.facts).members, ['main.js', 'nested/run.js']);
+  fs.writeFileSync(path.join(root, 'main.js'), 'export function main() {}');
+  const after = capture(root);
+  assert.deepEqual(rootProject(after.facts).members, ['main.js']);
+  assert.equal(rootProject(after.facts).optionsDigest, rootProject(before.facts).optionsDigest);
+  assert.deepEqual(after.facts.files.map(f => f.path), before.facts.files.map(f => f.path));
+  assert.ok(comparability(before.context, after.context).reasons.some(reason => reason.code === 'typescript-project-scope-changed'));
+  fs.writeFileSync(path.join(root, 'nested/added.js'), 'export const added = true;');
+  assert.ok(comparability(before.context, capture(root).context).reasons.some(reason => reason.code === 'typescript-project-scope-changed'),
+    'an addition outside the affected Program does not hide a shared membership change');
+});
+
 test('reordering SDK records preserves project identity while changed ownership does not', t => {
   const { context } = capture(project(t, { 'main.js': 'export function run() {}' }));
   const first = structuredClone(context);

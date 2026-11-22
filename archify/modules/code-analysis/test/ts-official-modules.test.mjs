@@ -4,7 +4,7 @@ import path from 'node:path';
 import { test } from 'node:test';
 import { extractFacts, loadConfig } from '../lib/analysis.mjs';
 import { MODULE_CASES } from './ts-official-cases.mjs';
-import { configuredProgram, officialFixture, sdkPath, ts } from './ts-official-oracle.mjs';
+import { configuredProgram, nativeDependencies, officialFixture, sdkPath, ts } from './ts-official-oracle.mjs';
 
 for (const observation of MODULE_CASES) test(`official resolver ${observation.id}`, t => {
   const configName = observation.options ? 'jsconfig.json' : null;
@@ -41,4 +41,32 @@ for (const observation of MODULE_CASES) test(`official resolver ${observation.id
     assert.equal(actual.to, expected, 'same captured module target as the selected Compiler API');
     assert.equal(actual.resolved, Boolean(expected));
   }
+});
+
+test('real-project acceptance distinguishes literal, runtime, type-only and computed imports', t => {
+  const files = {
+    'jsconfig.json': { compilerOptions: { module: 'NodeNext' } },
+    'package.json': { type: 'module', imports: { '#run': { types: './run.d.ts', import: './run.js' } } },
+    'entry.mjs': 'import "#run";\nfunction local(require) { require("./shadowed.js"); }\nconst name = "./run.js";\nimport(name);',
+    'types.ts': 'import type { Run } from "#run";',
+    'run.js': 'export function run() {}',
+    'run.d.ts': 'export type Run = () => void;',
+    'shadowed.js': 'export {};',
+  };
+  const { root, selected } = officialFixture(t, { files });
+  const { options, roots } = configuredProgram(root, 'jsconfig.json');
+  const program = ts.createProgram(roots, options);
+  const peers = file => nativeDependencies(ts, program.getSourceFile(path.join(root, file)), program, options, fs.realpathSync(root), new Set(selected));
+  const { literal, computed } = peers('entry.mjs');
+  assert.deepEqual(literal.map(edge => [edge.specifier, edge.officialTarget, edge.projected, edge.projection]), [
+    ['#run', 'run.d.ts', 'run.js', 'runtime'],
+  ]);
+  assert.deepEqual(computed, [{ line: 4, specifier: '<computed>', kind: 'dynamic', resolved: false }]);
+  assert.deepEqual(peers('types.ts').literal.map(edge => [edge.projected, edge.projection]), [['run.d.ts', 'type-only']]);
+  const { facts } = extractFacts(root, { language: 'ts', config: { ...loadConfig(null), exclude: [], typescript: { sdk: sdkPath } } });
+  assert.deepEqual(facts.imports.map(edge => [edge.from, edge.specifier, edge.kind, edge.to, edge.typeOnly]), [
+    ['entry.mjs', '#run', 'static', 'run.js', undefined],
+    ['entry.mjs', '<computed>', 'dynamic', undefined, undefined],
+    ['types.ts', '#run', 'static', 'run.d.ts', true],
+  ]);
 });

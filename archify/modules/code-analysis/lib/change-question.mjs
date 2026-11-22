@@ -20,9 +20,14 @@ const end = range => ({ line: range.endLine, column: range.endColumn });
 
 // Normalize root-relative compiler paths, without rewriting arbitrary strings
 // such as path patterns. External paths remain explicit comparison differences.
-function normalize(value, root) {
+function normalize(value, root, preserveOrder = false) {
   if (Array.isArray(value)) return value.map(item => normalize(item, root));
-  if (value && typeof value === 'object') return Object.fromEntries(Object.keys(value).sort().map(k => [k, normalize(value[k], root)]));
+  if (value && typeof value === 'object') {
+    const keys = Object.keys(value);
+    // A tie between compiler paths patterns follows declaration order.
+    if (!preserveOrder) keys.sort();
+    return Object.fromEntries(keys.map(k => [k, normalize(value[k], root, k === 'paths')]));
+  }
   if (typeof value === 'string' && path.isAbsolute(value)) {
     const rel = path.relative(root, value);
     if (rel !== '..' && !rel.startsWith(`..${path.sep}`) && !path.isAbsolute(rel)) return `<root>/${rel.split(path.sep).join('/')}`;

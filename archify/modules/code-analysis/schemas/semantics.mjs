@@ -121,7 +121,8 @@ function rawFactsErrors(data, report) {
         add(`/languageScope/sdks/${index}`, 'each recorded SDK must own a captured project');
       }
       for (const [i, project] of (data.languageScope?.projects || []).entries()) {
-        if (!Number.isInteger(project.sdkIndex) || sdks[project.sdkIndex]?.version !== project.sdkVersion) {
+        const selected = sdks[project.sdkIndex];
+        if (!Number.isInteger(project.sdkIndex) || !selected || selected.version !== project.sdkVersion) {
           add(`/languageScope/projects/${i}/sdkIndex`, 'must identify the SDK used for this project');
         }
       }
@@ -130,7 +131,8 @@ function rawFactsErrors(data, report) {
       const projects = data.languageScope?.projects || [];
       const sdkByFile = new Map(projects.flatMap(project => project.files.map(file => [file, project.sdkIndex])));
       for (const [i, project] of projects.entries()) {
-        if (!Array.isArray(project.members) || project.files.some(file => !project.members.includes(file))
+        const members = new Set(Array.isArray(project.members) ? project.members : []);
+        if (!Array.isArray(project.members) || project.files.some(file => !members.has(file))
           || project.members.some(file => !files.has(file) || sdkByFile.get(file) !== project.sdkIndex)) {
           add(`/languageScope/projects/${i}/members`, 'requires captured caller Program members including owned files, all under the same SDK');
         }
@@ -413,11 +415,12 @@ function callTargetErrors(call, at, context) {
   if (!functionStarts.has(JSON.stringify([targetFile, call.target.name, call.target.line])) && !abstractMethod) add(`${at}/target`, 'target must reference a recorded function in its target file');
 }
 
-function commonJsTargetErrors(call, at, targetFile, { add, requireImports, brokenFiles, commonJsModel }) {
+function commonJsTargetErrors(call, at, targetFile, { add, requireImports, brokenFiles, commonJsModel, functionPoints }) {
   if (!commonJsModel) add(`${at}/resolution`, 'requires the JS/TS v6 CommonJS call model');
   if (call.target.file === undefined || !requireImports.get(call.file)?.has(targetFile)) {
     add(`${at}/target/file`, 'must follow a recorded CommonJS require to its captured target file');
   }
+  if (!functionPoints.has(pointKey(targetFile, call.target))) add(`${at}/target`, 'must match a captured CommonJS definition start');
   if (brokenFiles.has(targetFile)) add(`${at}/target`, 'target file must have no parse errors');
 }
 

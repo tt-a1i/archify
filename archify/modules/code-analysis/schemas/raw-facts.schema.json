@@ -1197,6 +1197,7 @@
                 "properties": {
                   "config": { "type": ["string", "null"] },
                   "optionsDigest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+                  "selectionDigest": { "type": "string", "pattern": "^[0-9a-f]{64}$", "description": "Digest of effective config file selection and project references." },
                   "sdkIndex": { "type": "integer", "minimum": 0 },
                   "sdkVersion": { "type": "string", "minLength": 1 },
                   "members": { "type": "array", "items": { "type": "string" }, "uniqueItems": true, "description": "Captured sources available in this caller Program under the same SDK. May overlap other projects; files records exclusive fact ownership." },

@@ -8,7 +8,7 @@ import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { performance } from 'node:perf_hooks';
 import { extractFacts, loadConfig } from '../lib/analysis.mjs';
-import { inferredOptions, serverProjects } from './ts-official-oracle.mjs';
+import { inferredOptions, nativeDependencies, serverProjects } from './ts-official-oracle.mjs';
 
 const [, , checkout, evidenceDirectory] = process.argv;
 if (!checkout || !evidenceDirectory) throw new Error('Pass a clean Git checkout and an evidence directory.');
@@ -29,6 +29,7 @@ const ts = require(sdkPath);
 // and generated outputs by the existing defaults. Reject unsupported layouts.
 const selected = git('ls-files', '-z').split('\0').filter(file => /\.(?:[mc]?[jt]s|[jt]sx)$/.test(file)
   && !file.endsWith('.d.ts') && !file.split('/').some(part => ['node_modules', 'dist', 'build', 'coverage', '_archive'].includes(part))).sort();
+const selectedFiles = new Set(selected);
 const sourceHashes = () => Object.fromEntries(selected.map(file => [file, hash(fs.readFileSync(path.join(root, file)))]));
 const initialHashes = sourceHashes();
 const started = performance.now(), contexts = new Map(), differences = [];
@@ -38,7 +39,7 @@ const report = {
     packageVersion: require('./package.json').version, clean: true, lockSha256: hash(fs.readFileSync(path.join(root, 'package-lock.json'))) },
   environment: { platform: process.platform, arch: process.arch, node: process.version, sdkVersion: ts.version, sdkPath },
   scope: { selected, sourceSha256: initialHashes, policy: 'all tracked JS/TS selected by default Archify filters; native Programs may overlap; source facts have one owner' },
-  differences, files: [], imports: [], functions: [], knownCalls: [], unknownCalls: [], sensitivity: [],
+  differences, files: [], imports: [], computedImports: [], functions: [], knownCalls: [], unknownCalls: [], sensitivity: [],
 };
 const point = (source, pos) => { const p = source.getLineAndCharacterOfPosition(pos); return [p.line + 1, p.character + 1]; };
 const range = (source, node) => [...point(source, node.getStart(source)), ...point(source, node.getEnd())];
@@ -114,10 +115,11 @@ function nativeImplementationMatches(peer, definitions, target) {
 
 try {
   let captured;
+  const capturedOnly = false;
   const config = { ...loadConfig(null), typescript: { sdk: 'auto', requireProjectSdk: true } };
-  const { facts } = extractFacts(root, { language: 'ts', config, onCapture: value => { captured = value; } });
+  const { facts } = extractFacts(root, { language: 'ts', config, capturedOnly, onCapture: value => { captured = value; } });
   fs.writeFileSync(path.join(out, 'archify-raw-facts.json'), `${JSON.stringify(facts, null, 2)}\n`);
-  report.candidate = { adapter: facts.repository.adapter, adapterRevision: facts.repository.adapterRevision, callModel: facts.callModel,
+  report.candidate = { adapter: facts.repository.adapter, adapterRevision: facts.repository.adapterRevision, callModel: facts.callModel, capturedOnly,
     sourceSha256: Object.fromEntries(['index.mjs', 'sdk.mjs', 'calls.mjs', 'functions.mjs', 'imported-calls.mjs', 'snapshot-host.mjs', 'runtime-package-target.mjs', 'syntax-walk.mjs']
       .map(file => [file, hash(fs.readFileSync(new URL(`../extract/ts/${file}`, import.meta.url)))])),
     runnerSha256: hash(fs.readFileSync(new URL(import.meta.url))),
@@ -150,7 +152,7 @@ try {
     compare('syntax-coverage', file, Boolean(facts.parse_errors?.some(error => error.path === file)), Boolean(syntax.length));
     compare('source-text', file, facts.files.find(record => record.path === file)?.sourceText, source.text);
     const ast = [...nodes(source)], functionBodies = ast.filter(node => ts.isFunctionLike(node) && node.body);
-    const calls = ast.filter(ts.isCallExpression), literals = ast.filter(ts.isStringLiteralLike);
+    const calls = ast.filter(ts.isCallExpression);
     const actualFunctions = facts.functions.filter(fn => fn.file === file), actualCalls = facts.calls.filter(call => call.file === file);
     compare('call-inventory', file, sorted(actualCalls.map(call => [call.line, call.column, call.endLine, call.endColumn])), sorted(calls.map(node => range(source, node))));
     const required = new Set(functionBodies.filter(node => node.name || ts.isConstructorDeclaration(node)
@@ -166,28 +168,19 @@ try {
     }
     if (required.size) differences.push({ category: 'missing-function-bodies', subject: file, expected: [...required] });
 
-    // The compiler's independent preprocessor supplies the literal dependency
-    // inventory; syntax is used only to locate the usage mode and statement.
-    const imports = ts.preProcessFile(source.text, true, true).importedFiles.map(dependency => {
-      const literal = literals.find(node => node.text === dependency.fileName && node.getStart(source) <= dependency.pos && node.end >= dependency.end);
-      if (!literal) throw new Error(`No AST usage for ${file}:${dependency.fileName}`);
-      let statement = literal;
-      while (statement.parent && !ts.isImportDeclaration(statement) && !ts.isExportDeclaration(statement)
-        && !ts.isImportEqualsDeclaration(statement) && !ts.isCallExpression(statement)) statement = statement.parent;
-      const kind = ts.isExportDeclaration(statement) ? 'export' : ts.isImportEqualsDeclaration(statement) ? 'require'
-        : ts.isCallExpression(statement) ? statement.expression.kind === ts.SyntaxKind.ImportKeyword ? 'dynamic' : 'require' : 'static';
-      const line = point(source, statement.getStart(source))[0];
-      const resolved = ts.resolveModuleName(dependency.fileName, source.fileName, peer.options, ts.sys, undefined, undefined,
-        peer.program.getModeForUsageLocation(source, literal)).resolvedModule;
-      const resolvedFile = resolved && relative(fs.realpathSync(resolved.resolvedFileName));
-      const projected = selected.includes(resolvedFile) ? resolvedFile : null;
-      return { file, line, specifier: dependency.fileName, kind, officialTarget: resolvedFile || null, projected };
-    });
+    const { literal, computed } = nativeDependencies(ts, source, peer.program, peer.options, root, selectedFiles);
     const actualImports = facts.imports.filter(edge => edge.from === file);
-    compare('import-inventory', file, sorted(actualImports.map(edge => [edge.line, edge.specifier, edge.kind])), sorted(imports.map(edge => [edge.line, edge.specifier, edge.kind])));
-    for (const edge of imports) {
-      const actual = actualImports.find(item => item.line === edge.line && item.specifier === edge.specifier && item.kind === edge.kind);
-      compare('module-target', { file, line: edge.line, specifier: edge.specifier }, actual?.to || null, edge.projected);
+    const actualLiteral = actualImports.filter(edge => edge.specifier !== '<computed>');
+    const actualComputed = actualImports.filter(edge => edge.specifier === '<computed>');
+    const inventory = edges => sorted(edges.map(edge => [edge.line, edge.specifier, edge.kind]));
+    compare('literal-import-inventory', file, inventory(actualLiteral), inventory(literal));
+    compare('computed-import-inventory', file, sorted(actualComputed.map(({ line, specifier, kind, resolved }) => ({ line, specifier, kind, resolved }))), sorted(computed));
+    report.computedImports.push(...computed.map(edge => ({ file, ...edge })));
+    for (const edge of literal) {
+      const actual = actualLiteral.find(item => item.line === edge.line && item.specifier === edge.specifier && item.kind === edge.kind);
+      const subject = { file, line: edge.line, specifier: edge.specifier };
+      compare(`module-target/${edge.projection}`, subject, actual?.to || null, edge.projected);
+      compare('import-type-only', subject, Boolean(actual?.typeOnly), edge.typeOnly);
       report.imports.push({ ...edge, archifyTarget: actual?.to || null, matched: (actual?.to || null) === edge.projected });
     }
 
@@ -226,7 +219,7 @@ try {
         calleeSyntax: ts.SyntaxKind[node.expression.kind], officialDefinitions: definitions,
         policy: 'definition candidates are not runtime dispatch evidence' });
     }
-    report.files.push({ file, config: owner?.config, syntaxErrors: syntax.length, imports: imports.length, functions: actualFunctions.length, calls: actualCalls.length });
+    report.files.push({ file, config: owner?.config, syntaxErrors: syntax.length, imports: literal.length, computedImports: computed.length, functions: actualFunctions.length, calls: actualCalls.length });
   }
   const finalHashes = sourceHashes(), trackedChanges = git('status', '--porcelain').trim();
   compare('source-stability', 'checkout', finalHashes, initialHashes);
@@ -236,7 +229,7 @@ try {
   compare('repeat-capture', 'raw facts', repeatedDigest, rawDigest);
   report.reproducibility = { sourceUnchanged: key(finalHashes) === key(initialHashes), trackedTreeClean: trackedChanges === '',
     rawFactsSha256: rawDigest, repeatedRawFactsSha256: repeatedDigest, repeatedCaptureIdentical: rawDigest === repeatedDigest };
-  report.summary = { files: report.files.length, projects: report.projects.length, imports: report.imports.length,
+  report.summary = { files: report.files.length, projects: report.projects.length, imports: report.imports.length, computedImports: report.computedImports.length,
     functions: report.functions.length, calls: facts.calls.length, knownCalls: report.knownCalls.length,
     sharedMemberTargets: report.knownCalls.filter(call => facts.languageScope.projects.find(project => project.files.includes(call.file))
       !== facts.languageScope.projects.find(project => project.files.includes(call.target.file))).length,

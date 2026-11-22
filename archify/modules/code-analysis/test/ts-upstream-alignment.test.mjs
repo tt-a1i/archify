@@ -7,6 +7,7 @@ import ts from 'typescript';
 import { extract } from '../extract/ts/index.mjs';
 import { semanticErrors } from '../schemas/semantics.mjs';
 import { extractFacts } from '../lib/analysis.mjs';
+import { nativeDependencies } from './ts-official-oracle.mjs';
 
 const config = JSON.parse(fs.readFileSync(new URL('../config/defaults.json', import.meta.url), 'utf8'));
 
@@ -110,6 +111,9 @@ test('upstream CommonJS reference theme: a stable destructured require reaches o
   assert.deepEqual(semanticErrors('raw-facts', facts), []);
   const historical = structuredClone(facts); historical.callModel = 'js-ts-lexical-v5';
   assert.ok(semanticErrors('raw-facts', historical).some(error => error.message.includes('v6 CommonJS')));
+  const wrongColumn = structuredClone(facts);
+  wrongColumn.calls.find(item => item.resolution === 'commonjs-function').target.column += 1;
+  assert.ok(semanticErrors('raw-facts', wrongColumn).some(error => error.message.includes('CommonJS definition start')));
   const wrongEdge = structuredClone(facts); wrongEdge.calls.find(item => item.resolution === 'commonjs-function').target.file = 'b.js';
   assert.ok(semanticErrors('raw-facts', wrongEdge).some(error => error.message.includes('recorded CommonJS require')));
 });
@@ -157,14 +161,99 @@ test('CommonJS targets stay unknown when a captured require result can be mutate
   }
 });
 
-test('a loader escape in another captured source blocks CommonJS attribution', t => {
+test('dynamic import destructuring records a dependency without attributing a CommonJS call', t => {
   const root = fixture(t, {
-    'a.cjs': 'function f() {} module.exports.f = f;',
-    'b.cjs': 'const { f } = require("./a.cjs"); f();',
-    'c.cjs': 'require.cache[require.resolve("./a.cjs")].exports.f = () => {};',
+    'lib.cjs': 'function toString() { return ""; } module.exports.toString = toString;',
+    'entry.cjs': 'const { toString } = import("./lib.cjs");\ntoString();',
   });
   const { facts } = extractFacts(root, { language: 'ts', config });
-  assert.equal(facts.calls.find(call => call.file === 'b.cjs' && call.column > 30)?.resolution, 'unresolved');
+  assert.deepEqual(facts.imports.map(edge => [edge.kind, edge.to]), [['dynamic', 'lib.cjs']]);
+  assert.equal(facts.calls.find(call => call.line === 2)?.resolution, 'unresolved');
+});
+
+test('loader escapes in a separate Program member block CommonJS attribution', t => {
+  const root = fixture(t, {
+    'a.cjs': 'function f() {} module.exports.f = f;',
+    'b.cjs': 'require("./mutator.cjs");\nconst { f } = require("./a.cjs"); f();',
+    'mutator.cjs': '',
+  });
+  const call = () => extractFacts(root, { language: 'ts', config }).facts.calls
+    .find(call => call.file === 'b.cjs' && call.line === 2 && call.column > 30);
+  assert.equal(call()?.resolution, 'commonjs-function');
+  for (const mutator of [
+    'require.cache[require.resolve("./a.cjs")].exports.f = () => {};',
+    'function inspect(code) { eval(code); }',
+  ]) {
+    fs.writeFileSync(path.join(root, 'mutator.cjs'), mutator);
+    assert.equal(call()?.resolution, 'unresolved', mutator);
+  }
+});
+
+test('createRequire aliases contribute dependency evidence and invalidate escaped CommonJS exports', t => {
+  const root = fixture(t, {
+    'a.cjs': 'function f() {} module.exports.f = f;',
+    'b.cjs': 'const { f } = require("./a.cjs");\nf();',
+    'loader.mjs': [
+      'import { createRequire as makeLoader } from "node:module";',
+      'const load = makeLoader(import.meta.url);',
+      'const { f } = load("./a.cjs");',
+      'f();',
+    ].join('\n'),
+  });
+  const inspect = () => extractFacts(root, { language: 'ts', config }).facts;
+  const bound = inspect();
+  assert.ok(bound.imports.some(edge => edge.from === 'loader.mjs' && edge.kind === 'require' && edge.to === 'a.cjs'));
+  assert.equal(bound.calls.find(call => call.file === 'loader.mjs' && call.line === 4)?.resolution, 'commonjs-function');
+  for (const mutation of [
+    'const api = load("./a.cjs"); api.f = () => {};',
+    'load.cache[load.resolve("./a.cjs")].exports.f = () => {};',
+    'const bag = { load }; bag.load.cache[bag.load.resolve("./a.cjs")].exports.f = () => {};',
+  ]) {
+    const file = path.join(root, 'loader.mjs');
+    const before = fs.readFileSync(file, 'utf8');
+    fs.appendFileSync(file, `\n${mutation}`);
+    assert.equal(inspect().calls.find(call => call.file === 'b.cjs' && call.line === 2)?.resolution, 'unresolved');
+    fs.writeFileSync(file, before);
+  }
+});
+
+test('a reassigned createRequire binding cannot supply a dependency', t => {
+  const root = fixture(t, {
+    'a.cjs': 'function f() {} module.exports.f = f;',
+    'caller.cjs': 'const { f } = require("./a.cjs");\nf();',
+    'loader.mjs': [
+      'import { createRequire } from "node:module";',
+      'let load = createRequire(import.meta.url);',
+      'const fake = () => ({});',
+      'load = fake;',
+      'load("./a.cjs");',
+    ].join('\n'),
+  });
+  const { facts } = extractFacts(root, { language: 'ts', config });
+  assert.ok(!facts.imports.some(edge => edge.from === 'loader.mjs' && edge.specifier === './a.cjs'));
+  assert.ok(facts.imports.some(edge => edge.from === 'caller.cjs' && edge.to === 'a.cjs'));
+  assert.equal(facts.calls.find(call => call.file === 'caller.cjs' && call.line === 2)?.resolution, 'unresolved');
+});
+
+test('native acceptance retains createRequire and filters a shadowing parameter', t => {
+  const root = fs.realpathSync(fixture(t, {
+    'loader.mjs': [
+      'import { createRequire as factory } from "node:module";',
+      'const require = factory(import.meta.url);',
+      'require("./actual.cjs");',
+      'function local(require) { require("./shadowed.cjs"); }',
+    ].join('\n'),
+    'actual.cjs': 'module.exports = {};',
+    'shadowed.cjs': 'module.exports = {};',
+  }));
+  const options = { allowJs: true, module: ts.ModuleKind.NodeNext };
+  const file = path.join(root, 'loader.mjs');
+  const program = ts.createProgram([file], options);
+  const { literal } = nativeDependencies(ts, program.getSourceFile(file), program, options, root,
+    new Set(['loader.mjs', 'actual.cjs', 'shadowed.cjs']));
+  assert.deepEqual(literal.map(edge => [edge.specifier, edge.kind, edge.projected]), [
+    ['node:module', 'static', null], ['./actual.cjs', 'require', 'actual.cjs'],
+  ]);
 });
 
 test('a static self-require retains a valid CommonJS source target', t => {

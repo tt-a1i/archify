@@ -24,7 +24,7 @@
     "**/_archive/**"
   ],
   "typescript": {
-    "sdk": "auto",
+    "sdk": "bundled",
     "requireProjectSdk": false
   },
   "roles": {

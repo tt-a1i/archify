@@ -195,7 +195,7 @@ export function comparability(before, after) {
   if (before.configDigest !== after.configDigest) add('config-changed', 'The analysis configuration or module grouping changed (thresholds, include/exclude, roles, boundaries or ignored rules).');
   if (before.language === 'ts' && after.language === 'ts' && (before.tsProjects || after.tsProjects)
     && typescriptProjectsChanged(before, after)) {
-    add('typescript-project-scope-changed', 'The TypeScript project ownership or effective compiler options changed.');
+    add('typescript-project-scope-changed', 'The TypeScript project ownership, configuration or Program scope changed.');
   }
   if (before.language === 'ts' && after.language === 'ts' && (before.tsSdks || after.tsSdks)
     && JSON.stringify(before.tsSdks?.map(typescriptSdkIdentity).sort()) !== JSON.stringify(after.tsSdks?.map(typescriptSdkIdentity).sort())) {
@@ -243,21 +243,34 @@ const typescriptSdkIdentity = sdk => JSON.stringify([sdk?.version, sdk?.source, 
 function typescriptProjectsChanged(before, after) {
   if (!before.tsProjects || !after.tsProjects) return true;
   const describe = context => {
-    const files = new Map(), options = new Map();
+    const files = new Map(), projects = new Map();
     for (const project of context.tsProjects) {
       const sdk = typescriptSdkIdentity(context.tsSdks?.[project.sdkIndex] || { version: project.sdkVersion });
       const key = JSON.stringify([project.config, sdk]);
-      options.set(key, project.optionsDigest);
+      projects.set(key, { options: project.optionsDigest, selection: project.config === null ? null : project.selectionDigest, members: project.members && new Set(project.members) });
       const owner = JSON.stringify([key, project.optionsDigest]);
       for (const file of project.files) files.set(file, owner);
     }
-    return { files, options };
+    return { files, projects };
   };
   const left = describe(before), right = describe(after);
-  // Adding or deleting source files is the change being measured. Compare
-  // ownership for shared files and effective settings for shared projects.
-  return [...left.files].some(([file, owner]) => right.files.has(file) && right.files.get(file) !== owner)
-    || [...left.options].some(([project, options]) => right.options.has(project) && right.options.get(project) !== options);
+  if ([...left.files].some(([file, owner]) => right.files.has(file) && right.files.get(file) !== owner)) return true;
+  for (const [key, project] of left.projects) {
+    const other = right.projects.get(key);
+    if (!other) continue;
+    if (project.options !== other.options) return true;
+    const hasSelection = project.selection !== undefined && other.selection !== undefined;
+    if (hasSelection && project.selection !== other.selection) return true;
+    if (!project.members || !other.members) continue;
+    // Added or deleted members can change which shared dependencies a
+    // Program pulls in, even with the same effective config selection.
+    const previousMembers = [...project.members], currentMembers = [...other.members];
+    if (hasSelection && (previousMembers.some(file => !right.files.has(file))
+      || currentMembers.some(file => !left.files.has(file)))) continue;
+    if (previousMembers.some(file => right.files.has(file) && !other.members.has(file))
+      || currentMembers.some(file => left.files.has(file) && !project.members.has(file))) return true;
+  }
+  return false;
 }
 
 // Source contexts describe how an external report was produced. The changing

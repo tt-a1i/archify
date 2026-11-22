@@ -21,7 +21,7 @@ export const id = 'ts';
 // Revision of this adapter's own extraction logic, recorded as
 // repository.adapterRevision. Bump it when the same sources can yield different
 // raw facts (see docs/TECH-GUIDE.md, "Extractor revisions").
-export const REVISION = 28;
+export const REVISION = 30;
 
 const SOURCE_EXT = /\.(?:[mc]?[jt]s|[jt]sx)$/;
 // Placeholder specifier for import()/require() calls whose argument is not a string literal.
@@ -41,15 +41,17 @@ export function extract(root, config, { onCapture, capturedOnly = false } = {}) 
   const selected = file => SOURCE_EXT.test(file) && include(file) && !exclude(file)
     && !file.split('/').slice(0, -1).some((_, i, parts) => exclude(`${parts.slice(0, i + 1).join('/')}/`));
   const snapshot = snapshotTree(absRoot, file => selected(file) || file.endsWith('.json'));
-  const segments = selectTypeScripts(absRoot, snapshot, config, selected, { capturedOnly }).map(({ sdk, files }) => {
+  const sdkGroups = selectTypeScripts(absRoot, snapshot, config, selected, { capturedOnly });
+  const mixedSdks = sdkGroups.length > 1;
+  const segments = sdkGroups.map(({ sdk, files }) => {
     const engine = createExtractor(sdk.ts);
-    return { sdk, engine, prepared: engine.prepare(absRoot, files, snapshot, { capturedOnly }) };
+    return { sdk, engine, prepared: engine.prepare(absRoot, files, snapshot, { capturedOnly, mixedSdks }) };
   });
   if (!capturedOnly && config.typescript?.requireProjectSdk) {
     const missing = segments.find(segment => segment.prepared.projects.length && segment.sdk.status === 'fallback');
     if (missing) fail('extract/typescript-sdk-required', 'A captured project has no installed TypeScript SDK.', {
       subject: { root: absRoot, file: missing.prepared.projects[0].files[0] },
-      supportedFixes: ['install the project TypeScript SDK', 'set typescript.sdk to a validated package path'],
+      supportedFixes: ['install TypeScript 5.6–6.0 in the trusted project for "auto" discovery', 'set typescript.sdk to a validated package path you trust', 'disable typescript.requireProjectSdk to allow "bundled"'],
     });
   }
   const fileSet = new Set(segments.flatMap(segment => segment.prepared.projects.flatMap(project => project.files)));
@@ -64,16 +66,22 @@ export function extract(root, config, { onCapture, capturedOnly = false } = {}) 
     if (reads.has(file) && reads.get(file) !== value) fail('extract/source-changed', 'A TypeScript resolution input changed between project captures.', { subject: { file } });
     reads.set(file, value);
   }
-  onCapture?.({ options: results.length === 1 ? (results[0].prepared.projects.length === 1
-    ? results[0].prepared.projects[0].options
-    : results[0].prepared.projects.map(project => ({ config: project.config, options: project.options })))
-    : results.flatMap(({ sdk, prepared }) => prepared.projects.map(project => ({ config: project.config, sdkVersion: sdk.version, options: project.options }))), reads });
   const sdkRecord = sdk => {
     const relative = sdk.packagePath && path.relative(fs.realpathSync(absRoot), sdk.packagePath);
     const inside = relative && relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative);
     const packagePath = sdk.packagePath ? (inside ? toPosix(relative) : sdk.packagePath) : null;
     return { version: sdk.version, source: sdk.source, status: sdk.status, packagePath };
   };
+  if (onCapture) {
+    const projects = results.flatMap(({ sdk, prepared }) => prepared.projects.map(project => ({
+      config: project.config, options: project.options,
+      ...(results.length > 1 ? { sdkVersion: sdk.version, sdk: sdkRecord(sdk) } : {}),
+    })));
+    projects.sort((a, b) => compareText(a.config ?? '', b.config ?? '')
+      || compareText(JSON.stringify(a.sdk), JSON.stringify(b.sdk)));
+    onCapture({ options: results.length === 1 && projects.length === 1 ? projects[0].options : projects, reads });
+    for (const { prepared } of segments) prepared.inputs.assertUnchanged();
+  }
   const base = results[0].facts;
   const projects = results.flatMap(({ facts, sdk }, sdkIndex) => facts.languageScope.projects.map(project => ({ ...project, sdkIndex, sdkVersion: sdk.version })));
   const combined = { ...base,
@@ -95,12 +103,16 @@ export function extract(root, config, { onCapture, capturedOnly = false } = {}) 
   return combined;
 }
 
+function compareText(a, b) {
+  return a < b ? -1 : a > b ? 1 : 0;
+}
+
 function createExtractor(ts) {
 const { snapshotHost } = snapshotHostTools(ts);
 const { runtimePackageTarget } = runtimePackageTools(ts);
 const { isShortCircuitExpression, measureFunctions } = functionTools(ts);
 const { callsite } = callTools(ts);
-const { importedCallTarget, commonJsCallTarget, isModuleRequire } = importedCallTools(ts);
+const { importedCallTarget, commonJsCallTarget, isRequireCall } = importedCallTools(ts);
 
 const COMPILER_OPTIONS = {
   allowJs: true,
@@ -111,9 +123,9 @@ const COMPILER_OPTIONS = {
   allowImportingTsExtensions: true,
 };
 
-function prepare(root, files, snapshot, { capturedOnly }) {
+function prepare(root, files, snapshot, { capturedOnly, mixedSdks }) {
   const inputs = snapshotHost(root, snapshot, { capturedOnly });
-  return { inputs, ...configuredProjects(root, files, inputs, snapshot) };
+  return { inputs, ...configuredProjects(root, files, inputs, snapshot, mixedSdks) };
 }
 
 // Both project membership and lexical extraction read the same captured source
@@ -179,7 +191,10 @@ function run(root, config, { snapshot, sdk, prepared, fileSet, capturedOnly }) {
         if (found.lazy) record.lazy = true;
         if (found.conditional) record.conditional = true;
         if (source.isDeclarationFile || found.typeOnly) record.typeOnly = true;
-        const target = found.opaque ? { reason: 'opaque' } : resolve(record, abs, absRoot, fileSet, options, inputs, program.getModeForUsageLocation(source, found.usage));
+        // The compiler does not recognize createRequire aliases as require usage.
+        const mode = found.kind === 'require' && found.statement ? ts.ModuleKind.CommonJS
+          : program.getModeForUsageLocation(source, found.usage);
+        const target = found.opaque ? { reason: 'opaque' } : resolve(record, abs, absRoot, fileSet, options, inputs, mode);
         if (target.to) {
           record.to = target.to; record.resolved = true;
           if (found.statement) importTargets.set(found.statement, target.to);
@@ -236,7 +251,9 @@ function run(root, config, { snapshot, sdk, prepared, fileSet, capturedOnly }) {
     schema_version: 1,
     repository: { ...repo, language: 'ts', adapter: `typescript@${ts.version}`, adapterRevision: REVISION },
     languageScope: { language: 'ts', sdk: { version: sdk.version, source: sdk.source, status: sdk.status },
-      projects: projects.map(project => ({ config: project.config, optionsDigest: project.optionsDigest, files: project.files, members: project.members })),
+      projects: projects.map(({ config, optionsDigest, selectionDigest, files, members }) => ({
+        config, optionsDigest, ...(selectionDigest ? { selectionDigest } : {}), files, members,
+      })),
       excludedByProject: [], limitations: [...sdk.limitations, ...(projects.length > 1
         ? ['Call targets follow captured members of the caller Program. Cross-SDK targets and forwarding paths that disagree with recorded owner imports remain unresolved.'] : [])] },
     files: fileRecords,
@@ -251,19 +268,22 @@ function run(root, config, { snapshot, sdk, prepared, fileSet, capturedOnly }) {
   };
 }
 
-function compareText(a, b) {
-  return a < b ? -1 : a > b ? 1 : 0;
-}
-
 function lineOf(source, node) {
   return source.getLineAndCharacterOfPosition(node.getStart(source)).line + 1;
 }
 
 /** Assign selected sources to configured projects or inferred-project defaults. */
-function configuredProjects(root, files, inputs, snapshot) {
+function configuredProjects(root, files, inputs, snapshot, mixedSdks) {
   const parsed = new Map();
   const groups = new Map();
   const owners = [];
+  const groupFiles = new Set(files);
+  const followReferences = references => {
+    for (const reference of references || []) {
+      const referenced = ts.resolveProjectReferencePath(reference);
+      if (inputs.fileExists(referenced)) loadConfig(toPosix(path.relative(root, referenced)));
+    }
+  };
   const loadConfig = relative => {
     if (parsed.has(relative)) return parsed.get(relative);
     const file = path.join(root, relative);
@@ -272,13 +292,24 @@ function configuredProjects(root, files, inputs, snapshot) {
     if (loaded.error) fail('extract/tsconfig-invalid', 'Cannot read a TypeScript project configuration.', { subject: { file } });
     const result = ts.parseJsonConfigFileContent(loaded.config, inputs, path.dirname(file), undefined, file);
     inputs.assertUnchanged();
+    const roots = result.fileNames.map(name => toPosix(path.relative(root, name)))
+      .filter(name => snapshot.contents.has(name));
+    // Configs serve the SDK groups whose sources they select as roots. Parsing
+    // returns those roots and references even when this SDK rejects an option.
+    // Follow foreign solutions and references without applying their options.
+    if (mixedSdks && !roots.some(name => groupFiles.has(name))) {
+      parsed.set(relative, null);
+      followReferences(result.projectReferences);
+      return null;
+    }
     const errors = result.errors.filter(error => ![18002, 18003].includes(error.code));
     if (errors.length) fail('extract/tsconfig-invalid', 'Invalid TypeScript project configuration.', {
       subject: { file }, evidence: { errors: errors.map(error => ts.flattenDiagnosticMessageText(error.messageText, '\n')) },
     });
     const options = result.options;
-    const roots = result.fileNames.map(name => toPosix(path.relative(root, name)))
-      .filter(name => snapshot.contents.has(name));
+    const { files: rootSpec, include, exclude, references } = result.raw;
+    const selection = JSON.stringify({ files: rootSpec, include, exclude, references });
+    const selectionDigest = createHash('sha256').update(selection).digest('hex');
     // include/exclude selects roots, not the complete project. Let this SDK
     // follow imports and references; only captured source bytes are available.
     const members = new Set(roots);
@@ -288,12 +319,9 @@ function configuredProjects(root, files, inputs, snapshot) {
       const program = sourceProgram(root, roots, options, inputs, snapshot);
       for (const source of program.getSourceFiles()) members.add(toPosix(path.relative(root, source.fileName)));
     }
-    const project = { config: relative, options, members };
+    const project = { config: relative, options, members, selectionDigest };
     parsed.set(relative, project);
-    for (const reference of result.projectReferences || []) {
-      const referenced = ts.resolveProjectReferencePath(reference);
-      if (inputs.fileExists(referenced)) loadConfig(toPosix(path.relative(root, referenced)));
-    }
+    followReferences(result.projectReferences);
     return project;
   };
   for (const relative of files) {
@@ -313,8 +341,8 @@ function configuredProjects(root, files, inputs, snapshot) {
   for (const [relative, candidates] of owners) {
     // A nearer config can omit a source that another configured Program
     // imports. Prefer its own project when applicable, then an importing one.
-    const owner = candidates.find(project => project.members.has(relative))
-      || [...parsed.values()].find(project => project.members.has(relative));
+    const owner = candidates.find(project => project?.members.has(relative))
+      || [...parsed.values()].find(project => project?.members.has(relative));
     const key = owner?.config ?? null;
     if (!groups.has(key)) {
       const options = owner?.options ?? COMPILER_OPTIONS;
@@ -323,7 +351,7 @@ function configuredProjects(root, files, inputs, snapshot) {
         const relativePath = path.relative(root, value);
         return relativePath === '..' || relativePath.startsWith(`..${path.sep}`) ? value : `<root>/${toPosix(relativePath)}`;
       });
-      groups.set(key, { config: key, options, optionsDigest: createHash('sha256').update(normalized).digest('hex'), files: [], members: owner?.members });
+      groups.set(key, { config: key, options, optionsDigest: createHash('sha256').update(normalized).digest('hex'), files: [], members: owner?.members, selectionDigest: owner?.selectionDigest });
     }
     groups.get(key).files.push(relative);
   }
@@ -358,8 +386,7 @@ function collectImports(source, checker, options, onCall) {
       found.push({ statement: node, specifier: node.moduleSpecifier.text, usage: node.moduleSpecifier, kind: 'export', line: lineOf(source, node), names: exportedNames(clause), typeOnly: Boolean(node.isTypeOnly || (inlineTypesOnly && !options.verbatimModuleSyntax)) });
     } else if (ts.isCallExpression(node) && node.arguments.length) {
       const isImport = node.expression.kind === ts.SyntaxKind.ImportKeyword;
-      const isRequire = !isImport && ts.isIdentifier(node.expression) && node.expression.text === 'require'
-        && isModuleRequire(node.expression, checker);
+      const isRequire = !isImport && isRequireCall(node, checker);
       if (isImport || isRequire) {
         const kind = isImport ? 'dynamic' : 'require';
         const argument = node.arguments[0];
@@ -449,7 +476,7 @@ function resolve(record, containingFile, absRoot, fileSet, options, inputs, reso
     // Type declarations and TS substitutions cannot become runtime edges;
     // excluded-file boundaries remain checked against the captured file set.
     const runtimeHost = { ...inputs, fileExists: file => !/\.[cm]?tsx?$/.test(file) && inputs.fileExists(file) };
-    const runtime = ts.resolveModuleName(specifier, containingFile, options, runtimeHost, undefined, undefined, resolutionMode).resolvedModule;
+    const runtime = ts.resolveModuleName(specifier, containingFile, { ...options, noDtsResolution: true }, runtimeHost, undefined, undefined, resolutionMode).resolvedModule;
     const file = runtime?.resolvedFileName;
     if (!file || !/\.[cm]?js$/.test(file)) return { reason: 'unknown' };
     if (file.split(path.sep).join('/').includes('/node_modules/')) return { reason: 'external' };

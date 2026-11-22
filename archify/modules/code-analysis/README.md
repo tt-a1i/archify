@@ -65,15 +65,15 @@ Adding `--base-root` with a required `--entry` prepares a fresh before/after sou
 comparison, including separate call and module-reading references and explicit
 coverage limits. See [change questions](docs/FUNCTION-ANALYSIS.md#change-questions).
 
-For JS/TS analysis, the analyzer selects each source package's installed TypeScript SDK
-when available and records its version, source and project ownership in `raw-facts.json`,
-the check receipt's `coverage.languageScope`, and findings context. One capture may use
-different SDK versions for different subprojects; `repository.adapter` then reads
-`typescript@multi`, with the version of each project in `languageScope.projects`.
-Projects without an installed SDK use the bundled SDK. To require an installed project SDK, pass a JSON config file
-containing `{"typescript":{"requireProjectSdk":true}}` with `--config`; to select
-one explicitly, set `typescript.sdk` to its package directory. See
-[project SDK and configuration](docs/TECH-GUIDE.md#project-sdk-and-configuration).
+JS/TS analysis defaults to `typescript.sdk: "bundled"`. The bundled compiler
+follows project configs and references without executing code from the analyzed
+checkout. For a trusted project, set `typescript.sdk` to `"auto"` to discover
+installed SDKs, or specify a validated TypeScript package directory. Both opt-ins
+execute code from the selected TypeScript package in the Archify process.
+Set `typescript.requireProjectSdk: true` with an opt-in to reject bundled fallback.
+A capture can use different SDKs for different subprojects in `"auto"` mode.
+`raw-facts.json`, check receipts and findings record SDK provenance and project
+ownership. See [project SDK and configuration](docs/TECH-GUIDE.md#project-sdk-and-configuration).
 All sources selected by Archify are analyzed: files outside configured Programs
 enter inferred projects. A config `exclude` changes project membership, while
 Archify's own include/exclude controls capture. The [alignment ledger](docs/TS-UPSTREAM-LEDGER.md)

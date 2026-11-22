@@ -92,6 +92,12 @@ test('installed configuration packages remain supported and changes invalidate a
   try { assert.throws(() => extract(root, config), error => error.diagnostics?.[0].code === 'extract/source-changed'); }
   finally { ts.sys.readFile = read; }
   assert.ok(changed);
+
+  const configPath = path.join(root, 'node_modules/base-config/base.json');
+  assert.throws(() => extract(root, config, { onCapture({ reads }) {
+    assert.equal(reads.get(configPath), '{}');
+    fs.writeFileSync(configPath, '{"compilerOptions":{"strict":true}}');
+  } }), error => error.diagnostics?.[0].code === 'extract/source-changed');
 });
 
 test('unusual config extensions cannot change between capture and first use', t => {
@@ -155,6 +161,39 @@ test('JavaScript package implementation fallback uses the captured manifest and 
   assert.equal(result.imports[0].to, 'old.mjs');
   assert.equal(result.files.find(f => f.path === 'old.mjs').sourceText, 'export const value = "captured";');
   assert.ok(!result.files.some(f => f.path === 'new.mjs'));
+});
+
+test('NodeNext applies blocked package imports with implicit or explicit resolution', t => {
+  const root = fixture(t, {
+    'package.json': JSON.stringify({ type: 'module', imports: { '#run': { import: null, default: './fallback.mjs' } } }),
+    'entry.mjs': 'import "#run";',
+    'fallback.mjs': 'export {};',
+  });
+  for (const explicit of [false, true]) {
+    const compilerOptions = { allowJs: true, module: 'NodeNext', ...(explicit ? { moduleResolution: 'NodeNext' } : {}) };
+    fs.writeFileSync(path.join(root, 'tsconfig.json'), JSON.stringify({ compilerOptions }));
+    let options;
+    const facts = extract(root, config, { onCapture: value => { options = value.options; } });
+    assert.equal(facts.imports[0].resolved, false);
+    assert.equal(facts.unresolved.unknown, 1);
+    assert.equal(options.moduleResolution, explicit ? ts.ModuleResolutionKind.NodeNext : undefined);
+  }
+});
+
+test('JavaScript implementation fallback drops the types condition in a package map', t => {
+  const root = fixture(t, {
+    'tsconfig.json': JSON.stringify({ compilerOptions: nodeNext }),
+    'package.json': JSON.stringify({ type: 'module', imports: { '#run': { types: './types.js', import: './actual.mjs' } } }),
+    'entry.mjs': 'import "#run";',
+    'entry.ts': 'import type { Run } from "#run";',
+    'types.d.ts': 'export interface Run {}',
+    'types.js': 'export const typeBranch = true;',
+    'actual.mjs': 'export const runtimeBranch = true;',
+  });
+  const facts = extract(root, { ...config, exclude: [] });
+  assert.deepEqual(facts.imports.map(edge => [edge.from, edge.to, edge.typeOnly]), [
+    ['entry.mjs', 'actual.mjs', undefined], ['entry.ts', 'types.d.ts', true],
+  ]);
 });
 
 test('runtime conditional null blocks siblings while arrays retain their next target', t => {
