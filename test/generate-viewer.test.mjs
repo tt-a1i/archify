@@ -74,6 +74,25 @@ test('the committed Viewer rebuilds deterministically outside the repository wor
   assert.equal(fs.statSync(f.output).mtimeMs, beforeCheck, '--check must not rewrite output');
 });
 
+test('the generated Viewer declares color-scheme for the chosen theme', (t) => {
+  const f = fixture(t);
+  generateViewer({ root: f.root });
+  const generated = fs.readFileSync(f.output, 'utf8');
+  // The meta tag tells the browser both schemes are supported, so the first
+  // paint is not a white flash on dark-preferring systems.
+  assert.match(generated, /<meta name="color-scheme" content="dark light">/);
+  // Bare color-scheme declarations (not prefers-color-scheme queries) must
+  // sit in their own theme block, so native browser UI follows data-theme.
+  const darkBlock = generated.indexOf('[data-theme="dark"] {');
+  const lightBlock = generated.indexOf('[data-theme="light"] {');
+  const darkDecl = generated.search(/(?<!prefers-)color-scheme:\s*dark/);
+  const lightDecl = generated.search(/(?<!prefers-)color-scheme:\s*light/);
+  assert.ok(darkBlock !== -1, 'dark theme block exists');
+  assert.ok(lightBlock !== -1, 'light theme block exists');
+  assert.ok(darkDecl > darkBlock && darkDecl < lightBlock, 'color-scheme: dark lives in the dark theme block');
+  assert.ok(lightDecl > lightBlock, 'color-scheme: light lives in the light theme block');
+});
+
 test('Viewer generation runs through a preserved symlink entry', (t) => {
   const f = fixture(t);
   const script = path.join(f.root, 'scripts/generate-viewer.mjs');

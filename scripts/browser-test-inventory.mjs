@@ -66,4 +66,5 @@ export const browserTestFiles = [
   'export-svg-delivery.test.mjs',
   // Benchmark observers and real export integration require this explicit Chrome lane.
   'diagram-quality-e2e-browser.test.mjs',
+  'node-index-route-browser.test.mjs',
 ];
