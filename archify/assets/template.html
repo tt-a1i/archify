@@ -3518,68 +3518,45 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
     #code-analysis-dialog {
       --analysis-accent: var(--frontend-stroke);
-      --analysis-hairline: color-mix(in srgb, var(--text) 10%, transparent);
-      position: fixed;
       box-sizing: border-box;
-      width: min(37.5rem, calc(100% - 2rem));
+      width: min(35rem, calc(100% - 2rem));
       max-width: none;
       max-height: calc(100% - 2rem);
       margin: auto;
-      overflow: hidden auto;
-      padding: clamp(1.25rem, 4.5vw, 2rem);
-      border: 1px solid var(--analysis-hairline);
-      border-radius: 1.25rem;
+      overflow: auto;
+      padding: clamp(1.125rem, 4vw, 1.625rem);
+      border: 1px solid color-mix(in srgb, var(--panel-border) 80%, var(--analysis-accent));
+      border-radius: 1.125rem;
       background: var(--panel);
       background-image:
-        radial-gradient(90% 60% at 100% 0%, color-mix(in srgb, var(--analysis-accent) 9%, transparent), transparent 70%),
+        radial-gradient(120% 70% at 0% 0%, color-mix(in srgb, var(--analysis-accent) 11%, transparent), transparent 62%),
         linear-gradient(var(--toolbar-menu-bg), var(--toolbar-menu-bg));
       color: var(--text);
-      box-shadow:
-        0 2rem 5rem -1.5rem rgba(2, 6, 23, 0.5),
-        0 0.5rem 1.25rem -0.75rem rgba(2, 6, 23, 0.25),
-        inset 0 1px 0 color-mix(in srgb, #fff 6%, transparent);
+      box-shadow: 0 1.5rem 4rem -1rem rgba(2, 6, 23, 0.45), 0 0 0 1px color-mix(in srgb, var(--text) 4%, transparent) inset;
       font-size: 0.875rem;
-      line-height: 1.6;
+      line-height: 1.55;
       overflow-wrap: anywhere;
-      isolation: isolate;
     }
-    #code-analysis-dialog::before {
-      content: "";
-      position: absolute;
-      z-index: -1;
-      top: -3.5rem;
-      right: -3.5rem;
-      width: 15rem;
-      height: 15rem;
-      background: var(--analysis-accent);
-      opacity: 0.09;
-      -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200' fill='none' stroke='black'%3E%3Ccircle cx='100' cy='100' r='96' stroke-width='.8'/%3E%3Ccircle cx='100' cy='100' r='70' stroke-width='.8'/%3E%3Ccircle cx='100' cy='100' r='44' stroke-width='.8'/%3E%3Cpath d='M100 4v192M4 100h192M32 32l136 136M168 32 32 168' stroke-width='.6'/%3E%3Cg fill='black' stroke='none'%3E%3Ccircle cx='100' cy='30' r='3'/%3E%3Ccircle cx='161' cy='65' r='2.4'/%3E%3Ccircle cx='170' cy='100' r='3'/%3E%3Ccircle cx='56' cy='144' r='2.4'/%3E%3Ccircle cx='30' cy='100' r='3'/%3E%3Ccircle cx='131' cy='131' r='2.4'/%3E%3Ccircle cx='100' cy='144' r='2'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat;
-      mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200' fill='none' stroke='black'%3E%3Ccircle cx='100' cy='100' r='96' stroke-width='.8'/%3E%3Ccircle cx='100' cy='100' r='70' stroke-width='.8'/%3E%3Ccircle cx='100' cy='100' r='44' stroke-width='.8'/%3E%3Cpath d='M100 4v192M4 100h192M32 32l136 136M168 32 32 168' stroke-width='.6'/%3E%3Cg fill='black' stroke='none'%3E%3Ccircle cx='100' cy='30' r='3'/%3E%3Ccircle cx='161' cy='65' r='2.4'/%3E%3Ccircle cx='170' cy='100' r='3'/%3E%3Ccircle cx='56' cy='144' r='2.4'/%3E%3Ccircle cx='30' cy='100' r='3'/%3E%3Ccircle cx='131' cy='131' r='2.4'/%3E%3Ccircle cx='100' cy='144' r='2'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat;
-      pointer-events: none;
-    }
-    #code-analysis-dialog[open] { animation: analysis-info-in 220ms cubic-bezier(.16, 1, .3, 1); }
-    #code-analysis-dialog::backdrop { background: rgba(2, 6, 23, 0.46); backdrop-filter: blur(6px) saturate(1.1); }
-    @keyframes analysis-info-in { from { opacity: 0; transform: translateY(8px) scale(.98); } }
+    #code-analysis-dialog[open] { animation: analysis-info-in 180ms cubic-bezier(.2, .8, .2, 1); }
+    #code-analysis-dialog::backdrop { background: rgba(2, 6, 23, 0.5); backdrop-filter: blur(3px); }
+    @keyframes analysis-info-in { from { opacity: 0; transform: translateY(6px) scale(.985); } }
     @media (prefers-reduced-motion: reduce) { #code-analysis-dialog[open] { animation: none; } }
     .analysis-info-header {
       display: flex;
       align-items: center;
-      gap: 1rem;
+      gap: 0.875rem;
     }
     .analysis-info-mark {
       flex: 0 0 auto;
       display: grid;
       place-items: center;
-      width: 3.25rem;
-      height: 3.25rem;
-      border-radius: 1rem;
+      width: 3rem;
+      height: 3rem;
+      border-radius: 0.875rem;
       color: var(--analysis-accent);
       background:
-        radial-gradient(circle at 30% 25%, color-mix(in srgb, var(--analysis-accent) 26%, transparent), transparent 70%),
-        color-mix(in srgb, var(--text) 5%, var(--toolbar-menu-bg));
-      box-shadow:
-        inset 0 0 0 1px color-mix(in srgb, var(--analysis-accent) 30%, transparent),
-        0 0.5rem 1.25rem -0.5rem color-mix(in srgb, var(--analysis-accent) 45%, transparent);
+        linear-gradient(135deg, color-mix(in srgb, var(--analysis-accent) 18%, transparent), color-mix(in srgb, var(--backend-stroke) 12%, transparent));
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--analysis-accent) 28%, transparent) inset;
     }
     .analysis-info-mark::before {
       content: "";
@@ -3591,105 +3568,100 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     }
     .analysis-info-heading { min-width: 0; }
     .analysis-info-header h2 {
-      margin: 0;
-      font-size: 1.375rem;
+      margin: 0 0 0.3rem;
+      font-size: 1.1875rem;
       font-weight: 650;
-      letter-spacing: -0.015em;
-      line-height: 1.2;
+      letter-spacing: -0.01em;
+      line-height: 1.25;
     }
     .analysis-info-badge {
-      display: flex;
+      display: inline-flex;
       align-items: center;
-      gap: 0.45rem;
-      margin: 0.375rem 0 0;
+      gap: 0.375rem;
+      margin: 0;
+      padding: 0.125rem 0.5rem;
+      border-radius: 0.625rem;
       color: var(--text-muted);
-      font-size: 0.8125rem;
-      line-height: 1.35;
+      background: color-mix(in srgb, var(--text) 6%, transparent);
+      font-size: 0.75rem;
+      line-height: 1.4;
     }
     .analysis-info-badge::before {
       content: "";
-      flex: 0 0 auto;
-      width: 0.4375rem;
-      height: 0.4375rem;
+      width: 0.375rem;
+      height: 0.375rem;
       border-radius: 50%;
       background: var(--backend-stroke);
-      box-shadow: 0 0 0 0.1875rem color-mix(in srgb, var(--backend-stroke) 20%, transparent);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--backend-stroke) 22%, transparent);
     }
     .analysis-info-header form { margin-inline-start: auto; align-self: flex-start; }
     .analysis-info-features {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      column-gap: 1.75rem;
-      margin: 1.5rem 0 1.375rem;
+      gap: 0.625rem;
+      margin: 1.25rem 0;
       padding: 0;
       list-style: none;
     }
     .analysis-info-features li {
       display: flex;
-      align-items: flex-start;
-      gap: 0.75rem;
-      padding: 1rem 0;
-      border-top: 1px solid var(--analysis-hairline);
+      flex-direction: column;
+      gap: 0.5rem;
+      padding: 0.8125rem 0.875rem 0.875rem;
+      border: 1px solid color-mix(in srgb, var(--panel-border) 85%, transparent);
+      border-radius: 0.75rem;
+      background: color-mix(in srgb, var(--text) 3%, transparent);
+      color: var(--text);
+      font-size: 0.8125rem;
+      line-height: 1.5;
     }
-    .analysis-info-features li[data-feature="star"] { --feature-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='8.5' opacity='.45'/%3E%3Cpath d='M12 12V3.5M12 12l7.4 4.2M12 12l-7.4 4.2'/%3E%3Ccircle cx='12' cy='12' r='2' fill='black'/%3E%3C/svg%3E"); }
-    .analysis-info-features li[data-feature="model"] { --feature-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3 20 7.5v9L12 21l-8-4.5v-9z'/%3E%3Cpath d='M4 7.5 12 12l8-4.5M12 12v9'/%3E%3C/svg%3E"); }
-    .analysis-info-features li[data-feature="counts"] { --feature-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='6' width='12' height='12' rx='2.5'/%3E%3Ccircle cx='17.5' cy='6.5' r='3.5' fill='black'/%3E%3C/svg%3E"); }
-    .analysis-info-features li[data-feature="fix"] { --feature-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m8 8-4 4 4 4M16 8l4 4-4 4'/%3E%3Cpath d='M13.5 5 10.5 19' opacity='.6'/%3E%3C/svg%3E"); }
+    .analysis-info-copy { display: flex; flex-direction: column; gap: 0.125rem; min-width: 0; }
+    .analysis-info-copy strong { font-size: 0.875rem; font-weight: 650; color: var(--text); }
+    .analysis-info-copy > span { color: var(--text-muted); }
+    .analysis-info-features li[data-feature="star"] { --feature: var(--frontend-stroke); --feature-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='8.5' opacity='.45'/%3E%3Cpath d='M12 12V3.5M12 12l7.4 4.2M12 12l-7.4 4.2'/%3E%3Ccircle cx='12' cy='12' r='2' fill='black'/%3E%3C/svg%3E"); }
+    .analysis-info-features li[data-feature="model"] { --feature: var(--database-stroke); --feature-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3 20 7.5v9L12 21l-8-4.5v-9z'/%3E%3Cpath d='M4 7.5 12 12l8-4.5M12 12v9'/%3E%3C/svg%3E"); }
+    .analysis-info-features li[data-feature="counts"] { --feature: var(--messagebus-stroke); --feature-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='6' width='12' height='12' rx='2.5'/%3E%3Ccircle cx='17.5' cy='6.5' r='3.5' fill='black'/%3E%3C/svg%3E"); }
+    .analysis-info-features li[data-feature="fix"] { --feature: var(--backend-stroke); --feature-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m8 8-4 4 4 4M16 8l4 4-4 4'/%3E%3Cpath d='M13.5 5 10.5 19' opacity='.6'/%3E%3C/svg%3E"); }
     .analysis-info-icon {
-      flex: 0 0 auto;
       display: grid;
       place-items: center;
-      width: 2rem;
-      height: 2rem;
-      margin-top: 0.0625rem;
-      border-radius: 0.625rem;
-      background: color-mix(in srgb, var(--analysis-accent) 10%, transparent);
-      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--analysis-accent) 22%, transparent);
+      width: 1.875rem;
+      height: 1.875rem;
+      border-radius: 0.5625rem;
+      background: color-mix(in srgb, var(--feature) 16%, transparent);
     }
     .analysis-info-icon::before {
       content: "";
-      width: 1.0625rem;
-      height: 1.0625rem;
-      background: var(--analysis-accent);
+      width: 1.125rem;
+      height: 1.125rem;
+      background: var(--feature);
       -webkit-mask: var(--feature-icon) center / contain no-repeat;
       mask: var(--feature-icon) center / contain no-repeat;
     }
-    .analysis-info-copy { display: flex; flex-direction: column; gap: 0.1875rem; min-width: 0; }
-    .analysis-info-copy strong { font-size: 0.9375rem; font-weight: 600; letter-spacing: -0.005em; color: var(--text); }
-    .analysis-info-copy > span { color: var(--text-muted); font-size: 0.8125rem; line-height: 1.55; }
+    .analysis-info-start {
+      padding-top: 1.125rem;
+      border-top: 1px solid color-mix(in srgb, var(--panel-border) 85%, transparent);
+    }
     .analysis-info-start p { margin: 0; }
     .analysis-info-ask {
-      margin-bottom: 0.625rem !important;
+      margin-bottom: 0.5rem !important;
       color: var(--text-muted);
-      font-size: 0.75rem;
-      font-weight: 600;
-      letter-spacing: 0.04em;
+      font-size: 0.8125rem;
     }
     .analysis-info-bubble {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
-      gap: 0.875rem;
-      padding: 0.625rem 0.625rem 0.625rem 1rem;
-      border: 1px solid color-mix(in srgb, var(--analysis-accent) 28%, var(--analysis-hairline));
-      border-radius: 1rem;
-      background:
-        linear-gradient(90deg, color-mix(in srgb, var(--analysis-accent) 9%, transparent), transparent 75%),
-        color-mix(in srgb, var(--text) 3%, var(--toolbar-menu-bg));
-      box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 5%, transparent);
+      gap: 0.75rem;
+      padding: 0.75rem 0.75rem 0.75rem 1rem;
+      border: 1px solid color-mix(in srgb, var(--analysis-accent) 32%, var(--panel-border));
+      border-radius: 0.875rem 0.875rem 0.875rem 0.25rem;
+      background: color-mix(in srgb, var(--analysis-accent) 8%, transparent);
     }
-    .analysis-info-spark {
-      flex: 0 0 auto;
-      width: 1.25rem;
-      height: 1.25rem;
-      background: var(--analysis-accent);
-      -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='black'%3E%3Cpath d='M12 2.5c.5 4.6 2.4 6.9 7 7.5-4.6.6-6.5 2.9-7 7.5-.5-4.6-2.4-6.9-7-7.5 4.6-.6 6.5-2.9 7-7.5Z'/%3E%3Cpath d='M19 15.5c.2 1.8 1 2.7 2.8 3-1.8.3-2.6 1.2-2.8 3-.2-1.8-1-2.7-2.8-3 1.8-.3 2.6-1.2 2.8-3Z' opacity='.6'/%3E%3C/svg%3E") center / contain no-repeat;
-      mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='black'%3E%3Cpath d='M12 2.5c.5 4.6 2.4 6.9 7 7.5-4.6.6-6.5 2.9-7 7.5-.5-4.6-2.4-6.9-7-7.5 4.6-.6 6.5-2.9 7-7.5Z'/%3E%3Cpath d='M19 15.5c.2 1.8 1 2.7 2.8 3-1.8.3-2.6 1.2-2.8 3-.2-1.8-1-2.7-2.8-3 1.8-.3 2.6-1.2 2.8-3Z' opacity='.6'/%3E%3C/svg%3E") center / contain no-repeat;
-    }
-    .analysis-info-prompt { flex: 1 1 auto; min-width: 0; }
+    .analysis-info-prompt { flex: 1 1 14rem; min-width: 0; }
     .analysis-info-start q {
       font-size: 0.9375rem;
-      font-weight: 550;
-      line-height: 1.5;
+      font-weight: 650;
       color: var(--text);
     }
     .analysis-info-start q:lang(zh) { quotes: "「" "」"; }
@@ -3697,24 +3669,20 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 0.45rem;
+      gap: 0.4rem;
       min-height: 2.75rem;
-      border: 1px solid var(--analysis-hairline);
-      border-radius: 0.75rem;
-      background: transparent;
+      border: 1px solid var(--panel-border);
+      border-radius: 0.625rem;
+      background: var(--toolbar-menu-bg);
       color: var(--text);
-      padding: 0.375rem 1rem;
+      padding: 0.375rem 0.875rem;
       font: inherit;
       font-weight: 600;
-      white-space: nowrap;
       cursor: pointer;
-      transition: background-color 120ms ease, transform 120ms ease;
     }
-    #code-analysis-dialog button:active { transform: translateY(1px); }
-    #code-analysis-dialog button:focus-visible { outline: 2px solid var(--analysis-accent); outline-offset: 2px; }
     #code-analysis-dialog .analysis-info-glyph {
-      width: 1.0625rem;
-      height: 1.0625rem;
+      width: 1.125rem;
+      height: 1.125rem;
       flex: 0 0 auto;
       background: currentColor;
       -webkit-mask: var(--glyph) center / contain no-repeat;
@@ -3722,41 +3690,36 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     }
     #code-analysis-dialog .analysis-info-close .analysis-info-glyph { --glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 5l10 10M15 5 5 15'/%3E%3C/svg%3E"); }
     #code-analysis-copy .analysis-info-glyph { --glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='7' y='7' width='9' height='9' rx='2'/%3E%3Cpath d='M13 4.5H6A1.5 1.5 0 0 0 4.5 6v7'/%3E%3C/svg%3E"); }
+    #code-analysis-dialog button:focus-visible { outline: 2px solid var(--analysis-accent); outline-offset: 2px; }
     #code-analysis-dialog #code-analysis-copy {
-      flex: 0 0 auto;
       border-color: transparent;
       background: var(--text);
       color: var(--toolbar-menu-bg);
-      box-shadow: 0 0.375rem 1rem -0.5rem rgba(2, 6, 23, 0.45);
     }
-    #code-analysis-dialog #code-analysis-copy:hover { background: color-mix(in srgb, var(--text) 85%, var(--analysis-accent)); }
+    #code-analysis-dialog #code-analysis-copy:hover { background: color-mix(in srgb, var(--text) 86%, var(--toolbar-menu-bg)); }
     #code-analysis-dialog .analysis-info-close {
       min-width: 2.75rem;
       padding: 0;
       border-color: transparent;
-      border-radius: 50%;
+      background: transparent;
       color: var(--text-muted);
     }
     #code-analysis-dialog .analysis-info-close:hover { background: color-mix(in srgb, var(--text) 8%, transparent); color: var(--text); }
     #code-analysis-copy-status { color: var(--backend-stroke); font-size: 0.8125rem; font-weight: 600; }
-    #code-analysis-copy-status:not(:empty) { margin-top: 0.625rem; }
+    #code-analysis-copy-status:not(:empty) { margin-top: 0.5rem; }
     @media (max-width: 30rem) {
       .analysis-info-features { grid-template-columns: 1fr; }
-      .analysis-info-bubble { flex-wrap: wrap; }
-      .analysis-info-prompt { flex-basis: calc(100% - 2.25rem); }
+      .analysis-info-features li { flex-direction: row; align-items: flex-start; gap: 0.75rem; }
+      .analysis-info-icon { flex: 0 0 auto; }
       .analysis-info-bubble #code-analysis-copy { flex: 1 1 100%; }
-    }
-    @media (forced-colors: active) {
+    }@media (forced-colors: active) {
       #code-analysis-dialog .analysis-info-glyph,
       .analysis-info-mark::before,
       .analysis-info-icon::before,
-      .analysis-info-spark,
       .analysis-info-badge::before { forced-color-adjust: none; background: CanvasText; }
       #code-analysis-dialog #code-analysis-copy .analysis-info-glyph { background: ButtonText; }
       #code-analysis-dialog .analysis-info-close { border-color: ButtonText; }
-      #code-analysis-dialog::before { display: none; }
     }
-
 
 
     /* Tools share one quiet capsule; the capsule is drawn inside the 44px row
@@ -6346,7 +6309,6 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     <section class="analysis-info-start">
       <p class="analysis-info-ask">{{i18n:viewer.diagnosis.ask}}</p>
       <div class="analysis-info-bubble">
-        <span class="analysis-info-spark" aria-hidden="true"></span>
         <div class="analysis-info-prompt">
           <p><q id="code-analysis-prompt">{{i18n:viewer.diagnosis.prompt}}</q></p>
         </div>
