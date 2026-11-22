@@ -478,6 +478,7 @@
   "legend.change.removed": "− 削除",
   "legend.change.unchanged": "変更なし",
   "viewer.feedback.label": "フィードバックと応援",
+  "viewer.feedback.tagline": "理解・計画・共有したいことを、インタラクティブなビジュアルに変えます。",
   "viewer.feedback.trigger": "フィードバック",
   "viewer.feedback.issue": "Issue を作成",
   "viewer.feedback.issueHint": "不具合報告や改善提案",

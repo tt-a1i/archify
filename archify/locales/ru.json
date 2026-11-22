@@ -219,6 +219,7 @@
   "viewer.guide.credit": "Archify пригодился? Поставьте звезду на GitHub",
   "viewer.guide.star": "Звезда",
   "viewer.feedback.label": "Отзывы и поддержка",
+  "viewer.feedback.tagline": "Превращайте всё, что хотите понять, спланировать или показать, в интерактивную схему.",
   "viewer.feedback.trigger": "Отзыв",
   "viewer.feedback.issue": "Открыть issue",
   "viewer.feedback.issueHint": "Сообщить об ошибке или идее",

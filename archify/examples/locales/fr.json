@@ -501,6 +501,7 @@
   "legend.change.removed": "− Supprimé",
   "legend.change.unchanged": "Inchangé",
   "viewer.feedback.label": "Retours et soutien",
+  "viewer.feedback.tagline": "Transformez tout ce que vous voulez comprendre, planifier ou partager en un visuel interactif.",
   "viewer.feedback.trigger": "Retours",
   "viewer.feedback.issue": "Ouvrir une issue",
   "viewer.feedback.issueHint": "Signaler un bug ou une idée",

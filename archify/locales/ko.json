@@ -223,6 +223,7 @@
   "viewer.guide.credit": "Archify가 유용했다면 GitHub에 Star를 남겨 주세요",
   "viewer.guide.star": "Star",
   "viewer.feedback.label": "피드백과 응원",
+  "viewer.feedback.tagline": "이해하고, 계획하고, 공유하고 싶은 모든 것을 인터랙티브 시각 자료로 바꿔 보세요.",
   "viewer.feedback.trigger": "피드백",
   "viewer.feedback.issue": "이슈 열기",
   "viewer.feedback.issueHint": "버그 제보 또는 기능 제안",

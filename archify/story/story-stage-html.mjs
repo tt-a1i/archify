@@ -30,6 +30,7 @@ const stageLabelsFor = (isZh) => (isZh
       exporting: '正在导出 1080p 视频…',
       hint: '空格键播放/暂停 · 点击步骤条跳转 · 支持离线流式导出 1080p 60fps MP4 / WebM 视频',
       feedbackLabel: '反馈与支持',
+      feedbackTagline: '把你想理解、规划或分享的事，变成可以互动的可视化作品。',
       feedbackTrigger: '反馈', feedbackIssue: '提交 Issue', feedbackIssueHint: '反馈问题或功能建议',
       feedbackEmail: '发邮件反馈', feedbackCopyEmail: '复制邮箱地址', feedbackCopied: '已复制',
       feedbackStar: 'Star', feedbackStarLabel: '在 GitHub 给 Archify 点 Star',
@@ -41,6 +42,7 @@ const stageLabelsFor = (isZh) => (isZh
       exporting: 'Exporting 1080p video…',
       hint: 'Space to play/pause · Click any step to seek · Streams 1080p 60fps MP4 / WebM offline',
       feedbackLabel: 'Feedback and support',
+      feedbackTagline: 'Turn anything you want to understand, plan, or share into an interactive visual.',
       feedbackTrigger: 'Feedback', feedbackIssue: 'Open an issue', feedbackIssueHint: 'Bug report or suggestion',
       feedbackEmail: 'Send email', feedbackCopyEmail: 'Copy email address', feedbackCopied: 'Copied',
       feedbackStar: 'Star', feedbackStarLabel: 'Star Archify on GitHub',
@@ -179,9 +181,12 @@ ${toolbar.css}
 .stage-pane.is-active{display:block}
 .stage-pane>svg{display:block;width:100%;height:auto;border-radius:10px}
 .stage-feedback{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;margin:2px 0 0;padding-top:10px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)}
-.stage-feedback-brand{display:inline-flex;align-items:center;gap:8px;color:var(--muted);font-weight:500;text-decoration:none;transition:color .15s}
-.stage-feedback-brand:hover{color:var(--ink)}
-.stage-feedback-mark{display:inline-block;width:22px;height:22px;border-radius:6px;border:1px solid var(--border);background:var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 360' fill='none'%3E%3Cpath d='M151 94 81 164C67 178 60 191 60 212V248H97V212C97 204 100 199 106 193L179 120Z' fill='%230856F5'/%3E%3Cpath d='M238 135C252 132 261 126 270 116L321 167C334 180 339 194 339 213V248H303V213C303 204 300 199 294 193Z' fill='%231DBBB7'/%3E%3Crect x='146' y='16' width='110' height='104' rx='30' fill='%230856F5'/%3E%3Crect x='18' y='238' width='110' height='104' rx='28' fill='%230856F5'/%3E%3Crect x='274' y='238' width='108' height='104' rx='28' fill='%231DBBB7'/%3E%3C/svg%3E") center/13px 12px no-repeat;flex-shrink:0}
+.stage-feedback-brand{display:inline-flex;align-items:center;gap:10px;min-width:0;color:var(--ink);text-decoration:none}
+.stage-feedback-brand:hover .stage-feedback-name{color:var(--accent)}
+.stage-feedback-mark{display:inline-block;width:32px;height:32px;border-radius:9px;box-shadow:inset 0 0 0 1px var(--border);background:var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 360' fill='none'%3E%3Cpath d='M151 94 81 164C67 178 60 191 60 212V248H97V212C97 204 100 199 106 193L179 120Z' fill='%230856F5'/%3E%3Cpath d='M238 135C252 132 261 126 270 116L321 167C334 180 339 194 339 213V248H303V213C303 204 300 199 294 193Z' fill='%231DBBB7'/%3E%3Crect x='146' y='16' width='110' height='104' rx='30' fill='%230856F5'/%3E%3Crect x='18' y='238' width='110' height='104' rx='28' fill='%230856F5'/%3E%3Crect x='274' y='238' width='108' height='104' rx='28' fill='%231DBBB7'/%3E%3C/svg%3E") center/19px 17px no-repeat;flex-shrink:0}
+.stage-feedback-words{display:grid;gap:4px;min-width:0}
+.stage-feedback-name{font-size:13.5px;font-weight:650;line-height:1;letter-spacing:-.01em;color:var(--ink);transition:color .15s}
+.stage-feedback-tagline{font-size:11.5px;line-height:1.3;color:var(--muted)}
 .stage-feedback-actions{display:inline-flex;align-items:center;gap:8px}
 .stage-feedback-menu{position:relative}
 .stage-feedback-btn{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border:1px solid var(--border);border-radius:999px;background:var(--surface);color:var(--ink);font-size:12px;font-weight:500;line-height:1;text-decoration:none;cursor:pointer;user-select:none;list-style:none;transition:border-color .15s,background-color .15s}
@@ -245,7 +250,7 @@ ${toolbar.css}
   <nav class="steps" aria-label="Story steps">${stepButtons}</nav>
   <p class="hint" id="stage-status">${labels.hint}</p>
   <footer class="stage-feedback" aria-label="${labels.feedbackLabel}">
-    <a class="stage-feedback-brand" href="https://github.com/tt-a1i/archify" target="_blank" rel="noopener noreferrer"><span class="stage-feedback-mark" aria-hidden="true"></span><span>Archify</span></a>
+    <a class="stage-feedback-brand" href="https://github.com/tt-a1i/archify" target="_blank" rel="noopener noreferrer"><span class="stage-feedback-mark" aria-hidden="true"></span><span class="stage-feedback-words"><span class="stage-feedback-name">Archify</span><span class="stage-feedback-tagline">${labels.feedbackTagline}</span></span></a>
     <div class="stage-feedback-actions">
       <details class="stage-feedback-menu" data-feedback-menu>
         <summary class="stage-feedback-btn"><span class="stage-feedback-icon" data-icon="chat" aria-hidden="true"></span><span>${labels.feedbackTrigger}</span></summary>

@@ -219,6 +219,7 @@
   "viewer.guide.credit": "Find Archify useful? A star on GitHub helps",
   "viewer.guide.star": "Star",
   "viewer.feedback.label": "Feedback and support",
+  "viewer.feedback.tagline": "Turn anything you want to understand, plan, or share into an interactive visual.",
   "viewer.feedback.trigger": "Feedback",
   "viewer.feedback.issue": "Open an issue",
   "viewer.feedback.issueHint": "Bug report or suggestion",
