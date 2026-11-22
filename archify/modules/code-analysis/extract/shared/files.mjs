@@ -29,6 +29,43 @@ export function listFiles(root, config) {
   return collectFiles(root, config).map(entry => entry.rel);
 }
 
+// The default includes are the union of the adapters that can detect sources
+// without user configuration. C/C++ requires an explicit compilation database.
+// The optional offer needs one candidate name, not a source snapshot. Cap the
+// work even when there is no match and leave uncertain repositories unoffered.
+export function hasDefaultAnalysisSources(root) {
+  try {
+    const config = JSON.parse(fs.readFileSync(new URL('../../config/defaults.json', import.meta.url), 'utf8'));
+    const include = matcher(config.include);
+    const exclude = matcher(config.exclude);
+    let remaining = 8192;
+    root = fs.realpathSync(root);
+    const pending = [''];
+    while (pending.length && remaining > 0) {
+      const directory = pending.pop();
+      const absolute = path.join(root, directory);
+      if (fs.realpathSync(absolute) !== absolute) continue;
+      const entries = fs.opendirSync(absolute);
+      try {
+        while (remaining > 0) {
+          const entry = entries.readSync();
+          if (!entry) break;
+          remaining -= 1;
+          if (ALWAYS_SKIP.has(entry.name)) continue;
+          const rel = directory ? `${directory}/${entry.name}` : entry.name;
+          if (entry.isDirectory() && !exclude(`${rel}/`)) pending.push(rel);
+          if (entry.isFile() && include(rel) && !exclude(rel)) return true;
+        }
+      } finally {
+        entries.closeSync();
+      }
+    }
+  } catch {
+    return false;
+  }
+  return false;
+}
+
 // Capture bytes through a checked descriptor, then give adapters immutable
 // input. They must never reopen the enumerated names to obtain source text.
 export function snapshotFiles(root, config, accept = () => true) {
