@@ -1283,11 +1283,14 @@ export function createRouter(components, connections = [], {
       for (const rect of [...components.values(), ...frames, ...reservedLabels.map((entry) => entry.rect)]) {
         scenePoints.push([rect.x, rect.y], [rect.x + rect.width, rect.y + rect.height]);
       }
-      const bounds = {
-        left: Math.min(...scenePoints.map(([x]) => x)), right: Math.max(...scenePoints.map(([x]) => x)),
-        top: Math.min(...scenePoints.map(([, y]) => y)),
-        bottom: Math.max(...scenePoints.map(([, y]) => y)),
-      };
+      // A loop, not Math.min(...points): large scenes exceed the argument limit.
+      const bounds = { left: Infinity, right: -Infinity, top: Infinity, bottom: -Infinity };
+      for (const [x, y] of scenePoints) {
+        if (x < bounds.left) bounds.left = x;
+        if (x > bounds.right) bounds.right = x;
+        if (y < bounds.top) bounds.top = y;
+        if (y > bounds.bottom) bounds.bottom = y;
+      }
       const withinScene = ([x, y]) => x >= bounds.left && x <= bounds.right && y >= bounds.top && y <= bounds.bottom;
       const jointlyImproved = new Set();
       const labelClears = (rect, owner, entries, labels, inBounds = withinScene) => {
