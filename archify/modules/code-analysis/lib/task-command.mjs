@@ -25,7 +25,7 @@ export function analysisStartCommand(cli, root, { ir, out, locale, language, con
   ], platform);
 }
 
-function nodeCommand(args, platform) {
+export function nodeCommand(args, platform = process.platform) {
   const windows = platform === 'win32';
   if (windows && args.some((arg) => /[%!"\r\n]/.test(arg))) {
     const payload = Buffer.from(JSON.stringify(args)).toString('base64');
