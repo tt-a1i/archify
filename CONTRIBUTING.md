@@ -172,12 +172,13 @@ paths also work. Use `--list` with the same selection to inspect it without
 running tests. A focused pass is evidence for that selection only.
 
 Run `npm run test:changed` to select local checks from staged, unstaged, and
-untracked files using the same ownership rules as CI. Add
+untracked files Git reports using the same ownership rules as CI. Add
 `-- --base=origin/dev` to include commits since the branch diverged. It runs
 affected Node suites, focused browser selections, and directly changed suites
 in the browser inventory. It lists other checks selected by CI, such as the
-core CLI smoke or generated output checks. If the selection is empty or the changes need wider
-verification, it exits with guidance on choosing the relevant checks.
+core CLI smoke or generated output checks. If the selection is empty or the
+changes need wider verification, it exits with guidance on choosing the
+relevant checks.
 
 To narrow a large file further, add a quoted Node test-name pattern (Node 18.11+):
 

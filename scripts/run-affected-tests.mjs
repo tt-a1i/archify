@@ -71,9 +71,15 @@ function localPlan(args) {
   if (plan.scope === 'full') {
     throw new Error('The changed paths require broader verification. Use test:focus for a specific check or test:full for the complete Node suite.');
   }
-  const browserFiles = browserTestFiles.map(file => `test/${file}`)
-    .filter(file => paths.has(file) || plan.browserTests.includes(file));
-  return { ...plan, browserFiles };
+  const browserFiles = [...new Set([
+    ...plan.browserTests,
+    ...browserTestFiles.map(file => `test/${file}`).filter(file => paths.has(file)),
+  ])];
+  // The Chrome runner validates exact files itself. CI still exercises its
+  // whole inventory contract, including unregistered browser suites.
+  const changedTests = plan.browserProfile === 'changed' && !paths.has('test/browser-gate.test.mjs')
+    ? plan.changedTests.filter(file => file !== 'test/browser-gate.test.mjs') : plan.changedTests;
+  return { ...plan, changedTests, browserFiles };
 }
 
 if (process.argv[1] && sameEntry(process.argv[1], fileURLToPath(import.meta.url)).status === 'match') {

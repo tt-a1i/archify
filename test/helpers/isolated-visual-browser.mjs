@@ -21,4 +21,3 @@ export async function isolatedVisualBrowser(browser) {
     throw error;
   }
 }
-

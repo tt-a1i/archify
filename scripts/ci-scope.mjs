@@ -60,9 +60,9 @@ function explainerPresentationCompanion(name) {
 }
 
 function independentMediaPath(name) {
-  return name === 'archify.zip' || name === 'CHANGELOG.md' ||
-    name.startsWith('archify/modules/code-analysis/') ||
-    /^test\/code-analysis(?:-[^/]+)?\.test\.mjs$/.test(name);
+  return explainerPresentationCompanion(name) || dshDocs.has(name) ||
+    /^archify\/(?:modules\/code-analysis|explainer)\//.test(name) ||
+    /^test\/(?:code-analysis(?:-[^/]+)?|explainer-[^/]+)\.test\.mjs$/.test(name);
 }
 
 export function classifyPaths(paths) {

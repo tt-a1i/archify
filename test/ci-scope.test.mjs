@@ -185,7 +185,10 @@ test('isolated Explainer rendering changes run its Node and Chrome cases and ret
   assert.deepEqual(selectAffectedTests(plan.owners, plan.changedTests, available),
     ['test/explainer-cli.test.mjs', 'test/explainer-input-publication.test.mjs', 'test/explainer-renderer.test.mjs']);
   assert.equal(classifyPaths([...files, 'docs/cases/explainer/first-rental.html']).website, true);
-  for (const extra of ['archify/explainer/sources.mjs', 'archify/bin/archify.mjs',
+  const sources = classifyPaths([...files, 'archify/explainer/sources.mjs']);
+  assert.equal(sources.scope, 'full');
+  assert.ok(sources.windows && !sources.webm);
+  for (const extra of ['archify/bin/archify.mjs',
     'archify/renderers/shared/generated-validators.mjs', 'archify/assets/template.html',
     'test/helpers/unknown.mjs']) {
     const mixed = classifyPaths([...files, extra]);
@@ -540,9 +543,9 @@ test('local affected checks use committed and dirty paths and reject ambiguous o
     import test from 'node:test';
     test(${JSON.stringify(name)}, () => fs.appendFileSync(${JSON.stringify(receipt)}, ${JSON.stringify(name + '\n')}));
   `);
-  const executed = () => fs.readFileSync(receipt, 'utf8').trim().split('\n').sort();
+  const executed = () => fs.readFileSync(receipt, 'utf8').split('\n').filter(Boolean).sort();
   fs.mkdirSync(path.join(root, 'test'));
-  for (const name of [...tests.slice(0, -1), 'explainer-render']) writeSuite(name);
+  for (const name of [...tests.slice(0, -1), 'browser-gate', 'explainer-render']) writeSuite(name);
   fs.writeFileSync(fixture('unrelated'), 'throw new Error("unrelated suite ran");');
   fs.writeFileSync(path.join(root, 'scripts', 'run-browser-tests.mjs'), `
     import fs from 'node:fs';
@@ -575,6 +578,7 @@ test('local affected checks use committed and dirty paths and reject ambiguous o
   const committed = local('--base=fixture-base');
   assert.equal(committed.status, 0, committed.stderr);
   assert.deepEqual(executed(), ['committed']);
+  assert.doesNotMatch(committed.stdout, /core smoke/);
 
   fs.appendFileSync(fixture('staged'), '// index change\n');
   git(['add', 'test/staged.test.mjs']);
@@ -610,21 +614,34 @@ test('local affected checks use committed and dirty paths and reject ambiguous o
   assert.equal(explainer.status, 0, explainer.stderr);
   assert.deepEqual(executed(), ['explainer-render']);
   assert.deepEqual(JSON.parse(fs.readFileSync(browserReceipt, 'utf8')), ['test/explainer-browser.test.mjs']);
+  assert.match(explainer.stdout, /CI also selects core smoke, package/);
+  fs.unlinkSync(path.join(root, 'archify', 'explainer', 'reader.js'));
+  writeSuite('i18n-browser');
+  fs.writeFileSync(receipt, '');
+  const browserOnly = local();
+  assert.equal(browserOnly.status, 0, browserOnly.stderr);
+  assert.deepEqual(executed(), []);
+  assert.deepEqual(JSON.parse(fs.readFileSync(browserReceipt, 'utf8')), ['test/i18n-browser.test.mjs']);
 });
 
-test('Windows portability skips only a successful scope that explicitly excludes Windows', () => {
-  const windows = workflow.jobs['windows-test-portability'];
-  assert.equal(windows.if, "always() && !cancelled() && !(needs.scope.result == 'success' && needs.scope.outputs.windows == 'false' "
-    + "&& (needs.scope.outputs.scope == 'docs' || needs.scope.outputs.scope == 'core'))");
-  const guard = windows.steps.find(step => step.name === 'Require successful scope checks');
-  assert.equal(guard.env.RUN_WINDOWS, '${{ needs.scope.outputs.windows }}');
-  for (const flag of ['', 'false', 'true']) {
-    const run = spawnSync('bash', ['-e', '-c', guard.run], {
-      env: { ...process.env, SCOPE_RESULT: 'success', CI_SCOPE: 'full', RUN_WINDOWS: flag },
-    });
-    assert.equal(run.status, flag === 'true' ? 0 : 1, `full scope with Windows flag ${JSON.stringify(flag)}`);
-  }
-});
+for (const [job, gate, variable] of [
+  ['windows-test-portability', 'windows', 'RUN_WINDOWS'],
+  ['published-update-manifest', 'manifest', 'RUN_MANIFEST'],
+]) {
+  test(`${job} skips only when a successful scope explicitly excludes it`, () => {
+    const lane = workflow.jobs[job];
+    assert.equal(lane.if, `always() && !cancelled() && !(needs.scope.result == 'success' && needs.scope.outputs.${gate} == 'false' `
+      + "&& (needs.scope.outputs.scope == 'docs' || needs.scope.outputs.scope == 'core'))");
+    const guard = lane.steps.find(step => step.name === 'Require successful scope checks');
+    assert.equal(guard.env[variable], '${{ needs.scope.outputs.' + gate + ' }}');
+    for (const flag of ['', 'false', 'true']) {
+      const run = spawnSync('bash', ['-e', '-c', guard.run], {
+        env: { ...process.env, SCOPE_RESULT: 'success', CI_SCOPE: 'full', [variable]: flag },
+      });
+      assert.equal(run.status, flag === 'true' ? 0 : 1, `full scope with ${gate}=${JSON.stringify(flag)}`);
+    }
+  });
+}
 
 test('canonical Node cannot pass full CI with failed, cancelled or skipped regression shards', () => {
   const step = workflow.jobs['canonical-test'].steps.find(step => step.name === 'Require complete regression shards');

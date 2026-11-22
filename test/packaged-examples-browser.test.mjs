@@ -39,4 +39,3 @@ test('all packaged HTML examples pass the real visual-check desktop gate', {
     }
   }
 });
-
