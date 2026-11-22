@@ -1742,5 +1742,7 @@ try {
     chromeProcess.kill('SIGKILL');
     await waitForExit(chromeProcess, 1000);
   }
+  // Chrome's crash reporter can inherit stderr and keep Node waiting after Chrome exits.
+  chromeProcess.stderr.destroy();
   await removeTempTree(tmp);
 }
