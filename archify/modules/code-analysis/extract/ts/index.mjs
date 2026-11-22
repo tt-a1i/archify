@@ -127,7 +127,7 @@ const COMPILER_OPTIONS = {
 
 function prepare(root, files, snapshot, { capturedOnly, mixedSdks, allowUnavailable }) {
   const inputs = snapshotHost(root, snapshot, { capturedOnly });
-  return { inputs, ...configuredProjects(root, files, inputs, snapshot, mixedSdks, allowUnavailable) };
+  return { inputs, ...configuredProjects(root, files, inputs, snapshot, { mixedSdks, capturedOnly, allowUnavailable }) };
 }
 
 // Both project membership and lexical extraction read the same captured source
@@ -277,12 +277,31 @@ function lineOf(source, node) {
 }
 
 /** Assign selected sources to configured projects or inferred-project defaults. */
-function configuredProjects(root, files, inputs, snapshot, mixedSdks, allowUnavailable) {
+function configuredProjects(root, files, inputs, snapshot, { mixedSdks, capturedOnly, allowUnavailable }) {
   const parsed = new Map();
   const unavailable = new Map();
   const groups = new Map();
   const owners = [];
   const groupFiles = new Set(files);
+  const invalidConfig = (relative, errors) => {
+    const details = errors.map(error => ts.flattenDiagnosticMessageText(error.messageText, '\n'));
+    // TypeScript reports a missing extends target as a file lookup or read error.
+    const missing = errors.findIndex(error => [5012, 5083, 6053].includes(error.code));
+    const supportedFixes = [];
+    if (missing >= 0 && !capturedOnly) {
+      supportedFixes.push("If a package provides the missing configuration, install the target project's dependencies with its package manager and retry.");
+    }
+    supportedFixes.push('Correct the TypeScript configuration or restore its referenced configuration files and retry.');
+    const directory = path.posix.dirname(relative);
+    if (directory !== '.' && directory !== '..' && !directory.startsWith('../')) {
+      const glob = directory.replace(/[*?{}\\]/g, '\\$&') + '/**';
+      supportedFixes.push(`If no included project references this config, add ${JSON.stringify(glob)} to the analysis JSON's "exclude" array, keeping the other patterns, then pass --config <analysis-config.json>.`);
+      supportedFixes.push('For a working tree, pass an unaffected directory as <repo-root>. For --pr analysis, use --scope <path> to select an unaffected directory.');
+    }
+    fail('extract/tsconfig-invalid', `Invalid TypeScript project configuration in ${relative}. ${details[missing >= 0 ? missing : 0]}`, {
+      subject: { file: path.join(root, relative) }, evidence: { errors: details }, supportedFixes,
+    });
+  };
   const followReferences = references => {
     for (const reference of references || []) {
       const referenced = ts.resolveProjectReferencePath(reference);
@@ -297,7 +316,7 @@ function configuredProjects(root, files, inputs, snapshot, mixedSdks, allowUnava
     const compilerPath = toPosix(file);
     const loaded = ts.readConfigFile(compilerPath, inputs.readFile);
     inputs.assertUnchanged();
-    if (loaded.error) fail('extract/tsconfig-invalid', 'Cannot read a TypeScript project configuration.', { subject: { file } });
+    if (loaded.error) invalidConfig(relative, [loaded.error]);
     const result = ts.parseJsonConfigFileContent(loaded.config, inputs, path.posix.dirname(compilerPath), undefined, compilerPath);
     inputs.assertUnchanged();
     const roots = result.fileNames.map(name => toPosix(path.relative(root, name)))
@@ -316,10 +335,7 @@ function configuredProjects(root, files, inputs, snapshot, mixedSdks, allowUnava
       const inside = name => name.startsWith(`${scope}/`);
       const missingExtends = allowUnavailable && scope !== '.' && files.some(inside) && roots.every(inside)
         ? missingPackageConfigs(loaded.config, errors, inputs, path.dirname(file)) : [];
-      if (!missingExtends.length) fail('extract/tsconfig-invalid', 'Invalid TypeScript project configuration.', {
-        subject: { file }, evidence: { errors: errors.map(error => ts.flattenDiagnosticMessageText(error.messageText, '\n')) },
-        supportedFixes: ['restore the TypeScript configuration and its dependencies, then retry analysis'],
-      });
+      if (!missingExtends.length) invalidConfig(relative, errors);
       unavailable.set(scope, { config: relative, missingExtends });
       parsed.set(relative, null);
       return null;

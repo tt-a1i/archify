@@ -33,13 +33,14 @@ one accepted id without re-running analysis. Both require --baseline.
 Exit codes: 0 passed, 1 gate failed, 2 analysis or usage error.
 Outputs with --out: raw-facts, module-graph, findings, review, overview (.json).`;
 
+const USAGE_SUFFIX = `\n${USAGE}`;
 const VALUE_OPTIONS = ['--language', '--config', '--ir', '--map', '--baseline', '--compare', '--out', '--fail-on', '--reason', '--accept', '--revoke'];
 const FLAG_OPTIONS = ['--new-only', '--update-baseline', '--json'];
 const SEVERITY = { error: 0, warning: 1, info: 2 };
 
 export function parseCheckArgs(argv) {
   const [repo, ...rest] = argv;
-  const usage = (message) => fail('cli/usage', `${message}\n${USAGE}`, { supportedFixes: ['see the usage above'] });
+  const usage = (message) => fail('cli/usage', message + USAGE_SUFFIX, { supportedFixes: ['see the usage above'] });
   if (!repo || repo.startsWith('-')) usage('check requires a <repo-root>.');
   const options = { '--fail-on': 'warning' };
   for (let i = 0; i < rest.length; i += 1) {
@@ -250,10 +251,17 @@ function openRuleCounts(findings) {
 }
 
 const CLI = fileURLToPath(new URL('../../../bin/archify.mjs', import.meta.url));
+const TERMINAL_CONTROLS = /[\u0000-\u001f\u007f-\u009f]/g;
 
 export function formatText(r) {
-  if (r.action === 'accept-finding' || r.action === 'revoke-finding') return `${r.action === 'accept-finding' ? 'Accepted' : 'Revoked acceptance for'} ${r.id}\n  Baseline: ${r.baseline} (${r.entries} accepted entries)`;
-  if (r.action === 'update-baseline') return `Baseline written: ${r.baseline}\n  ${r.entries} accepted findings (${r.kept} kept, ${r.added} added, ${r.dropped} no longer found and dropped)`;
+  if (r.action === 'accept-finding' || r.action === 'revoke-finding') return [
+    `${r.action === 'accept-finding' ? 'Accepted' : 'Revoked acceptance for'} ${r.id}`,
+    `  Baseline: ${r.baseline} (${r.entries} accepted entries)`,
+  ].map(formatTerminalText).join('\n');
+  if (r.action === 'update-baseline') return [
+    `Baseline written: ${r.baseline}`,
+    `  ${r.entries} accepted findings (${r.kept} kept, ${r.added} added, ${r.dropped} no longer found and dropped)`,
+  ].map(formatTerminalText).join('\n');
   const lines = [];
   const c = r.counts;
   lines.push(`Code analysis: ${r.status === 'incomplete' ? r.status : r.verdict} — ${c.findings} finding${c.findings === 1 ? '' : 's'} (${c.error} error, ${c.warning} warning, ${c.info} info open; ${c.accepted} accepted)`);
@@ -280,14 +288,14 @@ export function formatText(r) {
   const uncovered = r.coverage || { parseErrors: [], otherLanguages: [] };
   if (uncovered.analyzedFiles !== undefined) {
     const scope = `  Graph/rule scope: ${uncovered.analyzedFiles} source file${uncovered.analyzedFiles === 1 ? '' : 's'} analyzed`;
-    const breakdown = Object.entries(uncovered.excludedRoleCounts || {}).map(([role, count]) => `${count} ${formatTerminalText(role)}`).join(', ');
+    const breakdown = Object.entries(uncovered.excludedRoleCounts || {}).map(([role, count]) => `${count} ${role}`).join(', ');
     lines.push(uncovered.excludedByRole ? `${scope}, ${uncovered.excludedByRole} excluded by role${breakdown ? ` (${breakdown})` : ''}` : scope);
   }
-  if (uncovered.parseErrors.length) lines.push(`  Not analyzed, parse failed: ${uncovered.parseErrors.map(formatTerminalText).join(', ')}`);
+  if (uncovered.parseErrors.length) lines.push(`  Not analyzed, parse failed: ${uncovered.parseErrors.join(', ')}`);
   if (uncovered.unavailableTypeScriptFiles) {
     lines.push(`  TypeScript project coverage incomplete: ${uncovered.unavailableTypeScriptFiles} selected source files omitted.`);
     for (const { config, missingExtends } of uncovered.languageScope.unavailableProjects) {
-      lines.push(`    ${formatTerminalText(config)} requires ${missingExtends.map(formatTerminalText).join(', ')}`);
+      lines.push(`    ${config} requires ${missingExtends.join(', ')}`);
     }
   }
   if (r.gate.blocked) lines.push(uncovered.unavailableTypeScriptFiles
@@ -297,7 +305,7 @@ export function formatText(r) {
   for (const source of uncovered.external || []) {
     const coverage = source.coverage.complete === true ? 'complete' : source.coverage.complete === false ? 'incomplete' : 'unknown';
     const files = source.coverage.files.length;
-    lines.push(`  External ${formatTerminalText(source.id)}: ${formatTerminalText(source.tool)} ${source.toolVersion ? formatTerminalText(source.toolVersion) : '(version unknown)'} · coverage ${coverage} (${files} declared file${files === 1 ? '' : 's'}) · source binding ${source.binding}`);
+    lines.push(`  External ${source.id}: ${source.tool} ${source.toolVersion || '(version unknown)'} · coverage ${coverage} (${files} declared file${files === 1 ? '' : 's'}) · source binding ${source.binding}`);
   }
   if (uncovered.external?.some((source) => source.coverage.complete !== true || source.status !== 'imported' || source.binding !== 'verified')) lines.push('  Empty external reports with incomplete coverage or unverified/changed source binding do not establish a clean scan.');
   if (r.duplicates) {
@@ -307,9 +315,9 @@ export function formatText(r) {
   }
   if (r.diagram) {
     lines.push(`  Diagram alignment: ${r.diagram.mappedComponents}/${r.diagram.components} components mapped · ${r.diagram.unmappedModules.length} unmapped module${r.diagram.unmappedModules.length === 1 ? '' : 's'} · ${r.diagram.offDiagramFindings} finding${r.diagram.offDiagramFindings === 1 ? '' : 's'} off diagram`);
-    if (r.diagram.unmappedModules.length) lines.push(`    unmapped modules: ${r.diagram.unmappedModules.slice(0, 12).map(formatTerminalText).join(', ')}${r.diagram.unmappedModules.length > 12 ? ` (+${r.diagram.unmappedModules.length - 12} more)` : ''}`);
-    if (r.diagram.ambiguousModules?.length) lines.push(`    ambiguous component mapping: ${r.diagram.ambiguousModules.map((m) => `${formatTerminalText(m.id)} (${m.components.map(formatTerminalText).join(', ')})`).join('; ')}. Imports involving these modules retain module-level evidence.`);
-    if (r.diagram.undeclaredEdges.length) lines.push(`    undeclared component imports: ${r.diagram.undeclaredEdges.slice(0, 8).map((e) => `${formatTerminalText(e.from)} -> ${formatTerminalText(e.to)} (${e.weight})`).join(', ')}${r.diagram.undeclaredEdges.length > 8 ? ` (+${r.diagram.undeclaredEdges.length - 8} more)` : ''}`);
+    if (r.diagram.unmappedModules.length) lines.push(`    unmapped modules: ${r.diagram.unmappedModules.slice(0, 12).join(', ')}${r.diagram.unmappedModules.length > 12 ? ` (+${r.diagram.unmappedModules.length - 12} more)` : ''}`);
+    if (r.diagram.ambiguousModules?.length) lines.push(`    ambiguous component mapping: ${r.diagram.ambiguousModules.map((m) => `${m.id} (${m.components.join(', ')})`).join('; ')}. Imports involving these modules retain module-level evidence.`);
+    if (r.diagram.undeclaredEdges.length) lines.push(`    undeclared component imports: ${r.diagram.undeclaredEdges.slice(0, 8).map((e) => `${e.from} -> ${e.to} (${e.weight})`).join(', ')}${r.diagram.undeclaredEdges.length > 8 ? ` (+${r.diagram.undeclaredEdges.length - 8} more)` : ''}`);
   }
   if (r.investigation?.leads?.length) {
     lines.push(`Start here: ${r.investigation.leads.length} ranked lead${r.investigation.leads.length === 1 ? '' : 's'}. Each is static evidence, not a proven defect; read the cited source first.`);
@@ -317,10 +325,14 @@ export function formatText(r) {
     if (r.investigation.architecture?.structuralSignals?.length) {
       lines.push('  Architecture signals (outside top leads):');
       for (const sig of r.investigation.architecture.structuralSignals) {
-        lines.push(`    - ${sig.severity.padEnd(7)} ${sig.code}  ${formatTerminalText(sig.where ?? sig.id)}  [${sig.id}]`);
+        lines.push(`    - ${sig.severity.padEnd(7)} ${sig.code}  ${sig.where ?? sig.id}  [${sig.id}]`);
       }
     }
-    if (r.investigation.drillDown) lines.push(`  Drill down (${r.investigation.shell}): ${r.investigation.drillDown}`);
+    if (r.investigation.drillDown) {
+      const label = `  Drill down (${r.investigation.shell}):`;
+      if (r.out) lines.push(label, formatTerminalCommand(r.investigation.drillDown, 'investigation.drillDown'));
+      else lines.push(`${label} ${r.investigation.drillDown}`);
+    }
   }
   if (r.review.comparison) {
     const c = r.review.comparison;
@@ -337,17 +349,35 @@ export function formatText(r) {
     if (r.gate.failing.length > 20) lines.push(`  … ${r.gate.failing.length - 20} more (use --json for all)`);
     if (r.gate.adopt) {
       lines.push('  First run, or a rule became stricter? To record what exists now and fail only on new findings, run once and commit the file:');
-      lines.push(`    ${r.gate.adopt}`);
+      lines.push(formatTerminalCommand(r.gate.adopt, 'gate.adopt'));
       lines.push('  Then pass --baseline analysis-baseline.json on every run. Accepted errors stay listed as still to fix.');
     }
   } else if (r.status !== 'incomplete') lines.push(`PASSED: no open finding at or above ${r.gate.failOn}${r.gate.newOnly ? ' among new findings' : ''}.`);
-  return lines.join('\n');
+  return lines.map(formatTerminalText).join('\n');
 }
 
-function formatTerminalText(value) {
-  return String(value)
-    .replace(/\\/g, '\\\\')
-    .replace(/[\u0000-\u001f\u007f-\u009f]/g, (character) => `\\u${character.codePointAt(0).toString(16).padStart(4, '0')}`);
+function escapeTerminalControl(character) {
+  return `\\u${character.codePointAt(0).toString(16).padStart(4, '0')}`;
+}
+
+function formatTerminalText(text) {
+  const escaped = text.replace(TERMINAL_CONTROLS, escapeTerminalControl);
+  return escaped === text ? text : `${escaped}\n  Control characters escaped. Use --json for the exact value.`;
+}
+
+function formatTerminalCommand(command, jsonField) {
+  return command.search(TERMINAL_CONTROLS) === -1 ? command
+    : `  Command omitted because it contains control characters. See ${jsonField} in --json.`;
+}
+
+function formatTerminalDiagnostic({ code, message }) {
+  const usage = code === 'cli/usage' && message.endsWith(USAGE_SUFFIX) ? USAGE_SUFFIX : '';
+  return formatTerminalText(`[${code}] ${message.slice(0, message.length - usage.length)}`) + usage;
+}
+
+function formatTerminalJson(document) {
+  // JSON.stringify escapes C0 controls inside strings. Escape DEL and C1 too.
+  return JSON.stringify(document, null, 2).replace(/[\u007f-\u009f]/g, escapeTerminalControl);
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
@@ -356,12 +386,12 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   if (!args.length || args[0] === '--help' || args[0] === '-h') console.log(USAGE);
   else {
     runCheck(args).then(({ exitCode, receipt: r }) => {
-      console.log(json ? JSON.stringify(r, null, 2) : formatText(r));
+      console.log(json ? formatTerminalJson(r) : formatText(r));
       process.exitCode = exitCode;
     }).catch((error) => {
       const diagnostics = error instanceof DiagnosticError ? error.diagnostics : [{ code: 'internal/unclassified', severity: 'error', message: error.message, subject: {}, evidence: {}, supportedFixes: [] }];
-      if (json) console.log(JSON.stringify(receipt('error', { command: 'check', diagnostics }), null, 2));
-      else console.error(diagnostics.map((d) => `[${d.code}] ${d.message}`).join('\n'));
+      if (json) console.log(formatTerminalJson(receipt('error', { command: 'check', diagnostics })));
+      else console.error(diagnostics.map(formatTerminalDiagnostic).join('\n'));
       process.exitCode = 2;
     });
   }

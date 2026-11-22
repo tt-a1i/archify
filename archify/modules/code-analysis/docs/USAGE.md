@@ -210,7 +210,9 @@ Run `check` without a diagram (or pass `--ir architecture.json [--map overlay-ma
 node bin/archify.mjs code-analysis check /path/to/repo --language ts --out out/first-look --json
 ```
 
-Choose `--language` when the repository contains more than one language; without it, `check` stops with `extract/adapter-ambiguous` and lists per-adapter file counts (`evidence.counts`) so the dominant language is visible on first contact. Each run analyzes one language and reports the others under `coverage.otherLanguages`.
+Archify selects an adapter automatically when it is the only eligible choice. In a mixed tree, the leading adapter must account for at least 90% of files matched by eligible adapters. Go or Rust also needs a regular `go.mod` or `Cargo.toml`, respectively, at the analysis root. A C or C++ lead still requires a choice because source counts cannot tell which files have unique compilation commands. The [Java detection rules](JAVA.md) still apply, and the C++ adapter also covers C when both match.
+
+When Archify needs a choice, `extract/adapter-ambiguous` reports the source counts and corresponding `--language` flags. An explicit `--language` takes precedence. Each run reports the other languages and their file counts in `coverage.otherLanguages`.
 
 Start from the JSON receipt, not the full finding list:
 
@@ -339,7 +341,7 @@ How cycles are graded:
 | `coupling/cycle`: a component that only closes through deferred, conditional or type-only edges | warning |
 | Rust file and module cycles | info: files of one crate compile together, and mutual `use` is ordinary there |
 
-**Upgrading.** Before rule version 2, file cycles were warnings and module and Java cycles were info. `check` fails on warnings by default, so a project whose only cycles were module-level or Java cycles passed and will now fail. When `check` fails without `--baseline`, its summary prints the exact command for this project (language and config included). To adopt the new levels without blocking CI on existing cycles, record them once and commit the file:
+**Upgrading.** Before rule version 2, file cycles were warnings and module and Java cycles were info. `check` fails on warnings by default, so a project whose only cycles were module-level or Java cycles passed and will now fail. When `check` fails without `--baseline`, its receipt includes the exact command for this project (language and config included). To adopt the new levels without blocking CI on existing cycles, record them once and commit the file:
 
 ```sh
 node bin/archify.mjs code-analysis check "/path/to/project" --baseline analysis-baseline.json --update-baseline --reason "existing cycle, tracked in <issue>"
@@ -495,7 +497,7 @@ node bin/archify.mjs code-analysis check "/path/to/project" --baseline analysis-
 | `--update-baseline [--reason text]` | Write the baseline instead of checking. |
 | `--json` | Print a machine-readable receipt instead of the summary. |
 
-Exit codes: `0` passed, `1` the gate failed, `2` the analysis could not run (the diagnostic says why). A failing run without `--baseline` ends with the command that records today's findings in `analysis-baseline.json` (also in the `--json` receipt as `gate.adopt`), for a first run or after a rule became stricter. The printed summary lists failing findings as `path:line` with their ids, the comparison counts, and stale baseline entries.
+Exit codes: `0` passed, `1` the gate failed, `2` the analysis could not run (the diagnostic says why). A failing run without `--baseline` offers the command that records today's findings in `analysis-baseline.json`, for a first run or after a rule became stricter. If the baseline or drill-down command contains control characters, the summary points to the exact command in the `--json` receipt under `gate.adopt` or `investigation.drillDown`. The printed summary lists failing findings as `path:line` with their ids, the comparison counts, and stale baseline entries.
 
 
 ## Config files
