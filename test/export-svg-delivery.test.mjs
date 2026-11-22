@@ -7,7 +7,7 @@ import { spawnSync } from 'node:child_process';
 import { findChrome } from '../archify/bin/visual-check.mjs';
 
 const helper = path.resolve('archify/bin/export-svg.mjs');
-const input = path.resolve('archify/examples/drilldown-platform.html');
+const input = path.resolve('examples/drilldown-platform.html');
 const run = (args, env = process.env) => spawnSync(process.execPath, [helper, ...args], { encoding: 'utf8', env });
 
 test('SVG delivery exports the offline Viewer and preserves existing output', { skip: !findChrome() }, (t) => {

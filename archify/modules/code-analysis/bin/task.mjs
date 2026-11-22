@@ -95,8 +95,6 @@ export function parseTaskArgs(argv) {
 export async function runTask(argv, { now = new Date() } = {}) {
   const { dir, options } = parseTaskArgs(argv);
   if (options['--base-root']) return runChangeQuestion(options);
-  const { ensureDependencies } = await import('./serve.mjs');
-  await ensureDependencies();
   const { buildTask, renderTaskMarkdown, validateTask, readJson } = await import('../lib/task.mjs');
   const { verifyTask } = await import('../lib/evidence.mjs');
   const { stableJson } = await import('../lib/analysis.mjs');
@@ -153,7 +151,6 @@ export async function runTask(argv, { now = new Date() } = {}) {
   };
 }
 
-// Paired capture deliberately avoids ensureDependencies: this path never installs.
 async function runChangeQuestion(options) {
   const root = path.resolve(options['--root']);
   const baseRoot = path.resolve(options['--base-root']);

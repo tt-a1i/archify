@@ -6123,7 +6123,7 @@ async function commandFinalize(rawArgs) {
     const offer = result.summary.codeAnalysisOffer;
     if (offer) {
       const { nodeCommand } = await import('../modules/code-analysis/lib/task-command.mjs');
-      const installNotice = offer.dependencies === 'missing' ? ' (first use installs the analysis components automatically)' : '';
+      const installNotice = offer.dependencies === 'missing' ? ' (analysis components are missing; reinstall Archify first)' : '';
       console.log(`Architecture Diagnosis available (not run)${installNotice}: ${nodeCommand(offer.start.argv.slice(1))}`);
     }
     if (result.summary.update?.noticeRequired) console.log(result.summary.update.noticeText);

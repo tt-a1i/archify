@@ -19,8 +19,8 @@
       "engineeringProfile": null,
       "nodeCount": 12,
       "edgeCount": 11,
-      "artifactBytes": 905606,
-      "artifactSha256": "7ed77c49fd8d404f76a3c93634a49fe1d3a322b1ff2f66393ae1cd74fe58d1fa",
+      "artifactBytes": 908349,
+      "artifactSha256": "3b28980b147d74f0b9b386bb8d4b613129907915c640542980bceac2b3ad9655",
       "sourceBytes": 4939,
       "sourceSha256": "d67965d50872c97e4ff3476271e645bf19fab6b3ab44e111bdb44b063e3aa36f",
       "checks": [
@@ -141,8 +141,8 @@
       "engineeringProfile": "deployment-ownership",
       "nodeCount": 12,
       "edgeCount": 12,
-      "artifactBytes": 908461,
-      "artifactSha256": "bd18892f1da209b5044b08d71fd7f72bad1d31dd82d8e477ba0fefb019c83c15",
+      "artifactBytes": 911204,
+      "artifactSha256": "83ec9197230ad1de569bba3d53b2ddbb17af2915ca61c4c516d6a66752baa5d8",
       "sourceBytes": 4734,
       "sourceSha256": "610a5614667e8f108bdcf1769c9d7af5c3ce0fb62be3ea50550b10eb752e4bda",
       "checks": [
@@ -272,8 +272,8 @@
       "engineeringProfile": null,
       "nodeCount": 7,
       "edgeCount": 12,
-      "artifactBytes": 895894,
-      "artifactSha256": "5cc577223a41f4d6042efbe848599ab7c4caa0176e7a4125ebf27a3dd3e5826f",
+      "artifactBytes": 898637,
+      "artifactSha256": "6a931ceceecf93cd43f9c9e48740d06d3105679a0face65bdf28259c33cf3d93",
       "sourceBytes": 3805,
       "sourceSha256": "f8486daa803fff6c295cecca4604c561fbbf9acb2e83326022b5a87639e8afe6",
       "checks": [
@@ -406,8 +406,8 @@
       "engineeringProfile": null,
       "nodeCount": 10,
       "edgeCount": 10,
-      "artifactBytes": 901166,
-      "artifactSha256": "72c3b445506cd269543839786d82756d486597f4100d0e5a4391f1116bd99cc0",
+      "artifactBytes": 903909,
+      "artifactSha256": "a1444044ba9ced61cd53a0978cbdeea299d43654eaa9f3cd86f2176171891efa",
       "sourceBytes": 4510,
       "sourceSha256": "dbd5c174af66296caec372e7214cf4df7158b50a563508e16826b95ab8d1cd6c",
       "checks": [
@@ -546,8 +546,8 @@
       "engineeringProfile": null,
       "nodeCount": 11,
       "edgeCount": 10,
-      "artifactBytes": 898566,
-      "artifactSha256": "8e0e6c3c4c487b463770f3603134af7e27e0ce243f43761dd6f74279163f4beb",
+      "artifactBytes": 901309,
+      "artifactSha256": "8e2527a851546b0d9ba63de2a3f5f39580e813da5fd2f1a49d89249994430cd1",
       "sourceBytes": 4723,
       "sourceSha256": "630be98449925d2716ecb8439f404b2bff5fe65ba905b0ad0baea6d96890c526",
       "checks": [
@@ -732,8 +732,8 @@
       "engineeringProfile": null,
       "nodeCount": 10,
       "edgeCount": 10,
-      "artifactBytes": 898181,
-      "artifactSha256": "f1492f4991cac1a471b9763fe2991b03320dd7f1d469c96639033422c02dada1",
+      "artifactBytes": 900924,
+      "artifactSha256": "4412b42267e757456315afc6267182e3b0a292fa62c0fa402095d08bf75d1ded",
       "sourceBytes": 5035,
       "sourceSha256": "8a635db9e51a5b1a8d2955b9d66f5b9a450e0a298432ce8f2e2f0be11f372e05",
       "checks": [
@@ -867,8 +867,8 @@
       "engineeringProfile": null,
       "nodeCount": 7,
       "edgeCount": 14,
-      "artifactBytes": 896240,
-      "artifactSha256": "cc49b5f72b190828f50ba981a7afb0119f987a53b9495f89616f160d9e2e3094",
+      "artifactBytes": 898983,
+      "artifactSha256": "8d0655f66809d97338e7a2d59365c591f468a6db2e5e80f895177d500ca53c59",
       "sourceBytes": 3766,
       "sourceSha256": "b8c6c52f1763ede2933c77deb8da59b3e06917bc41d27e66df896136456b859a",
       "checks": [
@@ -1019,8 +1019,8 @@
       "engineeringProfile": null,
       "nodeCount": 12,
       "edgeCount": 12,
-      "artifactBytes": 902101,
-      "artifactSha256": "996398a05b2ef72147501253406441fcd4fedb9eda92b61a110aeb39f6c7243a",
+      "artifactBytes": 904844,
+      "artifactSha256": "332c0519d27f530829ed8d294c4fac18eb38ceb70288edb7f3a370b9bb519392",
       "sourceBytes": 4769,
       "sourceSha256": "3bdd77674282009c7c68d588cf8a3c495bc98a3be1b9c45327fd1801a6f83a23",
       "checks": [
@@ -1171,8 +1171,8 @@
       "engineeringProfile": null,
       "nodeCount": 10,
       "edgeCount": 12,
-      "artifactBytes": 902014,
-      "artifactSha256": "59762444a322dc7835b38daa6a7f760f8727d08184683c72e37f03eba45b344d",
+      "artifactBytes": 904757,
+      "artifactSha256": "d0eed6b1e8e67fb5c27a7e8b89a032d25e52c5b5b9c50480e5f6da24fe1f8480",
       "sourceBytes": 3260,
       "sourceSha256": "5ba36f5ce91ed428cb48b599e275424916d82b619b9a3231cbd1bbc3966fc54b",
       "checks": [
@@ -1293,8 +1293,8 @@
       "engineeringProfile": null,
       "nodeCount": 12,
       "edgeCount": 15,
-      "artifactBytes": 909039,
-      "artifactSha256": "94cc2126f3d69ff8a0b3fa17e56fd3776e2e991ff64dbd34cc5999cb4a5c496c",
+      "artifactBytes": 911782,
+      "artifactSha256": "b1b67ff208a73668b64e5a39011e63ce651b6570402270d04b530f3268184032",
       "sourceBytes": 4155,
       "sourceSha256": "e3dc105d03c1c9881160006cdace23cb5d8533803e337caf0ec287c64e775275",
       "checks": [
@@ -1415,8 +1415,8 @@
       "engineeringProfile": null,
       "nodeCount": 10,
       "edgeCount": 9,
-      "artifactBytes": 900879,
-      "artifactSha256": "23e6b85aa2412a8f29eeffadf50767b82fab30fa05400cdf461591cc9b2fa2a8",
+      "artifactBytes": 903622,
+      "artifactSha256": "7762834857dcd26b5f5cb2245471a59456f53ceaa25ca1eb18ea81f31693c043",
       "sourceBytes": 3197,
       "sourceSha256": "95e051b27a9e4a3307e194c0f666fca4af51470be7e2228d400ff48aea5b353b",
       "checks": [
@@ -1542,7 +1542,36 @@
           "minimumProjectedTextPx": 7.75,
           "semanticTextCount": 28
         },
-        "issues": []
+        "issues": [
+          {
+            "severity": "info",
+            "code": "composition/label-arrowhead-mask",
+            "label": "read-through",
+            "labelRelationship": {
+              "id": "cache-read-through",
+              "from": "api",
+              "to": "cache",
+              "label": "read-through",
+              "collectionIndex": 5,
+              "artifactIndex": 6
+            },
+            "otherRelationship": {
+              "id": "cache-read-through",
+              "from": "api",
+              "to": "cache",
+              "label": "read-through",
+              "collectionIndex": 5,
+              "artifactIndex": 6
+            },
+            "labelRect": {
+              "x": 701.2,
+              "y": 212,
+              "width": 67.6,
+              "height": 14
+            },
+            "detail": "Label \"read-through\" covers an arrowhead of relationship id \"cache-read-through\" (\"api\" -> \"cache\")."
+          }
+        ]
       }
     },
     {
@@ -1559,8 +1588,8 @@
       "engineeringProfile": null,
       "nodeCount": 6,
       "edgeCount": 5,
-      "artifactBytes": 915585,
-      "artifactSha256": "e18062dd1d09369d1ebfbfb83f620e5a39ed4bc5e5d94289118d6ff0811ad061",
+      "artifactBytes": 918328,
+      "artifactSha256": "e7330d0c6a0ab575c93b324985ddf7ea36ae2d477f444f6c5ad89519f5bb2447",
       "sourceBytes": 7321,
       "sourceSha256": "1777a374647084466f4d7ce3a968004be6ab70ac9cf82459b96bed7c556cdfdd",
       "checks": [
@@ -1684,8 +1713,8 @@
       "engineeringProfile": null,
       "nodeCount": 5,
       "edgeCount": 4,
-      "artifactBytes": 895211,
-      "artifactSha256": "09529c314b82ee57b18c7da9e8bd7ad70c38fdaf9327c4c7c89dae6abbf8ec88",
+      "artifactBytes": 897954,
+      "artifactSha256": "b8e7de528744c1455f1c5d39511dfa7c3af7eedf11105e1611bae4a76ddbb8d1",
       "sourceBytes": 2828,
       "sourceSha256": "afba837f97a041e14687cbe8893523232c4afad7afd922d9b128606d1b3f12c8",
       "checks": [
@@ -1811,8 +1840,8 @@
       "engineeringProfile": null,
       "nodeCount": 10,
       "edgeCount": 9,
-      "artifactBytes": 894169,
-      "artifactSha256": "88a20c493d537d7b88433c07a8dfa84b8be580204df28aa4e9897bb2ec14d350",
+      "artifactBytes": 896912,
+      "artifactSha256": "f597f114631b4a0eac4f6be965b8ae087a911eb07dc19505dd31d6c3bd2f5643",
       "sourceBytes": 1214,
       "sourceSha256": "1e99f37b3845d67fa97c9a2ff33109981c23bfdb0d03ba05b7d92944dcdfc61f",
       "checks": [
@@ -1936,8 +1965,8 @@
       "engineeringProfile": null,
       "nodeCount": 5,
       "edgeCount": 0,
-      "artifactBytes": 888643,
-      "artifactSha256": "17738e6b758a6b16d9117702cb448914ef2fb43faf7b34ea4afb6a20ef155577",
+      "artifactBytes": 891386,
+      "artifactSha256": "076556543af9fc9c99275194d8b913d383488cbc050a6c3ab6c16741c939b157",
       "sourceBytes": 1445,
       "sourceSha256": "c1f535b3cc915ddd47ecd7df4e3ef02c441c8c3191daced5cf4422cff8dec95f",
       "checks": [
@@ -2061,8 +2090,8 @@
       "engineeringProfile": null,
       "nodeCount": 6,
       "edgeCount": 5,
-      "artifactBytes": 887835,
-      "artifactSha256": "b65e9a6b46a85dafee72b9f844736f1c4bdd45dd451dba9a86363f784c2cf010",
+      "artifactBytes": 890578,
+      "artifactSha256": "d0e86d0bb5ad0d160349d9fcc4d749dd6fa04aafaa3a8fc6b3d4be83a9615b00",
       "sourceBytes": 1209,
       "sourceSha256": "55a5f74699a0f0e44018a4a000556d43c90430b95f39accac6141af8318b5133",
       "checks": [

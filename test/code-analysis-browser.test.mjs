@@ -6,15 +6,13 @@ import { execFileSync } from 'node:child_process';
 import { test } from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { ChromeVisualBrowser, findChrome } from '../archify/bin/visual-check.mjs';
-import { ensureDependencies, startAnalysisView } from '../archify/modules/code-analysis/bin/serve.mjs';
+import { startAnalysisView } from '../archify/modules/code-analysis/bin/serve.mjs';
 
 const chrome = process.env.ARCHIFY_CHROME ? findChrome() : null;
 
 test('Code Analysis highlights exact duplicate characters and retains both locations through source navigation', {
   skip: chrome ? false : 'Set ARCHIFY_CHROME to run Code Analysis browser coverage.',
 }, async t => {
-  // Match the service's preparation order before loading parser/schema libraries.
-  await ensureDependencies();
   const { buildGraph } = await import('../archify/modules/code-analysis/lib/analysis.mjs');
   const { buildOverlay } = await import('../archify/modules/code-analysis/overlay/inject.mjs');
   const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-c6-browser-'));
@@ -190,7 +188,6 @@ test('Code Analysis highlights exact duplicate characters and retains both locat
 test('Code Analysis marks an empty or incomplete duplicate scan instead of showing a checked all-clear', {
   skip: chrome ? false : 'Set ARCHIFY_CHROME to run Code Analysis browser coverage.',
 }, async t => {
-  await ensureDependencies();
   const { buildGraph } = await import('../archify/modules/code-analysis/lib/analysis.mjs');
   const { buildOverlay } = await import('../archify/modules/code-analysis/overlay/inject.mjs');
   const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-c6-coverage-browser-'));
@@ -251,7 +248,6 @@ test('Code Analysis marks an empty or incomplete duplicate scan instead of showi
 test('Code Analysis shows omitted TypeScript projects on the first screen in both locales', {
   skip: chrome ? false : 'Set ARCHIFY_CHROME to run Code Analysis browser coverage.',
 }, async t => {
-  await ensureDependencies();
   const { buildGraph } = await import('../archify/modules/code-analysis/lib/analysis.mjs');
   const { buildOverlay } = await import('../archify/modules/code-analysis/overlay/inject.mjs');
   const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-ts-project-coverage-browser-'));
@@ -873,7 +869,6 @@ test('Code Analysis Atlas draws the analyzed tree, focuses a module and hands a 
 test('Code Analysis Atlas keeps complexity spike lengths when a focused module is constrained', {
   skip: chrome ? false : 'Set ARCHIFY_CHROME to run Code Analysis browser coverage.',
 }, async t => {
-  await ensureDependencies();
   const { buildGraph } = await import('../archify/modules/code-analysis/lib/analysis.mjs');
   const { buildOverlay } = await import('../archify/modules/code-analysis/overlay/inject.mjs');
   const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-atlas-spike-scale-'));

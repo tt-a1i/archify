@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "layout": {
+    "mode": "auto"
+  },
+  "meta": {
+    "viewBox": [
+      670,
+      280
+    ],
+    "title": "Fixed frame",
+    "output": "review.html",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    {
+      "id": "n0",
+      "label": "Node 0",
+      "type": "backend",
+      "size": [
+        180,
+        80
+      ]
+    },
+    {
+      "id": "n1",
+      "label": "Node 1",
+      "type": "backend",
+      "size": [
+        160,
+        80
+      ]
+    },
+    {
+      "id": "n2",
+      "label": "Node 2",
+      "type": "backend",
+      "size": [
+        180,
+        70
+      ]
+    },
+    {
+      "id": "n3",
+      "label": "Node 3",
+      "type": "backend",
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "n4",
+      "label": "Node 4",
+      "type": "backend",
+      "size": [
+        180,
+        70
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Frame 0",
+      "wraps": [
+        "n4"
+      ],
+      "pad": 28
+    },
+    {
+      "kind": "region",
+      "label": "Frame 1",
+      "wraps": [
+        "n1",
+        "n2"
+      ],
+      "pad": 10
+    }
+  ],
+  "connections": [
+    {
+      "from": "n1",
+      "to": "n2"
+    },
+    {
+      "from": "n1",
+      "to": "n4"
+    }
+  ]
+}

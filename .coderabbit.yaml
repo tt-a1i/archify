@@ -28,7 +28,8 @@ reviews:
     base_branches: ["^dev$"]
     enabled: true
     drafts: false
-    auto_incremental_review: true
+    # Review once when a PR opens; request later passes with `@coderabbitai review`.
+    auto_incremental_review: false
     auto_pause_after_reviewed_commits: 0
   finishing_touches:
     docstrings:
@@ -43,21 +44,6 @@ reviews:
   # Filters also affect sparse checkout: keep runtime resources and authored inputs.
   # New outputs remain reviewable until their generation/freshness proof is checked.
   path_filters:
-    - "!archify/examples/class-payment-processors-rendered.html"
-    - "!archify/examples/class-payments-rendered.html"
-    - "!archify/examples/dataflow-product-analytics.html"
-    - "!archify/examples/erd-orders-rendered.html"
-    - "!archify/examples/lifecycle-agent-run.html"
-    - "!archify/examples/sequence-cache-miss-request.html"
-    - "!archify/examples/subscription-billing-rendered.html"
-    - "!archify/examples/timeline-archify-dev-activity-rendered.html"
-    - "!archify/examples/timeline-payment-incident-rendered.html"
-    - "!archify/examples/tree-archify-repository-rendered.html"
-    - "!archify/examples/tree-payment-platform-rendered.html"
-    - "!archify/examples/waterfall-checkout-request-rendered.html"
-    - "!archify/examples/waterfall-example-rebuild-rendered.html"
-    - "!archify/examples/web-app-rendered.html"
-    - "!archify/examples/workflow-agent-tool-call-rendered.html"
     - "!examples/class-payment-processors-rendered.html"
     - "!examples/class-payments-rendered.html"
     - "!examples/dataflow-product-analytics.html"

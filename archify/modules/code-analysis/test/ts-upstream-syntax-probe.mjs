@@ -8,7 +8,7 @@ import path from 'node:path';
 import { createRequire } from 'node:module';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import ts from 'typescript';
+import ts from '../vendor/typescript.cjs';
 import { extractFacts, loadConfig } from '../lib/analysis.mjs';
 import { configuredProgram } from './ts-official-oracle.mjs';
 import { REVISION } from '../extract/ts/index.mjs';

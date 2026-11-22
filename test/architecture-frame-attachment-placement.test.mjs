@@ -66,3 +66,37 @@ test('interchangeable peripheral cards follow their frame endpoints without crow
   assert.equal(blocker.x, 190);
   assert.ok(Math.abs(leftLeaf.x - 80) < 35 && Math.abs(rightLeaf.x - 390) < 25);
 });
+
+test('optional terminals use the actual frame entrances and exits when there is room', () => {
+  const card = (x, y, width = 160, height = 60) => ({ x, y, width, height });
+  const runtime = { ...card(90, 140, 830, 430), leftInset: 30, topPad: 30 };
+  const intake = { ...card(0, 0), parent: runtime };
+  const writer = { ...card(290, 180), parent: runtime };
+  runtime.children = [intake, writer];
+
+  const clients = [card(100, 0), card(300, 0)];
+  const relay = { ...card(860, 720, 240, 140), leftInset: 30, topPad: 30 };
+  const relayMember = { ...card(0, 0, 180), parent: relay };
+  relay.children = [relayMember];
+  const artifact = card(0, 800);
+  const worker = { ...card(260, 660, 520, 260), children: [] };
+  const attachment = (from, to, originalFrom, originalTo, variant) => ({
+    from, to, originalFrom, originalTo, variant,
+  });
+  const group = {
+    children: [...clients, runtime, relay, artifact, worker],
+    edges: [
+      ...clients.map((client) => attachment(client, runtime, client, intake)),
+      attachment(runtime, relay, intake, relayMember, 'dashed'),
+      attachment(runtime, artifact, writer, artifact, 'dashed'),
+    ],
+  };
+
+  placeFrameAttachments(group, { vertical: true, width: 1100, height: 920 }, 24);
+
+  assert.ok(relay.y < runtime.y && relay.y + relay.height <= runtime.y);
+  assert.ok(relay.x >= clients[1].x + clients[1].width + 40);
+  assert.equal(artifact.x + artifact.width / 2, runtime.x + runtime.leftInset + writer.x + writer.width / 2);
+  assert.ok(artifact.y >= runtime.y + runtime.height && artifact.y + artifact.height <= worker.y);
+  assert.deepEqual(clients.map(({ x, y }) => [x, y]), [[100, 0], [300, 0]]);
+});

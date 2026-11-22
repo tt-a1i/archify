@@ -5,7 +5,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { test } from 'node:test';
-import ts from 'typescript';
+import ts from '../vendor/typescript.cjs';
 import { extract } from '../extract/ts/index.mjs';
 import { extractFacts, buildGraph } from '../lib/analysis.mjs';
 import { analysisContext } from '../evaluate/index.mjs';

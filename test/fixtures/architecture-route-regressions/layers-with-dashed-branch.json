@@ -1,0 +1,198 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "layout": {
+    "mode": "auto"
+  },
+  "components": [
+    {
+      "id": "users",
+      "type": "external",
+      "label": "ユーザー",
+      "sublabel": "ブラウザ / モバイル",
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "auth",
+      "type": "security",
+      "label": "認証プロバイダー",
+      "sublabel": "OAuth 2.0",
+      "size": [
+        120,
+        64
+      ],
+      "tag": "JWT + PKCE"
+    },
+    {
+      "id": "cdn",
+      "type": "cloud",
+      "label": "CloudFront",
+      "sublabel": "CDN",
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "lb",
+      "type": "cloud",
+      "label": "ロードバランサー",
+      "sublabel": "HTTPS :443",
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "APIサーバー",
+      "sublabel": "FastAPI :8000",
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "cache",
+      "type": "database",
+      "label": "Redis",
+      "sublabel": "cache :6379",
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "PostgreSQL",
+      "sublabel": "primary :5432",
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "cloud",
+      "label": "S3",
+      "sublabel": "静的アセット",
+      "size": [
+        130,
+        60
+      ],
+      "tag": "OAI protected"
+    },
+    {
+      "id": "queue",
+      "type": "messagebus",
+      "label": "SQS",
+      "sublabel": "ジョブキュー",
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "worker",
+      "type": "backend",
+      "label": "ワーカー",
+      "sublabel": "非同期処理",
+      "size": [
+        130,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "users-to-cdn",
+      "from": "users",
+      "to": "cdn",
+      "label": "HTTPS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "jwt-verification",
+      "from": "auth",
+      "to": "api",
+      "label": "JWT検証",
+      "variant": "security"
+    },
+    {
+      "id": "cdn-to-lb",
+      "from": "cdn",
+      "to": "lb"
+    },
+    {
+      "id": "static-assets",
+      "from": "cdn",
+      "to": "s3",
+      "label": "静的",
+      "variant": "dashed"
+    },
+    {
+      "id": "lb-to-api",
+      "from": "lb",
+      "to": "api"
+    },
+    {
+      "id": "cache-read-through",
+      "from": "api",
+      "to": "cache",
+      "label": "read-through"
+    },
+    {
+      "id": "api-sql",
+      "from": "api",
+      "to": "db",
+      "label": "SQL"
+    },
+    {
+      "id": "enqueue-job",
+      "from": "api",
+      "to": "queue",
+      "label": "enqueue",
+      "variant": "dashed"
+    },
+    {
+      "id": "queue-to-worker",
+      "from": "queue",
+      "to": "worker"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWSリージョン: us-west-2",
+      "wraps": [
+        "cdn",
+        "lb",
+        "api",
+        "cache",
+        "db",
+        "s3",
+        "queue",
+        "worker"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "sg-api :443/:8000",
+      "wraps": [
+        "lb",
+        "api"
+      ]
+    }
+  ],
+  "meta": {
+    "title": "Layer crossing recovery",
+    "output": "chart.html",
+    "quality_profile": "showcase",
+    "locale": "ja"
+  }
+}

@@ -61,8 +61,6 @@ export function parseCheckArgs(argv) {
 
 export async function runCheck(argv) {
   const { repo, options } = parseCheckArgs(argv);
-  const { ensureDependencies } = await import('./serve.mjs');
-  await ensureDependencies();
   const { extractFacts, buildGraph, evaluateGraph, loadBaseline, saveBaseline, loadPrevious, readJsonInput, stableJson, reviewSummary } = await import('../lib/analysis.mjs');
   const { reviewFindings, baselineFrom, acceptFinding, revokeFinding, isOpen } = await import('../lib/review.mjs');
   const { buildOverview, findingWhere } = await import('../overlay/overview.mjs');

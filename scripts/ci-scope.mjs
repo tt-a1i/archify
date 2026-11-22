@@ -42,7 +42,7 @@ const viewerMediaFixtures = new Set([
 // Both committed Story HTML fixtures are compared against the current renderer
 // and their input in test:generated, even when this job only runs Viewer media.
 const storyGoldenFixtures = new Set([
-  'archify/examples/waterfall-checkout-request-rendered.html', 'archify/examples/workflow-agent-tool-call-rendered.html',
+  'examples/waterfall-checkout-request-rendered.html', 'examples/workflow-agent-tool-call-rendered.html',
 ]);
 
 function viewerRebuildCompanion(name) {

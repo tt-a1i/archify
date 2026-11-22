@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Probe",
+    "output": "probe.html",
+    "quality_profile": "showcase"
+  },
+  "layout": {
+    "mode": "auto"
+  },
+  "components": [
+    {
+      "id": "n",
+      "type": "backend",
+      "label": "Loop",
+      "pos": [
+        200,
+        100
+      ],
+      "size": [
+        120,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "retry",
+      "from": "n",
+      "to": "n",
+      "fromSide": "right",
+      "toSide": "right"
+    }
+  ]
+}
