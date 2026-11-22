@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { automaticComponentPositions } from '../archify/renderers/architecture/automatic-placement.mjs';
 import { measuredCrossingPairs } from '../archify/renderers/architecture/automatic-placement-candidates.mjs';
 import { connectionLabelBoxAt, createArchitectureRouter } from '../archify/renderers/architecture/routing.mjs';
-import { properSegmentIntersection, roundedPath, segmentRectClearance } from '../archify/renderers/shared/geometry.mjs';
+import { properSegmentIntersection, rectsOverlap, roundedPath, segmentRectClearance } from '../archify/renderers/shared/geometry.mjs';
 
 const fixtureUrl = name => new URL(`fixtures/architecture-route-regressions/${name}.json`, import.meta.url);
 const load = name => JSON.parse(readFileSync(fixtureUrl(name), 'utf8'));
@@ -21,6 +21,81 @@ function measuredLayout(name) {
   const layout = JSON.parse(result.stdout);
   return new Map(load(name).connections.map(({ id }, index) => [id, layout.connections[index]]));
 }
+
+function inferredLayout(t, components, connections, boundaries, quality = 'showcase') {
+  const dir = mkdtempSync(join(tmpdir(), 'archify-inferred-layout-'));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const input = join(dir, 'input.json');
+  writeFileSync(input, JSON.stringify({
+    schema_version: 1, diagram_type: 'architecture', layout: { mode: 'auto' },
+    meta: { title: 'Inferred layout', output: 'output.html', quality_profile: quality },
+    components, connections, boundaries,
+  }));
+  const { status, receipt } = validate(input, quality, '--layout-json');
+  assert.equal(status, 0, JSON.stringify(receipt.diagnostics));
+  return receipt;
+}
+
+test('an inferred input with a deep consumer approaches from an adjacent slot', t => {
+  const components = [
+    ['cli', 'external'], ['collect', 'backend'], ['remote', 'cloud'], ['snapshot', 'database'],
+    ['analyze', 'backend'], ['guidance', 'external'], ['report', 'external'],
+  ].map(([id, type]) => ({ id, type, label: id, size: [160, 66] }));
+  const connections = [
+    ['cli', 'collect', '运行采集', 'emphasis'], ['collect', 'remote', 'gh 请求'],
+    ['collect', 'snapshot', '输出 JSON', 'emphasis'], ['snapshot', 'analyze', '提供数据', 'emphasis'],
+    ['guidance', 'analyze', '解释口径'], ['analyze', 'report', '整理结论', 'emphasis'],
+  ].map(([from, to, label, variant]) => ({ from, to, label, variant }));
+  const layout = inferredLayout(t, components, connections);
+  const branch = layout.connections.find(route => route.from === 'guidance');
+  assert.equal(branch.points.length, 2);
+  assert.equal(branch.points[0][1], branch.points[1][1]);
+  assert.ok(Math.abs(branch.points[0][0] - branch.points[1][0]) <= 80, JSON.stringify(branch));
+});
+
+test('an inferred relationship label keeps the marker on its short final approach visible', t => {
+  const components = [
+    ['ui', 'frontend', 150], ['worker', 'backend', 160], ['store', 'database', 160],
+    ['auth', 'security', 160], ['client', 'external', 150],
+  ].map(([id, type, width]) => ({ id, type, label: id, size: [width, 65] }));
+  const connections = [
+    ['ui', 'worker', '词库请求', 'emphasis'], ['worker', 'store', '读取与写入', 'emphasis'],
+    ['worker', 'auth', '身份检查'], ['client', 'auth', '密钥认证'], ['auth', 'store', '查询凭据'],
+  ].map(([from, to, label, variant]) => ({ from, to, label, variant }));
+  for (const quality of ['standard', 'showcase']) {
+    const { connections: routes } = inferredLayout(t, components, connections, undefined, quality);
+    const route = routes.find(entry => entry.from === 'client');
+    const [x, y] = route.points.at(-1);
+    assert.ok(route.points.at(-2)[1] > y && route.points.at(-2)[0] === x);
+    const marker = { x: x - 5.25, y: y - 1.5, width: 10.5, height: 15 };
+    assert.equal(rectsOverlap(connectionLabelBoxAt(route, route.labelAt), marker), false, quality);
+  }
+});
+
+test('a tall inferred chain folds once while keeping the sequence of links', t => {
+  const components = Array.from({ length: 7 }, (_, index) => ({
+    id: `card${index}`, type: 'frontend', label: `Stage ${index + 1}`, size: [180, 70],
+  }));
+  const connections = components.slice(1).map(({ id }, index) => ({
+    from: components[index].id, to: id, label: '下一步',
+  }));
+  const layout = inferredLayout(t, components, connections);
+  assert.ok(layout.viewBox[1] <= 650, JSON.stringify(layout.viewBox));
+  assert.equal(new Set(layout.components.map(({ x }) => x)).size, 2);
+  assert.deepEqual(layout.connections.map(({ from, to }) => [from, to]), connections.map(({ from, to }) => [from, to]));
+});
+
+test('two close arrivals get room between their arrowheads on the same face', t => {
+  const fixture = JSON.parse(readFileSync(new URL(
+    'fixtures/architecture-viewport/readable-scroll-worldscope.architecture.json', import.meta.url), 'utf8'));
+  const components = fixture.components.map(({ pos, ...card }) => card);
+  const connections = fixture.connections.map(({ fromSide, toSide, labelAt, via, route, ...link }) => link);
+  const layout = inferredLayout(t, components, connections, fixture.boundaries);
+  const [api, agent] = ['api', 'agent'].map(id => layout.connections.find(({ from, to }) => from === id && to === 'context'));
+  const [first, second] = [api, agent].map(route => route.points.at(-1));
+  assert.equal(first[1], second[1]);
+  assert.ok(Math.abs(first[0] - second[0]) >= 22 - 0.001, JSON.stringify({ first, second }));
+});
 
 test('a shorter route cannot cause the final label solver to put another label on an arrow', () => {
   measuredLayout('clearance');

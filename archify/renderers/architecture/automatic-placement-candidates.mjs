@@ -1,5 +1,6 @@
 import { properSegmentIntersection, rectsOverlap } from '../shared/geometry.mjs';
 import { analyzeSvgPath } from '../shared/svg-path-analysis.mjs';
+import { horizontalLabelClearance } from './routing.mjs';
 
 function pointOnSegment(point, { start, end }) {
   const [x, y] = point;
@@ -63,6 +64,150 @@ export function measuredCrossingPairs(routes) {
 
 function move(box, x, y) {
   return { ...box, x, y, cx: x + box.width / 2, cy: y + box.height / 2 };
+}
+
+export function routeSpanMeasures(routes, boxes, viewBox) {
+  const spans = routes.map(({ relation, points }) => {
+    const from = boxes.get(relation.from);
+    const to = boxes.get(relation.to);
+    const separation = Math.abs(to.cx - from.cx) + Math.abs(to.cy - from.cy);
+    const length = points.slice(1).reduce((total, [x, y], index) =>
+      total + Math.abs(x - points[index][0]) + Math.abs(y - points[index][1]), 0);
+    return { length, centerRatio: separation ? length / separation : null };
+  });
+  return {
+    spans,
+    length: spans.reduce((total, route) => total + route.length, 0),
+    longest: Math.max(0, ...spans.map(route => route.length)) / Math.hypot(...viewBox),
+  };
+}
+
+// Pull a terminal branch toward the layer beside its first shared card.
+// Preserve the spacing inside a short unary chain when it moves as a unit.
+export function terminalBranchCandidates({ boxes, routes, viewBox, titles }, spans) {
+  const neighbors = new Map([...boxes.keys()].map(id => [id, new Set()]));
+  const incoming = new Map([...boxes.keys()].map(id => [id, new Set()]));
+  const outgoing = new Map([...boxes.keys()].map(id => [id, new Set()]));
+  for (const { relation: { from, to } } of routes) {
+    neighbors.get(from).add(to);
+    neighbors.get(to).add(from);
+    incoming.get(to).add(from);
+    outgoing.get(from).add(to);
+  }
+  const frames = titles.boundaries;
+  const inScope = (frame, box) => frame.wraps.includes(box.id);
+  const moves = [];
+  const seen = new Set();
+  const contentRight = Math.max(...[...boxes.values()].map(box => box.x + box.width));
+  const contentBottom = Math.max(...[...boxes.values()].map(box => box.y + box.height));
+  for (const [id, peers] of neighbors) {
+    if (peers.size !== 1 || peers.has(id)) continue;
+    const branch = new Set([id]);
+    let attach = id;
+    let [neighbor] = peers;
+    while (branch.size < 3 && neighbors.get(neighbor).size === 2
+      && incoming.get(neighbor).size === 1 && outgoing.get(neighbor).size === 1) {
+      branch.add(neighbor);
+      const next = [...neighbors.get(neighbor)].find(other => other !== attach);
+      attach = neighbor;
+      neighbor = next;
+    }
+    if (neighbors.get(neighbor).size < 2 || branch.has(neighbor)) continue;
+    const links = routes.filter(({ relation }) => relation.from === attach && relation.to === neighbor
+      || relation.to === attach && relation.from === neighbor);
+    const longest = Math.max(...links.map(link => spans[routes.indexOf(link)].length));
+    if (longest < Math.max(240, Math.hypot(...viewBox) / 3)) continue;
+    const box = boxes.get(attach);
+    const target = boxes.get(neighbor);
+    const [left, right] = [target.x, target.x + target.width];
+    const [top, bottom] = [target.y, target.y + target.height];
+    const x = target.cx - box.width / 2;
+    const y = target.cy - box.height / 2;
+    const gap = 28;
+    const horizontal = Math.max(52, ...links.map(({ relation }) => (relation.label?.length ?? 0) * 7 + 24));
+    const inner = [...branch].map(member => boxes.get(member));
+    const others = [...boxes.values()].filter(other => !branch.has(other.id));
+    const xs = [x, left, right - box.width, box.x, left - box.width - gap, right + gap];
+    const ys = [y, top, bottom - box.height, box.y, top - box.height - gap, bottom + gap];
+    const positions = [
+      ...xs.flatMap(value => [[value, top - box.height - 48], [value, bottom + 48]]),
+      ...ys.flatMap(value => [[left - box.width - horizontal, value], [right + horizontal, value]]),
+    ];
+    for (const frame of frames.filter(frame => inScope(frame, target) && !inScope(frame, box))) {
+      positions.push([x, frame.y - box.height - gap], [x, frame.y + frame.height + gap],
+        [frame.x - box.width - gap, y], [frame.x + frame.width + gap, y]);
+    }
+    for (const other of others) {
+      // Existing slots one band away can have a clearer approach than the
+      // closest strip. Include their edges, but keep the neighbor alignment.
+      if (Math.abs(other.cx - target.cx) < target.width * 1.5) {
+        positions.push([x, other.y - box.height - gap], [x, other.y + other.height + gap]);
+      }
+      if (Math.abs(other.cy - target.cy) < target.height * 2) {
+        positions.push([other.x - box.width - gap, y], [other.x + other.width + gap, y]);
+      }
+    }
+    const oldGap = Math.abs(target.cx - box.cx) + Math.abs(target.cy - box.cy);
+    for (const [cx, cy] of positions) {
+      const gain = oldGap - (Math.abs(cx + box.width / 2 - target.cx) + Math.abs(cy + box.height / 2 - target.cy));
+      if (gain < 48) continue;
+      const changed = inner.map(member => move(member, member.x + cx - box.x, member.y + cy - box.y));
+      if (changed.some((member, index) => member.x < 40 || member.y < 40
+          || member.x + member.width > contentRight + 0.0001 || member.y + member.height > contentBottom + 0.0001
+          || others.some(other => rectsOverlap(other, member, gap))
+          || frames.some(frame => !inScope(frame, member) && rectsOverlap(frame, member, 12)
+            && !rectsOverlap(frame, inner[index], 12)))) continue;
+      const key = JSON.stringify(changed.map(({ id, x, y }) => [id, x, y]));
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const moved = new Map(boxes);
+      for (const member of changed) moved.set(member.id, member);
+      moves.push({ moved, gain, longest, attach });
+    }
+    if (inner.length !== 1) continue;
+    // Peers of equal size can exchange slots inside a packed frame. This
+    // gives a shared interface a shorter approach without moving its frame.
+    for (const peer of others) {
+      if (peer === target || peer.width !== box.width || peer.height !== box.height
+          || !frames.every(frame => inScope(frame, peer) === inScope(frame, box))) continue;
+      if (!frames.some(frame => inScope(frame, box))) continue;
+      const gain = oldGap - (Math.abs(target.cx - peer.cx) + Math.abs(target.cy - peer.cy));
+      if (gain < 48) continue;
+      const moved = new Map(boxes).set(box.id, move(box, peer.x, peer.y)).set(peer.id, move(peer, box.x, box.y));
+      moves.push({ moved, gain, longest, attach });
+    }
+  }
+  return moves.sort((a, b) => b.longest - a.longest || b.gain - a.gain);
+}
+
+export function foldedChain({ boxes, routes, titles, viewBox }) {
+  if (boxes.size < 7 || titles.boundaries.length || routes.length !== boxes.size - 1
+      || viewBox[1] < 850 || viewBox[1] < viewBox[0] * 2.6) return null;
+  const outgoing = new Map(routes.map(route => [route.relation.from, route.relation]));
+  const targets = new Set(routes.map(route => route.relation.to));
+  if (outgoing.size !== routes.length || targets.size !== routes.length) return null;
+  const order = [];
+  const seen = new Set();
+  let id = [...boxes.keys()].find(key => !targets.has(key));
+  while (id && !seen.has(id)) {
+    seen.add(id);
+    order.push(boxes.get(id));
+    id = outgoing.get(id)?.to;
+  }
+  if (order.length !== boxes.size) return null;
+  const split = Math.ceil(order.length / 2);
+  const height = Math.max(...order.map(box => box.height));
+  const leftWidth = Math.max(...order.slice(0, split).map(box => box.width));
+  const rightWidth = Math.max(...order.slice(split).map(box => box.width));
+  const gap = Math.max(72, horizontalLabelClearance(outgoing.get(order[split - 1].id)));
+  const moved = new Map(boxes);
+  for (const [index, box] of order.entries()) {
+    const left = index < split;
+    const y = left ? index : split * 2 - index - 1;
+    moved.set(box.id, move(box, 48 + (left ? (leftWidth - box.width) / 2
+      : leftWidth + gap + (rightWidth - box.width) / 2), 48 + y * (height + 60)));
+  }
+  return moved;
 }
 
 function layerOrder(components, connections, frames, vertical, bestOnly = false) {

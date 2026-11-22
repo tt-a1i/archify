@@ -5,7 +5,7 @@ import { createSpatialGrid } from './spatial-grid.mjs';
 // It never routes an edge, moves a node, expands the canvas, or rewrites input.
 export function placeAutomaticLabels({
   labels, routes, components, titles, viewBox, placementBottom = viewBox[1], fallbackRing = true, keepFallbackNearRoute = false,
-  gridSweep = false, maxOwnRouteDistance = Infinity,
+  gridSweep = false, maxOwnRouteDistance = Infinity, protectedEndpoints = new Map(), onlyProtectedEndpoints = false,
 }) {
   const placed = [...labels];
   const obstacles = [...components, ...titles];
@@ -43,10 +43,11 @@ export function placeAutomaticLabels({
   const overlapsLabel = (rect, index, gap = 0) => placed.some((other, otherIndex) => (
     otherIndex !== index && rectsOverlap(rect, other, gap)
   ));
+  const coversEndpoint = rect => protectedEndpoints.get(rect.relationIndex)?.some(zone => rectsOverlap(rect, zone));
   const clear = (rect, index) => (
     inside(rect) && rect.y + rect.height <= placementBottom
     && !obstacles.some(obstacle => rectsOverlap(rect, obstacle, 2))
-    && !overlapsLabel(rect, index, 2) && !masksRoute(rect)
+    && !overlapsLabel(rect, index, 2) && !masksRoute(rect) && !coversEndpoint(rect)
     && (!Number.isFinite(maxOwnRouteDistance) || segments.some(segment =>
       segment.relationIndex === rect.relationIndex
       && segmentRectClearanceWithin(segment, rect, maxOwnRouteDistance) <= maxOwnRouteDistance))
@@ -153,10 +154,10 @@ export function placeAutomaticLabels({
 
   const pinned = label => ['labelAt', 'labelDx', 'labelDy', 'labelSegment']
     .some(key => label.relation[key] !== undefined);
-  const needsPlacement = (label, index) => !inside(label)
+  const needsPlacement = (label, index) => coversEndpoint(label) || (!onlyProtectedEndpoints && (!inside(label)
     || components.some(component => rectsOverlap(label, component, -2))
     || titles.some(title => rectsOverlap(label, title))
-    || overlapsLabel(label, index) || masksRoute(label);
+    || overlapsLabel(label, index) || masksRoute(label)));
   const placeLabel = (index, rerank) => {
     const label = placed[index];
     // Match actual defect thresholds before searching; a valid placement is

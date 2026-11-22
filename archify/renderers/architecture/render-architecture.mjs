@@ -14,8 +14,11 @@ import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeFrameAttrs, changeLeg
 import { gridLayout, resolveComponentPos, validateGridPlacement } from './grid.mjs';
 import { automaticComponentPositions, boundaryInsets } from './automatic-placement.mjs';
 import { placeCrossedLeaf, placeCrossedSinks, facingFramePlacements } from './crossed-leaf-placement.mjs';
-import { crossingPlacementCandidates, frameAttachmentCandidates, frameEnclosureCandidates, measuredCrossingPairs, strongestLayerOrder } from './automatic-placement-candidates.mjs';
-import { createArchitectureRouter, connectionLabelBoxAt } from './routing.mjs';
+import { crossingPlacementCandidates, foldedChain, frameAttachmentCandidates, frameEnclosureCandidates, measuredCrossingPairs, routeSpanMeasures, strongestLayerOrder, terminalBranchCandidates } from './automatic-placement-candidates.mjs';
+import {
+  closeReciprocalLanes, createArchitectureRouter, connectionLabelBoxAt, parallelFrameRunLength,
+  MIN_PARALLEL_DEPARTURE, READABLE_PORT_GAP,
+} from './routing.mjs';
 import { placeAutomaticLabels } from '../shared/automatic-labels.mjs';
 import { cleanRouteDetourProblems } from '../shared/route-quality.mjs';
 import {
@@ -29,6 +32,7 @@ import {
   cleanAmbiguousCorridorProblems,
   collectArrowheadCollisions,
   routeBudgetMetrics,
+  frameBorderSegments,
   collectLabelRouteClearance,
   segmentRectClearanceWithin,
   cleanBorderRunProblems,
@@ -114,6 +118,7 @@ function automaticComponentSize(c) {
 }
 
 const auto = arch.layout?.mode === 'auto';
+const whollyInferred = auto && !arch.meta?.viewBox && arch.components.every(component => !component.pos);
 const requiresNestedBoundaryMembership = arch.meta?.engineering_profile === 'deployment-ownership';
 const fitInferredBoundaryNesting = auto && requiresNestedBoundaryMembership && !arch.meta?.viewBox
   && arch.components.every(c => !c.pos);
@@ -396,10 +401,11 @@ const forRouting = boundaries => boundaries.map(boundary => ({
 let rawBoundaries = boundsFor(components);
 const routingFrames = forRouting(rawBoundaries);
 const connections = asArray(arch.connections);
-const makeRouter = (boxes, boundaries = rawBoundaries) => {
+const makeRouter = (boxes, boundaries = rawBoundaries, routingOptions = {}) => {
   let acceptedProblems;
   return createArchitectureRouter(boxes, connections, {
     automaticPlacement: Boolean(automaticPositions),
+    ...routingOptions,
     fixedCanvas: Boolean(arch.meta?.viewBox),
     frames: forRouting(boundaries),
     acceptSimplification: (before, after) => {
@@ -496,6 +502,29 @@ function resolveBoundaryTitles(scene, connectionGeometry, rawBoundaries) {
 
 // Run the same title, canvas and label placement for a route proposal and
 // for the SVG. The router's provisional label reservations only prune probes.
+function endpointLabelZones({ relation, points }) {
+  const stroke = relation.width || (relation.variant === 'emphasis' ? 1.8 : 1.5);
+  function zone(tip, next, along, across, overhang = 0) {
+    const distance = Math.hypot(next[0] - tip[0], next[1] - tip[1]);
+    if (!distance) return null;
+    const [ux, uy] = next.map((value, axis) => (value - tip[axis]) / distance);
+    const x = tip[0] + ux * along;
+    const y = tip[1] + uy * along;
+    const dx = Math.abs(uy) * across;
+    const dy = Math.abs(ux) * across;
+    const sx = tip[0] - ux * overhang;
+    const sy = tip[1] - uy * overhang;
+    return { x: Math.min(sx, x) - dx, y: Math.min(sy, y) - dy,
+      width: Math.abs(x - sx) + 2 * dx, height: Math.abs(y - sy) + 2 * dy };
+  }
+  // The marker polygon extends 9 stroke widths behind its reference point
+  // and one ahead. Preserve the short departure as well.
+  return [
+    zone(points[0], points[1], Math.min(8, Math.hypot(points[1][0] - points[0][0], points[1][1] - points[0][1])), stroke),
+    zone(points.at(-1), points.at(-2), 9 * stroke, 3.5 * stroke, stroke),
+  ].filter(Boolean);
+}
+
 function resolveConnectionComposition(boxes, routeFor, measuredBoundaries = boundsFor(boxes)) {
   const routes = connections.flatMap((relation, relationIndex) => {
     if (!boxes.has(relation.from) || !boxes.has(relation.to)) return [];
@@ -515,10 +544,18 @@ function resolveConnectionComposition(boxes, routeFor, measuredBoundaries = boun
   const titles = resolveBoundaryTitles({ boxes, connectionLabels: labels, titleRouteSegments }, geometry, measuredBoundaries);
   const boundaries = titles.boundaries;
   const viewBox = arch.meta?.viewBox || autoViewBoxFor(boxes, boundaries, geometry);
-  const placed = arch.meta?.quality_profile === 'showcase' ? placeAutomaticLabels({
+  const protectedEndpoints = new Map(whollyInferred ? routes
+    .filter(({ relation }) => relation.label && hasAutomaticRouteGeometry(relation))
+    .map(route => [route.relationIndex, endpointLabelZones(route)]) : []);
+  const showcase = arch.meta?.quality_profile === 'showcase';
+  const hitEndpoint = !showcase && labels.some(label => protectedEndpoints.get(label.relationIndex)
+    ?.some(zone => rectsOverlap(label, zone)));
+  const placed = showcase || hitEndpoint ? placeAutomaticLabels({
     keepFallbackNearRoute: true,
     labels,
     routes,
+    protectedEndpoints,
+    onlyProtectedEndpoints: !showcase,
     components: [...boxes.values()],
     titles: boundaries.map(boundary => boundary.title),
     viewBox,
@@ -527,10 +564,10 @@ function resolveConnectionComposition(boxes, routeFor, measuredBoundaries = boun
       ? viewBox[1] - 48 - legendFootprint(architectureLegendEntries, { width: viewBox[0] - layout.margin * 2 }).extraHeight
       : viewBox[1],
   }) : labels;
-  return { routes, labels: placed, titles, viewBox, boxes };
+  return { routes, labels: placed, titles, viewBox, boxes, protectedEndpoints };
 }
 
-function labelProblems({ routes, labels, titles, viewBox, boxes }) {
+function labelProblems({ routes, labels, titles, viewBox, boxes, protectedEndpoints }) {
   const problems = new Map();
   // Use the same measurements as the composition gate. Compare distances
   // per label and relationship so an existing defect cannot mask a new one.
@@ -543,6 +580,9 @@ function labelProblems({ routes, labels, titles, viewBox, boxes }) {
   const canvas = { x: 0, y: 0, width: viewBox[0], height: viewBox[1] };
   for (const [index, label] of labels.entries()) {
     const { relationIndex } = label;
+    if (protectedEndpoints.get(relationIndex)?.some(zone => rectsOverlap(label, zone))) {
+      problems.set(`endpoint/${relationIndex}`, 1);
+    }
     const owner = byIndex.get(relationIndex);
     const own = distance(owner.points, label, Infinity);
     for (const other of routes) {
@@ -573,6 +613,46 @@ function frameEnclosures(boxes, boundaries) {
     .map(box => ({ frame, box })));
 }
 
+function spacingDebt({ routes, boxes, titles }) {
+  const ports = new Map();
+  const directed = new Map();
+  const borders = forRouting(titles.boundaries).flatMap(frameBorderSegments);
+  let portDebt = 0;
+  let borderDebt = 0;
+  for (const { relation, points } of routes) {
+    borderDebt += parallelFrameRunLength(points, borders);
+    if (relation.from !== relation.to) {
+      const key = JSON.stringify([relation.from, relation.to]);
+      for (const other of directed.get(JSON.stringify([relation.to, relation.from])) || []) {
+        for (const { separation } of closeReciprocalLanes(points, other)) {
+          portDebt += READABLE_PORT_GAP - Math.abs(separation);
+        }
+      }
+      if (!directed.has(key)) directed.set(key, []);
+      directed.get(key).push(points);
+    }
+    for (const [id, tip, adjacent, arrival] of [
+      [relation.from, points[0], points[1], false], [relation.to, points.at(-1), points.at(-2), true],
+    ]) {
+      const box = boxes.get(id);
+      const axis = tip[0] === adjacent[0] ? 0 : 1;
+      const face = [id, axis, tip[1 - axis] < (axis ? box.cx : box.cy)].join('/');
+      const peers = ports.get(face) || [];
+      const stub = Math.abs(tip[1 - axis] - adjacent[1 - axis]);
+      for (const peer of peers) {
+        const reciprocal = peer.relation.from === relation.to && peer.relation.to === relation.from;
+        const longDepartures = !arrival && !peer.arrival && Math.min(stub, peer.stub) >= MIN_PARALLEL_DEPARTURE;
+        if ((arrival && peer.arrival) || reciprocal || longDepartures) {
+          portDebt += Math.max(0, READABLE_PORT_GAP - Math.abs(tip[axis] - peer.value));
+        }
+      }
+      peers.push({ value: tip[axis], stub, arrival, relation });
+      ports.set(face, peers);
+    }
+  }
+  return { portDebt, borderDebt };
+}
+
 function chooseAutomaticPlacement() {
   if (!auto || components.size > 40 || connections.length > 64 || rawBoundaries.length > 24
       || [...components.values()].some(box => box.pos)
@@ -584,20 +664,19 @@ function chooseAutomaticPlacement() {
     ? frameEnclosures(components, initial.titles.boundaries) : [];
   const small = components.size <= 24 && connections.length <= 36;
   const crossings = !arch.meta?.viewBox || enclosures.length ? measuredCrossingPairs(initial.routes) : [];
-  if (!enclosures.length && !crossings.length) return initial;
+  const canShorten = small && !arch.meta?.viewBox && !enclosures.length;
+  if (!enclosures.length && !crossings.length && !canShorten) return initial;
   const labels = labelProblems(initial);
   function measure(scene) {
     const { routesOverSuggestedBends: bends, routesOverSuggestedStretch: stretch } =
       routeBudgetMetrics({ routedRelations: scene.routes });
-    const length = scene.routes.reduce((total, { points }) => total + points.slice(1).reduce((sum, [x, y], index) =>
-      sum + Math.abs(x - points[index][0]) + Math.abs(y - points[index][1]), 0), 0);
-    return { bends, stretch, length, area: scene.viewBox[0] * scene.viewBox[1] };
+    return { bends, stretch, ...routeSpanMeasures(scene.routes, scene.boxes, scene.viewBox), area: scene.viewBox[0] * scene.viewBox[1] };
   }
   const baseline = measure(initial);
   let best = { ...baseline, crossings, enclosures, scene: initial, router };
-  function consider(moved, enclosureLimit = 0) {
+  function consider(moved, enclosureLimit = 0, kind = '', routingOptions) {
     const bounds = boundsFor(moved);
-    const candidate = makeRouter(moved, bounds);
+    const candidate = makeRouter(moved, bounds, routingOptions);
     const scene = resolveConnectionComposition(moved, candidate.pathFor, bounds);
     const nextCrossings = measuredCrossingPairs(scene.routes);
     const next = measure(scene);
@@ -608,6 +687,23 @@ function chooseAutomaticPlacement() {
     if (enclosureLimit) {
       if (nextCrossings.length > crossings.length || nextEnclosures.length >= enclosureLimit
           || (nextEnclosures.length - best.enclosures.length || order) >= 0) return;
+    } else if (kind === 'span') {
+      // Both normalizations matter: shrinking a mostly empty canvas must
+      // still leave the longest route shorter relative to the whole view.
+      if (nextCrossings.length > best.crossings.length || next.bends > best.bends || next.stretch > best.stretch
+          || next.length >= best.length - 0.0001 || next.area > best.area || next.longest > best.longest + 0.0001
+          || next.spans.reduce((sum, span) => sum + span.centerRatio, 0)
+            > best.spans.reduce((sum, span) => sum + span.centerRatio, 0) + 0.0001) return;
+    } else if (kind === 'spacing') {
+      const old = spacingDebt(best.scene);
+      const debt = spacingDebt(scene);
+      if (nextCrossings.length > best.crossings.length || next.bends > best.bends || next.stretch > best.stretch
+          || next.length > best.length * 1.025 || next.area > best.area || next.longest > best.longest + 0.025
+          || debt.portDebt > old.portDebt || debt.borderDebt > old.borderDebt + 0.0001
+          || (debt.portDebt === old.portDebt && debt.borderDebt >= old.borderDebt - 0.0001)) return;
+    } else if (kind === 'fold') {
+      if (nextCrossings.length > best.crossings.length || next.bends > best.bends || next.stretch > best.stretch
+          || scene.viewBox[1] >= best.scene.viewBox[1] * 0.75 || next.area > best.area * 1.25) return;
     } else if (order >= 0 || nextCrossings.length >= crossings.length || next.length > baseline.length + 0.0001
         || scene.viewBox.some((size, axis) => size > initial.viewBox[axis])) return;
     if (!candidate.planIsClear(scene.viewBox, { checkProvisionalLabels: false })
@@ -642,7 +738,7 @@ function chooseAutomaticPlacement() {
       if (start === best) break;
     }
     if (best.enclosures.length) return initial;
-  } else {
+  } else if (crossings.length) {
     function tryCrossingMoves(candidates) {
       for (const moved of candidates) {
         if (remaining <= 0) break;
@@ -654,6 +750,37 @@ function chooseAutomaticPlacement() {
     if (remaining && best.crossings.length) {
       tryCrossingMoves(frameAttachmentCandidates(best.scene.boxes, connections, best.scene.titles.boundaries, best.crossings));
     }
+  }
+  if (canShorten) {
+    let budget = 12;
+    for (let pass = 0; pass < 3 && budget; pass += 1) {
+      const start = best;
+      const moves = terminalBranchCandidates(start.scene, start.spans);
+      let attempts = 0;
+      const tried = new Map();
+      for (const { moved, attach } of moves) {
+        if (!budget || attempts >= 6) break;
+        if ((tried.get(attach) ?? 0) >= 3) continue;
+        tried.set(attach, (tried.get(attach) ?? 0) + 1);
+        attempts += 1;
+        budget -= 1;
+        consider(moved, 0, 'span');
+      }
+      if (start === best) break;
+    }
+  }
+  if (canShorten) {
+    const debt = spacingDebt(best.scene);
+    if (debt.portDebt) {
+      consider(best.scene.boxes, 0, 'spacing', { spreadLanes: true });
+      consider(best.scene.boxes, 0, 'spacing', { readablePorts: true, spreadLanes: true });
+    }
+    if (debt.borderDebt) {
+      consider(best.scene.boxes, 0, 'spacing', { frameClearance: 8 });
+      if (debt.portDebt) consider(best.scene.boxes, 0, 'spacing', { frameClearance: 8, readablePorts: true });
+    }
+    const folded = foldedChain(best.scene);
+    if (folded) consider(folded, 0, 'fold');
   }
   if (best.router !== router) {
     router = best.router;
