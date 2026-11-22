@@ -183,6 +183,7 @@ const ZH_CN = {
   "Filter": "筛选",
   "findings": "项发现",
   "No errors": "无错误级",
+  "Incomplete project coverage": "项目覆盖不完整",
   "No checks ran": "未运行检查",
   "{count} errors": "{count} 项错误级",
   "File cycles": "文件导入环",

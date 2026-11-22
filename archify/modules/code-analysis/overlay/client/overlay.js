@@ -898,11 +898,15 @@
     }
     h += reviewHtml(o.review);
     var rules = o.coverage && o.coverage.rules && o.coverage.rules.run || [];
+    var omittedTypeScriptFiles = o.coverage && o.coverage.files && o.coverage.files.unavailableTypeScriptFiles;
+    var healthTone = errors ? 'attention' : omittedTypeScriptFiles ? 'incomplete' : 'positive';
+    var healthStatus = !rules.length ? tr('No checks ran') : errors ? tr('{count} errors', { count: errors }) : omittedTypeScriptFiles ? tr('Incomplete project coverage') : tr('No errors');
     var fileCycles = data.findings.filter(function (f) { return f.code === 'coupling/import-cycle'; }).length;
     var moduleCycles = data.findings.filter(function (f) { return f.code === 'coupling/cycle'; }).length;
     var boundaryViolations = data.findings.filter(function (f) { return f.code === 'architecture/boundary'; }).length;
     if (data.pullRequest) h += '<details class="pr-head-checks"><summary>' + esc(tr('PR head checks · {errors} error-level findings', { errors: errors })) + '</summary>';
-    h += '<section class="health-summary" aria-label="' + esc(tr('Structural signals')) + '"><div class="health-primary ' + (errors ? 'attention' : 'positive') + '"><b>' + fmt(o.counts.findings) + '</b><span>' + esc(tr('findings')) + '</span><i>' + esc(!rules.length ? tr('No checks ran') : errors ? tr('{count} errors', { count: errors }) : tr('No errors')) + '</i></div>';
+    h += '<section class="health-summary" aria-label="' + esc(tr('Structural signals')) + '"><div class="health-primary ' + healthTone + '"><b>' + fmt(o.counts.findings) + '</b><span>' + esc(tr('findings')) + '</span><i>' + esc(healthStatus) + '</i></div>';
+    if (omittedTypeScriptFiles) h += '<p class="project-coverage-notice">' + esc(tr('TypeScript files omitted because a base configuration is unavailable: {count}', { count: omittedTypeScriptFiles })) + '</p>';
     h += '<div class="health-facts"><span>' + esc(tr('Import cycles')) + '<b>' + (rules.indexOf('coupling/import-cycle') !== -1 ? fmt(fileCycles) : tr('Not checked')) + '</b></span><span>' + esc(tr('Module cycles')) + '<b>' + (rules.indexOf('coupling/cycle') !== -1 ? fmt(moduleCycles) : tr('Not checked')) + '</b></span><span>' + esc(tr('Boundary violations')) + '<b>' + (!o.coverage.boundaries || !o.coverage.boundaries.rules ? tr('Not configured') : rules.indexOf('architecture/boundary') !== -1 ? fmt(boundaryViolations) : tr('Not checked')) + '</b></span></div>';
     if (o.counts.acceptedErrors) h += '<p class="scope-line">' + esc(tr('{open} open · {accepted} accepted error-level findings', { open: o.counts.error, accepted: o.counts.acceptedErrors })) + '</p>';
     // A thin ring is still a finding, not an all-clear: say what each ring weight means.

@@ -248,6 +248,62 @@ test('Code Analysis marks an empty or incomplete duplicate scan instead of showi
   assert.match(full.coverage, /Duplicate code: 2\/2 files analyzed(?! · incomplete)/);
 });
 
+test('Code Analysis shows omitted TypeScript projects on the first screen in both locales', {
+  skip: chrome ? false : 'Set ARCHIFY_CHROME to run Code Analysis browser coverage.',
+}, async t => {
+  await ensureDependencies();
+  const { buildGraph } = await import('../archify/modules/code-analysis/lib/analysis.mjs');
+  const { buildOverlay } = await import('../archify/modules/code-analysis/overlay/inject.mjs');
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-ts-project-coverage-browser-'));
+  t.after(() => fs.rmSync(scratch, { recursive: true, force: true }));
+  const browser = new ChromeVisualBrowser(chrome);
+  t.after(() => browser.close());
+  const session = await browser.sessionPromise;
+  const send = (method, params = {}) => browser.cdp.send(method, params, session);
+  await send('Emulation.setDeviceMetricsOverride', { width: 1200, height: 760, deviceScaleFactor: 1, mobile: false });
+  for (const { locale, incomplete, status, notice, config } of [
+    { locale: 'en', incomplete: true, status: 'Incomplete project coverage', notice: 'TypeScript files omitted because a base configuration is unavailable: 1', config: /website\/tsconfig\.json requires shared-config\/strict/ },
+    { locale: 'zh-CN', incomplete: true, status: '项目覆盖不完整', notice: '因基础配置不可用而跳过的 TypeScript 文件：1', config: /website\/tsconfig\.json.*shared-config\/strict/ },
+    { locale: 'en', incomplete: false, status: 'No errors' },
+  ]) {
+    const sdk = { version: '5.9.3', source: 'bundled', status: 'fallback' };
+    const facts = {
+      schema_version: 1,
+      repository: { revision: null, baseRevision: null, sourceKind: 'working-tree', root: '.', url: null, language: 'ts', adapter: 'typescript@5.9.3', adapterRevision: 31, snapshotId: 'd'.repeat(64) },
+      files: [{ path: 'src/a.ts', loc: 1, role: 'source', sourceText: 'export const a = 1;\n' }],
+      packageMarkers: [], imports: [], symbols: [], calls: [], functions: [], unresolved: { external: 0, outside: 0, unknown: 0, opaque: 0 },
+      languageScope: {
+        language: 'ts', sdk, sdks: [{ ...sdk, packagePath: null }], limitations: [],
+        projects: [{ config: null, optionsDigest: 'a'.repeat(64), sdkIndex: 0, sdkVersion: sdk.version, files: ['src/a.ts'], members: ['src/a.ts'] }],
+        excludedByProject: incomplete ? [{ file: 'website/index.ts', config: 'website/tsconfig.json' }] : [],
+        ...(incomplete ? { unavailableProjects: [{ config: 'website/tsconfig.json', missingExtends: ['shared-config/strict'] }] } : {}),
+      },
+    };
+    const graph = buildGraph(facts, { modules: { groups: { app: ['**'] }, excludeRoles: [] } });
+    const file = path.join(scratch, `${locale}-${incomplete}.html`);
+    fs.writeFileSync(file, buildOverlay({ graph, facts, run: { rules: ['complexity/function'], locale, openAnalysis: true } }).html);
+    const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
+    await send('Page.navigate', { url: pathToFileURL(file).href });
+    await loaded;
+    const response = await send('Runtime.evaluate', { expression: `(() => {
+      const overview = document.getElementById('bauify-overview');
+      const notice = overview.querySelector('.project-coverage-notice');
+      return { status: overview.querySelector('.health-primary i').textContent,
+        positive: overview.querySelector('.health-primary').classList.contains('positive'),
+        notice: notice?.textContent, visible: !!notice && notice.getBoundingClientRect().height > 0 &&
+          notice.getBoundingClientRect().bottom <= Math.min(window.innerHeight, overview.getBoundingClientRect().bottom),
+        scope: overview.querySelector('details.coverage .cov').textContent };
+    })()`, returnByValue: true });
+    assert.equal(response.exceptionDetails, undefined, response.exceptionDetails?.exception?.description);
+    const actual = response.result.value;
+    assert.equal(actual.status, status);
+    assert.equal(actual.positive, !incomplete);
+    assert.equal(actual.notice, notice);
+    assert.equal(actual.visible, incomplete);
+    if (config) assert.match(actual.scope, config);
+  }
+});
+
 test('Code Analysis presents Java cycles as structural dependencies in the browser', {
   skip: chrome ? false : 'Set ARCHIFY_CHROME to run Code Analysis browser coverage.',
 }, async t => {
