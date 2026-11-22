@@ -239,6 +239,7 @@ function openRuleCounts(findings) {
 }
 
 const CLI = fileURLToPath(new URL('../../../bin/archify.mjs', import.meta.url));
+const TERMINAL_CONTROLS = /[\u0000-\u001f\u007f-\u009f]/g;
 
 export function formatText(r) {
   if (r.action === 'accept-finding' || r.action === 'revoke-finding') return [
@@ -306,7 +307,11 @@ export function formatText(r) {
         lines.push(`    - ${sig.severity.padEnd(7)} ${sig.code}  ${sig.where ?? sig.id}  [${sig.id}]`);
       }
     }
-    if (r.investigation.drillDown) lines.push(`  Drill down (${r.investigation.shell}): ${r.investigation.drillDown}`);
+    if (r.investigation.drillDown) {
+      const label = `  Drill down (${r.investigation.shell}):`;
+      if (r.out) lines.push(label, formatTerminalCommand(r.investigation.drillDown, 'investigation.drillDown'));
+      else lines.push(`${label} ${r.investigation.drillDown}`);
+    }
   }
   if (r.review.comparison) {
     const c = r.review.comparison;
@@ -323,7 +328,7 @@ export function formatText(r) {
     if (r.gate.failing.length > 20) lines.push(`  … ${r.gate.failing.length - 20} more (use --json for all)`);
     if (r.gate.adopt) {
       lines.push('  First run, or a rule became stricter? To record what exists now and fail only on new findings, run once and commit the file:');
-      lines.push(`    ${r.gate.adopt}`);
+      lines.push(formatTerminalCommand(r.gate.adopt, 'gate.adopt'));
       lines.push('  Then pass --baseline analysis-baseline.json on every run. Accepted errors stay listed as still to fix.');
     }
   } else lines.push(`PASSED: no open finding at or above ${r.gate.failOn}${r.gate.newOnly ? ' among new findings' : ''}.`);
@@ -335,8 +340,13 @@ function escapeTerminalControl(character) {
 }
 
 function formatTerminalText(text) {
-  const escaped = text.replace(/[\u0000-\u001f\u007f-\u009f]/g, escapeTerminalControl);
-  return escaped === text ? text : `${escaped} (Control characters escaped. Use --json for the exact value.)`;
+  const escaped = text.replace(TERMINAL_CONTROLS, escapeTerminalControl);
+  return escaped === text ? text : `${escaped}\n  Control characters escaped. Use --json for the exact value.`;
+}
+
+function formatTerminalCommand(command, jsonField) {
+  return command.search(TERMINAL_CONTROLS) === -1 ? command
+    : `  Command omitted because it contains control characters. See ${jsonField} in --json.`;
 }
 
 function formatTerminalDiagnostic({ code, message }) {

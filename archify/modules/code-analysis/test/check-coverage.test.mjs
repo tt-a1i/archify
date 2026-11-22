@@ -160,10 +160,10 @@ test('check: argument errors preserve built-in usage layout and escape option te
   const text = check('.', [option]);
   assert.equal(text.status, 2);
   const firstLine = '[cli/usage] Invalid option: --unknown\\u0009option\\u000amore\\u001b\\u009d';
-  const newline = text.stderr.indexOf('\n');
-  assert.equal(text.stderr.slice(newline + 1), help.stdout);
-  assert.ok(text.stderr.slice(0, newline).startsWith(firstLine));
-  assert.match(text.stderr.slice(0, newline), /control characters escaped.*--json/i);
+  const [message, notice, ...usage] = text.stderr.split('\n');
+  assert.equal(message, firstLine);
+  assert.match(notice, /^\s*control characters escaped.*--json/i);
+  assert.equal(usage.join('\n'), help.stdout);
 
   const json = check('.', [option, '--json']);
   assert.equal(json.status, 2);
@@ -287,7 +287,7 @@ test('check: investigation leads carry the message, location and a task command'
 
   const text = check(root, ['--language', 'py', '--config', config, '--out', path.join(root, 'text-out')]);
   assert.match(text.stdout, /Start here: 1 ranked lead\./);
-  assert.match(text.stdout, /Drill down \((?:cmd\.exe|POSIX sh)\): node .*code-analysis task /);
+  assert.match(text.stdout, /Drill down \((?:cmd\.exe|POSIX sh)\):\nnode /);
 
   const noOut = check(root, ['--language', 'py', '--config', config]);
   assert.match(noOut.stdout, /Re-run with --out <dir>/);
