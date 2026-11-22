@@ -8,7 +8,8 @@ export function placeAutomaticLabels({
   labels, routes, components, titles, viewBox, placementBottom = viewBox[1], fallbackRing = true, keepFallbackNearRoute = false,
   gridSweep = false, maxOwnRouteDistance = Infinity, protectedEndpoints = new Map(), onlyProtectedEndpoints = false,
   arrowheads = [], clearanceBorders = [], ownershipMargin = 0, repairOwnership = false, searchBand = false,
-  coversRouteStroke = () => false, coversOwnShaft, coversFrame, preferShaftAttachment = false, canMove = () => true,
+  coversRouteStroke = () => false, coversOwnShaft, coversFrame, preferShaftAttachment = false,
+  canMove = () => true, allowsPlacement = () => true,
 }) {
   const preferRouteMidpoint = Boolean(coversOwnShaft);
   const placed = [...labels];
@@ -83,7 +84,7 @@ export function placeAutomaticLabels({
     return distance;
   };
   const clear = (rect, index) => (
-    inside(rect) && rect.y + rect.height <= placementBottom
+    allowsPlacement(rect) && inside(rect) && rect.y + rect.height <= placementBottom
     && !obstacles.some(obstacle => rectsOverlap(rect, obstacle, 2))
     && !overlapsLabel(rect, index, 2) && !masksRoute(rect) && !coversRouteStroke(rect)
     && !coversEndpoint(rect) && !touchesBorder(rect) && keepsOwner(rect)

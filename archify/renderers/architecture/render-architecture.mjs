@@ -121,6 +121,7 @@ function automaticComponentSize(c) {
 }
 
 const auto = arch.layout?.mode === 'auto';
+const qualityProfile = process.env.ARCHIFY_QUALITY_PROFILE || arch.meta?.quality_profile;
 const whollyInferred = auto && !arch.meta?.viewBox && arch.components.every(component => !component.pos);
 const automaticLabelOwnershipMargin = 4;
 const requiresNestedBoundaryMembership = arch.meta?.engineering_profile === 'deployment-ownership';
@@ -587,6 +588,52 @@ function routeArrowheads(routes) {
   }));
 }
 
+function facingGapLabelPlacement(routes, labels, boxes) {
+  if (qualityProfile !== 'showcase') return undefined;
+  const sideSlots = new Map();
+  const labelsByIndex = new Map(labels.map(label => [label.relationIndex, label]));
+  for (const { relation, relationIndex, points } of routes) {
+    const label = labelsByIndex.get(relationIndex);
+    if (!label || !hasAutomaticRouteGeometry(relation)) continue;
+    const from = boxes.get(relation.from);
+    const to = boxes.get(relation.to);
+    const [start, next] = points;
+    const end = points.at(-1);
+    const previous = points.at(-2);
+    const axis = start[1] === next[1] ? 0 : 1;
+    const across = 1 - axis;
+    if (start[axis] === next[axis] || start[across] !== next[across] || previous[across] !== end[across]
+        || (next[axis] - start[axis]) * (end[axis] - previous[axis]) <= 0) continue;
+    const low = Math.min(start[axis], end[axis]);
+    const high = Math.max(start[axis], end[axis]);
+    if ((axis === 0 ? label.width : label.height) <= high - low) continue;
+    const crossLow = axis === 0 ? Math.min(from.y, to.y) : Math.min(from.x, to.x);
+    const crossHigh = axis === 0 ? Math.max(from.y + from.height, to.y + to.height)
+      : Math.max(from.x + from.width, to.x + to.width);
+    if (!points.every(point => point[axis] >= low && point[axis] <= high
+        && point[across] >= crossLow && point[across] <= crossHigh)) continue;
+    const size = axis === 0 ? label.height : label.width;
+    sideSlots.set(relationIndex, points.slice(1).flatMap((end, i) => {
+      const start = points[i];
+      if (start[axis] !== end[axis] || Math.abs(end[across] - start[across]) < size + 16) return [];
+      return [{ start, end, axis: across, low: Math.min(start[across], end[across]),
+        high: Math.max(start[across], end[across]) }];
+    }));
+  }
+  if (!sideSlots.size) return undefined;
+  // In a short gap, only a full slot beside a transverse shaft still
+  // reads as a relationship label. Keep the collision when no slot fits.
+  return rect => {
+    const slots = sideSlots.get(rect.relationIndex);
+    return !slots || slots.some(slot => {
+      const [start, size] = slot.axis === 0 ? [rect.x, rect.width] : [rect.y, rect.height];
+      const reach = rect.height * 2;
+      return start >= slot.low && start + size <= slot.high
+        && segmentRectClearanceWithin(slot, rect, reach) <= reach;
+    });
+  };
+}
+
 function resolveConnectionComposition(boxes, routeFor, measuredBoundaries = boundsFor(boxes)) {
   const routes = connections.flatMap((relation, relationIndex) => {
     if (!boxes.has(relation.from) || !boxes.has(relation.to)) return [];
@@ -615,6 +662,7 @@ function resolveConnectionComposition(boxes, routeFor, measuredBoundaries = boun
     ?.some(zone => rectsOverlap(label, zone)) || arrowheads.some(({ marker }) => maskCoversArrowhead(label, marker)));
   const placed = showcase || hitEndpoint ? placeAutomaticLabels({
     keepFallbackNearRoute: true,
+    allowsPlacement: facingGapLabelPlacement(routes, labels, boxes),
     labels,
     routes,
     protectedEndpoints,
@@ -934,6 +982,9 @@ function frameOutline(frame) {
 
 function finishAutomaticLabels(scene, repairFixedCanvas = false, { canMove, sideOnly = false } = {}) {
   if ((!auto && !canMove) || !scene.labels.length) return scene;
+  // A standard diagram with authored layout and canvas keeps its default
+  // label, so a collision still reaches the placement diagnostic.
+  if (sideOnly && !auto && arch.meta?.viewBox && qualityProfile === 'standard') return scene;
   const clearanceBorders = whollyInferred ? forRouting(scene.titles.boundaries).flatMap(frameBorderSegments) : [];
   const arrowheads = scene.arrowheads.length ? scene.arrowheads : routeArrowheads(scene.routes);
   const frameOutlines = repairFixedCanvas ? forRouting(scene.titles.boundaries).map(frameOutline) : [];
@@ -946,6 +997,7 @@ function finishAutomaticLabels(scene, repairFixedCanvas = false, { canMove, side
   const labels = placeAutomaticLabels({
     ...scene,
     canMove,
+    allowsPlacement: facingGapLabelPlacement(scene.routes, scene.labels, scene.boxes),
     arrowheads,
     clearanceBorders,
     // The quadratic outline approximates the SVG's round corners within

@@ -2514,6 +2514,14 @@ export function createRouter(components, connections = [], {
       const oldJogs = jogs(before).length;
       const fromBox = components.get(conn.from);
       const toBox = components.get(conn.to);
+      const inferred = inferredSides(conn);
+      // Keep an obstacle bypass on its inferred faces when those faces
+      // cannot connect by a cheap bridge. A shortcut through different
+      // faces would discard the route the obstacle search was meant to find.
+      const keepEndpointSides = before.length >= 6
+        && oldSides.fromSide === inferred.fromSide && oldSides.toSide === inferred.toSide
+        && !routeClearsComponents(conn,
+          routedForGeometryWithoutGrid(conn, [], connectionGeometry(conn, oldSides)).points, 2, []);
       const seen = new Set([JSON.stringify(before)]);
       const candidates = [];
       function consider(raw, sides, from, to) {
@@ -2575,6 +2583,7 @@ export function createRouter(components, connections = [], {
       }
       for (const sides of candidateSidePairs(conn)) {
         if (!limit || !probes) break;
+        if (keepEndpointSides && (sides.fromSide !== oldSides.fromSide || sides.toSide !== oldSides.toSide)) continue;
         const { from, to, start, end, fromSide, toSide } = connectionGeometry(conn, sides);
         const sourceAxis = axisOf(fromSide);
         const targetAxis = axisOf(toSide);
