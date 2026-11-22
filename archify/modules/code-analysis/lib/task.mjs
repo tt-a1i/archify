@@ -23,7 +23,7 @@ import { fail } from '../core/index.mjs';
 import { schemaErrors } from '../schemas/index.mjs';
 import { summarizeModule } from './module-summary.mjs';
 import { taskIdOf } from './task-id.mjs';
-import { analysisDigest } from './verification-context.mjs';
+import { taskAnalysisDigest } from './verification-context.mjs';
 
 export const TASK_SCHEMA_VERSION = 1;
 export const KIND = 'archify-code-analysis-task';
@@ -206,7 +206,7 @@ function buildTaskWithContext({ findings, facts, ids, commands = [], review = nu
       ...(d.evidenceDigest ? { evidenceDigest: d.evidenceDigest } : {}),
       ...(d.external ? { external: d.external } : {}),
     })),
-    source: { ...sourceOf(findings, facts, context.analysisSha256 ??= analysisDigest(findings)), ...(external.length ? { external: externalSources } : {}) },
+    source: { ...sourceOf(findings, facts, context.analysisSha256 ??= taskAnalysisDigest(findings)), ...(external.length ? { external: externalSources } : {}) },
     locations,
     ...(moduleSummaries.length ? { moduleSummaries } : {}),
     facts: selected.map((d) => ({ findingId: d.id, statement: d.message, evidence: keyEvidence(d) })),

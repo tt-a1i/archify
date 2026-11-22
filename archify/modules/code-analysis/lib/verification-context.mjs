@@ -5,6 +5,13 @@ export function analysisDigest(doc) {
   return createHash('sha256').update(stableJson(doc)).digest('hex');
 }
 
+// Supplemental source is already bound by the evidence and report digests.
+// Duplicate copies of those bytes do not change a task's capture identity.
+export function taskAnalysisDigest(doc) {
+  const { externalEvidence, ...capture } = doc;
+  return analysisDigest(capture);
+}
+
 const sha = /^[a-f0-9]{64}$/;
 
 // Keep source text, commands, and finding messages out of the portable comparison input.
@@ -27,6 +34,7 @@ export function verificationContext(previous, current, review) {
   const added = new Set(comparison.new);
   return {
     before: snapshot(previous),
+    taskAnalysisSha256: taskAnalysisDigest(previous),
     after: snapshot(current),
     root: previous.repository.root,
     configDigest: previous.analysis?.configDigest ?? null,

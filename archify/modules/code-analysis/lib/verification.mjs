@@ -11,7 +11,7 @@ export async function evaluateVerification(context, task, reported, identifyTask
   const contexts = Array.isArray(context) ? context : [context];
   const matches = contexts.filter((capture) => task.source?.snapshotId === capture.before.snapshotId
     && task.source?.root === capture.root && (task.source?.configDigest ?? null) === capture.configDigest
-    && (!Object.hasOwn(task.source, 'analysisSha256') || task.source.analysisSha256 === capture.before.analysisSha256));
+    && (!Object.hasOwn(task.source, 'analysisSha256') || task.source.analysisSha256 === capture.taskAnalysisSha256));
   if (matches.length !== 1) return bad('wrong-task-snapshot');
   context = matches[0];
 

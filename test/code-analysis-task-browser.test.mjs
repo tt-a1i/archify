@@ -133,6 +133,9 @@ test('AI task reader: evidence first, live validation, clipboard fallback, downl
   await wait("/newer analysis snapshot/.test(document.querySelector('#bauify-detail .task-status').textContent)");
   assert.equal(await run("document.querySelector('#bauify-detail .task-copy').disabled"), true, 'a stable ID must not mix old page evidence with a newer task');
   assert.equal(await run("taskRequests.length > 0 && taskRequests.every(r => r.expected && r.ids.every(id => r.expected[id] === JSON.parse(document.getElementById('bauify-analysis').textContent).findings.find(f => f.id === id).reviewTarget))"), true, 'native preview, quick copy, refresh and download requests bind the claim displayed by the page');
+  // Return to the overview for this part of the flow. Re-analysis from a
+  // finding now keeps that finding open.
+  await run("document.querySelector('#bauify-detail .back').click()");
   // Large reports remain navigable; accepted findings stay out of priority slots.
   fs.writeFileSync(sourceFile, source);
   const manyFile = path.join(root, 'many.py');
