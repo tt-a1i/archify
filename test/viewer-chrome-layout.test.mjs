@@ -564,6 +564,23 @@ test('the initial architecture Dock leaves the formatted-result return readable'
   assert.equal(geometry.hitsPlate, false);
 });
 
+test('a diagonal route outside the lifted Dock leaves the controls in view', {
+  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
+}, async t => {
+  const browser = new ChromeVisualBrowser(chromePath);
+  t.after(() => browser.close());
+  const input = path.join(__dirname, 'fixtures/architecture-route-regressions/dock-false-overlap-diagonal.json');
+  const output = path.join(tmp, 'dock-diagonal.html');
+  execFileSync(process.execPath, [path.join(skillRoot, 'bin/archify.mjs'), 'render', 'architecture', input, output]);
+  const session = await load(browser, output, { width: 1024, height: 560 });
+  const dock = await evaluate(browser, session, `(() => {
+    const { top, bottom, width } = document.querySelector('.diagram-nav').getBoundingClientRect();
+    return { top, bottom, width, scroll: scrollY };
+  })()`);
+  assert.equal(dock.scroll, 0);
+  assert.ok(dock.width > 0 && dock.top >= 0 && dock.bottom <= 552, JSON.stringify(dock));
+});
+
 test('live camera transitions keep authored relationship paint outside the Dock on every frame', {
   skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
 }, async () => {

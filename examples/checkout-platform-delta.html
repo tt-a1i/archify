@@ -17236,6 +17236,26 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (!lift) return rect;
         return { x: rect.x, y: rect.y + lift, left: rect.left, right: rect.right, top: rect.top + lift, bottom: rect.bottom + lift, width: rect.width, height: rect.height };
       }
+      function segmentReachesDock(start, end, rect, margin) {
+        var entry = 0;
+        var exit = 1;
+        var limits = [[rect.left, rect.right], [rect.top, rect.bottom]];
+        for (var axis = 0; axis &lt; 2; axis += 1) {
+          var lo = limits[axis][0] - margin;
+          var hi = limits[axis][1] + margin;
+          var change = end[axis] - start[axis];
+          if (!change) {
+            if (start[axis] &lt; lo || start[axis] &gt; hi) return false;
+            continue;
+          }
+          var a = (lo - start[axis]) / change;
+          var b = (hi - start[axis]) / change;
+          entry = Math.max(entry, Math.min(a, b));
+          exit = Math.min(exit, Math.max(a, b));
+          if (entry &gt; exit) return false;
+        }
+        return true;
+      }
       function coversArchitecture(dock, amount) {
         if (window.scrollY &gt; 1 || (svg.dataset.diagramType !== &#39;architecture&#39; &amp;&amp; svg.dataset.readerPrimaryText !== &#39;14&#39;)) return false;
         var lifted = { left: dock.left, right: dock.right, top: dock.top - amount, bottom: dock.bottom - amount };
@@ -17259,10 +17279,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             var margin = index === points.length - 2 &amp;&amp; edge.hasAttribute(&#39;marker-end&#39;)
               ? Math.max(pad, 3.5 * stroke * scale, 9 * stroke * scale - Math.hypot(end[0] - start[0], end[1] - start[1]))
               : pad;
-            return intersectionArea(lifted, {
-              left: Math.min(start[0], end[0]) - margin, right: Math.max(start[0], end[0]) + margin,
-              top: Math.min(start[1], end[1]) - margin, bottom: Math.max(start[1], end[1]) + margin
-            }) &gt; 0;
+            return segmentReachesDock(start, end, lifted, margin);
           });
         });
       }
@@ -33453,6 +33470,26 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (!lift) return rect;
         return { x: rect.x, y: rect.y + lift, left: rect.left, right: rect.right, top: rect.top + lift, bottom: rect.bottom + lift, width: rect.width, height: rect.height };
       }
+      function segmentReachesDock(start, end, rect, margin) {
+        var entry = 0;
+        var exit = 1;
+        var limits = [[rect.left, rect.right], [rect.top, rect.bottom]];
+        for (var axis = 0; axis &lt; 2; axis += 1) {
+          var lo = limits[axis][0] - margin;
+          var hi = limits[axis][1] + margin;
+          var change = end[axis] - start[axis];
+          if (!change) {
+            if (start[axis] &lt; lo || start[axis] &gt; hi) return false;
+            continue;
+          }
+          var a = (lo - start[axis]) / change;
+          var b = (hi - start[axis]) / change;
+          entry = Math.max(entry, Math.min(a, b));
+          exit = Math.min(exit, Math.max(a, b));
+          if (entry &gt; exit) return false;
+        }
+        return true;
+      }
       function coversArchitecture(dock, amount) {
         if (window.scrollY &gt; 1 || (svg.dataset.diagramType !== &#39;architecture&#39; &amp;&amp; svg.dataset.readerPrimaryText !== &#39;14&#39;)) return false;
         var lifted = { left: dock.left, right: dock.right, top: dock.top - amount, bottom: dock.bottom - amount };
@@ -33476,10 +33513,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             var margin = index === points.length - 2 &amp;&amp; edge.hasAttribute(&#39;marker-end&#39;)
               ? Math.max(pad, 3.5 * stroke * scale, 9 * stroke * scale - Math.hypot(end[0] - start[0], end[1] - start[1]))
               : pad;
-            return intersectionArea(lifted, {
-              left: Math.min(start[0], end[0]) - margin, right: Math.max(start[0], end[0]) + margin,
-              top: Math.min(start[1], end[1]) - margin, bottom: Math.max(start[1], end[1]) + margin
-            }) &gt; 0;
+            return segmentReachesDock(start, end, lifted, margin);
           });
         });
       }
