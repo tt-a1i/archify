@@ -181,6 +181,40 @@ test('browser shards are deterministic, nonempty, disjoint and cover the full ma
   assert.notEqual(owner('viewer-chrome-layout.test.mjs'), owner('reader-layout-browser.test.mjs'));
 });
 
+test('CI browser profiles preserve the exact Atlas and media test inventories across shards', () => {
+  const list = (env = {}, args = []) => spawnSync(process.execPath, [runner, '--list', ...args], {
+    encoding: 'utf8', env: { ...process.env, ARCHIFY_CHROME: '', ...env },
+  });
+  const full = list().stdout.trim().split('\n');
+  const cases = [
+    [{ CI_BROWSER_PROFILE: 'atlas' }, full.filter(file => file.startsWith('test/code-analysis-'))],
+    [{ CI_STORY_BROWSER_OWNER: 'webm' }, full.filter(file => file !== 'test/story-browser.test.mjs')],
+  ];
+  for (const [env, expected] of cases) {
+    const selected = [];
+    for (const index of [1, 2, 3, 4]) {
+      const result = list(env, [`--shard=${index}/4`]);
+      assert.equal(result.status, 0, result.stderr);
+      const files = result.stdout.trim().split('\n');
+      assert.ok(files.every(Boolean));
+      selected.push(...files);
+    }
+    assert.deepEqual(selected.sort(), expected.sort());
+  }
+  assert.ok(full.includes('test/story-browser.test.mjs'));
+  for (const env of [{ CI_BROWSER_PROFILE: 'atals' }, { CI_STORY_BROWSER_OWNER: 'unknown' }]) {
+    assert.notEqual(list(env).status, 0);
+  }
+  const ci = parse(fs.readFileSync(path.join(repoRoot, '.github/workflows/ci.yml'), 'utf8')).jobs;
+  const release = parse(fs.readFileSync(path.join(repoRoot, '.github/workflows/release.yml'), 'utf8')).jobs.release;
+  const browser = job => job.steps.find(step => step.name === 'Run shared browser regression gate');
+  assert.equal(browser(ci['browser-regression']).env.CI_BROWSER_PROFILE, '${{ needs.scope.outputs.browserProfile }}');
+  assert.equal(browser(ci['browser-regression']).env.CI_STORY_BROWSER_OWNER,
+    "${{ needs.scope.outputs.webm == 'true' && 'webm' || 'browser' }}");
+  assert.equal(browser(release).env.CI_STORY_BROWSER_OWNER, 'webm');
+  assert.ok(release.steps.findIndex(step => step.run === 'npm run test:webm') < release.steps.indexOf(browser(release)));
+});
+
 test('browser shard listing requires neither Chrome nor test execution', () => {
   const full = spawnSync(process.execPath, [runner, '--list'], {
     encoding: 'utf8', env: { ...process.env, ARCHIFY_CHROME: '' },

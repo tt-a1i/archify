@@ -72,6 +72,7 @@ jobs:
         env:
           ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
           ARCHIFY_CHROME_NO_SANDBOX: '1'
+          CI_STORY_BROWSER_OWNER: webm
       - name: Tag must match package.json version
         run: |
           pkg_version="$(node -p "require('./archify/package.json').version")"

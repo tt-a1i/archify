@@ -1,4 +1,5 @@
 // Shared by PR CI and tag releases. WebM decoding stays in test:webm.
+export const storyMediaBrowserTest = 'story-browser.test.mjs';
 // Ordering spreads measured heavy suites across CI's four modulo shards.
 export const browserTestFiles = [
   'finalize-browser.test.mjs',
@@ -59,7 +60,7 @@ export const browserTestFiles = [
   'code-analysis-workbench-browser.test.mjs',
   'code-analysis-standalone-browser.test.mjs',
   'code-analysis-pr-browser.test.mjs',
-  'story-browser.test.mjs',
+  storyMediaBrowserTest,
   'story-choreography-browser.test.mjs',
   // Benchmark observers and real export integration require this explicit Chrome lane.
   'diagram-quality-e2e-browser.test.mjs',

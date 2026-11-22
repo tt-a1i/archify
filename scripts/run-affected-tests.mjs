@@ -12,7 +12,7 @@ const shared = /^(geometry|spatial-grid|svg-path-(?:analysis|checker)|layout-rul
 const viewer = /^(viewer-|reader-|desktop-|semantic-|finder|focus|intent-|crossover-|animation|export-|motion-|offline-|i18n|relationship-|share-|reach-|presentation|story-)/;
 export function selectAffectedTests(owners, changed, available) {
   if (!Array.isArray(owners) || !Array.isArray(changed)) throw new Error('CI test selection must contain arrays');
-  const allowed = new Set(['renderer', 'viewer', 'authoring', 'schema', 'pr', 'site', 'artifact', 'delta', 'readme', 'changelog', 'policy', 'readme-assets', 'architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'class', 'tree', 'timeline', 'waterfall']);
+  const allowed = new Set(['renderer', 'viewer', 'authoring', 'schema', 'pr', 'atlas', 'site', 'artifact', 'delta', 'readme', 'changelog', 'policy', 'readme-assets', 'architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'class', 'tree', 'timeline', 'waterfall']);
   if (owners.some(owner => !allowed.has(owner))) throw new Error('Unknown CI test owner');
   if (changed.some(name => !/^test\/[^/]+\.test\.mjs$/.test(name))) throw new Error('Invalid changed test path');
   return available.filter(file => {
@@ -20,6 +20,7 @@ export function selectAffectedTests(owners, changed, available) {
     return changed.includes(file) || owners.some(owner =>
       owner === 'renderer' ? mode.test(name) || shared.test(name)
         : owner === 'viewer' ? viewer.test(name)
+          : owner === 'atlas' ? name === 'code-analysis.test.mjs'
           : owner === 'authoring' ? /^(authoring-|skill-|diagram-guide|delivery-contract|workflow-semantic-contract|ordinary-model-floor|guide|gallery|start-page)/.test(name)
             : owner === 'site' ? /^(gallery|guide-page|start-page|generated-artifact-xml)\.test\.mjs$/.test(name)
             : owner === 'artifact' ? name === 'generated-artifact-xml.test.mjs'
@@ -51,6 +52,10 @@ if (process.argv[1] && sameEntry(process.argv[1], fileURLToPath(import.meta.url)
       'test/reach-share-card.test.mjs', 'test/route-share-card.test.mjs']);
     run(['--test', 'integrations/deepseek-harness/test/docs-contract.test.mjs']);
     run(['--test', '--test-name-pattern=README install tables', 'integrations/hermes-agent/test/plugin-contract.test.mjs']);
+  }
+  if (owners.includes('atlas')) {
+    run(['--test', ...['atlas', 'client-assets', 'source-panel'].map(name =>
+      `archify/modules/code-analysis/test/${name}.test.mjs`)]);
   }
   if (files.length) run(['scripts/run-tests.mjs', ...files]);
   else console.log('No owned regression suites selected.');

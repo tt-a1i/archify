@@ -19,6 +19,7 @@ jobs:
       website: ${{ steps.classify.outputs.website }}
       generated: ${{ steps.classify.outputs.generated }}
       browser: ${{ steps.classify.outputs.browser }}
+      browserProfile: ${{ steps.classify.outputs.browserProfile }}
       webm: ${{ steps.classify.outputs.webm }}
       package: ${{ steps.classify.outputs.package }}
       windows: ${{ steps.classify.outputs.windows }}
@@ -251,6 +252,8 @@ jobs:
         env:
           ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
           ARCHIFY_CHROME_NO_SANDBOX: '1'
+          CI_BROWSER_PROFILE: ${{ needs.scope.outputs.browserProfile }}
+          CI_STORY_BROWSER_OWNER: ${{ needs.scope.outputs.webm == 'true' && 'webm' || 'browser' }}
 
   webm-decode:
     needs: scope

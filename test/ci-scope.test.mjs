@@ -35,6 +35,31 @@ test('owned changes add their real gates without requiring every unrelated lane'
   assert.ok(classifyPaths(['docs/skill-updates/archify/stable.json']).manifest);
 });
 
+test('Atlas-only changes keep CLI, overlay, browser and package checks without unrelated gates', () => {
+  const paths = ['archify/modules/code-analysis/overlay/client/atlas.js',
+    'archify/modules/code-analysis/docs/USAGE.md', 'archify.zip', 'test/code-analysis-browser.test.mjs'];
+  const plan = classifyPaths(paths);
+  assert.equal(plan.scope, 'core');
+  assert.equal(plan.browserProfile, 'atlas');
+  assert.deepEqual(plan.owners, ['atlas']);
+  assert.ok(plan.browser && plan.package);
+  assert.ok(!plan.webm && !plan.website && !plan.windows);
+  assert.deepEqual(selectAffectedTests(plan.owners, plan.changedTests, [
+    'test/browser-gate.test.mjs', 'test/code-analysis.test.mjs', 'test/code-analysis-browser.test.mjs',
+    'test/export-browser.test.mjs',
+  ]), ['test/browser-gate.test.mjs', 'test/code-analysis-browser.test.mjs', 'test/code-analysis.test.mjs']);
+  assert.equal(workflow.jobs.scope.outputs.browserProfile, '${{ steps.classify.outputs.browserProfile }}');
+  assert.equal(classifyPaths([...paths, 'viewer/viewer.css']).browserProfile, 'full');
+  assert.equal(classifyPaths([...paths, 'test/export-browser.test.mjs']).browserProfile, 'full');
+  for (const extra of ['archify/modules/code-analysis/extract/ts/index.mjs',
+    'archify/modules/code-analysis/overlay/inject.mjs', 'archify/modules/code-analysis/overlay/client/atlas3d.js']) {
+    const mixed = classifyPaths([...paths, extra]);
+    assert.equal(mixed.scope, 'full', extra);
+    assert.equal(mixed.browserProfile, 'full', extra);
+  }
+  assert.equal(classifyPaths(['test/story-browser.test.mjs']).webm, true);
+});
+
 test('five README languages and changelog use documentation checks and preserve mixed product gates', () => {
   const readmes = ['README.md', 'README_EN.md', 'README_ZH.md', 'README_JA.md', 'README_KO.md'];
   const available = ['readme-showcase', 'readme-support', 'cursor-onboarding', 'llms-txt', 'skill-metadata',

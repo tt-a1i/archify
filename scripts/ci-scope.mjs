@@ -2,13 +2,16 @@
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import { browserTestFiles } from './browser-test-inventory.mjs';
+import { browserTestFiles, storyMediaBrowserTest } from './browser-test-inventory.mjs';
 
 const modes = 'architecture|workflow|sequence|dataflow|lifecycle|erd|class|tree|timeline|waterfall';
 const rendererPath = new RegExp(`^archify/(?:renderers/(${modes})/|schemas/(${modes})\\.schema\\.json$)`);
 const renderShared = /^(geometry|utils|i18n|route-quality|diagnostics|brand-marks|generated-validators|legend|layout-report|engineering-profiles|validator|generated-brand-marks|desktop-readability|text-fit|svg-path-analysis|automatic-labels|spatial-grid|change-marks)\.mjs$/;
 // Review export and PR pack code renders through the Viewer styles and ships in the package.
 const reviewExport = /^(archify\/renderers\/shared\/svg-(?:bake|export)\.mjs|archify\/pr\/[^/]+\.mjs)$/;
+const atlasClient = /^archify\/modules\/code-analysis\/overlay\/client\/atlas\.(?:js|css)$/;
+const atlasGuide = 'archify/modules/code-analysis/docs/USAGE.md';
+const atlasBrowserTest = name => name.startsWith('test/code-analysis-') && browserTestFiles.includes(name.slice(5));
 const sharedSvgBaker = 'archify/renderers/shared/svg-bake.mjs';
 const gates = ['generated', 'browser', 'webm', 'package', 'windows', 'manifest', 'website'];
 const storyPresentationFiles = new Set([
@@ -17,7 +20,7 @@ const storyPresentationFiles = new Set([
   'story-container.js', 'story-export.js', 'story-stage-runtime.js', 'native-motion.js',
 ]);
 export function classifyPaths(paths) {
-  const plan = { scope: 'core', owners: [], changedTests: [], ...Object.fromEntries(gates.map(name => [name, false])) };
+  const plan = { scope: 'core', browserProfile: 'full', owners: [], changedTests: [], ...Object.fromEntries(gates.map(name => [name, false])) };
   const full = () => ({ ...plan, scope: 'full', ...Object.fromEntries(gates.map(name => [name, true])) });
   if (!paths.length) return full();
   const own = owner => { if (!plan.owners.includes(owner)) plan.owners.push(owner); };
@@ -30,6 +33,7 @@ export function classifyPaths(paths) {
     if (/^test\/[^/]+\.test\.mjs$/.test(name)) {
       plan.changedTests.push(name);
       if (name === 'test/repository-evidence-replacement.test.mjs') plan.windows = true;
+      if (name === `test/${storyMediaBrowserTest}`) plan.webm = true;
       if (browserTestFiles.includes(name.slice(5)) || name.endsWith('-browser.test.mjs')) {
         plan.browser = true;
         if (!plan.changedTests.includes('test/browser-gate.test.mjs')) plan.changedTests.push('test/browser-gate.test.mjs');
@@ -44,6 +48,11 @@ export function classifyPaths(paths) {
       plan.website = true;
       if (/^docs\/(gallery(?:\/|\.html$)|guide\.html$|start\.html$)/.test(name)) own('site');
       if (/^docs\/skill-updates\//.test(name)) plan.manifest = true;
+      continue;
+    }
+    if (atlasClient.test(name) || name === atlasGuide) {
+      own('atlas'); plan.package = true;
+      if (atlasClient.test(name)) plan.browser = true;
       continue;
     }
     const renderer = name.match(rendererPath);
@@ -93,7 +102,11 @@ export function classifyPaths(paths) {
     requireFull = true;
   }
   if (requireFull) return full();
-  if (archiveChanged && !plan.owners.some(owner => ['renderer', 'viewer', 'authoring', 'schema', 'pr', ...modes.split('|')].includes(owner))) return full();
+  if (archiveChanged && !plan.owners.some(owner => ['renderer', 'viewer', 'authoring', 'schema', 'pr', 'atlas', ...modes.split('|')].includes(owner))) return full();
+  if (paths.some(name => atlasClient.test(name)) &&
+      paths.every(name => atlasClient.test(name) || name === atlasGuide || name === 'archify.zip' || atlasBrowserTest(name))) {
+    plan.browserProfile = 'atlas';
+  }
   if (plan.owners.every(owner => ['readme', 'changelog', 'policy', 'readme-assets'].includes(owner)) && !plan.changedTests.length && !gates.some(name => plan[name])) plan.scope = 'docs';
   return plan;
 }

@@ -6,6 +6,7 @@ import net from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
+import { storyMediaBrowserTest } from '../scripts/browser-test-inventory.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..', 'archify');
@@ -1708,7 +1709,7 @@ try {
   assert.ok(uniqueFrames.size >= 2, 'decoded WebM frames are static');
   console.log(`ok WebM artifact: ${payload.size} bytes, ${hashes.length} sampled frames, ${uniqueFrames.size} unique`);
   // Story uses a separate offline encoder and muxer from the live motion export.
-  execFileSync(process.execPath, ['--test', path.join(__dirname, 'story-browser.test.mjs')], {
+  execFileSync(process.execPath, ['--test', path.join(__dirname, storyMediaBrowserTest)], {
     env: { ...process.env, ARCHIFY_CHROME: chrome, ARCHIFY_FFMPEG: ffmpeg, ARCHIFY_FFPROBE: ffprobe },
     stdio: 'inherit',
     timeout: 60_000,

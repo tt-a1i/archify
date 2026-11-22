@@ -250,8 +250,11 @@ retains optional browser skips. Real WebM decoding and site-language integration
 remain in the separate `npm run test:webm` gate used by both workflows.
 
 PR CI divides the maintained browser inventory into four disjoint file shards
-with `npm run test:browser -- --shard=1/4` through `--shard=4/4`. They run alongside
-the independent WebM gate. The required `webm-artifact` check succeeds after
+with `npm run test:browser -- --shard=1/4` through `--shard=4/4`. Atlas-only client changes run the Code Analysis browser inventory, the related
+Node suites, and package validation. Shared and mixed browser-impacting changes
+keep the full browser inventory. When WebM CI is selected, it also owns the
+Story browser file and runs it with FFmpeg. The browser shards retain that
+file when WebM CI is outside the change scope. The required `webm-artifact` check succeeds after
 every browser shard, WebM, and scope check succeeds. Tag releases and an
 unqualified `npm run test:browser` still run the complete browser inventory.
 `--list --shard=1/2` lists a shard without requiring Chrome. Shards cannot be

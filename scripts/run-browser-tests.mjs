@@ -8,12 +8,20 @@ import { fileURLToPath } from 'node:url';
 import { findChrome } from '../archify/bin/visual-check.mjs';
 import { testRunnerOptions } from './test-runner-options.mjs';
 
-import { browserTestFiles as testFiles } from './browser-test-inventory.mjs';
+import { browserTestFiles, storyMediaBrowserTest } from './browser-test-inventory.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 let options;
 try {
+  const profile = process.env.CI_BROWSER_PROFILE ?? 'full';
+  const storyOwner = process.env.CI_STORY_BROWSER_OWNER ?? 'browser';
+  if (!['full', 'atlas'].includes(profile)) throw new Error(`Unknown browser test profile: ${profile}`);
+  if (!['browser', 'webm'].includes(storyOwner)) throw new Error(`Unknown Story browser test owner: ${storyOwner}`);
+  const testFiles = browserTestFiles.filter(file =>
+    (profile === 'full' || file.startsWith('code-analysis-')) &&
+    (storyOwner === 'browser' || file !== storyMediaBrowserTest));
+  if (!testFiles.length) throw new Error('The browser test profile selected no tests');
   if (new Set(testFiles).size !== testFiles.length) throw new Error('Browser inventory contains duplicate files');
   options = testRunnerOptions(process.argv.slice(2), {
     repoRoot, testFiles: testFiles.map(file => path.join('test', file)), allowShards: true,
