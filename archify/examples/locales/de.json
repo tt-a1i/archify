@@ -476,5 +476,10 @@
   "legend.change.added": "+ Hinzugefügt",
   "legend.change.modified": "~ Geändert",
   "legend.change.removed": "− Entfernt",
-  "legend.change.unchanged": "Unverändert"
+  "legend.change.unchanged": "Unverändert",
+  "viewer.feedback.label": "Feedback und Unterstützung",
+  "viewer.feedback.prompt": "Fragen oder Ideen?",
+  "viewer.feedback.email": "E-Mail senden",
+  "viewer.feedback.issue": "Issue eröffnen",
+  "viewer.feedback.star": "Auf GitHub einen Stern geben"
 }

@@ -499,5 +499,10 @@
   "legend.change.added": "+ Ajouté",
   "legend.change.modified": "~ Modifié",
   "legend.change.removed": "− Supprimé",
-  "legend.change.unchanged": "Inchangé"
+  "legend.change.unchanged": "Inchangé",
+  "viewer.feedback.label": "Retours et soutien",
+  "viewer.feedback.prompt": "Des questions ou des idées ?",
+  "viewer.feedback.email": "Nous écrire",
+  "viewer.feedback.issue": "Ouvrir une issue",
+  "viewer.feedback.star": "Mettre une étoile sur GitHub"
 }

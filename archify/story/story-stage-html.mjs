@@ -29,12 +29,14 @@ const stageLabelsFor = (isZh) => (isZh
       video: '视频',
       exporting: '正在导出 1080p 视频…',
       hint: '空格键播放/暂停 · 点击步骤条跳转 · 支持离线流式导出 1080p 60fps MP4 / WebM 视频',
+      feedbackPrompt: '有问题或建议？', feedbackEmail: '发邮件反馈', feedbackIssue: '提交 Issue', feedbackStar: '在 GitHub 点 Star',
     }
   : {
       play: 'Play', pause: 'Pause', replay: 'Replay',
       video: 'Video',
       exporting: 'Exporting 1080p video…',
       hint: 'Space to play/pause · Click any step to seek · Streams 1080p 60fps MP4 / WebM offline',
+      feedbackPrompt: 'Questions or ideas?', feedbackEmail: 'Email us', feedbackIssue: 'Open an issue', feedbackStar: 'Star on GitHub',
     });
 
 function stageThemeCss(styles) {
@@ -168,6 +170,10 @@ ${toolbar.css}
 .stage-pane{display:none}
 .stage-pane.is-active{display:block}
 .stage-pane>svg{display:block;width:100%;height:auto;border-radius:10px}
+.stage-feedback{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px 10px;margin:4px 0 0;font-size:12px;color:var(--muted)}
+.stage-feedback a{color:var(--ink);text-decoration:underline;text-decoration-color:var(--border);text-underline-offset:.2em}
+.stage-feedback a:hover{text-decoration-color:currentColor}
+.stage-feedback .stage-star{margin-left:4px;padding:3px 10px;border:1px solid var(--border);border-radius:999px;background:var(--surface);font-weight:600;text-decoration:none}
 .controls{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 14px}
 .timeline{flex:1;min-width:120px;accent-color:var(--accent)}
 .clock{font:500 12px/1 ui-monospace,Consolas,monospace;color:var(--muted);min-width:96px;text-align:right;font-variant-numeric:tabular-nums}
@@ -196,6 +202,7 @@ ${toolbar.css}
   </section>
   <nav class="steps" aria-label="Story steps">${stepButtons}</nav>
   <p class="hint" id="stage-status">${labels.hint}</p>
+  <p class="stage-feedback"><span>${labels.feedbackPrompt}</span><a href="mailto:2801884530@qq.com?subject=Archify%20feedback">${labels.feedbackEmail}</a><span aria-hidden="true">·</span><a href="https://github.com/tt-a1i/archify/issues/new/choose" target="_blank" rel="noopener noreferrer">${labels.feedbackIssue}</a><a class="stage-star" href="https://github.com/tt-a1i/archify" target="_blank" rel="noopener noreferrer">★ ${labels.feedbackStar}</a></p>
 </main>
 <script type="application/json" id="story-stage-meta">${meta}</script>
 <script>${containerCode}</script>

@@ -476,5 +476,10 @@
   "legend.change.added": "+ 追加",
   "legend.change.modified": "~ 変更",
   "legend.change.removed": "− 削除",
-  "legend.change.unchanged": "変更なし"
+  "legend.change.unchanged": "変更なし",
+  "viewer.feedback.label": "フィードバックと応援",
+  "viewer.feedback.prompt": "質問やアイデアはありますか？",
+  "viewer.feedback.email": "メールで送る",
+  "viewer.feedback.issue": "Issue を作成",
+  "viewer.feedback.star": "GitHub でスターを付ける"
 }
