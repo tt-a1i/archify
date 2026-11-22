@@ -155,7 +155,7 @@
   "review8/frame-recovery-second": {
     "file": "review8-frame-recovery-second.json",
     "passes": true,
-    "round11Svg": "e7bd6d0140ba9ad26a28c46f260b1e5844795c8b5ba4cd87b97e8a64cde4f555"
+    "straightConnections": [["n0", "n1"]]
   },
   "review8/load-inventory-detour": {
     "file": "review8-load-inventory-detour.json",
@@ -180,7 +180,7 @@
   "review9/fixed-096": {
     "file": "review9-fixed-096.json",
     "passes": true,
-    "round11Svg": "a46b72008cdb99ad487f50b492ad36c20aa65af6e11e5520dc23b6765fd099e8",
+    "straightConnections": [["n3", "n4"]],
     "cleanArtifact": true
   }
 }

@@ -8,7 +8,7 @@ export function placeAutomaticLabels({
   labels, routes, components, titles, viewBox, placementBottom = viewBox[1], fallbackRing = true, keepFallbackNearRoute = false,
   gridSweep = false, maxOwnRouteDistance = Infinity, protectedEndpoints = new Map(), onlyProtectedEndpoints = false,
   arrowheads = [], clearanceBorders = [], ownershipMargin = 0, repairOwnership = false, searchBand = false,
-  coversRouteStroke = () => false, coversOwnShaft, coversFrame,
+  coversRouteStroke = () => false, coversOwnShaft, coversFrame, canMove = () => true,
 }) {
   const preferRouteMidpoint = Boolean(coversOwnShaft);
   const placed = [...labels];
@@ -422,7 +422,7 @@ export function placeAutomaticLabels({
     ))));
     if (fallback) placed[index] = fallback;
   };
-  let pending = placed.map((_, index) => index).filter(index => !pinned(placed[index]));
+  let pending = placed.flatMap((label, index) => !pinned(label) && canMove(label) ? [index] : []);
   // A later label can vacate the only slot available to an earlier one.
   // Retry only unresolved labels after a move; accepted placements clear all
   // current labels and fixed geometry, so each success retires one label.

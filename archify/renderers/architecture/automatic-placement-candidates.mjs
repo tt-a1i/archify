@@ -1,7 +1,7 @@
 import { normalizeRoutePoints, properSegmentIntersection, rectsOverlap } from '../shared/geometry.mjs';
 import { analyzeSvgPath } from '../shared/svg-path-analysis.mjs';
 import { prepareCrossingPath, visibleCrossings } from '../shared/route-crossings.mjs';
-import { horizontalLabelClearance } from './routing.mjs';
+import { facingPortCorridor, horizontalLabelClearance } from './routing.mjs';
 
 export function measuredCrossingPairs(routes) {
   const paths = routes.map(({ d }) => analyzeSvgPath(d).subpaths
@@ -13,6 +13,30 @@ export function measuredCrossingPairs(routes) {
 
 function move(box, x, y) {
   return { ...box, x, y, cx: x + box.width / 2, cy: y + box.height / 2 };
+}
+
+export function* nearAlignmentCandidates({ boxes, routes, titles }) {
+  // Open a lane between the legal port ranges with a small perpendicular
+  // nudge. Avoid repacking cards or changing a frame's membership.
+  for (const route of routes) {
+    if (route.points.length <= 2) continue;
+    const { relation } = route;
+    const from = boxes.get(relation.from);
+    const to = boxes.get(relation.to);
+    const corridor = facingPortCorridor(from, to);
+    if (!corridor?.offset) continue;
+    const { axis, low, high, offset } = corridor;
+    const distance = 8 - (high - low);
+    if (distance <= 0 || distance > 24 || distance > Math.abs(offset)) continue;
+    for (const [box, change] of [[from, -Math.sign(offset) * distance], [to, Math.sign(offset) * distance]]) {
+      if (box.pos) continue;
+      const moved = move(box, box.x + (axis ? 0 : change), box.y + (axis ? change : 0));
+      if (moved.x < 0 || moved.y < 0 || [...boxes.values()].some(other => other !== box && rectsOverlap(other, moved, 12))
+          || titles.boundaries.some(frame => !frame.wraps.includes(box.id)
+            && rectsOverlap(frame, moved, 12) && !rectsOverlap(frame, box, 12))) continue;
+      yield { relation, boxes: new Map(boxes).set(box.id, moved) };
+    }
+  }
 }
 
 export function routeSpanMeasures(routes, boxes, viewBox) {

@@ -14,7 +14,7 @@ import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeFrameAttrs, changeLeg
 import { gridLayout, resolveComponentPos, validateGridPlacement } from './grid.mjs';
 import { automaticComponentPositions, boundaryInsets } from './automatic-placement.mjs';
 import { placeCrossedLeaf, placeCrossedSinks, facingFramePlacements } from './crossed-leaf-placement.mjs';
-import { crossingPlacementCandidates, foldedChain, frameAttachmentCandidates, frameEnclosureCandidates, groupMoveCanPreserveRoutes, groupMovePreservesRoutes, measuredCrossingPairs, routeSpanMeasures, sharedNeighborCandidates, strongestLayerOrder, terminalBranchCandidates } from './automatic-placement-candidates.mjs';
+import { crossingPlacementCandidates, foldedChain, frameAttachmentCandidates, frameEnclosureCandidates, groupMoveCanPreserveRoutes, groupMovePreservesRoutes, measuredCrossingPairs, nearAlignmentCandidates, routeSpanMeasures, sharedNeighborCandidates, strongestLayerOrder, terminalBranchCandidates } from './automatic-placement-candidates.mjs';
 import {
   closeReciprocalLanes, createArchitectureRouter, connectionLabelBoxAt, parallelFrameRunLength,
   MIN_PARALLEL_DEPARTURE, parallelRunMeasures, READABLE_FRAME_GAP, READABLE_PORT_GAP,
@@ -309,7 +309,9 @@ function horizontalOverlap(left, right) {
 // A route through a title disappears under its mask and reads as struck-through
 // text. Keep the left rail position when it is clear; otherwise slide the title
 // along its rail to the nearest clear position inside the frame.
-function slideTitleOffRoutes(boundary, title, placedTitles, { titleRouteSegments, boxes, connectionLabels }) {
+function slideTitleOffRoutes(boundary, title, placedTitles, {
+  titleRouteSegments, boxes, connectionLabels, allowBottomRail = whollyInferred,
+}) {
   if (!enforcesBoundaryTitleComposition) return;
   const clear = (x, y = title.y) => {
     const rect = { ...title, x, y };
@@ -336,7 +338,7 @@ function slideTitleOffRoutes(boundary, title, placedTitles, { titleRouteSegments
     title.x = x;
     return;
   }
-  if (!whollyInferred) return;
+  if (!allowBottomRail) return;
   // Wide titles sometimes cannot fit on either side of a route on the top
   // rail. Try the unused bottom inset before changing the frame's footprint.
   const bottomRail = boundary.y + boundary.height - title.height - layout.boundaryLabelFrameInset;
@@ -878,7 +880,7 @@ function chooseAutomaticPlacement() {
     router = best.router;
     for (const [id, box] of best.scene.boxes) components.set(id, box);
   }
-  return best.scene;
+  return { ...best.scene, routingOptions: best.routingOptions };
 }
 
 function frameOutline(frame) {
@@ -892,8 +894,8 @@ function frameOutline(frame) {
   return prepareCrossingPath(segments);
 }
 
-function finishAutomaticLabels(scene, repairFixedCanvas = false) {
-  if (!auto || !scene.labels.length) return scene;
+function finishAutomaticLabels(scene, repairFixedCanvas = false, changedRelation) {
+  if ((!auto && !changedRelation) || !scene.labels.length) return scene;
   const clearanceBorders = whollyInferred ? forRouting(scene.titles.boundaries).flatMap(frameBorderSegments) : [];
   const arrowheads = scene.arrowheads.length ? scene.arrowheads : routeArrowheads(scene.routes);
   const frameOutlines = repairFixedCanvas ? forRouting(scene.titles.boundaries).map(frameOutline) : [];
@@ -905,6 +907,7 @@ function finishAutomaticLabels(scene, repairFixedCanvas = false) {
   const strokesByIndex = repairFixedCanvas && new Map(strokes.map(stroke => [stroke.relationIndex, stroke]));
   const labels = placeAutomaticLabels({
     ...scene,
+    canMove: changedRelation && (label => label.relation === changedRelation),
     arrowheads,
     clearanceBorders,
     // The quadratic outline approximates the SVG's round corners within
@@ -1076,8 +1079,134 @@ function repairFixedCanvasLabels(scene) {
 }
 
 const automaticComposition = chooseAutomaticPlacement();
-const composition = automaticComposition ? finishAutomaticLabels(automaticComposition)
-  : repairFixedCanvasLabels(fixedCanvasComposition(resolveConnectionComposition(components, pathFor, rawBoundaries)));
+function simplifyFinishedComposition(initial, sceneRouter = router) {
+  let current = initial;
+  let beforeProblems;
+  const borders = forRouting(initial.titles.boundaries).flatMap(frameBorderSegments);
+  let outlines;
+  sceneRouter.simplifyFinishedRoutes(initial.viewBox, borders, (relation, routed, sides, clearsFrame) => {
+    const routes = current.routes.map(route => route.relation === relation ? { ...route, ...routed } : route);
+    const route = routes.find(route => route.relation === relation);
+    const path = prepareCrossingPath(roundedPathSegments(route.points, 8));
+    const halfWidth = routeStrokeWidth(relation) / 2;
+    const arrowheads = routeArrowheads(routes);
+    let titles = current.titles;
+    const coversTitle = title => drawnPathRectClearance(path, title, halfWidth) < halfWidth;
+    const blocked = titles.boundaries.filter(({ title }) => coversTitle(title));
+    if (blocked.length) {
+      if (!clearsFrame || !auto) return false;
+      const titleRouteSegments = routes.flatMap(({ points }) =>
+        points.slice(1).map((end, index) => ({ start: points[index], end })));
+      const boundaries = [...titles.boundaries];
+      for (const frame of blocked) {
+        const title = { ...frame.title };
+        slideTitleOffRoutes(frame, title, boundaries.filter(other => other !== frame).map(other => other.title), {
+          boxes: current.boxes, connectionLabels: current.labels, titleRouteSegments, allowBottomRail: true,
+        });
+        if (coversTitle(title) || arrowheads.some(({ marker }) => maskCoversArrowhead(title, marker))) return false;
+        boundaries[boundaries.indexOf(frame)] = { ...frame, title };
+      }
+      titles = { ...titles, boundaries };
+    }
+    const protectedEndpoints = new Map(current.protectedEndpoints);
+    if (protectedEndpoints.has(route.relationIndex)) protectedEndpoints.set(route.relationIndex, endpointLabelZones(route));
+    const labels = current.labels.map(label => label.relation === relation
+      ? { ...label, ...connectionLabelBoxAt(relation, labelPoint(relation, route.points)) } : label);
+    const proposed = { ...current, routes, labels, titles, arrowheads, protectedEndpoints };
+    const candidate = relation.label ? finishAutomaticLabels(proposed, true, relation) : proposed;
+    if (candidate.labels.some(label => drawnPathRectClearance(path, label, halfWidth) < halfWidth)) return false;
+    const ownLabel = candidate.labels.find(label => label.relation === relation);
+    if (ownLabel) {
+      outlines ??= forRouting(initial.titles.boundaries).map(frameOutline);
+      if (outlines.some(outline => drawnPathRectClearance(outline, ownLabel, 2) < 2 - 0.0001)
+          || arrowheads.some(({ marker }) => maskCoversArrowhead(ownLabel, marker))) return false;
+    }
+    beforeProblems ??= labelProblems({ ...current, arrowheads: routeArrowheads(current.routes) }, automaticLabelOwnershipMargin);
+    const afterProblems = labelProblems(candidate, automaticLabelOwnershipMargin);
+    if (!preservesLabels(beforeProblems, afterProblems)) return false;
+    const proposedRouter = {
+      pathFor: other => other === relation ? routed : sceneRouter.pathFor(other),
+      connectionEndpointSide: (other, end) => other === relation
+        ? sides[end === 'source' ? 'fromSide' : 'toSide'] : sceneRouter.connectionEndpointSide(other, end),
+    };
+    try {
+      withIsolatedDiagnosticRecording(() => validateArchitecture(candidate, proposedRouter));
+    } catch (error) {
+      if (!error.archifyDiagnostics?.length) throw error;
+      return false;
+    }
+    beforeProblems = afterProblems;
+    current = candidate;
+    return true;
+  });
+  return current;
+}
+
+function alignNearlyFacingCards(initial) {
+  if (!automaticComposition || !whollyInferred || !remainingPlacementRoutes || components.size > 24) return initial;
+  let current = initial;
+  let attempts = 6;
+  while (attempts && remainingPlacementRoutes) {
+    const before = current;
+    const previousCrossings = measuredCrossingPairs(before.routes);
+    const budget = routeBudgetMetrics({ routedRelations: before.routes });
+    const oldSpans = routeSpanMeasures(before.routes, before.boxes, before.viewBox);
+    let oldLabels;
+    for (const { relation, boxes } of nearAlignmentCandidates(before)) {
+      if (!attempts || !remainingPlacementRoutes) break;
+      attempts -= 1;
+      const bounds = boundsFor(boxes);
+      const candidate = routePlacement(boxes, bounds, initial.routingOptions);
+      const placed = finishAutomaticLabels(resolveConnectionComposition(boxes, candidate.pathFor, bounds), true);
+      const after = simplifyFinishedComposition(placed, candidate);
+      if (after.routes.find(route => route.relation === relation).points.length !== 2
+          || after.routes.some((route, index) => route.points.length > before.routes[index].points.length)
+          || after.viewBox.some((size, axis) => size > before.viewBox[axis])
+          || measuredCrossingPairs(after.routes).some(([a, b]) => !previousCrossings.some(([x, y]) => a === x && b === y))
+          || routeSpanMeasures(after.routes, boxes, after.viewBox).length > oldSpans.length + 0.0001
+          || routeBudgetMetrics({ routedRelations: after.routes }).routesOverSuggestedStretch > budget.routesOverSuggestedStretch
+          || !candidate.planIsClear(after.viewBox, { checkProvisionalLabels: false })
+          || frameEnclosures(boxes, after.titles.boundaries).length) continue;
+      oldLabels ??= drawnLabelProblems(before);
+      if (!preservesLabels(oldLabels, drawnLabelProblems(after))) continue;
+      try {
+        withIsolatedDiagnosticRecording(() => validateArchitecture(after, candidate));
+      } catch (error) {
+        if (!error.archifyDiagnostics?.length) throw error;
+        continue;
+      }
+      current = after;
+      router = candidate;
+      for (const [id, box] of boxes) components.set(id, box);
+      break;
+    }
+    if (current === before) break;
+  }
+  return current;
+}
+
+function drawnLabelProblems(scene) {
+  const problems = labelProblems({ ...scene, arrowheads: routeArrowheads(scene.routes) }, automaticLabelOwnershipMargin);
+  const outlines = forRouting(scene.titles.boundaries).map(frameOutline);
+  for (const { points, relation, relationIndex } of scene.routes) {
+    const path = prepareCrossingPath(roundedPathSegments(points, 8));
+    const halfWidth = routeStrokeWidth(relation) / 2;
+    for (const label of scene.labels) {
+      const clearance = drawnPathRectClearance(path, label, halfWidth);
+      if (clearance < halfWidth) problems.set(`stroke/${label.relationIndex}/${relationIndex}`, halfWidth - clearance);
+    }
+  }
+  for (const label of scene.labels) {
+    for (const [index, path] of outlines.entries()) {
+      const clearance = drawnPathRectClearance(path, label, 2);
+      if (clearance < 2) problems.set(`frame/${label.relationIndex}/${index}`, 2 - clearance);
+    }
+  }
+  return problems;
+}
+
+const composition = alignNearlyFacingCards(simplifyFinishedComposition(automaticComposition ? finishAutomaticLabels(automaticComposition)
+  : repairFixedCanvasLabels(fixedCanvasComposition(resolveConnectionComposition(components, pathFor, rawBoundaries)))));
 const {
   titles: { boundaries }, labels: connectionLabels, viewBox,
 } = composition;

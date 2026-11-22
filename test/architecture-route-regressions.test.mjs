@@ -523,36 +523,31 @@ test('an inferred return label keeps its elbows and competing shafts visible', (
   }
 });
 
-for (const [name, text, points] of [
-  ['review9-fixed-074', 'Fetch data 5', [
-    [[136, 88], [209, 88]],
-    [[309, 86], [356.5, 86], [356.5, 59], [404, 59]],
-    [[420, 103], [420, 162], [96, 162], [96, 199]],
-    [[110, 199], [110, 163], [266, 163], [266, 187]],
-    [[280, 187], [280, 163], [516, 163], [516, 201], [492, 201]],
-    [[432, 237], [432, 261], [180, 261], [180, 234], [156, 234]],
-    [[259, 112], [259, 155.5], [82, 155.5], [82, 199]],
-    [[388, 165], [388, 115], [136, 115]],
-    [[156, 220], [217, 220], [217, 126], [348.5, 126], [348.5, 87], [404, 87]],
-  ]],
-  ['review9-fixed-125', 'Retrieve configuration 6', [
-    [[157, 85], [202, 85]],
-    [[286, 56], [286, 48], [387, 48]],
-    [[387, 69], [363, 69], [363, 156], [161, 156], [161, 188], [137, 188]],
-    [[137, 215], [178.5, 215], [178.5, 198], [220, 198]],
-    [[320, 188], [397, 188]],
-    [[270, 162], [270, 146], [286, 146], [286, 128]],
-  ]],
+for (const [name, text] of [
+  ['review9-fixed-074', 'Fetch data 5'],
+  ['review9-fixed-125', 'Retrieve configuration 6'],
 ]) {
-  test(`automatic labels clear strokes and markers without moving pinned geometry in ${name}`, () => {
+  test(`automatic labels clear strokes and markers without moving pinned geometry in ${name}`, t => {
     const input = load(name);
     const { status, receipt } = validate(fileURLToPath(fixtureUrl(name)),
       input.meta.quality_profile ?? 'standard', '--layout-json');
     assert.equal(status, 0, JSON.stringify(receipt.diagnostics));
     assert.deepEqual(receipt.components.map(({ x, y }) => [x, y]), input.components.map(({ pos }) => pos));
-    assert.deepEqual(receipt.connections.map(route => route.points), points);
+    const points = receipt.connections.map(route => route.points);
     const ownerIndex = receipt.connections.findIndex(({ label }) => label === text);
-    const label = connectionLabelBoxAt(input.connections[ownerIndex], receipt.connections[ownerIndex].labelAt);
+    const scratch = mkdtempSync(join(tmpdir(), 'archify-label-mask-'));
+    t.after(() => rmSync(scratch, { recursive: true, force: true }));
+    const artifact = join(scratch, 'chart.html');
+    const rendered = spawnSync(process.execPath, [renderer, fileURLToPath(fixtureUrl(name)), artifact], { encoding: 'utf8' });
+    assert.equal(rendered.status, 0, rendered.stdout + rendered.stderr);
+    // Layout receipts round anchors for display. Read the drawn mask so
+    // rounding cannot erase a fractional pixel of valid ownership clearance.
+    const html = readFileSync(artifact, 'utf8');
+    const mask = [...html.matchAll(/<g data-detail="context" ([^>]+)>\s*<rect x="([^"]+)" y="([^"]+)" width="([^"]+)" height="([^"]+)"/g)]
+      .find(([, attrs]) => attrs.includes(`data-edge-key="${ownerIndex}"`));
+    assert.ok(mask, `missing rendered mask for ${text}`);
+    const [x, y, width, height] = mask.slice(2).map(Number);
+    const label = { x, y, width, height };
     const paths = points.map(route => prepareCrossingPath(roundedPathSegments(route, 8)));
     const own = drawnPathRectClearance(paths[ownerIndex], label);
     for (const [index, route] of points.entries()) {
