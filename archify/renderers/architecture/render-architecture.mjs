@@ -527,8 +527,12 @@ function resolveBoundaryTitles(scene, connectionGeometry, rawBoundaries) {
 
 // Run the same title, canvas and label placement for a route proposal and
 // for the SVG. The router's provisional label reservations only prune probes.
+function routeStrokeWidth(relation) {
+  return relation.width || (relation.variant === 'emphasis' ? 1.8 : 1.5);
+}
+
 function endpointLabelZones({ relation, points }) {
-  const stroke = relation.width || (relation.variant === 'emphasis' ? 1.8 : 1.5);
+  const stroke = routeStrokeWidth(relation);
   function zone(tip, next, along, across, overhang = 0) {
     const distance = Math.hypot(next[0] - tip[0], next[1] - tip[1]);
     if (!distance) return null;
@@ -562,7 +566,7 @@ function distinctNeighbor(points, end) {
 function routeArrowheads(routes) {
   return routes.map(({ relation, relationIndex, points }) => ({
     relationIndex, marker: arrowheadTriangle(points.at(-1), distinctNeighbor(points, 'end'),
-      relation.width || (relation.variant === 'emphasis' ? 1.8 : 1.5)),
+      routeStrokeWidth(relation)),
   }));
 }
 
@@ -877,19 +881,40 @@ function chooseAutomaticPlacement() {
   return best.scene;
 }
 
-function finishAutomaticLabels(scene) {
+function frameOutline(frame) {
+  const edges = frameBorderSegments(frame);
+  const segments = edges.flatMap((edge, index) => {
+    const next = edges[(index + 1) % edges.length];
+    const control = edge.side === 'top' || edge.side === 'bottom'
+      ? [next.start[0], edge.end[1]] : [edge.end[0], next.start[1]];
+    return [edge, { start: edge.end, end: next.start, control }];
+  });
+  return prepareCrossingPath(segments);
+}
+
+function finishAutomaticLabels(scene, repairFixedCanvas = false) {
   if (!auto || !scene.labels.length) return scene;
   const clearanceBorders = whollyInferred ? forRouting(scene.titles.boundaries).flatMap(frameBorderSegments) : [];
   const arrowheads = scene.arrowheads.length ? scene.arrowheads : routeArrowheads(scene.routes);
+  const frameOutlines = repairFixedCanvas ? forRouting(scene.titles.boundaries).map(frameOutline) : [];
   const strokes = scene.routes.map(({ points, relation, relationIndex }) => {
     const path = prepareCrossingPath(roundedPathSegments(points, 8));
     return { path, relationIndex, corners: { ...path, segments: path.segments.filter(segment => segment.control) },
-      halfWidth: (relation.width || (relation.variant === 'emphasis' ? 1.8 : 1.5)) / 2 };
+      halfWidth: routeStrokeWidth(relation) / 2 };
   });
+  const strokesByIndex = repairFixedCanvas && new Map(strokes.map(stroke => [stroke.relationIndex, stroke]));
   const labels = placeAutomaticLabels({
     ...scene,
     arrowheads,
     clearanceBorders,
+    // The quadratic outline approximates the SVG's round corners within
+    // the same two-pixel frame clearance used for straight borders.
+    coversFrame: frameOutlines.length ? label => frameOutlines.some(path =>
+      drawnPathRectClearance(path, label, 2) < 2 - 0.0001) : undefined,
+    coversOwnShaft: repairFixedCanvas ? label => {
+      const { path, halfWidth } = strokesByIndex.get(label.relationIndex);
+      return drawnPathRectClearance(path, label, halfWidth) < halfWidth;
+    } : undefined,
     ownershipMargin: automaticLabelOwnershipMargin,
     repairOwnership: true,
     searchBand: true,
@@ -905,7 +930,7 @@ function finishAutomaticLabels(scene) {
       ? scene.viewBox[1] - 48 - legendFootprint(architectureLegendEntries, { width: scene.viewBox[0] - layout.margin * 2 }).extraHeight
       : scene.viewBox[1],
   });
-  return labels.some((label, index) => label !== scene.labels[index]) ? { ...scene, arrowheads, labels } : scene;
+  return repairFixedCanvas || labels.some((label, index) => label !== scene.labels[index]) ? { ...scene, arrowheads, labels } : scene;
 }
 
 function fixedCanvasComposition(initial) {
@@ -1012,9 +1037,47 @@ function fixedCanvasComposition(initial) {
   return best.scene;
 }
 
+function repairFixedCanvasLabels(scene) {
+  if (!auto || !arch.meta?.viewBox || connections.some(relation => relation.labelAt)) return scene;
+  let repaired = finishAutomaticLabels(scene, true);
+  const ownMarker = (composition, label) => composition.arrowheads.find(marker => marker.relationIndex === label.relationIndex)?.marker;
+  for (const [index] of repaired.labels.entries()) {
+    const before = repaired;
+    const label = before.labels[index];
+    if (!maskCoversArrowhead(label, ownMarker(before, label))) continue;
+    const baseline = labelProblems(before, automaticLabelOwnershipMargin);
+    router.repairMaskedApproach(label.relation, before.viewBox, (next, sides, shorter) => {
+      const routes = before.routes.map(route => route.relation === label.relation ? { ...route, ...next } : route);
+      const arrowheads = routeArrowheads(routes);
+      const candidate = finishAutomaticLabels({ ...before, routes, arrowheads }, true);
+      const placed = candidate.labels[index];
+      const path = prepareCrossingPath(roundedPathSegments(next.points, 8));
+      const halfWidth = routeStrokeWidth(label.relation) / 2;
+      if (placed === label || maskCoversArrowhead(placed, ownMarker(candidate, placed))
+          || candidate.labels.some(rect => (rect !== placed || !shorter)
+            && drawnPathRectClearance(path, rect, halfWidth) < halfWidth)
+          || !preservesLabels(baseline, labelProblems(candidate, automaticLabelOwnershipMargin))) return false;
+      const proposedRouter = {
+        pathFor: relation => relation === label.relation ? next : router.pathFor(relation),
+        connectionEndpointSide: (relation, end) => relation === label.relation
+          ? sides[end === 'source' ? 'fromSide' : 'toSide'] : router.connectionEndpointSide(relation, end),
+      };
+      try {
+        withIsolatedDiagnosticRecording(() => validateArchitecture(candidate, proposedRouter));
+      } catch (error) {
+        if (!error.archifyDiagnostics?.length) throw error;
+        return false;
+      }
+      repaired = candidate;
+      return true;
+    });
+  }
+  return repaired;
+}
+
 const automaticComposition = chooseAutomaticPlacement();
 const composition = automaticComposition ? finishAutomaticLabels(automaticComposition)
-  : fixedCanvasComposition(resolveConnectionComposition(components, pathFor, rawBoundaries));
+  : repairFixedCanvasLabels(fixedCanvasComposition(resolveConnectionComposition(components, pathFor, rawBoundaries)));
 const {
   titles: { boundaries }, labels: connectionLabels, viewBox,
 } = composition;

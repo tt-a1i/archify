@@ -8,8 +8,9 @@ export function placeAutomaticLabels({
   labels, routes, components, titles, viewBox, placementBottom = viewBox[1], fallbackRing = true, keepFallbackNearRoute = false,
   gridSweep = false, maxOwnRouteDistance = Infinity, protectedEndpoints = new Map(), onlyProtectedEndpoints = false,
   arrowheads = [], clearanceBorders = [], ownershipMargin = 0, repairOwnership = false, searchBand = false,
-  coversRouteStroke = () => false,
+  coversRouteStroke = () => false, coversOwnShaft, coversFrame,
 }) {
+  const preferRouteMidpoint = Boolean(coversOwnShaft);
   const placed = [...labels];
   const obstacles = [...components, ...titles];
   const segments = routes.flatMap(({ relationIndex, points }) => {
@@ -48,7 +49,8 @@ export function placeAutomaticLabels({
   ));
   const coversEndpoint = rect => protectedEndpoints.get(rect.relationIndex)?.some(zone => rectsOverlap(rect, zone))
     || arrowheads.some(({ marker }) => maskCoversArrowhead(rect, marker));
-  const touchesBorder = rect => clearanceBorders.some(part => segmentRectClearanceWithin(part, rect, 2) < 2 - 0.0001);
+  const touchesBorder = rect => coversFrame?.(rect)
+    || clearanceBorders.some(part => segmentRectClearanceWithin(part, rect, 2) < 2 - 0.0001);
   const mustKeepOwner = new Set(labels.filter(label => touchesBorder(label) || arrowheads.some(({ relationIndex, marker }) =>
     relationIndex !== label.relationIndex && maskCoversArrowhead(label, marker))).map(label => label.relationIndex));
   function keepsOwner(rect) {
@@ -132,9 +134,53 @@ export function placeAutomaticLabels({
 
   let remainingBandProbes = 100_000;
   function searchOwnedBand(label, index, ownSegments) {
+    // Rank only a label that needs repair. The current clear positions
+    // are already reserved and do not need another search.
+    let anchorX = label.x + label.width / 2;
+    let anchorY = label.y + label.height / 2;
+    if (preferRouteMidpoint) {
+      const lengths = ownSegments.map(({ start, end }) => Math.hypot(end[0] - start[0], end[1] - start[1]));
+      let length = lengths.reduce((sum, value) => sum + value, 0) / 2;
+      for (const [i, { start, end }] of ownSegments.entries()) {
+        if (length <= lengths[i] && lengths[i] > 0) {
+          const ratio = length / lengths[i];
+          anchorX = start[0] + (end[0] - start[0]) * ratio;
+          anchorY = start[1] + (end[1] - start[1]) * ratio;
+          break;
+        }
+        length -= lengths[i];
+      }
+    }
+
     const reach = label.height * 3;
+    // A feasible slot can extend just past a short segment's endpoint.
+    const endReach = preferRouteMidpoint ? reach : 0;
+    let best = null;
+    let bestDistance = Infinity;
+    // Permit a shaft interruption only if the current label has a hard
+    // collision. A candidate that leaves the shaft clear always wins.
+    let bestMasksShaft = !coversOwnShaft || needsPlacement(label, index);
+    const accept = (rect, segment) => {
+      if (!coversOwnShaft) {
+        if (!clear(rect, index) || segmentRectClearanceWithin(segment, rect, reach) > reach) return false;
+        best = rect;
+        return true;
+      }
+      const dx = rect.x + rect.width / 2 - anchorX;
+      const dy = rect.y + rect.height / 2 - anchorY;
+      const distance = dx * dx + dy * dy;
+      if (!bestMasksShaft && distance >= bestDistance) return false;
+      const masksShaft = coversOwnShaft(rect);
+      if ((masksShaft && !bestMasksShaft) || (masksShaft === bestMasksShaft && distance >= bestDistance)
+        || !clear(rect, index) || segmentRectClearanceWithin(segment, rect, reach) > reach) return false;
+      best = rect;
+      bestDistance = distance;
+      bestMasksShaft = masksShaft;
+      return false;
+    };
     const perSegment = Math.max(1, Math.floor(24_000 / ownSegments.length));
-    for (const { start, end } of ownSegments) {
+    for (const segment of ownSegments) {
+      const { start, end } = segment;
       const horizontal = start[1] === end[1];
       if (!horizontal && start[0] !== end[0]) {
         const [dx, dy] = end.map((value, axis) => value - start[axis]);
@@ -142,47 +188,56 @@ export function placeAutomaticLabels({
         const [ux, uy] = [dx / length, dy / length];
         const halfWidth = label.width / 2;
         const halfHeight = label.height / 2;
-        const [x, y] = [label.x + halfWidth - start[0], label.y + halfHeight - start[1]];
+        const [x, y] = [anchorX - start[0], anchorY - start[1]];
         const normalReach = Math.abs(uy) * halfWidth + Math.abs(ux) * halfHeight + reach;
         const across = stations(-normalReach, normalReach, -uy * x + ux * y,
           Math.max(2, Math.floor(Math.sqrt(perSegment)) - 3));
-        const along = stations(0, length, ux * x + uy * y, Math.max(2, Math.floor(perSegment / across.length) - 3));
+        const along = stations(-endReach, length + endReach, ux * x + uy * y, Math.max(2, Math.floor(perSegment / across.length) - 3));
         for (const offset of across) for (const position of along) {
-          if (!remainingBandProbes) return null;
+          if (!remainingBandProbes) return best;
           remainingBandProbes -= 1;
           const rect = rectAt(label, start[0] + position * ux - offset * uy,
             start[1] + position * uy + offset * ux - halfHeight + 10);
-          if (clear(rect, index) && segmentRectClearanceWithin({ start, end }, rect, reach) <= reach) return rect;
+          if (accept(rect, segment)) return best;
         }
         continue;
       }
       const axis = horizontal ? 0 : 1;
-      const along = horizontal ? 'x' : 'y';
-      const across = horizontal ? 'y' : 'x';
       const span = horizontal ? label.width : label.height;
       const thickness = horizontal ? label.height : label.width;
       const extent = [viewBox[0], placementBottom];
+      const preferred = preferRouteMidpoint
+        ? [anchorX - label.width / 2, anchorY - label.height / 2] : [label.x, label.y];
       const samples = Math.max(2, Math.floor(Math.sqrt(perSegment)) - 3);
       const offsets = stations(Math.max(0, start[1 - axis] - thickness - reach),
-        Math.min(extent[1 - axis] - thickness, start[1 - axis] + reach), label[across], samples);
+        Math.min(extent[1 - axis] - thickness, start[1 - axis] + reach), preferred[1 - axis], samples);
       if (!offsets.length) continue;
-      const run = stations(Math.max(0, Math.min(start[axis], end[axis]) - span / 2),
-        Math.min(extent[axis] - span, Math.max(start[axis], end[axis]) - span / 2), label[along],
-        Math.max(2, Math.floor(perSegment / offsets.length) - 3));
-      // Prefer staying near the original lane before shifting farther
-      // across the route.
-      for (let offset = 0; offset < offsets.length; offset++) {
+      const low = Math.max(0, Math.min(start[axis], end[axis]) - span / 2 - endReach);
+      const high = Math.min(extent[axis] - span, Math.max(start[axis], end[axis]) - span / 2 + endReach);
+      const run = stations(low, high, preferred[axis], Math.max(2, Math.floor(perSegment / offsets.length) - 3));
+      if (!run.length) continue;
+      // Reject card-blocked samples before constructing a candidate or testing
+      // its strokes. Each row needs only the obstacles that touch its band.
+      for (const offset of offsets) {
+        const band = horizontal
+          ? { x: low, y: offset, width: high - low + span, height: thickness }
+          : { x: offset, y: low, width: thickness, height: high - low + span };
+        const nearby = obstacles.filter(obstacle => rectsOverlap(band, obstacle, 2));
+        const sample = { width: label.width, height: label.height, x: band.x, y: band.y };
         for (const position of run) {
-          if (!remainingBandProbes) return null;
+          if (!remainingBandProbes) return best;
           remainingBandProbes -= 1;
-          const rect = { ...label, [along]: position, [across]: offsets[offset] };
-          if (clear(rect, index) && segmentRectClearanceWithin({ start, end }, rect, reach) <= reach) {
-            return rectAt(label, rect.x + label.width / 2, rect.y + 10);
+          sample.x = horizontal ? position : offset;
+          sample.y = horizontal ? offset : position;
+          if (nearby.some(obstacle => rectsOverlap(sample, obstacle, 2))) continue;
+          const { x, y } = sample;
+          if (accept({ ...label, x, y, lx: x + label.width / 2, ly: y + 10 }, segment)) {
+            return rectAt(label, best.lx, best.ly);
           }
         }
       }
     }
-    return null;
+    return best;
   }
 
   // An opted-in grid layout runs parallel lines through shared gaps. Rank
@@ -252,7 +307,12 @@ export function placeAutomaticLabels({
     // not a reason to restyle the diagram. New placements leave extra space.
     // The grid ranking already starts from the preferred position, so it
     // also re-ranks labels whose default spot is merely valid.
-    if (!rerank && !needsPlacement(label, index)) return;
+    if (!rerank && !needsPlacement(label, index) && !coversOwnShaft?.(label)) return;
+    if (preferRouteMidpoint) {
+      const replacement = searchOwnedBand(label, index, segments.filter(segment => segment.relationIndex === label.relationIndex));
+      if (replacement) placed[index] = replacement;
+      return;
+    }
     if (rerank) {
       // Callers measure the plate one pixel higher than rectAt; test with a
       // pixel of slack so the chosen position also passes their clearance.
@@ -375,7 +435,7 @@ export function placeAutomaticLabels({
       moved ||= placed[index] !== before;
     }
     if (!moved) break;
-    pending = pending.filter(index => needsPlacement(placed[index], index));
+    pending = pending.filter(index => needsPlacement(placed[index], index) || coversOwnShaft?.(placed[index]));
   }
   return placed;
 }

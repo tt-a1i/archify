@@ -6,12 +6,15 @@ import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { connectionLabelBoxAt } from '../archify/renderers/architecture/routing.mjs';
+import { frameBorderSegments, roundedPathSegments, segmentRectClearance } from '../archify/renderers/shared/geometry.mjs';
+import { drawnPathRectClearance, prepareCrossingPath } from '../archify/renderers/shared/route-crossings.mjs';
 
 const fixtures = new URL('fixtures/architecture-frame-recovery/', import.meta.url);
 const cases = JSON.parse(readFileSync(new URL('cases.json', fixtures), 'utf8'));
 const cli = fileURLToPath(new URL('../archify/bin/archify.mjs', import.meta.url));
 
-for (const [name, { file, passes, diagnostic, round5Svg, round7Svg, round8Svg, cleanArtifact, routeLengthLimits }] of Object.entries(cases)) {
+for (const [name, { file, passes, diagnostic, round5Svg, round8Svg, round11Svg, cleanArtifact, routeLengthLimits }] of Object.entries(cases)) {
   test(`frame recovery preserves the validated layout for ${name}`, t => {
     const scratch = mkdtempSync(join(tmpdir(), 'archify-fixed-canvas-'));
     t.after(() => rmSync(scratch, { recursive: true, force: true }));
@@ -24,7 +27,7 @@ for (const [name, { file, passes, diagnostic, round5Svg, round7Svg, round8Svg, c
     const failure = result.stdout + result.stderr;
     assert.equal(result.status === 0, passes, failure);
     if (diagnostic) assert.ok(failure.includes(`[${diagnostic}]`), failure);
-    const expectedSvg = round5Svg ?? round7Svg ?? round8Svg;
+    const expectedSvg = round5Svg ?? round8Svg ?? round11Svg;
     if (expectedSvg) {
       // Fixed-canvas compatibility includes routes, labels and frames.
       const svg = readFileSync(output, 'utf8').match(/<svg\b[\s\S]*?<\/svg>/g)
@@ -73,3 +76,26 @@ for (const [name, expectedLengths] of [
     assert.ok(lengths.every((length, index) => length <= expectedLengths[index]), JSON.stringify(lengths));
   });
 }
+
+test('a fixed-canvas label clears both the frame border and the routes', () => {
+  const fixture = new URL('label-fixed-074-frame-16.json', fixtures);
+  const input = JSON.parse(readFileSync(fixture, 'utf8'));
+  const result = spawnSync(process.execPath,
+    [cli, 'validate', 'architecture', fileURLToPath(fixture), '--quality', 'standard', '--layout-json'],
+    { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const { boundaries, connections } = JSON.parse(result.stdout);
+  const index = connections.findIndex(({ label }) => label === 'Fetch data 5');
+  const label = connectionLabelBoxAt(input.connections[index], connections[index].labelAt);
+  for (const frame of boundaries) {
+    for (const edge of frameBorderSegments({ ...frame, radius: 12 })) {
+      assert.ok(segmentRectClearance(edge, label) >= 0.5, `label covers the frame's ${edge.side} border`);
+    }
+  }
+  for (const [index, { points }] of connections.entries()) {
+    const { width, variant } = input.connections[index];
+    const stroke = width || (variant === 'emphasis' ? 1.8 : 1.5);
+    const path = prepareCrossingPath(roundedPathSegments(points, 8));
+    assert.ok(drawnPathRectClearance(path, label) >= stroke / 2, `label covers shaft ${index}`);
+  }
+});

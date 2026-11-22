@@ -1266,31 +1266,6 @@ export function createRouter(components, connections = [], {
       };
       const withinScene = ([x, y]) => x >= bounds.left && x <= bounds.right && y >= bounds.top && y <= bounds.bottom;
       const jointlyImproved = new Set();
-      const endpointSlotsClear = (candidateRoutes, others, sidesOf) => {
-        const entries = [...others, ...candidateRoutes];
-        for (const candidate of candidateRoutes) {
-          const sides = sidesOf(candidate.conn);
-          for (const [componentId, side, point] of [
-            [candidate.conn.from, sides.fromSide, candidate.points[0]],
-            [candidate.conn.to, sides.toSide, candidate.points.at(-1)],
-          ]) {
-            const coordinate = side === 'left' || side === 'right' ? 1 : 0;
-            for (const other of entries) {
-              if (other.conn === candidate.conn) continue;
-              const otherSides = sidesOf(other.conn);
-              for (const [otherId, otherSide, otherPoint] of [
-                [other.conn.from, otherSides.fromSide, other.points[0]],
-                [other.conn.to, otherSides.toSide, other.points.at(-1)],
-              ]) {
-                if (componentId === otherId && side === otherSide
-                    && Math.abs(point[coordinate] - otherPoint[coordinate])
-                      < portSpacing(candidate.conn, other.conn) - 0.0001) return false;
-              }
-            }
-          }
-        }
-        return true;
-      };
       const labelClears = (rect, owner, entries, labels, inBounds = withinScene) => {
         if (!rect) return !owner.label;
         if (!inBounds([rect.x, rect.y])
@@ -2305,6 +2280,107 @@ export function createRouter(components, connections = [], {
       .map(other => [conn, other.conn]));
   }
 
+  function endpointSlotsClear(candidateRoutes, others, sidesOf) {
+    const entries = [...others, ...candidateRoutes];
+    for (const candidate of candidateRoutes) {
+      const sides = sidesOf(candidate.conn);
+      for (const [componentId, side, point] of [
+        [candidate.conn.from, sides.fromSide, candidate.points[0]],
+        [candidate.conn.to, sides.toSide, candidate.points.at(-1)],
+      ]) {
+        const coordinate = side === 'left' || side === 'right' ? 1 : 0;
+        for (const other of entries) {
+          if (other.conn === candidate.conn) continue;
+          const otherSides = sidesOf(other.conn);
+          for (const [otherId, otherSide, otherPoint] of [
+            [other.conn.from, otherSides.fromSide, other.points[0]],
+            [other.conn.to, otherSides.toSide, other.points.at(-1)],
+          ]) {
+            if (componentId === otherId && side === otherSide
+                && Math.abs(point[coordinate] - otherPoint[coordinate])
+                  < portSpacing(candidate.conn, other.conn) - 0.0001) return false;
+          }
+        }
+      }
+    }
+    return true;
+  }
+
+  // Keep the current plan unless a bounded port and lane search can expose
+  // a masked approach without adding a crossover or exceeding a route budget.
+  function repairMaskedApproach(conn, [width, height], accept) {
+    if (hasAuthoredRouteGeometry(conn) || hasAuthoredLabelPlacement(conn)
+        || [conn.fromSide, conn.toSide].some(side => side && side !== 'auto')) return false;
+    const current = pathFor(conn);
+    if (current.points.length !== 4) return false;
+    const sides = selectedSides.get(conn);
+    const from = components.get(conn.from);
+    const to = components.get(conn.to);
+    const others = routedEntries().filter(entry => entry.conn !== conn);
+    const crossingCounts = others.map(other => crossingPoints(current.points, other));
+    const budget = routeBudgetMetrics({ routedRelations: [current] });
+    const currentLength = routeLength(current.points);
+    const candidates = [];
+    const verticalFace = side => side === 'top' || side === 'bottom';
+    const withLane = (point, axis, lane) => axis ? [point[0], lane] : [lane, point[1]];
+    const portLimits = (box, axis) => {
+      const origin = axis ? box.y : box.x;
+      const size = axis ? box.height : box.width;
+      const inset = Math.min(AUTOMATIC_PORT_CORNER_GUTTER, size / 2);
+      return [origin + inset, origin + size - inset];
+    };
+    const add = (points, fromSide, toSide) => {
+      candidates.push({ points, sides: { fromSide, toSide }, length: routeLength(points) });
+    };
+
+    const first = current.points[0];
+    const last = current.points.at(-1);
+    if (sides.fromSide !== sides.toSide && verticalFace(sides.fromSide) === verticalFace(sides.toSide)) {
+      const axis = verticalFace(sides.fromSide) ? 0 : 1;
+      for (const lane of new Set([last[axis], first[axis]])) {
+        add([withLane(first, axis, lane), withLane(last, axis, lane)], sides.fromSide, sides.toSide);
+      }
+    }
+    // An outside lane can expose a label that cannot fit inside the facing
+    // corridor. Test the near lane at the same bend count as the dogleg.
+    for (const side of SIDE_ORDER) {
+      const axis = verticalFace(side) ? 0 : 1;
+      const start = anchor(from, side);
+      const end = anchor(to, side);
+      const outward = side === 'top' || side === 'left' ? -1 : 1;
+      const lane = (outward < 0 ? Math.min : Math.max)(start[1 - axis], end[1 - axis])
+        + outward * AUTOMATIC_PORT_CORNER_GUTTER;
+      for (const fromLane of [start[axis], ...portLimits(from, axis)]) {
+        for (const toLane of [end[axis], ...portLimits(to, axis)]) {
+          const source = withLane(start, axis, fromLane);
+          const target = withLane(end, axis, toLane);
+          add([source, withLane(source, 1 - axis, lane), withLane(target, 1 - axis, lane), target], side, side);
+        }
+      }
+    }
+    let remainingCompositions = 8;
+    for (const { points, sides, length } of candidates.sort((a, b) => a.length - b.length)) {
+      const { fromSide, toSide } = sides;
+      const nextBudget = routeBudgetMetrics({ routedRelations: [{ points }] });
+      const next = { conn, points };
+      if (points.some(([x, y]) => x < 0 || y < 0 || x > width || y > height)
+          || nextBudget.routesOverSuggestedBends > budget.routesOverSuggestedBends
+          || nextBudget.routesOverSuggestedStretch > budget.routesOverSuggestedStretch
+          || !portHasCornerClearance(from, fromSide, points[0])
+          || !portHasCornerClearance(to, toSide, points.at(-1))
+          || !endpointSlotsClear([next], others, other => selectedSides.get(other))
+          || !routeIsClear(conn, next, { from, to, ...sides }, others, [])
+          || others.some((other, index) => crossingPoints(points, other) > crossingCounts[index])) continue;
+      if (!remainingCompositions) break;
+      remainingCompositions -= 1;
+      const routed = { points, d: roundedPath(points, 8) };
+      if (!accept(routed, sides, length < currentLength)) continue;
+      cachePath(conn, routed, sides);
+      return true;
+    }
+    return false;
+  }
+
   function planIsClear([right, bottom], { checkProvisionalLabels = true } = {}) {
     const entries = routedEntries();
     const labels = checkProvisionalLabels ? reservedLabels : [];
@@ -2328,5 +2404,5 @@ export function createRouter(components, connections = [], {
     return { ...planningMetrics };
   }
 
-  return { ports: automaticPorts, pathFor, connectionSides, inferredSides, connectionEndpointSide, routingMetrics, crossingPairs, planIsClear };
+  return { ports: automaticPorts, pathFor, connectionSides, inferredSides, connectionEndpointSide, routingMetrics, crossingPairs, planIsClear, repairMaskedApproach };
 }

@@ -11,7 +11,7 @@ import { arrowheadTriangle, maskCoversArrowhead } from '../archify/renderers/sha
 import { drawnPathRectClearance, prepareCrossingPath } from '../archify/renderers/shared/route-crossings.mjs';
 import { measuredCrossingPairs, routeSpanMeasures, sharedNeighborCandidates } from '../archify/renderers/architecture/automatic-placement-candidates.mjs';
 import { connectionLabelBoxAt, createArchitectureRouter, parallelRunMeasures } from '../archify/renderers/architecture/routing.mjs';
-import { properSegmentIntersection, rectsOverlap, roundedPath, roundedPathSegments, segmentRectClearance } from '../archify/renderers/shared/geometry.mjs';
+import { frameBorderSegments, properSegmentIntersection, rectsOverlap, roundedPath, roundedPathSegments, segmentRectClearance } from '../archify/renderers/shared/geometry.mjs';
 
 const fixtureUrl = name => new URL(`fixtures/architecture-route-regressions/${name}.json`, import.meta.url);
 const load = name => JSON.parse(readFileSync(fixtureUrl(name), 'utf8'));
@@ -560,6 +560,35 @@ for (const [name, text, points] of [
       const stroke = width || (variant === 'emphasis' ? 1.8 : 1.5);
       assert.equal(maskCoversArrowhead(label, arrowheadTriangle(route.at(-1), route.at(-2), stroke)), false);
       if (index !== ownerIndex) assert.ok(drawnPathRectClearance(paths[index], label) >= own + 4);
+    }
+  });
+}
+
+for (const [fixture, texts] of [
+  ['label-fixed-125-frame-29', ['Retrieve configuration 6', 'Fetch data 5']],
+  ['label-fixed-093-frame-9', ['Commit records 5']],
+  ['label-fixed-005', ['Send status']],
+]) {
+  test(`the fixed-canvas label leaves its shaft and all arrowheads visible in ${fixture}`, () => {
+    const input = load(fixture);
+    const { status, receipt } = validate(fileURLToPath(fixtureUrl(fixture)),
+      input.meta.quality_profile ?? 'standard', '--layout-json');
+    assert.equal(status, 0, JSON.stringify(receipt.diagnostics));
+    const borders = receipt.boundaries.flatMap(frame =>
+      frameBorderSegments({ ...frame, radius: frame.kind === 'security-group' ? 8 : 12 }));
+    for (const text of texts) {
+      const labelIndex = receipt.connections.findIndex(route => route.label === text);
+      const label = connectionLabelBoxAt(input.connections[labelIndex], receipt.connections[labelIndex].labelAt);
+      assert.ok(borders.every(border => segmentRectClearance(border, label) >= 0.5), `${text} covers a frame border`);
+      for (const [index, { points }] of receipt.connections.entries()) {
+        const { width, variant } = input.connections[index];
+        const stroke = width || (variant === 'emphasis' ? 1.8 : 1.5);
+        const marker = arrowheadTriangle(points.at(-1), points.at(-2), stroke);
+        assert.ok(marker, `connection ${index} has a measurable arrowhead`);
+        assert.equal(maskCoversArrowhead(label, marker), false, `${text} covers arrowhead ${index}`);
+        const path = prepareCrossingPath(roundedPathSegments(points, 8));
+        assert.ok(drawnPathRectClearance(path, label) >= stroke / 2, `${text} covers shaft ${index}`);
+      }
     }
   });
 }
