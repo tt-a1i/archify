@@ -13,6 +13,7 @@ import { translateMessage as i18nText } from '../shared/i18n.mjs';
 import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeFrameAttrs, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeNodeAttrs, changeReviewFor, nodeChangeBadgePos, renderChangeBadge, renderChangeEdgePrefix, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
 import { gridLayout, resolveComponentPos, validateGridPlacement } from './grid.mjs';
 import { automaticComponentPositions } from './automatic-placement.mjs';
+import { placeCrossedLeaf } from './crossed-leaf-placement.mjs';
 import { createArchitectureRouter, connectionLabelBoxAt } from './routing.mjs';
 import { placeAutomaticLabels } from '../shared/automatic-labels.mjs';
 import { cleanRouteDetourProblems } from '../shared/route-quality.mjs';
@@ -419,14 +420,25 @@ function layoutBoundaryTitles(rawBoundaries, minimumFontSize) {
 // automatic route never borrows a frame border as its corridor), never the
 // title-expanded frames or the viewBox.
 const rawBoundaries = containNestedBoundaryFrames(asArray(arch.boundaries).map(boundaryRect).filter(Boolean));
-const { pathFor, connectionSides, connectionEndpointSide } = createArchitectureRouter(components, arch.connections, {
+const routingFrames = rawBoundaries.map(boundary => ({
+  ...boundary,
+  radius: boundary.kind === 'security-group' ? 8 : 12,
+}));
+const connections = asArray(arch.connections);
+const makeRouter = boxes => createArchitectureRouter(boxes, connections, {
   automaticPlacement: Boolean(automaticPositions),
   fixedCanvas: Boolean(arch.meta?.viewBox),
-  frames: rawBoundaries.map((boundary) => ({
-    ...boundary,
-    radius: boundary.kind === 'security-group' ? 8 : 12,
-  })),
+  frames: routingFrames,
 });
+let router = makeRouter(components);
+if (automaticPositions && !arch.meta?.viewBox) {
+  const placement = placeCrossedLeaf(components, connections, routingFrames, router, makeRouter);
+  if (placement) {
+    components.set(placement.box.id, placement.box);
+    router = placement.router;
+  }
+}
+const { pathFor, connectionSides, connectionEndpointSide } = router;
 function hasAutomaticRouteGeometry(connection) {
   return !Array.isArray(connection?.via)
     && (!connection?.route || connection.route === 'auto')

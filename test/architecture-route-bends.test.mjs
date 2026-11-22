@@ -5,7 +5,9 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createRouter } from '../archify/renderers/architecture/routing.mjs';
+import { connectionLabelBoxAt, createArchitectureRouter, createRouter } from '../archify/renderers/architecture/routing.mjs';
+import { placeCrossedLeaf } from '../archify/renderers/architecture/crossed-leaf-placement.mjs';
+import { labelPoint, segmentRectClearance } from '../archify/renderers/shared/geometry.mjs';
 
 const cli = fileURLToPath(new URL('../archify/bin/archify.mjs', import.meta.url));
 
@@ -234,4 +236,64 @@ test('a two-bend automatic branch can use a clear corner without disturbing the 
     }
     assert.deepEqual(connections, original);
   }
+});
+
+test('an automatic route can cross a clear channel below a neighboring card in two bends', () => {
+  const boxes = new Map([
+    box('producer', 320, 398, 150, 64), box('renderer', 570, 398, 150, 64),
+    box('stage', 570, 550, 150, 64), box('page', 812, 550, 150, 64),
+    box('reader', 320, 550, 150, 64),
+  ]);
+  const opens = { from: 'reader', to: 'page', label: 'opens' };
+  const connections = [
+    { from: 'producer', to: 'stage', label: 'stage file', variant: 'dashed' },
+    { from: 'renderer', to: 'page', label: 'load page' },
+    opens,
+  ];
+  const frames = [{ x: 290, y: 368, width: 702, height: 266, radius: 12 }];
+  const router = createArchitectureRouter(boxes, connections, { frames, automaticPlacement: true });
+  const route = router.pathFor(opens);
+  assert.ok(route.points.length <= 4, JSON.stringify(route.points));
+  const length = route.points.slice(1).reduce((total, [x, y], index) =>
+    total + Math.abs(x - route.points[index][0]) + Math.abs(y - route.points[index][1]), 0);
+  assert.ok(length <= 450, 'the two-turn path stays in the gap below the stage card');
+  const label = connectionLabelBoxAt(opens, route.labelAt || labelPoint(opens, route.points));
+  const gap = points => Math.min(...points.slice(1).map((end, index) =>
+    segmentRectClearance({ start: points[index], end }, label)));
+  const ownGap = gap(route.points);
+  assert.ok(ownGap <= 14, 'the label reads beside the arrow');
+  for (const other of connections.filter(conn => conn !== opens)) {
+    assert.ok(gap(router.pathFor(other).points) > ownGap, 'the label follows the reader arrow');
+  }
+  assert.ok(router.crossingPairs().every(pair => !pair.includes(opens)));
+});
+
+test('a crossed terminal branch can move inside its frame and clear the long route', () => {
+  const boxes = new Map([
+    box('gateway', 160, 518, 172, 66), box('manager', 767, 220, 172, 62),
+    box('service', 452, 380, 172, 66), box('store', 767, 382, 172, 62),
+    box('processor', 610, 732, 172, 64), box('worker', 610, 892, 172, 64),
+  ]);
+  const [write, control, launch] = [
+    { from: 'service', to: 'store', label: 'dispatches · messages' },
+    { from: 'manager', to: 'processor', label: 'control', variant: 'emphasis' },
+    { from: 'manager', to: 'worker', label: 'launch' },
+  ];
+  const connections = [write, control, launch];
+  const frames = [
+    { x: 130, y: 190, width: 839, height: 414, radius: 12, wraps: ['gateway', 'manager', 'service', 'store'] },
+    { x: 580, y: 702, width: 232, height: 274, radius: 12, wraps: ['processor', 'worker'] },
+  ];
+  const makeRouter = components => createArchitectureRouter(components, connections, { frames, automaticPlacement: true });
+  const baseline = makeRouter(boxes);
+  assert.deepEqual(baseline.crossingPairs(), [[write, control]]);
+  const placement = placeCrossedLeaf(boxes, connections, frames, baseline, makeRouter);
+  assert.equal(placement?.box.id, 'store');
+  assert.deepEqual(placement.router.crossingPairs(), []);
+  assert.ok(placement.router.pathFor(control).points.length <= 4);
+  assert.ok(placement.router.pathFor(write).points.length <= 4);
+  assert.equal(boxes.get('store').x, 767, 'the caller still owns the original placement');
+
+  const pinned = new Map(boxes).set('store', { ...boxes.get('store'), pos: [767, 382] });
+  assert.equal(placeCrossedLeaf(pinned, connections, frames, makeRouter(pinned), makeRouter), null);
 });

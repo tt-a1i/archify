@@ -4,6 +4,7 @@
 
 import {
   segmentIntersectsRect,
+  segmentRectClearanceWithin,
   anchor,
   automaticPortSpread,
   alignAutomaticFacingPorts,
@@ -26,6 +27,16 @@ import { shortestOrthogonalGridRoute } from '../shared/route-quality.mjs';
 import { textUnits } from '../shared/utils.mjs';
 import { reservedLabelRect } from '../shared/automatic-labels.mjs';
 import { changeEdgeLabelExtraWidth } from '../shared/change-marks.mjs';
+
+function labelDistance(points, rect, limit) {
+  return Math.min(...points.slice(1).map((end, index) =>
+    segmentRectClearanceWithin({ start: points[index], end }, rect, limit)));
+}
+
+function labelFollowsRoute(rect, points, others) {
+  const distance = labelDistance(points, rect, 20);
+  return distance <= 20 && others.every(other => labelDistance(other.points, rect, distance) > distance);
+}
 
 export function connectionLabelBoxAt(conn, [lx, ly]) {
   const width = Math.max(30, textUnits(conn.label) * 4.8 + 10) + changeEdgeLabelExtraWidth(conn);
@@ -1480,6 +1491,120 @@ export function createRouter(components, connections = [], {
           }
         }
       }
+      function simplifyResidualRoutes() {
+        // Try off-center ports and short orthogonal routes after the regular
+        // planner has settled. Keep every other route and label in place.
+        const horizontal = side => side === 'left' || side === 'right';
+        const direction = side => side === 'right' || side === 'bottom' ? 1 : -1;
+        const withCoordinate = (point, axis, value) => axis === 0 ? [value, point[1]] : [point[0], value];
+        // The SVG origin is fixed. A label in blank space above or left of
+        // the scene can still fit in the same viewBox.
+        const labelInBounds = ([x, y]) => x >= 0 && x <= bounds.right && y >= 0 && y <= bounds.bottom;
+        for (const entry of resolvedRoutes) {
+          const { conn } = entry;
+          if (entry.points.length <= 4 || jointlyImproved.has(conn) || typeOwned.has(conn) || hasAuthoredRouteGeometry(conn)
+              || hasAuthoredLabelPlacement(conn) || conn.from === conn.to) continue;
+          const others = resolvedRoutes.filter(other => other !== entry);
+          const crossed = new Set(others.filter(other => crossingCount(conn, entry.points, [other])));
+          const length = routeLength(entry.points);
+          const labels = reservedLabels.filter(label => label.conn !== conn);
+          const routes = others.map(other => other.points);
+          const obstacles = [...components.values(), ...frames, ...labels.map(({ rect }) => rect)];
+          const ownedLabels = labels.flatMap(({ conn: owner, rect }) => {
+            const distance = labelDistance(pathCache.get(owner).points, rect, 20);
+            return distance <= 20 && labelDistance(entry.points, rect, distance) > distance
+              ? [{ rect, distance }] : [];
+          });
+          const slots = (rect, side, preferred) => {
+            const axis = Number(horizontal(side));
+            const origin = axis ? rect.y : rect.x;
+            const size = axis ? rect.height : rect.width;
+            const inset = Math.min(AUTOMATIC_PORT_CORNER_GUTTER, size / 2);
+            const low = origin + inset;
+            const high = origin + size - inset;
+            const values = [preferred[axis], low, high];
+            for (const { conn: other, field, sideField } of incidentEndpoints.get(rect.id) || []) {
+              if (other === conn || selectedSides.get(other)[sideField] !== side) continue;
+              const port = pathCache.get(other).points.at(field === 'from' ? 0 : -1);
+              const gap = portSpacing(conn, other);
+              values.push(port[axis] - gap, port[axis] + gap);
+            }
+            return [...new Set(values)].filter(value => value >= low && value <= high);
+          };
+          let best;
+          for (const sides of candidateSidePairs(conn)) {
+            const geometry = connectionGeometry(conn, sides);
+            const { from, to, start, end, fromSide, toSide } = geometry;
+            const sourceAxis = Number(horizontal(fromSide));
+            const targetAxis = Number(horizontal(toSide));
+            const starts = slots(from, fromSide, start);
+            const ends = slots(to, toSide, end);
+            if (sourceAxis === targetAxis) {
+              starts.push(...ends.filter(value => portHasCornerClearance(from, fromSide, withCoordinate(start, sourceAxis, value))));
+              ends.push(...starts.filter(value => portHasCornerClearance(to, toSide, withCoordinate(end, targetAxis, value))));
+            }
+            const axis = 1 - sourceAxis;
+            const step = direction(fromSide);
+            const lastStep = direction(toSide);
+            const stub = Math.max(interiorSegmentPx, microSegmentPx);
+            const startLimit = start[axis] + step * stub;
+            const endLimit = end[axis] + lastStep * stub;
+            const coordinates = [(startLimit + endLimit) / 2, startLimit, endLimit, ...entry.points.map(point => point[axis])];
+            if (sourceAxis === targetAxis) {
+              // Cut the available corridor at known obstacle and route
+              // coordinates. Each intervening slot gets one midpoint.
+              const edges = obstacles.flatMap(rect => axis
+                ? [rect.y, rect.y + rect.height] : [rect.x, rect.x + rect.width]);
+              const cuts = [...new Set([...edges, ...routes.flatMap(points => points.map(point => point[axis])),
+                startLimit, endLimit])].sort((a, b) => a - b);
+              coordinates.push(...cuts.slice(1).map((cut, index) => (cuts[index] + cut) / 2));
+            }
+            const channels = [...new Set(coordinates)].filter(value =>
+              step * (value - startLimit) >= 0 && lastStep * (value - endLimit) >= 0);
+            const sidesOf = candidate => candidate === conn ? sides : selectedSides.get(candidate);
+            const consider = (points, drift) => {
+              const span = routeLength(points);
+              if (span > length + 0.0001 || !points.every(withinScene)) return;
+              const order = best ? points.length - best.points.length
+                || (Math.abs(span - best.length) > 0.0001 ? span - best.length : drift - best.drift) : -1;
+              if (best?.crossings === 0 && order >= 0) return;
+              if (!endpointSlotsClear([{ conn, points }], others, sidesOf)
+                  || !routeIsClear(conn, { points }, { ...geometry, crowded: false }, others)) return;
+              const crossings = others.filter(other => crossingCount(conn, points, [other]));
+              if (crossings.some(other => !crossed.has(other))) return;
+              if (best && (crossings.length - best.crossings || order) >= 0) return;
+              const rect = labelRectFor?.(conn, points, { routes: [...routes, points], labels: labels.map(label => label.rect) });
+              if (!labelClears(rect, conn, others, labels, labelInBounds)
+                  || (rect && !labelFollowsRoute(rect, points, others))
+                  || ownedLabels.some(({ rect, distance }) => labelDistance(points, rect, distance) <= distance)) return;
+              best = { points, sides, rect, length: span, drift, crossings: crossings.length };
+            };
+            for (const fromValue of new Set(starts)) {
+              for (const toValue of new Set(ends)) {
+                const source = withCoordinate(start, sourceAxis, fromValue);
+                const target = withCoordinate(end, targetAxis, toValue);
+                const drift = Math.abs(start[sourceAxis] - fromValue) + Math.abs(end[targetAxis] - toValue);
+                if (sourceAxis !== targetAxis) {
+                  consider([source, withCoordinate(source, axis, target[axis]), target], drift);
+                } else if (fromValue === toValue) {
+                  consider([source, target], drift);
+                } else {
+                  for (const channel of channels) {
+                    consider([source, withCoordinate(source, axis, channel), withCoordinate(target, axis, channel), target], drift);
+                  }
+                }
+              }
+            }
+          }
+          if (!best) continue;
+          const { points, sides, rect } = best;
+          cachePath(conn, { points, d: roundedPath(points, 8), ...(rect ? { labelAt: [rect.lx, rect.ly] } : {}) }, sides);
+          entry.points = points;
+          reservedLabels = [...labels, ...(rect ? [{ conn, rect }] : [])];
+          planningMetrics.readabilityImprovedCount += 1;
+        }
+      }
+
       function uncrossEndpointPorts() {
         // Two elbows can cross because of the order of ports on a shared
         // endpoint side. Exchanging the occupied slots leaves the rest of each
@@ -1674,7 +1799,10 @@ export function createRouter(components, connections = [], {
           // occupied when the earlier pass examined it.
           if (planningMetrics.readabilityImprovedCount !== improvedBefore) straightenFacingRoutes();
         }
-        if (repairAutomaticPorts) uncrossEndpointPorts();
+        if (repairAutomaticPorts) {
+          uncrossEndpointPorts();
+          simplifyResidualRoutes();
+        }
       } finally {
         allowGridSearch = true;
       }
@@ -1692,10 +1820,39 @@ export function createRouter(components, connections = [], {
     return computePath(conn, []);
   }
 
+  function routedEntries() {
+    planRoutes();
+    return [...pathCache].map(([conn, routed]) => ({ conn, ...routed }));
+  }
+
+  function crossingPairs() {
+    const entries = routedEntries();
+    return entries.flatMap(({ conn, points }, index) => entries.slice(index + 1)
+      .filter(other => crossingCount(conn, points, [other]))
+      .map(other => [conn, other.conn]));
+  }
+
+  function planIsClear([right, bottom]) {
+    const entries = routedEntries();
+    const fits = ([x, y]) => x >= 0 && y >= 0 && x <= right + 0.0001 && y <= bottom + 0.0001;
+    return entries.every(entry => {
+      const { conn, points } = entry;
+      const geometry = { ...selectedSides.get(conn), from: components.get(conn.from), to: components.get(conn.to) };
+      const others = entries.filter(other => other !== entry);
+      if (!points.every(fits) || !routeIsClear(conn, entry, geometry, others)) return false;
+      if (!conn.label) return true;
+      const rect = reservedLabels.find(label => label.conn === conn)?.rect;
+      return rect && fits([rect.x, rect.y]) && fits([rect.x + rect.width, rect.y + rect.height])
+        && labelFollowsRoute(rect, points, others)
+        && !reservedLabels.some(label => label.conn !== conn && rectsOverlap(label.rect, rect))
+        && ![...components.values()].some(box => rectsOverlap(box, rect, -2));
+    });
+  }
+
   function routingMetrics() {
     planRoutes();
     return { ...planningMetrics };
   }
 
-  return { ports: automaticPorts, pathFor, connectionSides, inferredSides, connectionEndpointSide, routingMetrics };
+  return { ports: automaticPorts, pathFor, connectionSides, inferredSides, connectionEndpointSide, routingMetrics, crossingPairs, planIsClear };
 }
