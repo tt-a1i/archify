@@ -142,6 +142,12 @@ Archify는 선택적 업데이트 알림을 위해 고정된 stable manifest를 
 Archify로 그려 줘: Browser -> API -> Redis cache -> PostgreSQL fallback.
 ```
 
+Archify에 내장된 **아키텍처 진단**은 저장소의 의존성을 방사형 별 지도와 회전할 수 있는 3D 모델로 보여줍니다. 기존 아키텍처 다이어그램의 구성 요소별로 발견 사항의 개수를 표시하며, 순환 의존성이나 다이어그램에 빠진 의존성을 선택하면 관련 소스 코드를 확인할 수 있습니다. Archify는 저장소를 바탕으로 만든 아키텍처 다이어그램을 전달한 뒤 진단을 한 번 제안하며, 사용자가 동의할 때만 시작합니다. 처음 사용하면 분석 구성 요소가 자동으로 설치됩니다. 자세한 내용은 [Code Analysis 사용 가이드](archify/modules/code-analysis/docs/USAGE.md)를 참고하세요.
+
+```text
+Use archify Code Analysis on this repository: show module coupling, dependency cycles and hotspots.
+```
+
 ### 3. 대화로 다듬기
 
 `Redis 추가`, `인증을 왼쪽으로 이동`, `롤백 경로 강조`처럼 구체적인 요청을 이어 가세요. Archify는 선택적 수정을 위해 typed source를 유지합니다.
