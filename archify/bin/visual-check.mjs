@@ -1627,6 +1627,10 @@ export class ChromeVisualBrowser {
     const targets = await this.cdp.send(
       'Target.getTargets', {}, undefined, this.startupTimeoutMs,
     );
+    // Deny downloads across this browser, including pages created by resetPage.
+    // If the browser rejects the policy, stop before loading an artifact whose
+    // exports could leave partial files in the user's Downloads folder (#1371).
+    await this.cdp.send('Browser.setDownloadBehavior', { behavior: 'deny' });
     let target = targets.targetInfos?.find((item) => item.type === 'page');
     if (!target) {
       const created = await this.cdp.send('Target.createTarget', { url: 'about:blank' });

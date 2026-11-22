@@ -5,6 +5,7 @@
     { "locale": "zh-TW", "file": "zh-TW.json" },
     { "locale": "es", "file": "es.json" },
     { "locale": "ko", "file": "ko.json" },
-    { "locale": "ar", "file": "ar.json" }
+    { "locale": "ar", "file": "ar.json" },
+    { "locale": "ru", "file": "ru.json" }
   ]
 }
