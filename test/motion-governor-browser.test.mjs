@@ -276,7 +276,7 @@ test('Motion Governor preserves mode, ownership, continuous Live flow and real c
     }
   });
 
-  await t.test('Sequence WebM records every authored row in order without overlapping heads', async () => {
+  for (const duration of [6000, 3300]) await t.test('Sequence WebM preserves authored order at ' + duration + ' ms', async () => {
     await load('sequence');
     const result = await run(`(async () => {
       const svg = document.querySelector('.diagram-container svg');
@@ -305,8 +305,8 @@ test('Motion Governor preserves mode, ownership, continuous Live flow and real c
           }
           return originalArc.apply(this, arguments);
         };
-        const video = await Archify.motion.recordWebm({ fps: 24, duration: 6000 });
-        return { rows, seen, peak, last, size: video.size, type: video.type };
+        const video = await Archify.motion.recordWebm({ fps: 24, duration: ${duration} });
+        return { rows, seen, peak, last, elapsed: performance.now() - started, size: video.size, type: video.type };
       } finally {
         canvas.arc = originalArc;
         canvas.clearRect = originalClear;
@@ -316,7 +316,8 @@ test('Motion Governor preserves mode, ownership, continuous Live flow and real c
     assert.ok(result.size > 1000);
     assert.deepEqual(result.seen, result.rows);
     assert.equal(result.peak, 1);
-    assert.ok(result.last > 3700, 'the final authored message remains animated near the end of the timeline');
+    assert.ok(result.elapsed >= duration && result.elapsed < duration + 2200, 'recording uses the requested duration');
+    assert.ok(result.last > duration * 0.61, 'the final authored message remains animated near the end of the timeline');
   });
 
   await t.test('settled Live node glow preserves Classic card depth across themes', async () => {
