@@ -9,8 +9,11 @@ import { spawnSync } from 'node:child_process';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { formatText } from '../bin/check.mjs';
+import { selectAdapter } from '../extract/index.mjs';
+import { loadConfig } from '../lib/analysis.mjs';
 
 const CHECK = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'bin', 'check.mjs');
+const ARCHIFY = fileURLToPath(new URL('../../../bin/archify.mjs', import.meta.url));
 
 function fixture(t, files) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-check-coverage-'));
@@ -25,6 +28,150 @@ function fixture(t, files) {
 function check(root, args) {
   return spawnSync(process.execPath, [CHECK, root, ...args], { encoding: 'utf8', timeout: 60000 });
 }
+
+function prepare(root, out, args = []) {
+  return spawnSync(process.execPath, [ARCHIFY, 'code-analysis', 'prepare', root, '--out', out, ...args],
+    { encoding: 'utf8', timeout: 60000 });
+}
+
+test('prepare: a dominant adapter is selected and the workbench discloses other languages', (t) => {
+  const root = fixture(t, {
+    ...Object.fromEntries(Array.from({ length: 19 }, (_, i) => [`src/file${i}.ts`, 'export const value = 1;'])),
+    'helpers/script.py': 'value = 1',
+    'helpers/tool.rs': 'fn main() {}',
+  });
+  const out = path.join(root, 'out');
+  const automatic = prepare(root, out);
+  assert.equal(automatic.status, 0, automatic.stdout + automatic.stderr);
+  const receipt = JSON.parse(automatic.stdout);
+  const expected = [{ adapter: 'py', files: 1 }, { adapter: 'rust', files: 1 }];
+  assert.deepEqual(receipt.summary.coverage.otherLanguages, expected);
+  const facts = JSON.parse(fs.readFileSync(path.join(out, 'analysis', 'raw-facts.json'), 'utf8'));
+  assert.equal(facts.repository.language, 'ts');
+  const overview = JSON.parse(fs.readFileSync(path.join(out, 'analysis', 'overview.json'), 'utf8'));
+  assert.deepEqual(overview.coverage.otherLanguages, expected);
+
+  const explicit = check(root, ['--language', 'py', '--json']);
+  assert.equal(explicit.status, 0, explicit.stdout + explicit.stderr);
+  assert.deepEqual(JSON.parse(explicit.stdout).coverage.otherLanguages, [
+    { adapter: 'ts', files: 19 }, { adapter: 'rust', files: 1 },
+  ]);
+
+  fs.unlinkSync(path.join(root, 'src/file18.ts'));
+  assert.equal(selectAdapter(root, loadConfig()).id, 'ts', '18 of 20 files meets the cutoff');
+  fs.unlinkSync(path.join(root, 'src/file17.ts'));
+  const mixed = check(root, ['--json']);
+  assert.equal(mixed.status, 2, '17 of 19 files falls below the cutoff: ' + mixed.stdout + mixed.stderr);
+  assert.equal(JSON.parse(mixed.stdout).diagnostics[0].code, 'extract/adapter-ambiguous');
+});
+
+test('adapter selection: an Archify-like mix at about 94% selects TypeScript', (t) => {
+  const files = Object.entries({ ts: 859, py: 27, rs: 27, go: 1 }).flatMap(([extension, count]) =>
+    Array.from({ length: count }, (_, i) => [`src/${extension}/file${i}.${extension}`, '']));
+  const root = fixture(t, Object.fromEntries(files));
+  assert.equal(selectAdapter(root, loadConfig()).id, 'ts');
+});
+
+for (const [language, extension, source, manifest, manifestText, missingCode] of [
+  ['go', 'go', 'package backend', 'go.mod', 'module example.test/backend\n', 'extract/go-module-missing'],
+  ['rust', 'rs', 'pub fn run() {}', 'Cargo.toml', '[package]\nname = "backend"\nversion = "0.1.0"\n', 'extract/rust-manifest-missing'],
+]) {
+  test(`check: ${language} dominance requires a manifest at the analysis root`, (t) => {
+    const root = fixture(t, {
+      ...Object.fromEntries(Array.from({ length: 19 }, (_, i) => [`backend/src/file${i}.${extension}`, source])),
+      [`backend/${manifest}`]: manifestText,
+      'frontend/index.ts': 'export const value = 1;',
+    });
+
+    const automatic = check(root, ['--json']);
+    assert.equal(automatic.status, 2, automatic.stdout + automatic.stderr);
+    const [diagnostic] = JSON.parse(automatic.stdout).diagnostics;
+    assert.equal(diagnostic.code, 'extract/adapter-ambiguous');
+    assert.ok(diagnostic.supportedFixes.includes('pass --language ts (1 file)'));
+
+    const explicit = check(root, ['--language', language, '--json']);
+    assert.equal(explicit.status, 2, explicit.stdout + explicit.stderr);
+    assert.equal(JSON.parse(explicit.stdout).diagnostics[0].code, missingCode);
+
+    const alternate = check(root, ['--language', 'ts', '--json']);
+    assert.equal(alternate.status, 0, alternate.stdout + alternate.stderr);
+    assert.deepEqual(JSON.parse(alternate.stdout).coverage.otherLanguages, [{ adapter: language, files: 19 }]);
+
+    const config = loadConfig();
+    const wrongCase = path.join(root, manifest.toUpperCase());
+    fs.writeFileSync(wrongCase, manifestText);
+    assert.throws(() => selectAdapter(root, config), error => error.diagnostics?.[0].code === 'extract/adapter-ambiguous');
+    fs.unlinkSync(wrongCase);
+    fs.renameSync(path.join(root, 'backend', manifest), path.join(root, manifest));
+    assert.equal(selectAdapter(root, config).id, language);
+  });
+}
+
+test('prepare: an unresolved TypeScript config names the dependency and a working exclusion', (t) => {
+  const root = fixture(t, {
+    'src/main.ts': 'export const main = 1;',
+    'website/index.ts': 'export const website = 1;',
+    'website/tsconfig.json': '{"extends":"missing-framework/tsconfigs/strict"}',
+    'analysis-config.json': '{"exclude":["website/**"]}',
+  });
+  const out = path.join(root, 'out');
+  const result = prepare(root, out);
+  assert.equal(result.status, 2, result.stdout + result.stderr);
+  const [diagnostic] = JSON.parse(result.stdout).diagnostics;
+  assert.equal(diagnostic.code, 'extract/tsconfig-invalid');
+  assert.equal(diagnostic.subject.file, path.join(root, 'website/tsconfig.json'));
+  assert.match(diagnostic.message, /website\/tsconfig\.json.*missing-framework\/tsconfigs\/strict/);
+  assert.ok(diagnostic.evidence.errors.some(error => error.includes('missing-framework/tsconfigs/strict')));
+  assert.ok(diagnostic.supportedFixes.some(fix => fix.includes("install the target project's dependencies")));
+  assert.ok(diagnostic.supportedFixes.some(fix => fix.includes('exclude') && fix.includes('"website/**"') && fix.includes('--config')));
+  assert.ok(diagnostic.supportedFixes.some(fix => fix.includes('<repo-root>')));
+  assert.ok(!fs.existsSync(path.join(out, 'analysis')));
+
+  const repaired = prepare(root, out, ['--config', path.join(root, 'analysis-config.json')]);
+  assert.equal(repaired.status, 0, repaired.stdout + repaired.stderr);
+  const facts = JSON.parse(fs.readFileSync(path.join(out, 'analysis', 'raw-facts.json'), 'utf8'));
+  assert.deepEqual(facts.files.map(file => file.path), ['src/main.ts']);
+});
+
+test('check: terminal diagnostics escape controls in a TypeScript config error', (t) => {
+  const missingConfig = 'missing-framework/strict\t\u001b]fixture\u0007config';
+  const root = fixture(t, {
+    'main.ts': 'export const value = 1;',
+    'tsconfig.json': JSON.stringify({ extends: missingConfig }),
+  });
+  const text = check(root, []);
+  assert.equal(text.status, 2, text.stdout + text.stderr);
+  assert.match(text.stderr, /\[extract\/tsconfig-invalid\] .*tsconfig\.json/);
+  assert.ok(text.stderr.includes('missing-framework/strict\\u0009\\u001b]fixture\\u0007config'));
+  assert.match(text.stderr, /control characters escaped.*--json/i);
+  assert.doesNotMatch(text.stderr, /[\t\u001b\u0007]/);
+
+  const json = check(root, ['--json']);
+  assert.equal(json.status, 2, json.stdout + json.stderr);
+  const [diagnostic] = JSON.parse(json.stdout).diagnostics;
+  assert.ok(diagnostic.message.includes(missingConfig));
+  assert.ok(diagnostic.evidence.errors.some(error => error.includes(missingConfig)));
+});
+
+test('check: argument errors preserve built-in usage layout and escape option text', () => {
+  const option = '--unknown\toption\nmore\u001b\u009d';
+  const help = check('--help', []);
+  assert.equal(help.status, 0);
+  const text = check('.', [option]);
+  assert.equal(text.status, 2);
+  const firstLine = '[cli/usage] Invalid option: --unknown\\u0009option\\u000amore\\u001b\\u009d';
+  const [message, notice, ...usage] = text.stderr.split('\n');
+  assert.equal(message, firstLine);
+  assert.match(notice, /^\s*control characters escaped.*--json/i);
+  assert.equal(usage.join('\n'), help.stdout);
+
+  const json = check('.', [option, '--json']);
+  assert.equal(json.status, 2);
+  assert.doesNotMatch(json.stdout, /[\u001b\u009d]/);
+  const [diagnostic] = JSON.parse(json.stdout).diagnostics;
+  assert.equal(diagnostic.code, 'cli/usage');
+  assert.equal(diagnostic.message, 'Invalid option: ' + option + '\n' + help.stdout.trimEnd());
+});
 
 test('check: the summary shows a parse failure and a language that was not analyzed', (t) => {
   const root = fixture(t, {
@@ -140,7 +287,7 @@ test('check: investigation leads carry the message, location and a task command'
 
   const text = check(root, ['--language', 'py', '--config', config, '--out', path.join(root, 'text-out')]);
   assert.match(text.stdout, /Start here: 1 ranked lead\./);
-  assert.match(text.stdout, /Drill down \((?:cmd\.exe|POSIX sh)\): node .*code-analysis task /);
+  assert.match(text.stdout, /Drill down \((?:cmd\.exe|POSIX sh)\):\nnode /);
 
   const noOut = check(root, ['--language', 'py', '--config', config]);
   assert.match(noOut.stdout, /Re-run with --out <dir>/);
@@ -262,7 +409,7 @@ test('check: role exclusions and ambiguous-language file counts are visible on f
     { adapter: 'py', files: 4 },
     { adapter: 'ts', files: 1 },
   ]);
-  assert.equal(err.diagnostics[0].supportedFixes[0], 'pass --language py (4 files)');
+  assert.deepEqual(err.diagnostics[0].supportedFixes, ['pass --language py (4 files)', 'pass --language ts (1 file)']);
 
   const pyJson = check(root, ['--language', 'py', '--json']);
   assert.equal(pyJson.status, 0, pyJson.stdout + pyJson.stderr);
@@ -350,10 +497,19 @@ test('check: the text summary escapes control characters in parse-failure paths'
   assert.doesNotMatch(text, /\u001b/);
 });
 
+test('check: Windows parse-failure paths print verbatim', () => {
+  for (const file of ['\\\\server\\share\\broken.py', '\\\\?\\C:\\repo\\broken.py']) {
+    const line = textWithParseError(file).split('\n').find(line => line.includes('parse failed'));
+    assert.equal(line, '  Not analyzed, parse failed: ' + file);
+  }
+});
+
 test('check: parse paths with literal escapes remain distinct from control characters', () => {
   const controlCharacter = textWithParseError('src/bad\n.py');
   const literalEscape = textWithParseError('src/bad\\u000a.py');
   assert.match(controlCharacter, /src\/bad\\u000a\.py/);
-  assert.match(literalEscape, /src\/bad\\\\u000a\.py/);
+  assert.match(controlCharacter, /control characters escaped.*--json/i);
+  assert.match(literalEscape, /src\/bad\\u000a\.py/);
+  assert.doesNotMatch(literalEscape, /control characters escaped/);
   assert.notEqual(controlCharacter, literalEscape);
 });
