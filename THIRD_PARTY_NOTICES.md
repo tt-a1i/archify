@@ -99,18 +99,6 @@ revision `592d162b`, copyright (c) 2020 GitHub, under the MIT License.
 The complete license is preserved in
 `modules/code-analysis/import/vendor/CODEQL-LICENSE.txt` in the packaged Skill.
 
-## Code Analysis parsers and schema validation
-
-The Code Analysis module bundles TypeScript 5.9.3 (Apache-2.0), java-parser
-3.0.1 and its chevrotain 11.0.3 parser packages (Apache-2.0), chevrotain-allstar
-0.3.1, lodash 4.17.21, lodash-es 4.17.21, @xmldom/xmldom 0.9.12, Ajv 8.20.0,
-ajv-draft-04 1.0.0, ajv-formats 3.0.1, fast-deep-equal 3.1.3 and
-json-schema-traverse 1.0.0 (MIT), and fast-uri 3.1.9 (BSD-3-Clause) into
-`modules/code-analysis/vendor/typescript.cjs` and `vendor/deps.cjs`. They run
-only in the local analysis process and are not embedded in generated HTML. The
-complete licenses are preserved in `modules/code-analysis/vendor/LICENSES.txt`
-in the packaged Skill.
-
 ## Code Analysis Atlas 3D
 
 The Atlas 3D view includes the unmodified minified build of
