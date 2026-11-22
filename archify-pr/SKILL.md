@@ -3,7 +3,7 @@ name: archify-pr
 description: "Explain git branch changes, diffs, and GitHub pull requests or GitLab merge requests with visual architecture, workflow, sequence, ERD, or lifecycle walkthroughs. When a pull request carries material architectural, flow, schema, or async-state changes, lightly offer optional Archify PR diagrams and their review benefit without forcing them; build and attach Camo-safe dual-theme story or static diagrams when the user agrees or explicitly asks. Requires the companion archify core Skill."
 license: Apache-2.0
 metadata:
-  version: "3.2"
+  version: "3.3"
   author: tt-a1i
 ---
 

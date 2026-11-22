@@ -33,7 +33,7 @@
   <a href="https://skills.sh/tt-a1i/archify/archify"><img src="https://img.shields.io/badge/installs-130K%2B-0EA5E9?style=flat-square" alt="130K+ installs on skills.sh" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-22c55e?style=flat-square" alt="Apache License 2.0" /></a>
   <a href="#installation-options"><img src="https://img.shields.io/badge/works_with-Claude_Code_%7C_Codex_%7C_Cursor_%7C_OpenCode-7C3AED?style=flat-square" alt="Works with Claude Code, Codex, Cursor, and OpenCode" /></a>
-  <a href="CHANGELOG.md#unreleased"><img src="https://img.shields.io/badge/version-3.2.1--dev.1-0891b2?style=flat-square" alt="Development version 3.2.1-dev.1" /></a>
+  <a href="CHANGELOG.md#unreleased"><img src="https://img.shields.io/badge/version-3.3.1--dev.1-0891b2?style=flat-square" alt="Development version 3.3.1-dev.1" /></a>
 </p>
 
 <p align="center">
@@ -246,7 +246,7 @@ Open [`examples/web-app.html`](examples/web-app.html) locally to try the complet
 
 ## Quick start
 
-**Current development version:** `v3.2.1-dev.1`. See [Changelog](CHANGELOG.md#unreleased).
+**Current development version:** `v3.3.1-dev.1`. See [Changelog](CHANGELOG.md#unreleased).
 
 ### 1. Install
 

@@ -4,7 +4,9 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 ## [Unreleased]
 
-> Development identity: `v3.2.1-dev.1`. Not a stable release.
+> Development identity: `v3.3.1-dev.1`. Not a stable release.
+
+## [3.3.0] — 2026-11-23
 
 ### Release highlights
 - **Architecture Diagnosis and Code Analysis.** Point Archify at a repository to get a dependency star map, a rotatable 3D model, ranked findings (cycles, coupling, complexity hotspots, layer rules) and issue counts on the components of your architecture diagram. JS/TS, Python, Java, Go, Rust, C and C++ are supported, and nothing extra needs installing.
@@ -76,6 +78,12 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 - **README motion proof refreshed after Sequence header centering (#1293).** The README animation and its receipt are rebuilt from the current gallery artifacts, so the freshness check passes again. Thanks to [@BlueboxC](https://github.com/BlueboxC), who first identified the stale proof and recaptured it in [#1174](https://github.com/tt-a1i/archify/pull/1174); #1293 follows the same approach.
 - **Explainer-hosted Viewer hides standalone preset badges (#1196, #1195).** The Viewer an explainer opens keeps the page-selected preset and its tools, and hides the standalone title badges and the editorial plate. Standalone presentation is unchanged. Thanks to [@HengYangDS](https://github.com/HengYangDS).
 - **Export filenames use the diagram's own title (#1024).** Viewer downloads are named from the page heading, so locale decorations of the browser tab title (Diagram, Diagrama, 다이어그램, مخطّط) no longer enter the filename. Words such as Architecture or Diagram are no longer stripped: a diagram titled “Payments Architecture” downloads as `payments-architecture`, not `payments`, and a page without a heading falls back to its complete title, so “Checkout Diagram” stays `checkout-diagram`. Thanks to [@BlueboxC](https://github.com/BlueboxC), who proposed and verified this policy with real browser downloads.
+- **Explainer wrapped colophon alignment (#1456).** Keep `.colophon-aside` and `.colophon-facts` right-aligned on desktop when metadata facts wrap onto two lines, without a dangling vertical divider on the second row.
+- **Bottom Node Index uniform grid columns (#1457).** Switch the desktop bottom Node Index from `flex-wrap` to a uniform CSS grid with explicit title/sublabel line heights so wrapped rows, multiple groups, and mixed CJK/Latin labels share identical column edges and vertical baselines.
+
+### Release follow-up
+- The stable update manifest (`docs/skill-updates/archify/stable.json`) remains on `v3.2.0` until the `v3.3.0` GitHub Release is published and its `archify.zip` digest is verified.
+- The separately versioned DSH plugin (`integrations/deepseek-harness/release.json`) is explicitly deferred and will be synchronized in a dedicated follow-up after `v3.3.0` is published on `main`.
 
 ## [3.2.0] — 2026-10-18
 
