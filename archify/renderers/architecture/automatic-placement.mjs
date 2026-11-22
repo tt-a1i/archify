@@ -1,8 +1,8 @@
-import { asArray, properSegmentIntersection, segmentIntersectsRect } from '../shared/geometry.mjs';
+import { asArray, properSegmentIntersection, rectsOverlap, segmentIntersectsRect } from '../shared/geometry.mjs';
 import { textUnits } from '../shared/utils.mjs';
 import { placeFrameAttachments } from './frame-attachment-placement.mjs';
 import { layOutParallelPaths } from './parallel-path-placement.mjs';
-import { connectionLabelBoxAt, createArchitectureRouter } from './routing.mjs';
+import { connectionLabelBoxAt, createArchitectureRouter, horizontalLabelClearance } from './routing.mjs';
 import { straightChainPlacementDirection } from './straight-chain-placement.mjs';
 
 const canvasMargin = 48;
@@ -10,6 +10,7 @@ const horizontalGap = 92;
 const verticalGap = 96;
 const islandGap = 72;
 const comfortableWidth = 1040;
+const emphasisPriority = 2;
 
 function isPoint(value) {
   return Array.isArray(value) && value.length === 2 && value.every(Number.isFinite);
@@ -35,7 +36,7 @@ function membersOf(items, neighbors) {
 }
 
 function edgePriority(edge) {
-  if (edge.variant === 'emphasis') return 2;
+  if (edge.variant === 'emphasis') return emphasisPriority;
   if (edge.variant === 'dashed') return 0;
   return 1;
 }
@@ -98,7 +99,7 @@ function forwardOrder(items, incoming, outgoing) {
   return { order: finished.reverse(), backward };
 }
 
-function layOutIsland(items, edges, incoming, outgoing, vertical, alternateTies = false) {
+function layOutIsland(items, edges, incoming, outgoing, vertical, { alternateTies = false, centerDependency = false, alignExternalSource = false } = {}) {
   const { order, backward } = forwardOrder(items, incoming, outgoing);
   const parents = new Map();
   const rank = new Map();
@@ -136,8 +137,7 @@ function layOutIsland(items, edges, incoming, outgoing, vertical, alternateTies 
     if (!edge.label) continue;
     const first = Math.min(rank.get(edge.from), rank.get(edge.to));
     if (first === Math.max(rank.get(edge.from), rank.get(edge.to))) continue;
-    const { width } = connectionLabelBoxAt(edge, [0, 0]);
-    gaps[first] = Math.max(gaps[first], width + 28);
+    gaps[first] = Math.max(gaps[first], horizontalLabelClearance(edge));
   }
 
   const crossGap = vertical ? 64 : verticalGap;
@@ -162,6 +162,22 @@ function layOutIsland(items, edges, incoming, outgoing, vertical, alternateTies 
     const side = (item) => alternateTies ? Math.abs(item.index - anchorOrder) % 2 : 0;
     column.sort((a, b) => preferred.get(a) - preferred.get(b) || side(a) - side(b) || a.index - b.index);
 
+    if (index === 0 && alignExternalSource) {
+      // A root that joins the main path partway through can be separated
+      // from that path by an earlier branch. Try it beside the path while
+      // keeping it on the same side and preserving the other roots' order.
+      const sources = column.filter((item) => {
+        const [edge, next] = outgoing.get(item);
+        return !spine.has(item) && !incoming.get(item).length && edge && !next
+          && spine.has(edge.to) && edge.to !== last && rank.get(edge.to) > 1;
+      });
+      if (sources.length === 1) {
+        const sourceIndex = column.indexOf(sources[0]);
+        const spineIndex = column.findIndex((item) => spine.has(item));
+        const [source] = column.splice(sourceIndex, 1);
+        column.splice(sourceIndex < spineIndex ? spineIndex - 1 : spineIndex + 1, 0, source);
+      }
+    }
     const anchorIndex = Math.max(0, column.findIndex((item) => spine.has(item)));
     const anchor = column[anchorIndex];
     anchor.y = preferred.get(anchor) - anchor.height / 2;
@@ -183,7 +199,29 @@ function layOutIsland(items, edges, incoming, outgoing, vertical, alternateTies 
     right = columnX + columnWidth;
     columnX = right + gaps[index];
   }
+  const emphasizedSpine = pathWeight.get(last) === emphasisPriority * rank.get(last);
+  if (centerDependency && emphasizedSpine) placeSharedDependency(items, edges, spine, rank, right);
   return { items, width: right, height: bottom - top, top };
+}
+
+function placeSharedDependency(items, edges, spine, rank, width) {
+  if (spine.size !== items.length - 1) return;
+  const dependency = items.find((item) => !spine.has(item));
+  if (edges.some((edge) => edge.from === dependency)) return;
+  const links = edges.filter((edge) => edge.to === dependency);
+  if (links.length < 2 || links.some((edge) => edge.variant === 'emphasis')) return;
+
+  // A single shared dependency can sit beside the phases that use it,
+  // instead of extending the time-ordered path after the last phase.
+  const ranks = links.map(({ from }) => rank.get(from));
+  if (Math.max(...ranks) - Math.min(...ranks) < 2) return;
+  const centers = links.map(({ from }) => from.x + from.width / 2);
+  const x = (Math.min(...centers) + Math.max(...centers) - dependency.width) / 2;
+  if (x < 0 || x + dependency.width > width) return;
+  const clearance = 24;
+  const space = { x: x - clearance, y: dependency.y - clearance,
+    width: dependency.width + clearance * 2, height: dependency.height + clearance * 2 };
+  if (items.every((item) => item === dependency || !rectsOverlap(item, space))) dependency.x = x;
 }
 
 function directRouteInterference(items, edges) {
@@ -205,18 +243,63 @@ function directRouteInterference(items, edges) {
   return score;
 }
 
-function chooseIslandLayout(items, edges, incoming, outgoing, vertical, allowAlternate) {
-  const layout = layOutIsland(items, edges, incoming, outgoing, vertical);
-  // Two bounded attempts for small unframed drafts. Explicit geometry and
-  // frame membership can influence routes in ways this estimate does not see.
-  if (!allowAlternate || items.length < 4 || items.length > 24 || edges.length > 36
-    || items.some((item) => item.children || item.parent.members)) return layout;
+function layOutReciprocalPeers(items, edges, incoming, outgoing, allowedWidth) {
+  if (items.some((item) => item.hasSelfConnection)) return;
+  const hub = items.find((item) => incoming.get(item).length + outgoing.get(item).length === 2);
+  if (!hub) return;
+  const peers = items.filter((item) => item !== hub);
+  const links = peers.map((peer) => edges.filter(({ from, to }) =>
+    (from === hub && to === peer) || (from === peer && to === hub)));
+  if (links[0].length + links[1].length !== edges.length) return;
+  // A standard card has room for three horizontal ports on one side.
+  if (links.some((pair) => pair.length > 3 || !pair.some(({ from }) => from === hub)
+    || !pair.some(({ to }) => to === hub))) return;
+
+  // The ranked layout already picked the main path by edge priority.
+  // Keep that peer facing the same way and give the off-row peer the free side.
+  const cy = (item) => item.y + item.height / 2;
+  const [first, second] = peers;
+  if (Math.sign(first.x - hub.x) !== Math.sign(second.x - hub.x)) return;
+  const primary = peers.find((peer) => cy(peer) === cy(hub));
+  if (!primary) return;
+  const secondary = primary === first ? second : first;
+  const [left, right] = primary.x > hub.x ? [secondary, primary] : [primary, secondary];
+  const gaps = new Map(peers.map((peer, i) => [peer, Math.max(horizontalGap,
+    ...links[i].map(horizontalLabelClearance))]));
+  const width = left.width + gaps.get(left) + hub.width + gaps.get(right) + right.width;
+  if (width > allowedWidth) return;
+  left.x = 0;
+  hub.x = left.width + gaps.get(left);
+  right.x = width - right.width;
+  const height = Math.max(...items.map((item) => item.height));
+  for (const item of items) item.y = (height - item.height) / 2;
+  return { items, width, height, top: 0 };
+}
+
+function chooseIslandLayout(items, edges, incoming, outgoing, vertical, allowAlternate, allowedWidth) {
+  const small = items.length >= 4 && items.length <= 24 && edges.length <= 36;
+  const threeNodeCandidate = !vertical && items.length === 3 && edges.length >= 4 && edges.length <= 6;
+  const allowsAlternatives = allowAlternate && (small || threeNodeCandidate)
+    && items.every((item) => !item.children && !item.parent.members);
+  const smallUnframed = small && allowsAlternatives;
+  const layout = layOutIsland(items, edges, incoming, outgoing, vertical, { centerDependency: smallUnframed });
+  if (allowsAlternatives && threeNodeCandidate) {
+    const reciprocal = layOutReciprocalPeers(items, edges, incoming, outgoing, allowedWidth);
+    if (reciprocal) return reciprocal;
+  }
+  // Try bounded alternatives for small unframed drafts. Explicit geometry
+  // and frame membership can influence routes in ways this estimate does not see.
+  if (!smallUnframed) return layout;
   const score = directRouteInterference(items, edges);
   if (score < 2) return layout;
   const positions = items.map(({ x, y }) => [x, y]);
-  const alternate = layOutIsland(items, edges, incoming, outgoing, vertical, true);
-  if (alternate.width <= layout.width && alternate.height <= layout.height
-    && directRouteInterference(items, edges) <= score - 2) return alternate;
+  const alternatives = [{ alternateTies: true }];
+  if (vertical) alternatives.push({ alignExternalSource: true });
+  for (const options of alternatives) {
+    const alternate = layOutIsland(items, edges, incoming, outgoing, vertical, { ...options, centerDependency: true });
+    if (alternate.width <= layout.width && alternate.height <= layout.height
+      && directRouteInterference(items, edges) <= score - 2) return alternate;
+  }
   for (const [index, item] of items.entries()) [item.x, item.y] = positions[index];
   return layout;
 }
@@ -237,7 +320,7 @@ function layOutSiblings(items, edges, vertical, allowParallel, allowedWidth) {
       for (const item of group) [item.width, item.height] = [item.height, item.width];
     }
     const layout = (allowParallel && !direction && layOutParallelPaths(group, edges, neighbors, islandVertical))
-      || chooseIslandLayout(group, edges, incoming, outgoing, islandVertical, allowParallel);
+      || chooseIslandLayout(group, edges, incoming, outgoing, islandVertical, allowParallel, allowedWidth);
     for (const item of group) {
       item.y -= layout.top;
       if (direction?.reverse) item.x = layout.width - item.x - item.width;
@@ -247,7 +330,7 @@ function layOutSiblings(items, edges, vertical, allowParallel, allowedWidth) {
       }
     }
     if (islandVertical) [layout.width, layout.height] = [layout.height, layout.width];
-    return layout;
+    return { ...layout, edges };
   });
   layouts.sort((a, b) => b.items.length - a.items.length);
   const rowLimit = Math.max(Math.min(1000, allowedWidth), layouts[0].width);
@@ -255,11 +338,25 @@ function layOutSiblings(items, edges, vertical, allowParallel, allowedWidth) {
   let y = 0;
   let rowHeight = 0;
   let width = 0;
-  for (const layout of layouts) {
+  for (const [index, initial] of layouts.entries()) {
+    let layout = initial;
     if (x > 0 && x + layout.width > rowLimit) {
       x = 0;
       y += rowHeight + islandGap;
       rowHeight = 0;
+    }
+    // Fit a disconnected pair across its own final row. Its direction is
+    // independent of the main flow, and earlier rows keep their geometry.
+    if (allowParallel && vertical && x === 0 && y > 0 && index === layouts.length - 1
+      && !layout.items[0].parent.members
+      && layout.items.length === 2 && layout.edges.length === 1
+      && layout.items.every((item) => !item.children)) {
+      const [edge] = layout.edges;
+      const gap = Math.max(horizontalGap, horizontalLabelClearance(edge));
+      if (edge.from.width + gap + edge.to.width <= Math.min(rowLimit, width)) {
+        layout = layOutIsland(layout.items, layout.edges, incoming, outgoing, false);
+        for (const item of layout.items) item.y -= layout.top;
+      }
     }
     for (const item of layout.items) {
       item.x += x;
@@ -332,7 +429,11 @@ function distributeEdges(byId, connections) {
     const originalTo = byId.get(edge?.to);
     let from = originalFrom;
     let to = originalTo;
-    if (!from || !to || from === to) continue;
+    if (!from || !to) continue;
+    if (from === to) {
+      from.hasSelfConnection = true;
+      continue;
+    }
     const ancestors = new Map();
     for (let item = from; item.parent; item = item.parent) ancestors.set(item.parent, item);
     while (!ancestors.has(to.parent)) to = to.parent;
@@ -383,7 +484,7 @@ function placeParallelPeer(group) {
   };
 }
 
-function idealPositions(root, allowParallel, viewBox) {
+function idealPositions(root, { allowParallel, viewBox, relocatesLabels }) {
   const groups = [root];
   for (const group of groups) {
     for (const child of group.children) {
@@ -396,7 +497,7 @@ function idealPositions(root, allowParallel, viewBox) {
     group.parallel = layout.parallel;
     group.vertical = layout.vertical;
     const parallelPeer = placeParallelPeer(group);
-    if (allowParallel && !parallelPeer) placeFrameAttachments(group, layout);
+    if (allowParallel && !parallelPeer) placeFrameAttachments(group, layout, canvasMargin / 2, { relocatesLabels });
     const { width, height } = parallelPeer ?? layout;
     group.width = Math.max(width + group.pad * 2, group.titleWidth);
     group.leftInset = (group.width - width) / 2;
@@ -612,7 +713,7 @@ export function automaticComponentPositions(arch, defaultSize = [120, 60]) {
       && !edge?.labelAt && edge?.labelDx == null && edge?.labelDy == null && edge?.labelSegment == null
       && (!edge?.route || edge.route === 'auto'));
   const viewBox = isPoint(arch.meta?.viewBox) ? arch.meta.viewBox : undefined;
-  idealPositions(root, allowParallel, viewBox);
+  idealPositions(root, { allowParallel, viewBox, relocatesLabels: arch.meta?.quality_profile === 'showcase' });
   avoidPinnedComponents(byId, connections, boundaries, viewBox);
   return new Map([...byId].map(([id, item]) => [id, item.pin ?? [item.x, item.y]]));
 }
