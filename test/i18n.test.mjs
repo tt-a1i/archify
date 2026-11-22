@@ -28,7 +28,7 @@ const templatePath = path.join(skillRoot, 'assets/template.html');
 const { tmp, run, deliverKoreanFixture, deliverJapaneseFixture, cliJson } = createLocaleFixture();
 
 test('zh-CN localizes renderer-owned output across all five modes without translating authored content', () => {
-  assert.deepEqual(SUPPORTED_LOCALES, ['en', 'zh-CN', 'zh-TW', 'es', 'ko', 'ar']);
+  assert.deepEqual(SUPPORTED_LOCALES, ['en', 'zh-CN', 'zh-TW', 'es', 'ko', 'ar', 'ru']);
   for (const type of Object.keys(EXAMPLES)) {
     const document = example(type);
     const authoredTitle = document.meta.title;
@@ -592,7 +592,7 @@ test('the bundled Korean catalog is complete and preserves interpolation variabl
 // requested in tt-a1i's review on #457): reusable catalogs a caller can
 // supply via meta.translations. Historical key gaps fall back explicitly;
 // newly added diagram types must carry their own translations.
-for (const locale of ['fr', 'pt', 'ja', 'de', 'it', 'ru']) {
+for (const locale of ['fr', 'pt', 'ja', 'de', 'it']) {
   test(`the checked-in ${locale} example catalog validates reusable translations and discloses historical gaps`, () => {
     const translations = JSON.parse(fs.readFileSync(path.join(skillRoot, `examples/locales/${locale}.json`), 'utf8'));
     const report = validateTranslations(translations);

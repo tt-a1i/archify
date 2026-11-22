@@ -7,6 +7,7 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 > Development identity: `v3.2.1-dev.1`. Not a stable release.
 
 ### Added
+- **Bundled Russian Viewer catalog (#588).** `meta.locale: "ru"` selects a complete 516-message catalog without `meta.translations`. The reusable catalog moved from `archify/examples/locales/ru.json` to `archify/locales/ru.json`. Counted messages use singular `.one` forms and count-neutral `.other` labels.
 - **Pinned architecture drift review (Labs).** Compare two local JS/TS commits against one authored architecture and mapping; inspect newly observed component imports on the existing diagram, open source at the captured revision, and download a bounded review.
 - **JS/TS function source positions.** Current measurements record the implementation's exact UTF-16 range and digest. The Atlas side panel shows that captured position and states that it does not prove a runtime call. Historical measurements without the range remain readable.
 - **Atlas Map and Files tabs.** The relationship map stays selected by default. Files replaces it with a searchable captured-file list instead of adding another column or a lower scrolling region. File, module and finding selections replace each other; returning from a finding restores the prior tab, query and selection. Tabs support keyboard navigation and Chinese labels. The right panel previews/downloads captured file navigation as Markdown, explicitly without source content or full task evidence.
