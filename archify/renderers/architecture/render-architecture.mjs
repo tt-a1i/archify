@@ -420,15 +420,19 @@ const makeRouter = boxes => {
     },
   });
 };
-let router = makeRouter(components);
+const routable = new Map([...components].filter(([, box]) => isFinitePoint(box.x, box.y, box.width, box.height)));
+let router = makeRouter(routable);
 if (automaticPositions && !arch.meta?.viewBox) {
-  const placement = placeCrossedLeaf(components, connections, routingFrames, router, makeRouter);
+  const placement = placeCrossedLeaf(routable, connections, routingFrames, router, makeRouter);
   if (placement) {
     components.set(placement.box.id, placement.box);
     router = placement.router;
   }
 }
-const { pathFor, connectionSides, connectionEndpointSide } = router;
+const routedEndpointIds = new Set(routable.keys());
+const canRoute = conn => routedEndpointIds.has(conn.from) && routedEndpointIds.has(conn.to);
+const { connectionSides, connectionEndpointSide } = router;
+const pathFor = conn => canRoute(conn) ? router.pathFor(conn) : { points: [] };
 function hasAutomaticRouteGeometry(connection) {
   return !Array.isArray(connection?.via)
     && (!connection?.route || connection.route === 'auto')
@@ -935,7 +939,7 @@ function validateArchitecture() {
       problems.push(message);
       problems.push(`Connection "${conn.label || conn[field]}" endpoint "${conn[field]}" does not name a declared component.`);
     }
-    if (components.has(conn.from) && components.has(conn.to)) {
+    if (canRoute(conn)) {
       const routed = pathFor(conn);
       const outsidePoints = routed.points.filter(([x, y]) => x < 0 || y < 0 || x > viewBox[0] || y > viewBox[1]);
       if (arch.meta?.quality_profile === 'showcase' && outsidePoints.length) {
@@ -969,7 +973,7 @@ function validateArchitecture() {
 
   problems.push(...cleanEndpointSideProblems({
     relations: arch.connections,
-    endpointIds: new Set(components.keys()),
+    endpointIds: routedEndpointIds,
     pathFor,
     diagramType: 'architecture',
     relationCollection: 'connections',
@@ -988,7 +992,7 @@ function validateArchitecture() {
   }));
   problems.push(...cleanCrossingProblems({
     relations: arch.connections,
-    endpointIds: new Set(components.keys()),
+    endpointIds: routedEndpointIds,
     pathFor,
     diagramType: 'architecture',
     relationCollection: 'connections',
@@ -1003,7 +1007,7 @@ function validateArchitecture() {
   }));
   problems.push(...cleanAmbiguousCorridorProblems({
     relations: arch.connections,
-    endpointIds: new Set(components.keys()),
+    endpointIds: routedEndpointIds,
     pathFor,
     diagramType: 'architecture',
     relationCollection: 'connections',
@@ -1033,7 +1037,7 @@ function validateArchitecture() {
   }
   problems.push(...cleanBorderRunProblems({
     relations: arch.connections,
-    endpointIds: new Set(components.keys()),
+    endpointIds: routedEndpointIds,
     frames: compositionFrames,
     pathFor,
     diagramType: 'architecture',
@@ -1043,7 +1047,7 @@ function validateArchitecture() {
   }));
   problems.push(...cleanRouteRhythmProblems({
     relations: arch.connections,
-    endpointIds: new Set(components.keys()),
+    endpointIds: routedEndpointIds,
     pathFor,
     diagramType: 'architecture',
     relationCollection: 'connections',
@@ -1054,7 +1058,7 @@ function validateArchitecture() {
     relations: arch.connections,
     obstacles: components.values(),
     contentRects: [...components.values(), ...boundaries],
-    endpointIds: new Set(components.keys()),
+    endpointIds: routedEndpointIds,
     pathFor,
     fromSideFor: (conn) => connectionEndpointSide(conn, 'source'),
     toSideFor: (conn) => connectionEndpointSide(conn, 'target'),
@@ -1098,7 +1102,7 @@ function validateArchitecture() {
   problems.push(...cleanLabelRouteClearanceProblems({
     relations: arch.connections,
     labels: labelRects,
-    endpointIds: new Set(components.keys()),
+    endpointIds: routedEndpointIds,
     pathFor,
     diagramType: 'architecture',
     relationCollection: 'connections',

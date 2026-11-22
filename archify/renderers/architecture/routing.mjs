@@ -233,9 +233,9 @@ export function createRouter(components, connections = [], {
       : { ...component, x: component.x - gap, y: component.y - gap, width: component.width + gap * 2, height: component.height + gap * 2 }));
   }
 
-  function routeClearsComponents(conn, points, clearance = 2, labels = reservedLabels) {
+  function routeClearsComponents(conn, points, clearance = 2, labels = reservedLabels, obstacles = components.values()) {
     const endpointIds = new Set([conn.from, conn.to]);
-    for (const component of components.values()) {
+    for (const component of obstacles) {
       if (endpointIds.has(component.id)) continue;
       for (let index = 0; index < points.length - 1; index += 1) {
         if (segmentIntersectsRect({ start: points[index], end: points[index + 1] }, component, clearance)) {
@@ -248,10 +248,11 @@ export function createRouter(components, connections = [], {
 
   function routeClearsEndpointComponents(points, from, to) {
     const lastSegment = points.length - 2;
+    const sameComponent = repairAutomaticPorts && from === to;
     for (let index = 0; index <= lastSegment; index += 1) {
       const segment = { start: points[index], end: points[index + 1] };
-      if (index > 0 && segmentIntersectsRect(segment, from)) return false;
-      if (index < lastSegment && segmentIntersectsRect(segment, to)) return false;
+      if (index > 0 && !(sameComponent && index === lastSegment) && segmentIntersectsRect(segment, from)) return false;
+      if (index < lastSegment && !(sameComponent && index === 0) && segmentIntersectsRect(segment, to)) return false;
     }
     return true;
   }
@@ -449,7 +450,7 @@ export function createRouter(components, connections = [], {
     return crossingCount(conn, points, resolvedRoutes.filter((entry) => !reciprocal(entry.conn)));
   }
 
-  function routeVia(conn, from, to, start, end, fromSide, toSide, resolvedRoutes = []) {
+  function routeVia(conn, from, to, start, end, fromSide, toSide, resolvedRoutes = [], endpointStubPx = 24) {
     if (conn.via) return conn.via;
     switch (conn.route || 'auto') {
       case 'straight':
@@ -639,7 +640,7 @@ export function createRouter(components, connections = [], {
               toSide,
               clearance: 2,
               maximumObstacleCount: 80,
-              endpointStubPx: 24,
+              endpointStubPx,
               maximumGridNodes: 4096,
               avoidedSegments: unrelatedSegments,
               allowAvoidedCrossings: false,
@@ -680,7 +681,7 @@ export function createRouter(components, connections = [], {
             toSide,
             clearance: 2,
             maximumObstacleCount: 80,
-            endpointStubPx: 24,
+            endpointStubPx,
             maximumGridNodes: 4096,
             avoidedSegments,
             allowAvoidedCrossings: true,
@@ -861,12 +862,13 @@ export function createRouter(components, connections = [], {
   // A route can change sides after the initial port spread. Reserve slots on
   // the final side as well: falling back to its midpoint can put an arrow
   // between two existing slots, or directly on another incoming arrow.
-  function automaticEndpoint(conn, endpoint, rect, side, inferredSide) {
+  function automaticEndpoint(conn, endpoint, rect, side, inferredSide, loopSource) {
     const initial = side === inferredSide ? automaticPorts.get(conn)?.[endpoint] : null;
     const preferred = initial || anchor(rect, side);
     if (hasAuthoredRouteGeometry(conn) || conn.labelAt) return { point: preferred, spread: Boolean(initial) };
     const axis = side === 'left' || side === 'right' ? 1 : 0;
-    const occupied = [];
+    // A loop needs room to turn and distinguish its two arrow ports.
+    const occupied = loopSource ? [{ value: loopSource[axis], spacing: 24 }] : [];
     for (const { conn: other, field, sideField } of incidentEndpoints.get(rect.id) || []) {
       if (other === conn || (!minimumPortSpacing && (hasAuthoredRouteGeometry(other) || other.labelAt))) continue;
       const routed = pathCache.get(other);
@@ -906,8 +908,9 @@ export function createRouter(components, connections = [], {
     const source = reserveAutomaticPorts
       ? automaticEndpoint(conn, 'from', from, fromSide, inferred.fromSide)
       : { point: legacyPorts?.from || anchor(from, fromSide), spread: Boolean(legacyPorts?.from) };
+    const loopSource = repairAutomaticPorts && from === to && fromSide === toSide ? source.point : null;
     const target = reserveAutomaticPorts
-      ? automaticEndpoint(conn, 'to', to, toSide, inferred.toSide)
+      ? automaticEndpoint(conn, 'to', to, toSide, inferred.toSide, loopSource)
       : { point: legacyPorts?.to || anchor(to, toSide), spread: Boolean(legacyPorts?.to) };
     const ports = { from: source.spread, to: target.spread };
     const { start, end } = alignFacingPorts(
@@ -923,11 +926,11 @@ export function createRouter(components, connections = [], {
     return { from, to, start, end, fromSide, toSide, crowded: source.crowded || target.crowded };
   }
 
-  function routedForGeometry(conn, resolvedRoutes, geometry) {
+  function routedForGeometry(conn, resolvedRoutes, geometry, endpointStubPx) {
     const { from, to, start, end, fromSide, toSide } = geometry;
     const authoredPoints = [
       start,
-      ...routeVia(conn, from, to, start, end, fromSide, toSide, resolvedRoutes),
+      ...routeVia(conn, from, to, start, end, fromSide, toSide, resolvedRoutes, endpointStubPx),
       end,
     ];
     // Explicit waypoints are author-owned geometry. Keep even a collinear
@@ -976,11 +979,11 @@ export function createRouter(components, connections = [], {
     });
   }
 
-  function routeIsClear(conn, routed, geometry, resolvedRoutes, labels = reservedLabels) {
+  function routeIsClear(conn, routed, geometry, resolvedRoutes, labels = reservedLabels, obstacles = components.values()) {
     return !geometry.crowded && routed.points.length >= 2
       && routeHonorsEndpointSides(routed.points, geometry.fromSide, geometry.toSide)
       && routeClearsEndpointComponents(routed.points, geometry.from, geometry.to)
-      && routeClearsComponents(conn, routed.points, 2, labels)
+      && routeClearsComponents(conn, routed.points, 2, labels, obstacles)
       && routeMeetsCompositionFloors(routed.points)
       && !routeOverlapsResolved(conn, routed.points, resolvedRoutes);
   }
@@ -1025,14 +1028,14 @@ export function createRouter(components, connections = [], {
     }
 
     let firstFallback = null;
-    const clearRoute = () => {
+    const clearRoute = (endpointStubPx) => {
       let firstClear = null;
       for (const sides of candidateSidePairs(conn)) {
         const geometry = connectionGeometry(conn, sides);
         // This pair cannot pass the port-spacing check. Keep the original
         // fallback, but save the shared grid budget for viable ports.
         if (repairAutomaticPorts && firstFallback && geometry.crowded) continue;
-        const routed = routedForGeometry(conn, resolvedRoutes, geometry);
+        const routed = routedForGeometry(conn, resolvedRoutes, geometry, endpointStubPx);
         if (!firstFallback) firstFallback = { routed, sides };
         if (routeIsClear(conn, routed, geometry, resolvedRoutes)) {
           firstClear = { routed, sides };
@@ -1060,6 +1063,18 @@ export function createRouter(components, connections = [], {
           const plain = clearRoute();
           if (plain && routeLength(plain) * 1.25 + 64 < routeLength(chosen)) chosen = plain;
         }
+      }
+      honourReservedLabels = true;
+    }
+    // A default grid stub can land on an occupied track and strand the
+    // endpoint even when a shorter or longer departure reaches the corridor.
+    // Retry only after every ordinary alternative has failed.
+    if (!chosen && repairAutomaticPorts) {
+      honourReservedLabels = false;
+      for (const stub of [16, 32]) {
+        if (planningMetrics.gridSearchCount >= planningMetrics.maximumGridSearchCount) break;
+        chosen = clearRoute(stub);
+        if (chosen) break;
       }
       honourReservedLabels = true;
     }
@@ -1513,7 +1528,17 @@ export function createRouter(components, connections = [], {
           const length = routeLength(entry.points);
           const labels = reservedLabels.filter(label => label.conn !== conn);
           const routes = others.map(other => other.points);
-          const obstacles = [...components.values(), ...frames, ...labels.map(({ rect }) => rect)];
+          const fromBox = components.get(conn.from);
+          const toBox = components.get(conn.to);
+          // Any point on a path within this length must be reachable from
+          // both endpoints. Take their outer extents and include clearance.
+          const left = (fromBox.x + toBox.x - length) / 2 - 2.001;
+          const right = (fromBox.x + fromBox.width + toBox.x + toBox.width + length) / 2 + 2.001;
+          const top = (fromBox.y + toBox.y - length) / 2 - 2.001;
+          const bottom = (fromBox.y + fromBox.height + toBox.y + toBox.height + length) / 2 + 2.001;
+          const nearby = [...components.values()].filter(box =>
+            box.x <= right && box.x + box.width >= left && box.y <= bottom && box.y + box.height >= top);
+          const obstacles = [...nearby, ...frames, ...labels.map(({ rect }) => rect)];
           const segments = routes.flatMap(points => points.slice(1).map((end, index) => [points[index], end]));
           let remaining = Math.min(maximumCandidatesPerRoute, maximumCandidates - planningMetrics.residualCandidateCount);
           if (!remaining) break;
@@ -1599,7 +1624,7 @@ export function createRouter(components, connections = [], {
                 || (Math.abs(span - best.length) > 0.0001 ? span - best.length : drift - best.drift) : -1;
               if (best?.crossings === 0 && order >= 0) return;
               if (!endpointSlotsClear([{ conn, points }], others, sidesOf)
-                  || !routeIsClear(conn, { points }, { ...geometry, crowded: false }, others)) return;
+                  || !routeIsClear(conn, { points }, { ...geometry, crowded: false }, others, reservedLabels, nearby)) return;
               let crossings = 0;
               for (const [index, other] of others.entries()) {
                 const previous = previousCrossings[index];

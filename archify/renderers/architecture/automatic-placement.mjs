@@ -686,7 +686,10 @@ function avoidPinnedComponents(byId, connections, boundaries, viewBox) {
     }
     // Prefer a clear slot on the authored canvas. Retain the unbounded
     // fallback so genuinely impossible constraints still reach validation.
-    const bounded = viewBox ? [viewBox[0] - item.width, viewBox[1] - item.height] : [];
+    // The outer bounds are those of the wrapped frame, not just the card.
+    const rightPadding = Math.max(0, ...groups.map(group => group.pad));
+    const bottomPadding = groups.length ? 20 : 0;
+    const bounded = viewBox ? [viewBox[0] - item.width - rightPadding, viewBox[1] - item.height - bottomPadding] : [];
     [item.x, item.y] = nearestFreePosition(x, y, minX, minY, obstacles, ...bounded)
       ?? nearestFreePosition(x, y, minX, minY, basic, ...bounded)
       ?? (viewBox ? nearestFreePosition(x, y, minX, minY, obstacles) : undefined)
