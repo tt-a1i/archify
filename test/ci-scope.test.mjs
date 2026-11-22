@@ -152,10 +152,7 @@ test('media fixtures and Story inputs select the check that reads them', () => {
 
 test('independent product areas keep broader regressions while omitting both media checks', () => {
   const sets = [
-    ['archify/explainer/reader.js', 'docs/cases/explainer/first-rental.html',
-      'test/explainer-renderer.test.mjs', 'archify.zip'],
     ['archify/modules/code-analysis/extract/ts/index.mjs', 'test/code-analysis-browser.test.mjs', 'archify.zip'],
-    ['integrations/deepseek-harness/README.md', 'integrations/deepseek-harness/test/docs-contract.test.mjs'],
   ];
   for (const paths of sets) {
     const plan = classifyPaths(paths);
@@ -170,6 +167,47 @@ test('independent product areas keep broader regressions while omitting both med
       assert.equal(mixed.webmProfile, 'full', extra);
     }
   }
+});
+
+test('isolated Explainer rendering changes run its Node and Chrome cases and retain native package smoke', () => {
+  const browser = 'test/explainer-browser.test.mjs';
+  const files = ['archify/explainer/reader.js', 'archify/explainer/diagrams.mjs', 'archify/explainer/render.mjs',
+    'test/explainer-renderer.test.mjs', browser, 'archify.zip'];
+  const plan = classifyPaths(files);
+  assert.equal(plan.scope, 'core');
+  assert.deepEqual(plan.owners, ['explainer']);
+  assert.deepEqual(plan.browserTests, [browser]);
+  assert.equal(plan.browserProfile, 'changed');
+  assert.ok(plan.browser && plan.package);
+  for (const gate of ['generated', 'webm', 'windows', 'manifest', 'website']) assert.equal(plan[gate], false, gate);
+  const available = [browser, 'test/explainer-renderer.test.mjs', 'test/explainer-cli.test.mjs',
+    'test/explainer-input-publication.test.mjs', 'test/repository-evidence-replacement.test.mjs'];
+  assert.deepEqual(selectAffectedTests(plan.owners, plan.changedTests, available),
+    ['test/explainer-cli.test.mjs', 'test/explainer-input-publication.test.mjs', 'test/explainer-renderer.test.mjs']);
+  assert.equal(classifyPaths([...files, 'docs/cases/explainer/first-rental.html']).website, true);
+  for (const extra of ['archify/explainer/sources.mjs', 'archify/bin/archify.mjs',
+    'archify/renderers/shared/generated-validators.mjs', 'archify/assets/template.html',
+    'test/helpers/unknown.mjs']) {
+    const mixed = classifyPaths([...files, extra]);
+    assert.equal(mixed.scope, 'full', extra);
+    assert.ok(mixed.webm && mixed.windows, extra);
+  }
+});
+
+test('DeepSeek Harness documentation runs the integration docs contract without Archify product lanes', () => {
+  const files = ['integrations/deepseek-harness/README.md', 'integrations/deepseek-harness/test/docs-contract.test.mjs'];
+  for (const paths of [files, [files[1]]]) {
+    const plan = classifyPaths(paths);
+    assert.equal(plan.scope, 'docs');
+    assert.deepEqual(plan.owners, ['dsh-docs']);
+    for (const gate of ['generated', 'browser', 'webm', 'package', 'windows', 'manifest', 'website']) {
+      assert.equal(plan[gate], false, gate);
+    }
+  }
+  assert.equal(classifyPaths([...files, 'integrations/deepseek-harness/package.json']).scope, 'full');
+  assert.equal(classifyPaths([...files, 'archify.zip']).scope, 'full');
+  const mixed = classifyPaths([...files, 'viewer/viewer.css']);
+  assert.ok(mixed.owners.includes('dsh-docs') && mixed.generated && mixed.browser && mixed.webm && mixed.package);
 });
 
 test('five README languages and changelog use documentation checks and preserve mixed product gates', () => {
@@ -464,6 +502,8 @@ test('required jobs fail when classification fails or returns an unknown scope',
           SCOPE_RESULT: result,
           CI_SCOPE: scope,
           RUN_WINDOWS: 'true',
+          RUN_MANIFEST: 'true',
+          CI_COMPATIBILITY: scope === 'docs' ? 'false' : 'true',
         },
       });
       assert.equal(run.status, status, `${name}: ${result}/${scope}`);
@@ -472,6 +512,104 @@ test('required jobs fail when classification fails or returns an unknown scope',
   const fetch = workflow.jobs.scope.steps.find(step => step.name === 'Fetch PR comparison base');
   assert.ok(fetch.run.includes('--depth=1') && fetch.run.includes('--no-tags'));
   assert.equal(fetch.if, "github.event_name == 'pull_request'");
+});
+
+test('local affected checks use committed and dirty paths and reject ambiguous or empty selections', t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-local-affected-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const scripts = ['run-affected-tests.mjs', 'ci-scope.mjs', 'browser-test-inventory.mjs',
+    'run-tests.mjs', 'test-runner-options.mjs'].map(name => `scripts/${name}`);
+  for (const file of [...scripts, 'archify/renderers/shared/path-semantics.mjs']) {
+    const target = path.join(root, file);
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.copyFileSync(new URL(`../${file}`, import.meta.url), target);
+  }
+  const manifest = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+  assert.equal(manifest.scripts['test:changed'], 'node scripts/run-affected-tests.mjs --local');
+  const git = args => execFileSync('git', args, { cwd: root, encoding: 'utf8' });
+  git(['init', '-q']);
+  git(['config', 'user.name', 'Test']);
+  git(['config', 'user.email', 'test@example.invalid']);
+  git(['config', 'commit.gpgsign', 'false']);
+  const tests = ['committed', 'staged', 'unstaged suite', 'untracked'];
+  const fixture = name => path.join(root, 'test', `${name}.test.mjs`);
+  const receipt = path.join(root, '.git', 'executed-tests');
+  const browserReceipt = path.join(root, '.git', 'executed-browser-tests');
+  const writeSuite = name => fs.writeFileSync(fixture(name), `
+    import fs from 'node:fs';
+    import test from 'node:test';
+    test(${JSON.stringify(name)}, () => fs.appendFileSync(${JSON.stringify(receipt)}, ${JSON.stringify(name + '\n')}));
+  `);
+  const executed = () => fs.readFileSync(receipt, 'utf8').trim().split('\n').sort();
+  fs.mkdirSync(path.join(root, 'test'));
+  for (const name of [...tests.slice(0, -1), 'explainer-render']) writeSuite(name);
+  fs.writeFileSync(fixture('unrelated'), 'throw new Error("unrelated suite ran");');
+  fs.writeFileSync(path.join(root, 'scripts', 'run-browser-tests.mjs'), `
+    import fs from 'node:fs';
+    fs.writeFileSync(${JSON.stringify(browserReceipt)}, JSON.stringify(process.argv.slice(2)));
+  `);
+  git(['add', '.']);
+  git(['commit', '-qm', 'base']);
+  git(['branch', 'fixture-base']);
+
+  const { NODE_TEST_CONTEXT, CI_TEST_OWNERS, CI_CHANGED_TESTS, ...env } = process.env;
+  const runner = (args, extra = {}) => spawnSync(process.execPath, ['scripts/run-affected-tests.mjs', ...args],
+    { cwd: root, encoding: 'utf8', env: { ...env, ...extra } });
+  const local = (...args) => runner(['--local', ...args]);
+  assert.equal(runner([]).status, 1);
+  const clean = local();
+  assert.equal(clean.status, 1);
+  assert.match(clean.stderr, /No changed files/);
+  assert.equal(local('--base=--help').status, 1);
+  const ci = runner([], { CI_CHANGED_TESTS: '["test/committed.test.mjs"]' });
+  assert.equal(ci.status, 0, ci.stderr);
+  assert.deepEqual(executed(), ['committed']);
+  fs.writeFileSync(receipt, '');
+  const ownerOnly = runner([], { CI_TEST_OWNERS: '["explainer"]' });
+  assert.equal(ownerOnly.status, 0, ownerOnly.stderr);
+  assert.deepEqual(executed(), ['explainer-render']);
+  fs.writeFileSync(receipt, '');
+  fs.appendFileSync(fixture('committed'), '// branch change\n');
+  git(['add', '.']);
+  git(['commit', '-qm', 'change test on branch']);
+  const committed = local('--base=fixture-base');
+  assert.equal(committed.status, 0, committed.stderr);
+  assert.deepEqual(executed(), ['committed']);
+
+  fs.appendFileSync(fixture('staged'), '// index change\n');
+  git(['add', 'test/staged.test.mjs']);
+  fs.appendFileSync(fixture('unstaged suite'), '// worktree change\n');
+  writeSuite('untracked');
+  fs.writeFileSync(receipt, '');
+  const dirty = local('--base=fixture-base');
+  assert.equal(dirty.status, 0, dirty.stderr);
+  assert.deepEqual(executed(), tests.slice().sort());
+
+  fs.writeFileSync(path.join(root, 'unknown.txt'), 'unclassified input');
+  const unknown = local();
+  assert.equal(unknown.status, 1);
+  assert.match(unknown.stderr, /require broader verification/);
+  fs.unlinkSync(path.join(root, 'unknown.txt'));
+  fs.unlinkSync(fixture('staged'));
+  const deleted = local();
+  assert.equal(deleted.status, 1);
+  assert.match(deleted.stderr, /Cannot narrow tests/);
+
+  git(['restore', '--source=HEAD', '--staged', '--worktree', '--', 'test/staged.test.mjs', 'test/unstaged suite.test.mjs']);
+  fs.unlinkSync(fixture('untracked'));
+  fs.mkdirSync(path.join(root, 'website'));
+  fs.writeFileSync(path.join(root, 'website', 'content.md'), 'unowned by root Node suites');
+  const websiteOnly = local();
+  assert.equal(websiteOnly.status, 1);
+  assert.match(websiteOnly.stderr, /No runnable local checks/);
+  fs.unlinkSync(path.join(root, 'website', 'content.md'));
+  fs.mkdirSync(path.join(root, 'archify', 'explainer'));
+  fs.writeFileSync(path.join(root, 'archify', 'explainer', 'reader.js'), 'explainer source edit');
+  fs.writeFileSync(receipt, '');
+  const explainer = local();
+  assert.equal(explainer.status, 0, explainer.stderr);
+  assert.deepEqual(executed(), ['explainer-render']);
+  assert.deepEqual(JSON.parse(fs.readFileSync(browserReceipt, 'utf8')), ['test/explainer-browser.test.mjs']);
 });
 
 test('Windows portability skips only a successful scope that explicitly excludes Windows', () => {

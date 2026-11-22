@@ -18,6 +18,11 @@ const storyTest = `test/${storyMediaBrowserTest}`;
 const viewerTemplate = 'archify/assets/template.html';
 const atlasBrowserTest = name => name.startsWith('test/code-analysis-') && maintainedBrowserTests.has(name);
 const sharedSvgBaker = 'archify/renderers/shared/svg-bake.mjs';
+const explainerBrowserTest = 'test/explainer-browser.test.mjs';
+const explainerPresentation = /^archify\/explainer\/(?:browser-check\.mjs|diagrams\.mjs|layout\.mjs|reader\.(?:css|js)|render\.mjs|writing\.mjs)$/;
+const dshDocs = new Set([
+  'integrations/deepseek-harness/README.md', 'integrations/deepseek-harness/test/docs-contract.test.mjs',
+]);
 const gates = ['generated', 'browser', 'webm', 'package', 'windows', 'manifest', 'website'];
 const storyPresentationFiles = new Set([
   'component-stage.mjs', 'story-svg.mjs', 'svg-bake.mjs', 'story-stage-html.mjs', 'story-plan.mjs',
@@ -46,23 +51,30 @@ function viewerRebuildCompanion(name) {
     rootTest.test(name) || /^(docs\/|examples\/|archify\/examples\/[^/]+\.html$)/.test(name);
 }
 
+function explainerPresentationCompanion(name) {
+  return explainerPresentation.test(name) || name === 'archify.zip' || name === 'CHANGELOG.md' ||
+    name === 'archify/references/explainer-authoring.md' || name.startsWith('docs/cases/explainer/') ||
+    name === 'test/skill-metadata.test.mjs' ||
+    (/^test\/explainer-[^/]+\.test\.mjs$/.test(name) &&
+      (!name.endsWith('-browser.test.mjs') || maintainedBrowserTests.has(name)));
+}
+
 function independentMediaPath(name) {
   return name === 'archify.zip' || name === 'CHANGELOG.md' ||
-    /^archify\/(?:modules\/code-analysis|explainer)\//.test(name) ||
-    /^test\/(?:code-analysis(?:-[^/]+)?|explainer-[^/]+|skill-metadata)\.test\.mjs$/.test(name) ||
-    name === 'archify/references/explainer-authoring.md' || name.startsWith('docs/cases/explainer/') ||
-    name === 'integrations/deepseek-harness/README.md' ||
-    name === 'integrations/deepseek-harness/test/docs-contract.test.mjs';
+    name.startsWith('archify/modules/code-analysis/') ||
+    /^test\/code-analysis(?:-[^/]+)?\.test\.mjs$/.test(name);
 }
 
 export function classifyPaths(paths) {
   const plan = { scope: 'core', browserProfile: 'full', browserTests: [], webmProfile: 'full', owners: [], changedTests: [], ...Object.fromEntries(gates.map(name => [name, false])) };
-  const full = (webm = true) => ({ ...plan, scope: 'full', ...Object.fromEntries(gates.map(name => [name, true])), webm });
+  const full = (webm = true) => ({ ...plan, scope: 'full', ...Object.fromEntries(gates.map(name => [name, true])), webm, compatibility: true });
   if (!paths.length) return full();
   const own = owner => { if (!plan.owners.includes(owner)) plan.owners.push(owner); };
   const media = new Set();
   const viewerRebuild = paths.some(name => viewerInteraction.test(name) || name === 'viewer/tree-branches.js') &&
     paths.every(viewerRebuildCompanion);
+  const explainerPresentationOnly = paths.some(name => explainerPresentation.test(name)) &&
+    paths.every(explainerPresentationCompanion);
   let sharedRenderChanged = false;
   let archiveChanged = false;
   let requireFull = false;
@@ -87,6 +99,7 @@ export function classifyPaths(paths) {
     }
     if (/^README(?:_EN|_ZH|_JA|_KO)?\.md$/.test(name)) { own('readme'); continue; }
     if (name === 'CHANGELOG.md') { own('changelog'); continue; }
+    if (dshDocs.has(name)) { own('dsh-docs'); continue; }
     if (/^(CONTRIBUTING|REVIEWING|AGENTS|CODE_OF_CONDUCT|SECURITY|SECURITY_MODEL)\.md$/.test(name)) { own('policy'); continue; }
     if (/^journal\/geo-[^/]+\/[^/]+\.md$/.test(name)) continue;
     if (name === 'llms.txt' || name === 'docs/llms.txt') {
@@ -104,6 +117,11 @@ export function classifyPaths(paths) {
     if (atlasClient.test(name) || name === atlasGuide) {
       own('atlas'); plan.package = true;
       if (atlasClient.test(name)) plan.browser = true;
+      continue;
+    }
+    if (explainerPresentationOnly && explainerPresentation.test(name)) {
+      own('explainer');
+      plan.browser = plan.package = true;
       continue;
     }
     const renderer = name.match(rendererPath);
@@ -163,10 +181,15 @@ export function classifyPaths(paths) {
     requireFull = true;
   }
   if (requireFull) return full(!paths.every(independentMediaPath));
-  if (archiveChanged && !plan.owners.some(owner => ['renderer', 'viewer', 'authoring', 'schema', 'pr', 'atlas', ...modes.split('|')].includes(owner))) return full();
+  if (archiveChanged && !plan.owners.some(owner => ['renderer', 'viewer', 'authoring', 'schema', 'pr', 'atlas', 'explainer', ...modes.split('|')].includes(owner))) return full();
   plan.webm = media.size > 0;
   if (media.size === 1 && !sharedRenderChanged) [plan.webmProfile] = media;
-  if (paths.every(name => maintainedBrowserTests.has(name))) {
+  if (explainerPresentationOnly) {
+    // The packaged smoke also verifies Explainer on all three operating systems.
+    plan.browserProfile = 'changed';
+    plan.browserTests = [...new Set([explainerBrowserTest, ...paths.filter(name => maintainedBrowserTests.has(name))])];
+    plan.changedTests = plan.changedTests.filter(name => !plan.browserTests.includes(name));
+  } else if (paths.every(name => maintainedBrowserTests.has(name))) {
     // These suites also run their Node-only cases with Chrome available.
     plan.changedTests = [browserGateTest];
     plan.browserTests = paths.filter(name => name !== storyTest); // test:webm runs Story with FFmpeg.
@@ -176,7 +199,13 @@ export function classifyPaths(paths) {
       paths.every(name => atlasClient.test(name) || name === atlasGuide || name === 'archify.zip' || atlasBrowserTest(name))) {
     plan.browserProfile = 'atlas';
   }
-  if (plan.owners.every(owner => ['readme', 'llms', 'changelog', 'policy', 'readme-assets'].includes(owner)) && !plan.changedTests.length && !gates.some(name => plan[name])) plan.scope = 'docs';
+  if (plan.owners.every(owner => ['readme', 'llms', 'changelog', 'policy', 'readme-assets', 'dsh-docs'].includes(owner)) && !plan.changedTests.length && !gates.some(name => plan[name])) plan.scope = 'docs';
+  // These inputs cannot change the public CLI or its compatibility smoke.
+  // A change to the smoke itself must still exercise every supported runtime.
+  plan.compatibility = plan.scope !== 'docs' && paths.some(name =>
+    name === 'test/core-smoke.test.mjs' ||
+    !(rootTest.test(name) || /^(website\/|docs\/|journal\/geo-)/.test(name) ||
+      name === 'llms.txt' || /^[^/]+\.md$/.test(name)));
   return plan;
 }
 

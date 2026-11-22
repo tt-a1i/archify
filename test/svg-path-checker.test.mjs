@@ -237,11 +237,17 @@ test('交叉分析关系对预算只接受安全正整数环境变量', async t 
   // 318 relationships produce 50,403 eligible pairs, so invalid overrides
   // must fall back to the production 50,000-pair limit rather than merely
   // differing from an explicitly tiny valid override.
-  const body = Array.from({ length: 318 }, (_, index) => arrow('M20 20H80', {
-    id: `fallback-${index}`,
-    from: `source-${index}`,
-    to: `target-${index}`,
-  })).join('');
+  // Spread the routes across the canvas so the checker spends its budget
+  // on eligible pairs without reporting thousands of unrelated overlaps.
+  const body = Array.from({ length: 318 }, (_, index) => {
+    const x = 8 + (index % 18) * 22;
+    const y = 8 + Math.floor(index / 18) * 13;
+    return arrow(`M${x} ${y}H${x + 12}`, {
+      id: `fallback-${index}`,
+      from: `source-${index}`,
+      to: `target-${index}`,
+    });
+  }).join('');
   for (const [value, expectedLimit] of [
     ['', 50_000],
     ['not-a-number', 50_000],
@@ -256,6 +262,7 @@ test('交叉分析关系对预算只接受安全正整数环境变量', async t 
     assert.equal(result.code, 1);
     const issue = result.receipt.composition.issues.find(item => item.code === 'composition/crossing-analysis-budget');
     assert.equal(issue?.exhaustedBudget, 'relationship-pairs');
+    assert.equal(issue?.pairLimit, expectedLimit);
     assert.equal(issue?.attemptedPairs, expectedLimit);
     assert.match(issue?.detail || '', new RegExp(`relationship pairs \\(limit ${expectedLimit}\\)`));
   }

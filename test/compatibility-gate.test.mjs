@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { parse } from 'yaml';
 import { JSCPD_VERSION } from '../archify/modules/code-analysis/lib/duplicates.mjs';
+import { classifyPaths } from '../scripts/ci-scope.mjs';
 
 const manifest = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 const ci = parse(fs.readFileSync(new URL('../.github/workflows/ci.yml', import.meta.url), 'utf8'));
@@ -15,6 +16,18 @@ test('default and compatibility share the real public CLI core while full discov
   assert.match(manifest.scripts['test:full'], /test:generated/);
   assert.match(manifest.scripts['test:full'], /test:code-analysis && node scripts\/run-tests\.mjs$/);
   assert.ok(!manifest.scripts['test:core'].includes('golden'));
+});
+
+test('changes to the CLI or its smoke run across Node versions while independent edits run their own suites', () => {
+  for (const name of ['website/src/pages/index.astro', 'docs/start.html', 'test/notifier.test.mjs', 'README.md']) {
+    assert.equal(classifyPaths([name]).compatibility, false, name);
+    assert.equal(classifyPaths([name, 'archify/bin/archify.mjs']).compatibility, true, name);
+  }
+  for (const name of ['test/core-smoke.test.mjs', 'test/helpers/cli.mjs', 'archify/explainer/reader.js', 'package.json']) {
+    assert.equal(classifyPaths([name]).compatibility, true, name);
+  }
+  const lanes = ci.jobs.test.steps.filter(step => step.uses || step.name !== 'Require successful scope checks');
+  assert.ok(lanes.every(step => step.if === "needs.scope.outputs.compatibility == 'true'"));
 });
 
 test('generated checks have one explicit entrypoint separate from core feedback', () => {
@@ -31,11 +44,15 @@ test('all maintained Node check names remain and publication uses exhaustive ver
     assert.equal(ci.jobs[id].strategy, undefined, `${id} must keep a single stable check name`);
   }
   assert.equal(canonical.name, 'test (22)');
-  assert.deepEqual(canonical.needs, ['scope', 'full-regression', 'js-ts-platform']);
-  const jsTsPlatform = ci.jobs['js-ts-platform'];
-  assert.equal(jsTsPlatform.if, "needs.scope.outputs.scope == 'full'");
-  assert.deepEqual(jsTsPlatform.strategy.matrix.os, ['ubuntu-latest', 'macos-latest', 'windows-latest']);
-  assert.ok(canonical.steps.some(step => step.name === 'Require JS/TS platform matrix'));
+  assert.deepEqual(canonical.needs, ['scope', 'full-regression']);
+  const packages = ci.jobs['package-smoke'];
+  assert.deepEqual(packages.strategy.matrix.os, ['ubuntu-latest', 'macos-latest', 'windows-latest']);
+  const nativeSdk = packages.steps.find(step => step.name === 'Verify JS/TS project selection, resolution and calls');
+  assert.equal(nativeSdk.if, "needs.scope.outputs.scope == 'full' && runner.os != 'Linux'");
+  assert.ok(nativeSdk.run.includes('test/ts-official-projects.test.mjs'));
+  const boundaries = packages.steps.find(step => step.name === 'Compare official engines at supported version boundaries');
+  assert.equal(boundaries.if, "needs.scope.outputs.scope == 'full' && runner.os == 'Linux'");
+  assert.match(boundaries.run, /for version in 5\.6\.3 6\.0\.3/);
   assert.ok(canonical.steps.some(step => step.with?.['node-version'] === 22));
   const full = ci.jobs['full-regression'];
   assert.equal(full.if, "needs.scope.outputs.scope == 'full'");

@@ -16,6 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       scope: ${{ steps.classify.outputs.scope }}
+      compatibility: ${{ steps.classify.outputs.compatibility }}
       website: ${{ steps.classify.outputs.website }}
       generated: ${{ steps.classify.outputs.generated }}
       browser: ${{ steps.classify.outputs.browser }}
@@ -127,54 +128,6 @@ jobs:
         if: '!matrix.module-shard'
         run: node scripts/run-tests.mjs --shard=${{ matrix.shard }}/4
 
-  js-ts-platform:
-    needs: scope
-    if: needs.scope.outputs.scope == 'full'
-    name: JS/TS project SDK (${{ matrix.os }})
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
-        with:
-          node-version: 22
-      - name: Install Code Analysis dependencies
-        run: npm ci --prefix archify/modules/code-analysis --ignore-scripts --no-audit --no-fund
-      - name: Verify JS/TS project selection, resolution and calls
-        run: >-
-          node --test
-          archify/modules/code-analysis/test/ts-sdk.test.mjs
-          archify/modules/code-analysis/test/ts-projects.test.mjs
-          archify/modules/code-analysis/test/ts-snapshot.test.mjs
-          archify/modules/code-analysis/test/ts-upstream-alignment.test.mjs
-          archify/modules/code-analysis/test/ts-upstream-ledger.test.mjs
-          archify/modules/code-analysis/test/ts-official-projects.test.mjs
-          archify/modules/code-analysis/test/ts-official-modules.test.mjs
-          archify/modules/code-analysis/test/ts-official-syntax.test.mjs
-          archify/modules/code-analysis/test/ts-official-definitions.test.mjs
-          archify/modules/code-analysis/test/calls.test.mjs
-      - name: Install boundary TypeScript SDKs in temporary directories
-        if: matrix.os == 'ubuntu-latest'
-        shell: bash
-        run: |
-          for version in 5.6.3 6.0.3; do
-            npm install --prefix "$RUNNER_TEMP/archify-ts-$version" --ignore-scripts --no-audit --no-fund --no-save "typescript@$version"
-          done
-      - name: Compare official engines at supported version boundaries
-        if: matrix.os == 'ubuntu-latest'
-        shell: bash
-        run: |
-          for version in 5.6.3 6.0.3; do
-            ARCHIFY_TEST_TYPESCRIPT_SDK="$RUNNER_TEMP/archify-ts-$version/node_modules/typescript" node --test \
-              archify/modules/code-analysis/test/ts-official-projects.test.mjs \
-              archify/modules/code-analysis/test/ts-official-modules.test.mjs \
-              archify/modules/code-analysis/test/ts-official-syntax.test.mjs \
-              archify/modules/code-analysis/test/ts-official-definitions.test.mjs
-          done
-
   test:
     needs: scope
     if: always() && !cancelled()
@@ -188,14 +141,15 @@ jobs:
         env:
           SCOPE_RESULT: ${{ needs.scope.result }}
           CI_SCOPE: ${{ needs.scope.outputs.scope }}
+          CI_COMPATIBILITY: ${{ needs.scope.outputs.compatibility }}
         shell: bash
         run: |
           test "$SCOPE_RESULT" = success
-          case "$CI_SCOPE" in docs|core|full) ;; *) exit 1 ;; esac
+          case "$CI_SCOPE:$CI_COMPATIBILITY" in docs:false|core:false|core:true|full:true) ;; *) exit 1 ;; esac
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-        if: needs.scope.outputs.scope != 'docs'
+        if: needs.scope.outputs.compatibility == 'true'
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
-        if: needs.scope.outputs.scope != 'docs'
+        if: needs.scope.outputs.compatibility == 'true'
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
@@ -203,15 +157,15 @@ jobs:
             package-lock.json
             archify/package-lock.json
       - name: Install renderer dependencies
-        if: needs.scope.outputs.scope != 'docs'
+        if: needs.scope.outputs.compatibility == 'true'
         run: npm ci && npm --prefix archify ci
       - name: Supported Node runtime compatibility
-        if: needs.scope.outputs.scope != 'docs'
+        if: needs.scope.outputs.compatibility == 'true'
         run: npm run test:compat
 
   canonical-test:
     name: test (22)
-    needs: [scope, full-regression, js-ts-platform]
+    needs: [scope, full-regression]
     if: always() && !cancelled()
     runs-on: ubuntu-latest
     steps:
@@ -234,16 +188,6 @@ jobs:
             full:success|core:skipped|docs:skipped) ;;
             *) exit 1 ;;
           esac
-      - name: Require JS/TS platform matrix
-        env:
-          CI_SCOPE: ${{ needs.scope.outputs.scope }}
-          JS_TS_RESULT: ${{ needs['js-ts-platform'].result }}
-        shell: bash
-        run: |
-          case "$CI_SCOPE:$JS_TS_RESULT" in
-            full:success|core:skipped|docs:skipped) ;;
-            *) exit 1 ;;
-          esac
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         if: needs.scope.outputs.scope == 'core'
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
@@ -258,7 +202,7 @@ jobs:
         if: needs.scope.outputs.scope == 'core'
         run: npm ci && npm --prefix archify ci
       - name: Core public CLI contracts
-        if: needs.scope.outputs.scope == 'core'
+        if: needs.scope.outputs.scope == 'core' && needs.scope.outputs.compatibility == 'true'
         run: npm test
       - name: Generated outputs and representative goldens
         if: needs.scope.outputs.scope == 'core' && needs.scope.outputs.generated == 'true'
@@ -426,7 +370,9 @@ jobs:
 
   published-update-manifest:
     needs: scope
-    if: always() && !cancelled()
+    if: >-
+      always() && !cancelled() && !(needs.scope.result == 'success' && needs.scope.outputs.manifest == 'false'
+      && (needs.scope.outputs.scope == 'docs' || needs.scope.outputs.scope == 'core'))
     runs-on: ubuntu-latest
     steps:
       # Keep every required matrix check present; fail closed if classification/checks fail.
@@ -434,18 +380,17 @@ jobs:
         env:
           SCOPE_RESULT: ${{ needs.scope.result }}
           CI_SCOPE: ${{ needs.scope.outputs.scope }}
+          RUN_MANIFEST: ${{ needs.scope.outputs.manifest }}
         shell: bash
         run: |
           test "$SCOPE_RESULT" = success
+          test "$RUN_MANIFEST" = true
           case "$CI_SCOPE" in docs|core|full) ;; *) exit 1 ;; esac
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-        if: needs.scope.outputs.manifest == 'true'
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
-        if: needs.scope.outputs.manifest == 'true'
         with:
           node-version: 22
       - name: Public notifier manifest must reference an existing stable Release
-        if: needs.scope.outputs.manifest == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -556,6 +501,44 @@ jobs:
           --test-name-pattern="cli: lock release failure does not invoke the requested opener"
           test/cli-delivery-lock.test.mjs
 
+      # Linux covers the bundled SDK in the complete module suite. Keep both
+      # additional SDK versions here, plus the native macOS and Windows runs.
+      - name: Install Code Analysis dependencies for SDK comparison
+        if: needs.scope.outputs.scope == 'full'
+        run: npm ci --prefix archify/modules/code-analysis --ignore-scripts --no-audit --no-fund
+      - name: Verify JS/TS project selection, resolution and calls
+        if: needs.scope.outputs.scope == 'full' && runner.os != 'Linux'
+        run: >-
+          node --test
+          archify/modules/code-analysis/test/ts-sdk.test.mjs
+          archify/modules/code-analysis/test/ts-projects.test.mjs
+          archify/modules/code-analysis/test/ts-snapshot.test.mjs
+          archify/modules/code-analysis/test/ts-upstream-alignment.test.mjs
+          archify/modules/code-analysis/test/ts-upstream-ledger.test.mjs
+          archify/modules/code-analysis/test/ts-official-projects.test.mjs
+          archify/modules/code-analysis/test/ts-official-modules.test.mjs
+          archify/modules/code-analysis/test/ts-official-syntax.test.mjs
+          archify/modules/code-analysis/test/ts-official-definitions.test.mjs
+          archify/modules/code-analysis/test/calls.test.mjs
+      - name: Install boundary TypeScript SDKs in temporary directories
+        if: needs.scope.outputs.scope == 'full' && runner.os == 'Linux'
+        shell: bash
+        run: |
+          for version in 5.6.3 6.0.3; do
+            npm install --prefix "$RUNNER_TEMP/archify-ts-$version" --ignore-scripts --no-audit --no-fund --no-save "typescript@$version"
+          done
+      - name: Compare official engines at supported version boundaries
+        if: needs.scope.outputs.scope == 'full' && runner.os == 'Linux'
+        shell: bash
+        run: |
+          for version in 5.6.3 6.0.3; do
+            ARCHIFY_TEST_TYPESCRIPT_SDK="$RUNNER_TEMP/archify-ts-$version/node_modules/typescript" node --test \
+              archify/modules/code-analysis/test/ts-official-projects.test.mjs \
+              archify/modules/code-analysis/test/ts-official-modules.test.mjs \
+              archify/modules/code-analysis/test/ts-official-syntax.test.mjs \
+              archify/modules/code-analysis/test/ts-official-definitions.test.mjs
+          done
+
   website:
     needs: scope
     if: needs.scope.outputs.website == 'true'
@@ -588,7 +571,7 @@ jobs:
           sudo apt-get install --yes --no-install-recommends fonts-noto-cjk
           fc-match 'sans-serif:lang=zh-cn'
       - name: Verify checked-in site language and navigation
-        if: matrix.target == 'pages'
+        if: matrix.target == 'cloudflare'
         run: node --test test/site-language-integration.mjs
         env:
           ARCHIFY_CHROME: ${{ steps.website-chrome.outputs.chrome-path }}

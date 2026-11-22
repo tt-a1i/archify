@@ -7,6 +7,7 @@
   },
   "scripts": {
     "test": "npm run test:core",
+    "test:changed": "node scripts/run-affected-tests.mjs --local",
     "test:focus": "node scripts/run-tests.mjs --require-files",
     "test:compat": "npm run test:core",
     "test:browser": "node scripts/run-browser-tests.mjs",

@@ -24,7 +24,7 @@ node --test test/ts-official-*.test.mjs test/ts-upstream-ledger.test.mjs
 ARCHIFY_TEST_TYPESCRIPT_SDK=/path/to/typescript node --test test/ts-official-*.test.mjs
 ```
 
-CI 的 js-ts-platform 在 Linux/macOS/Windows 执行默认 SDK 对照，在 Linux 临时安装 5.6.3、6.0.3 重跑同一组场景。远端结果需在提交后核对；本机不能代替另外两个平台的通过记录。
+CI 在 Linux 的完整模块测试和 macOS、Windows 的安装包任务中执行默认 SDK 对照。Linux 安装包任务还临时安装 5.6.3 和 6.0.3，重跑同一组场景。
 
 ## 上游源码批量语法投影：915 个案例
 

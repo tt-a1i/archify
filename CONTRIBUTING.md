@@ -128,13 +128,17 @@ dependency installation. README and changelog files are not website build inputs
 Mixed product changes retain those documentation checks alongside product gates;
 changed tests still run through the core path. Unknown README language names and
 other Markdown paths do not automatically qualify for this fast path.
+The DeepSeek Harness README and its docs contract use the documentation path
+and run that contract. The separate DSH workflow still runs its adapter and
+distribution checks. Isolated Explainer rendering changes run the Explainer
+Node suites and Chrome suite, core CLI compatibility, and packaged delivery on
+Linux, macOS, and Windows. Shared or unclassified Explainer changes retain full CI.
 
 Unknown paths, an empty comparison, and an unavailable development-push base
 select full coverage. An invalid PR comparison fails classification. Changes
-confined to independent Explainer, Code Analysis, or DeepSeek Harness
-documentation and test inputs can retain full regression without running the
-Viewer and Story media checks. The package job still compares the regenerated
-ZIP when a change includes the archive. Required job names remain present,
+confined to independent Code Analysis inputs can retain full regression without
+running the Viewer and Story media checks. The package job still compares the
+regenerated ZIP when a change includes the archive. Required job names remain present,
 and failed classification blocks the required checks. Main pushes and manual
 CI runs use complete coverage. Releases explicitly run `test:full`. New pushes
 cancel obsolete CI runs for the same PR.
@@ -166,6 +170,14 @@ It requires at least one file and rejects unknown files rather than silently
 running the full suite. Paths are relative to the repository root; absolute
 paths also work. Use `--list` with the same selection to inspect it without
 running tests. A focused pass is evidence for that selection only.
+
+Run `npm run test:changed` to select local checks from staged, unstaged, and
+untracked files using the same ownership rules as CI. Add
+`-- --base=origin/dev` to include commits since the branch diverged. It runs
+affected Node suites, focused browser selections, and directly changed suites
+in the browser inventory. It lists other checks selected by CI, such as the
+core CLI smoke or generated output checks. If the selection is empty or the changes need wider
+verification, it exits with guidance on choosing the relevant checks.
 
 To narrow a large file further, add a quoted Node test-name pattern (Node 18.11+):
 

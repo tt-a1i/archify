@@ -26,13 +26,13 @@ test('Go native LF ranges preserve bare CR inside raw strings and comments', t =
   const root = fixture(t, {
     'entry.go': 'package p\n/* a\rb */ func Work() string { return `a\rb` }\nfunc Caller() string { return Work() }\n',
   });
-  const facts = capture(root, { go: { stdlib: false } });
+  const config = scopeConfig({ go: { stdlib: false } });
+  const base = captureChangeSide(root, config, 'go');
+  const { facts } = base;
   assert.deepEqual(schemaErrors('raw-facts', facts), []);
   const question = buildQuestion({ root, facts, entry: 'entry.go', symbol: 'Caller', question: 'Where is Work?' });
   assert.equal(question.calls.coverage, 'available');
   assert.deepEqual(question.calls.records[0].targetNavigation.location, { file: 'entry.go', name: 'Work', line: 2, column: 11 });
-  const config = scopeConfig({ go: { stdlib: false } });
-  const base = captureChangeSide(root, config, 'go');
   const headRoot = fixture(t, { 'entry.go': 'package p\n/* a\rb */ func Work() string { return `a\rc` }\nfunc Caller() string { return Work() }\n' });
   const head = captureChangeSide(headRoot, config, 'go');
   const pair = buildChangeQuestion({ root: headRoot, baseRoot: root, base, head, config, entry: 'entry.go', question: 'What changed?' });
@@ -124,17 +124,18 @@ test('Go imported module identity differs from directory names and package-decla
 test('Go UTF-16 ranges, saved metadata freshness and paired changed-definition callers reuse source evidence', t => {
   const root = fixture(t, { 'lib/work.go': 'package lib\nfunc Work() { _ = "😀"; println("x"); }\n',
     'entry.go': 'package app\nimport "example.org/app/lib"\nfunc Entry() { lib.Work() }\n' });
-  const facts = capture(root); assert.deepEqual(schemaErrors('raw-facts', facts), []);
+  const config = scopeConfig({ include: ['**/*.go'], exclude: [] });
+  const base = captureChangeSide(root, config, 'go');
+  const { facts } = base;
+  assert.deepEqual(schemaErrors('raw-facts', facts), []);
   const unicodeCall = callsIn(facts, 'lib/work.go')[0];
   assert.equal(unicodeCall.column, fs.readFileSync(path.join(root, 'lib/work.go'), 'utf8').split('\n')[1].indexOf('println') + 1);
-  const base = captureChangeSide(root, scopeConfig({ include: ['**/*.go'], exclude: [] }), 'go');
-  fs.writeFileSync(path.join(root, 'lib/work.go'), 'package lib\nfunc Work() { _ = "😀"; println("changed"); }\n');
-  const headRoot = fixture(t, { 'lib/work.go': fs.readFileSync(path.join(root, 'lib/work.go'), 'utf8'),
-    'entry.go': fs.readFileSync(path.join(root, 'entry.go'), 'utf8') });
-  // Keep base sources fresh for paired navigation.
-  fs.writeFileSync(path.join(root, 'lib/work.go'), 'package lib\nfunc Work() { _ = "😀"; println("x"); }\n');
-  const head = captureChangeSide(headRoot, scopeConfig({ include: ['**/*.go'], exclude: [] }), 'go');
-  const paired = buildChangeQuestion({ question: 'What references changed Work?', entry: 'lib/work.go', base, head, config: scopeConfig({ include: ['**/*.go'], exclude: [] }) });
+  const headRoot = fixture(t, {
+    'lib/work.go': 'package lib\nfunc Work() { _ = "😀"; println("changed"); }\n',
+    'entry.go': fs.readFileSync(path.join(root, 'entry.go'), 'utf8'),
+  });
+  const head = captureChangeSide(headRoot, config, 'go');
+  const paired = buildChangeQuestion({ question: 'What references changed Work?', entry: 'lib/work.go', base, head, config });
   const change = paired.changedDefinitions.items.find(row => row.head.definition.name === 'Work');
   assert.equal(change.head.knownReferences.total, 1); assert.equal(change.head.knownReferences.items[0].navigation.location.file, 'entry.go');
   fs.writeFileSync(path.join(root, 'go.mod'), 'module wrong.org/app\n');
