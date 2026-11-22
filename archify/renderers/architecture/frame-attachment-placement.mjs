@@ -1,3 +1,5 @@
+import { horizontalLabelClearance } from './routing.mjs';
+
 const attachmentGap = 40;
 
 function placeLeavesByAttachment(frames, links, layout, adjustedPeers, axes) {
@@ -56,7 +58,7 @@ function placeLeavesByAttachment(frames, links, layout, adjustedPeers, axes) {
 
 // The parent layout measures frames as boxes. The original endpoints let
 // a shallow peer face the part of a frame it actually connects to.
-export function placeFrameAttachments(group, layout, leadingAllowance) {
+export function placeFrameAttachments(group, layout, leadingAllowance, { relocatesLabels = false } = {}) {
   if (group.children.length > 24 || group.edges.length > 36) return;
   const frames = group.children.filter((item) => item.children && item.children.length <= 64);
   if (!frames.length) return;
@@ -101,7 +103,7 @@ export function placeFrameAttachments(group, layout, leadingAllowance) {
   if (adjustedPeers.size) placeIsolatedPeers(group, layout, axes, links, adjustedPeers);
   if (group.members || !leadingAllowance || layout.parallel) return;
   placeOptionalFrames(group, layout, axes, leadingAllowance);
-  placeTerminalCards(group, layout, axes, links);
+  placeTerminalCards(group, layout, axes, links, relocatesLabels);
 }
 
 function placeIsolatedPeers(group, layout, axes, links, adjustedPeers) {
@@ -194,16 +196,22 @@ function placeOptionalFrames(group, layout, axes, leadingAllowance) {
 }
 
 // Bring a detached card to a clear exit on the side that already faces it.
-function placeTerminalCards(group, layout, axes, links) {
+function placeTerminalCards(group, layout, axes, links, relocatesLabels) {
   const [across, span, inset, along, depth] = axes;
-  for (const { from: peer, to: card, originalFrom: member, variant } of group.edges) {
+  for (const edge of group.edges) {
+    const { from: peer, to: card, originalFrom: member, variant } = edge;
     if (variant !== 'dashed' || !peer.children || card.children || member.parent !== peer
-      || links.get(card).length !== 1 || card[along] < peer[along] + peer[depth]) continue;
+      || links.get(card).length !== 1) continue;
+    // A straight downward route anchors its default label above its start,
+    // inside the source card. Showcase can relocate that label.
+    if (layout.vertical && edge.label && !relocatesLabels) continue;
+    // Keep the label corridor beyond the frame, where the title cannot use it.
+    const exit = peer[along] + peer[depth] + (layout.vertical ? 0 : horizontalLabelClearance(edge));
+    if (card[along] < exit) continue;
     const track = member[across] + member[span] / 2;
     if (peer.children.some((other) => other !== member && other[along] > member[along]
       && track >= other[across] - 8 && track <= other[across] + other[span] + 8)) continue;
     const desired = peer[across] + peer[inset] + track - card[span] / 2;
-    const exit = peer[along] + peer[depth];
     if (desired < 0 || desired + card[span] > layout[span]
       || card[along] - exit + Math.abs(card[across] - desired) < 2 * attachmentGap) continue;
     if (group.children.some((other) => other !== card && other !== peer

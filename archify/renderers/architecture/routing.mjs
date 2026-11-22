@@ -32,6 +32,10 @@ export function connectionLabelBoxAt(conn, [lx, ly]) {
   return { x: lx - width / 2, y: ly - 10, width, height: 14, lx, ly };
 }
 
+export function horizontalLabelClearance(conn) {
+  return conn.label ? connectionLabelBoxAt(conn, [0, 0]).width + 28 : 0;
+}
+
 // Use the same architecture route preferences for rendering and placement checks.
 export function createArchitectureRouter(components, connections, {
   frames = [], fixedCanvas = false, automaticPlacement = false,

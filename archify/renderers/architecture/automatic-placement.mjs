@@ -2,7 +2,7 @@ import { asArray, properSegmentIntersection, rectsOverlap, segmentIntersectsRect
 import { textUnits } from '../shared/utils.mjs';
 import { placeFrameAttachments } from './frame-attachment-placement.mjs';
 import { layOutParallelPaths } from './parallel-path-placement.mjs';
-import { connectionLabelBoxAt, createArchitectureRouter } from './routing.mjs';
+import { connectionLabelBoxAt, createArchitectureRouter, horizontalLabelClearance } from './routing.mjs';
 import { straightChainPlacementDirection } from './straight-chain-placement.mjs';
 
 const canvasMargin = 48;
@@ -137,8 +137,7 @@ function layOutIsland(items, edges, incoming, outgoing, vertical, { alternateTie
     if (!edge.label) continue;
     const first = Math.min(rank.get(edge.from), rank.get(edge.to));
     if (first === Math.max(rank.get(edge.from), rank.get(edge.to))) continue;
-    const { width } = connectionLabelBoxAt(edge, [0, 0]);
-    gaps[first] = Math.max(gaps[first], width + 28);
+    gaps[first] = Math.max(gaps[first], horizontalLabelClearance(edge));
   }
 
   const crossGap = vertical ? 64 : verticalGap;
@@ -266,7 +265,7 @@ function layOutReciprocalPeers(items, edges, incoming, outgoing, allowedWidth) {
   const secondary = primary === first ? second : first;
   const [left, right] = primary.x > hub.x ? [secondary, primary] : [primary, secondary];
   const gaps = new Map(peers.map((peer, i) => [peer, Math.max(horizontalGap,
-    ...links[i].filter((edge) => edge.label).map((edge) => connectionLabelBoxAt(edge, [0, 0]).width + 28))]));
+    ...links[i].map(horizontalLabelClearance))]));
   const width = left.width + gaps.get(left) + hub.width + gaps.get(right) + right.width;
   if (width > allowedWidth) return;
   left.x = 0;
@@ -353,7 +352,7 @@ function layOutSiblings(items, edges, vertical, allowParallel, allowedWidth) {
       && layout.items.length === 2 && layout.edges.length === 1
       && layout.items.every((item) => !item.children)) {
       const [edge] = layout.edges;
-      const gap = edge.label ? Math.max(horizontalGap, connectionLabelBoxAt(edge, [0, 0]).width + 28) : horizontalGap;
+      const gap = Math.max(horizontalGap, horizontalLabelClearance(edge));
       if (edge.from.width + gap + edge.to.width <= Math.min(rowLimit, width)) {
         layout = layOutIsland(layout.items, layout.edges, incoming, outgoing, false);
         for (const item of layout.items) item.y -= layout.top;
@@ -485,7 +484,7 @@ function placeParallelPeer(group) {
   };
 }
 
-function idealPositions(root, allowParallel, viewBox) {
+function idealPositions(root, { allowParallel, viewBox, relocatesLabels }) {
   const groups = [root];
   for (const group of groups) {
     for (const child of group.children) {
@@ -498,7 +497,7 @@ function idealPositions(root, allowParallel, viewBox) {
     group.parallel = layout.parallel;
     group.vertical = layout.vertical;
     const parallelPeer = placeParallelPeer(group);
-    if (allowParallel && !parallelPeer) placeFrameAttachments(group, layout, canvasMargin / 2);
+    if (allowParallel && !parallelPeer) placeFrameAttachments(group, layout, canvasMargin / 2, { relocatesLabels });
     const { width, height } = parallelPeer ?? layout;
     group.width = Math.max(width + group.pad * 2, group.titleWidth);
     group.leftInset = (group.width - width) / 2;
@@ -714,7 +713,7 @@ export function automaticComponentPositions(arch, defaultSize = [120, 60]) {
       && !edge?.labelAt && edge?.labelDx == null && edge?.labelDy == null && edge?.labelSegment == null
       && (!edge?.route || edge.route === 'auto'));
   const viewBox = isPoint(arch.meta?.viewBox) ? arch.meta.viewBox : undefined;
-  idealPositions(root, allowParallel, viewBox);
+  idealPositions(root, { allowParallel, viewBox, relocatesLabels: arch.meta?.quality_profile === 'showcase' });
   avoidPinnedComponents(byId, connections, boundaries, viewBox);
   return new Map([...byId].map(([id, item]) => [id, item.pin ?? [item.x, item.y]]));
 }
