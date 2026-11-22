@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "layout": {
+    "mode": "auto"
+  },
+  "meta": {
+    "title": "Route corridor",
+    "output": "chart.html",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    {
+      "id": "n0",
+      "label": "Card 0",
+      "type": "backend",
+      "pos": [
+        86,
+        85
+      ],
+      "size": [
+        107,
+        59
+      ]
+    },
+    {
+      "id": "n1",
+      "label": "Card 1",
+      "type": "backend",
+      "pos": [
+        286,
+        89
+      ],
+      "size": [
+        115,
+        75
+      ]
+    },
+    {
+      "id": "n2",
+      "label": "Card 2",
+      "type": "backend",
+      "pos": [
+        470,
+        84
+      ],
+      "size": [
+        111,
+        59
+      ]
+    },
+    {
+      "id": "n3",
+      "label": "Card 3",
+      "type": "backend",
+      "pos": [
+        631,
+        76
+      ],
+      "size": [
+        127,
+        62
+      ]
+    },
+    {
+      "id": "n4",
+      "label": "Card 4",
+      "type": "backend",
+      "pos": [
+        68,
+        231
+      ],
+      "size": [
+        132,
+        72
+      ]
+    },
+    {
+      "id": "n5",
+      "label": "Card 5",
+      "type": "backend",
+      "pos": [
+        252,
+        258
+      ],
+      "size": [
+        125,
+        78
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "r0",
+      "from": "n3",
+      "to": "n4"
+    },
+    {
+      "id": "r1",
+      "from": "n5",
+      "to": "n0"
+    },
+    {
+      "id": "r2",
+      "from": "n2",
+      "to": "n3"
+    },
+    {
+      "id": "r3",
+      "from": "n0",
+      "to": "n2"
+    },
+    {
+      "id": "r4",
+      "from": "n2",
+      "to": "n4"
+    },
+    {
+      "id": "r5",
+      "from": "n1",
+      "to": "n5",
+      "fromSide": "right"
+    },
+    {
+      "id": "r6",
+      "from": "n0",
+      "to": "n4"
+    },
+    {
+      "id": "r7",
+      "from": "n3",
+      "to": "n5"
+    }
+  ]
+}

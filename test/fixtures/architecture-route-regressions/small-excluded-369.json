@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Probe",
+    "output": "probe.html",
+    "quality_profile": "showcase"
+  },
+  "layout": {
+    "mode": "auto"
+  },
+  "components": [
+    {
+      "id": "n0",
+      "label": "Node 0",
+      "type": "backend",
+      "pos": [
+        76,
+        104
+      ],
+      "size": [
+        87,
+        82
+      ]
+    },
+    {
+      "id": "n1",
+      "label": "Node 1",
+      "type": "backend",
+      "pos": [
+        265,
+        114
+      ],
+      "size": [
+        104,
+        69
+      ]
+    },
+    {
+      "id": "n3",
+      "label": "Node 3",
+      "type": "backend",
+      "pos": [
+        670,
+        108
+      ],
+      "size": [
+        132,
+        76
+      ]
+    },
+    {
+      "id": "n5",
+      "label": "Node 5",
+      "type": "backend",
+      "pos": [
+        272,
+        275
+      ],
+      "size": [
+        92,
+        52
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "r0",
+      "from": "n0",
+      "to": "n3"
+    },
+    {
+      "id": "r1",
+      "from": "n5",
+      "to": "n1"
+    },
+    {
+      "id": "r7",
+      "from": "n3",
+      "to": "n0"
+    },
+    {
+      "id": "r8",
+      "from": "n1",
+      "to": "n3",
+      "label": "Propagates configuration",
+      "toSide": "top",
+      "labelAt": [
+        619,
+        56
+      ]
+    }
+  ]
+}

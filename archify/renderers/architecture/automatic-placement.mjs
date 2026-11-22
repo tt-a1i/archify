@@ -12,6 +12,11 @@ const islandGap = 72;
 const comfortableWidth = 1040;
 const emphasisPriority = 2;
 
+export function boundaryInsets(pad = 30, composedTitle = false) {
+  // The composed title rail needs 16px plus 4px on either side.
+  return { side: pad, top: Math.max(pad, composedTitle ? 24 : 22), bottom: 20 };
+}
+
 function isPoint(value) {
   return Array.isArray(value) && value.length === 2 && value.every(Number.isFinite);
 }
@@ -553,7 +558,7 @@ function nearestFreePosition(x, y, minX, minY, obstacles, maxX = Infinity, maxY 
   return closest;
 }
 
-function avoidPinnedComponents(byId, connections, boundaries, viewBox) {
+function avoidPinnedComponents(byId, connections, boundaries, viewBox, composedTitle, fixedCanvasRecovery) {
   const items = [...byId.values()];
   const pinned = items.filter((item) => item.pin);
   const fixedRoutes = connections.filter((edge) => asArray(edge?.via).length
@@ -596,7 +601,15 @@ function avoidPinnedComponents(byId, connections, boundaries, viewBox) {
         item.y += dy;
       }
     }
-    return;
+    if (!viewBox || fixedCanvasRecovery === 'card-bounds') return;
+    const [right, bottom] = viewBox;
+    const cardsFit = items.every(item => item.x + item.width <= right && item.y + item.height <= bottom);
+    const framesFit = boundaries.every(boundary => asArray(boundary.wraps).every(id => {
+      const item = byId.get(id);
+      const padding = boundaryInsets(boundary.pad, composedTitle);
+      return !item || (item.x + item.width + padding.side <= right && item.y + item.height + padding.bottom <= bottom);
+    }));
+    if (!fixedCanvasRecovery && cardsFit && framesFit) return;
   }
 
   // Let each inferred box follow the nearest anchor along the relationship
@@ -620,6 +633,21 @@ function avoidPinnedComponents(byId, connections, boundaries, viewBox) {
   }
 
   const clearance = 24;
+  const canvasInsets = new Map();
+  if (viewBox && fixedCanvasRecovery !== 'card-bounds') {
+    for (const boundary of boundaries) {
+      const padding = boundaryInsets(boundary.pad, composedTitle);
+      for (const id of asArray(boundary.wraps)) {
+        const item = byId.get(id);
+        const old = canvasInsets.get(item);
+        if (item) canvasInsets.set(item, {
+          side: Math.max(padding.side, old?.side ?? 0),
+          top: Math.max(padding.top, old?.top ?? 0),
+          bottom: padding.bottom,
+        });
+      }
+    }
+  }
   const ownedGroups = new Map(items.map((item) => {
     const groups = [];
     for (let group = item.parent; group?.members; group = group.parent) groups.push(group);
@@ -686,16 +714,23 @@ function avoidPinnedComponents(byId, connections, boundaries, viewBox) {
     }
     // Prefer a clear slot on the authored canvas. Retain the unbounded
     // fallback so genuinely impossible constraints still reach validation.
-    const bounded = viewBox ? [viewBox[0] - item.width, viewBox[1] - item.height] : [];
-    [item.x, item.y] = nearestFreePosition(x, y, minX, minY, obstacles, ...bounded)
-      ?? nearestFreePosition(x, y, minX, minY, basic, ...bounded)
+    // The outer bounds are those of the wrapped frame, not just the card.
+    const { side, top, bottom } = fixedCanvasRecovery === 'packing' ? {
+      side: Math.max(0, ...groups.map(group => group.pad)), top: 0, bottom: groups.length ? 20 : 0,
+    } : canvasInsets.get(item) ?? { side: 0, top: 0, bottom: 0 };
+    const maxX = viewBox ? viewBox[0] - item.width - side : Infinity;
+    const maxY = viewBox ? viewBox[1] - item.height - bottom : Infinity;
+    const lowerX = viewBox && fixedCanvasRecovery !== 'packing' && fixedCanvasRecovery !== 'card-bounds' ? side : minX;
+    const lowerY = viewBox && fixedCanvasRecovery !== 'packing' && fixedCanvasRecovery !== 'card-bounds' ? top : minY;
+    [item.x, item.y] = nearestFreePosition(x, y, lowerX, lowerY, obstacles, maxX, maxY)
+      ?? nearestFreePosition(x, y, lowerX, lowerY, basic, maxX, maxY)
       ?? (viewBox ? nearestFreePosition(x, y, minX, minY, obstacles) : undefined)
       ?? (viewBox ? nearestFreePosition(x, y, minX, minY, basic) : undefined) ?? [x, y];
     place(item, item.x, item.y);
   }
 }
 
-export function automaticComponentPositions(arch, defaultSize = [120, 60]) {
+export function automaticComponentPositions(arch, defaultSize = [120, 60], { fixedCanvasRecovery } = {}) {
   const byId = new Map(asArray(arch.components).filter(Boolean).map((component, index) => {
     const [width, height] = isPoint(component.size) ? component.size : defaultSize;
     const pin = isPoint(component.pos) ? component.pos : undefined;
@@ -714,6 +749,7 @@ export function automaticComponentPositions(arch, defaultSize = [120, 60]) {
       && (!edge?.route || edge.route === 'auto'));
   const viewBox = isPoint(arch.meta?.viewBox) ? arch.meta.viewBox : undefined;
   idealPositions(root, { allowParallel, viewBox, relocatesLabels: arch.meta?.quality_profile === 'showcase' });
-  avoidPinnedComponents(byId, connections, boundaries, viewBox);
+  avoidPinnedComponents(byId, connections, boundaries, viewBox, Boolean(arch.meta?.quality_profile),
+    viewBox && fixedCanvasRecovery);
   return new Map([...byId].map(([id, item]) => [id, item.pin ?? [item.x, item.y]]));
 }

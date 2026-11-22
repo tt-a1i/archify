@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "layout": {
+    "mode": "auto"
+  },
+  "meta": {
+    "title": "Fixed canvas sample 705",
+    "output": "output.html",
+    "viewBox": [
+      376,
+      438
+    ],
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "components": [
+    {
+      "id": "n0",
+      "type": "backend",
+      "label": "Service 0",
+      "size": [
+        174,
+        52
+      ],
+      "pos": [
+        155,
+        185
+      ]
+    },
+    {
+      "id": "n1",
+      "type": "backend",
+      "label": "Service 1",
+      "size": [
+        100,
+        48
+      ]
+    },
+    {
+      "id": "n2",
+      "type": "backend",
+      "label": "Service 2",
+      "size": [
+        110,
+        72
+      ]
+    },
+    {
+      "id": "n3",
+      "type": "backend",
+      "label": "Service 3",
+      "size": [
+        100,
+        72
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e0",
+      "from": "n0",
+      "to": "n1"
+    },
+    {
+      "id": "e1",
+      "from": "n2",
+      "to": "n3",
+      "label": "API request",
+      "width": 3
+    },
+    {
+      "id": "e2",
+      "from": "n3",
+      "to": "n2",
+      "label": "Fetch preferences"
+    }
+  ],
+  "boundaries": []
+}
