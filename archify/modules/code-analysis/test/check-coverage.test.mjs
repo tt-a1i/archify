@@ -134,7 +134,7 @@ test('prepare: an unresolved TypeScript config names the dependency and a workin
 });
 
 test('check: terminal diagnostics escape controls in a TypeScript config error', (t) => {
-  const missingConfig = 'missing-framework/strict\tconfig';
+  const missingConfig = 'missing-framework/strict\t\u001b]fixture\u0007config';
   const root = fixture(t, {
     'main.ts': 'export const value = 1;',
     'tsconfig.json': JSON.stringify({ extends: missingConfig }),
@@ -142,8 +142,9 @@ test('check: terminal diagnostics escape controls in a TypeScript config error',
   const text = check(root, []);
   assert.equal(text.status, 2, text.stdout + text.stderr);
   assert.match(text.stderr, /\[extract\/tsconfig-invalid\] .*tsconfig\.json/);
-  assert.ok(text.stderr.includes('missing-framework/strict\\u0009config'));
-  assert.doesNotMatch(text.stderr, /\t/);
+  assert.ok(text.stderr.includes('missing-framework/strict\\u0009\\u001b]fixture\\u0007config'));
+  assert.match(text.stderr, /control characters escaped.*--json/i);
+  assert.doesNotMatch(text.stderr, /[\t\u001b\u0007]/);
 
   const json = check(root, ['--json']);
   assert.equal(json.status, 2, json.stdout + json.stderr);
@@ -159,10 +160,14 @@ test('check: argument errors preserve built-in usage layout and escape option te
   const text = check('.', [option]);
   assert.equal(text.status, 2);
   const firstLine = '[cli/usage] Invalid option: --unknown\\u0009option\\u000amore\\u001b\\u009d';
-  assert.equal(text.stderr, firstLine + '\n' + help.stdout);
+  const newline = text.stderr.indexOf('\n');
+  assert.equal(text.stderr.slice(newline + 1), help.stdout);
+  assert.ok(text.stderr.slice(0, newline).startsWith(firstLine));
+  assert.match(text.stderr.slice(0, newline), /control characters escaped.*--json/i);
 
   const json = check('.', [option, '--json']);
   assert.equal(json.status, 2);
+  assert.doesNotMatch(json.stdout, /[\u001b\u009d]/);
   const [diagnostic] = JSON.parse(json.stdout).diagnostics;
   assert.equal(diagnostic.code, 'cli/usage');
   assert.equal(diagnostic.message, 'Invalid option: ' + option + '\n' + help.stdout.trimEnd());
@@ -492,10 +497,19 @@ test('check: the text summary escapes control characters in parse-failure paths'
   assert.doesNotMatch(text, /\u001b/);
 });
 
+test('check: Windows parse-failure paths print verbatim', () => {
+  for (const file of ['\\\\server\\share\\broken.py', '\\\\?\\C:\\repo\\broken.py']) {
+    const line = textWithParseError(file).split('\n').find(line => line.includes('parse failed'));
+    assert.equal(line, '  Not analyzed, parse failed: ' + file);
+  }
+});
+
 test('check: parse paths with literal escapes remain distinct from control characters', () => {
   const controlCharacter = textWithParseError('src/bad\n.py');
   const literalEscape = textWithParseError('src/bad\\u000a.py');
   assert.match(controlCharacter, /src\/bad\\u000a\.py/);
-  assert.match(literalEscape, /src\/bad\\\\u000a\.py/);
+  assert.match(controlCharacter, /control characters escaped.*--json/i);
+  assert.match(literalEscape, /src\/bad\\u000a\.py/);
+  assert.doesNotMatch(literalEscape, /control characters escaped/);
   assert.notEqual(controlCharacter, literalEscape);
 });

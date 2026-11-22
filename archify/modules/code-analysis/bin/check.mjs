@@ -241,8 +241,14 @@ function openRuleCounts(findings) {
 const CLI = fileURLToPath(new URL('../../../bin/archify.mjs', import.meta.url));
 
 export function formatText(r) {
-  if (r.action === 'accept-finding' || r.action === 'revoke-finding') return `${r.action === 'accept-finding' ? 'Accepted' : 'Revoked acceptance for'} ${r.id}\n  Baseline: ${r.baseline} (${r.entries} accepted entries)`;
-  if (r.action === 'update-baseline') return `Baseline written: ${r.baseline}\n  ${r.entries} accepted findings (${r.kept} kept, ${r.added} added, ${r.dropped} no longer found and dropped)`;
+  if (r.action === 'accept-finding' || r.action === 'revoke-finding') return [
+    `${r.action === 'accept-finding' ? 'Accepted' : 'Revoked acceptance for'} ${r.id}`,
+    `  Baseline: ${r.baseline} (${r.entries} accepted entries)`,
+  ].map(formatTerminalText).join('\n');
+  if (r.action === 'update-baseline') return [
+    `Baseline written: ${r.baseline}`,
+    `  ${r.entries} accepted findings (${r.kept} kept, ${r.added} added, ${r.dropped} no longer found and dropped)`,
+  ].map(formatTerminalText).join('\n');
   const lines = [];
   const c = r.counts;
   lines.push(`Code analysis: ${r.verdict} — ${c.findings} finding${c.findings === 1 ? '' : 's'} (${c.error} error, ${c.warning} warning, ${c.info} info open; ${c.accepted} accepted)`);
@@ -269,15 +275,15 @@ export function formatText(r) {
   const uncovered = r.coverage || { parseErrors: [], otherLanguages: [] };
   if (uncovered.analyzedFiles !== undefined) {
     const scope = `  Graph/rule scope: ${uncovered.analyzedFiles} source file${uncovered.analyzedFiles === 1 ? '' : 's'} analyzed`;
-    const breakdown = Object.entries(uncovered.excludedRoleCounts || {}).map(([role, count]) => `${count} ${formatTerminalText(role)}`).join(', ');
+    const breakdown = Object.entries(uncovered.excludedRoleCounts || {}).map(([role, count]) => `${count} ${role}`).join(', ');
     lines.push(uncovered.excludedByRole ? `${scope}, ${uncovered.excludedByRole} excluded by role${breakdown ? ` (${breakdown})` : ''}` : scope);
   }
-  if (uncovered.parseErrors.length) lines.push(`  Not analyzed, parse failed: ${uncovered.parseErrors.map(formatTerminalText).join(', ')}`);
+  if (uncovered.parseErrors.length) lines.push(`  Not analyzed, parse failed: ${uncovered.parseErrors.join(', ')}`);
   if (uncovered.otherLanguages.length) lines.push(`  Not analyzed, other language: ${uncovered.otherLanguages.map((l) => `${l.files} ${l.adapter}`).join(', ')}`);
   for (const source of uncovered.external || []) {
     const coverage = source.coverage.complete === true ? 'complete' : source.coverage.complete === false ? 'incomplete' : 'unknown';
     const files = source.coverage.files.length;
-    lines.push(`  External ${formatTerminalText(source.id)}: ${formatTerminalText(source.tool)} ${source.toolVersion ? formatTerminalText(source.toolVersion) : '(version unknown)'} · coverage ${coverage} (${files} declared file${files === 1 ? '' : 's'}) · source binding ${source.binding}`);
+    lines.push(`  External ${source.id}: ${source.tool} ${source.toolVersion || '(version unknown)'} · coverage ${coverage} (${files} declared file${files === 1 ? '' : 's'}) · source binding ${source.binding}`);
   }
   if (uncovered.external?.some((source) => source.coverage.complete !== true || source.status !== 'imported' || source.binding !== 'verified')) lines.push('  Empty external reports with incomplete coverage or unverified/changed source binding do not establish a clean scan.');
   if (r.duplicates) {
@@ -287,9 +293,9 @@ export function formatText(r) {
   }
   if (r.diagram) {
     lines.push(`  Diagram alignment: ${r.diagram.mappedComponents}/${r.diagram.components} components mapped · ${r.diagram.unmappedModules.length} unmapped module${r.diagram.unmappedModules.length === 1 ? '' : 's'} · ${r.diagram.offDiagramFindings} finding${r.diagram.offDiagramFindings === 1 ? '' : 's'} off diagram`);
-    if (r.diagram.unmappedModules.length) lines.push(`    unmapped modules: ${r.diagram.unmappedModules.slice(0, 12).map(formatTerminalText).join(', ')}${r.diagram.unmappedModules.length > 12 ? ` (+${r.diagram.unmappedModules.length - 12} more)` : ''}`);
-    if (r.diagram.ambiguousModules?.length) lines.push(`    ambiguous component mapping: ${r.diagram.ambiguousModules.map((m) => `${formatTerminalText(m.id)} (${m.components.map(formatTerminalText).join(', ')})`).join('; ')}. Imports involving these modules retain module-level evidence.`);
-    if (r.diagram.undeclaredEdges.length) lines.push(`    undeclared component imports: ${r.diagram.undeclaredEdges.slice(0, 8).map((e) => `${formatTerminalText(e.from)} -> ${formatTerminalText(e.to)} (${e.weight})`).join(', ')}${r.diagram.undeclaredEdges.length > 8 ? ` (+${r.diagram.undeclaredEdges.length - 8} more)` : ''}`);
+    if (r.diagram.unmappedModules.length) lines.push(`    unmapped modules: ${r.diagram.unmappedModules.slice(0, 12).join(', ')}${r.diagram.unmappedModules.length > 12 ? ` (+${r.diagram.unmappedModules.length - 12} more)` : ''}`);
+    if (r.diagram.ambiguousModules?.length) lines.push(`    ambiguous component mapping: ${r.diagram.ambiguousModules.map((m) => `${m.id} (${m.components.join(', ')})`).join('; ')}. Imports involving these modules retain module-level evidence.`);
+    if (r.diagram.undeclaredEdges.length) lines.push(`    undeclared component imports: ${r.diagram.undeclaredEdges.slice(0, 8).map((e) => `${e.from} -> ${e.to} (${e.weight})`).join(', ')}${r.diagram.undeclaredEdges.length > 8 ? ` (+${r.diagram.undeclaredEdges.length - 8} more)` : ''}`);
   }
   if (r.investigation?.leads?.length) {
     lines.push(`Start here: ${r.investigation.leads.length} ranked lead${r.investigation.leads.length === 1 ? '' : 's'}. Each is static evidence, not a proven defect; read the cited source first.`);
@@ -297,7 +303,7 @@ export function formatText(r) {
     if (r.investigation.architecture?.structuralSignals?.length) {
       lines.push('  Architecture signals (outside top leads):');
       for (const sig of r.investigation.architecture.structuralSignals) {
-        lines.push(`    - ${sig.severity.padEnd(7)} ${sig.code}  ${formatTerminalText(sig.where ?? sig.id)}  [${sig.id}]`);
+        lines.push(`    - ${sig.severity.padEnd(7)} ${sig.code}  ${sig.where ?? sig.id}  [${sig.id}]`);
       }
     }
     if (r.investigation.drillDown) lines.push(`  Drill down (${r.investigation.shell}): ${r.investigation.drillDown}`);
@@ -321,20 +327,26 @@ export function formatText(r) {
       lines.push('  Then pass --baseline analysis-baseline.json on every run. Accepted errors stay listed as still to fix.');
     }
   } else lines.push(`PASSED: no open finding at or above ${r.gate.failOn}${r.gate.newOnly ? ' among new findings' : ''}.`);
-  return lines.join('\n');
+  return lines.map(formatTerminalText).join('\n');
 }
 
-function formatTerminalText(value) {
-  return String(value)
-    .replace(/\\/g, '\\\\')
-    .replace(/[\u0000-\u001f\u007f-\u009f]/g, (character) => `\\u${character.codePointAt(0).toString(16).padStart(4, '0')}`);
+function escapeTerminalControl(character) {
+  return `\\u${character.codePointAt(0).toString(16).padStart(4, '0')}`;
+}
+
+function formatTerminalText(text) {
+  const escaped = text.replace(/[\u0000-\u001f\u007f-\u009f]/g, escapeTerminalControl);
+  return escaped === text ? text : `${escaped} (Control characters escaped. Use --json for the exact value.)`;
 }
 
 function formatTerminalDiagnostic({ code, message }) {
-  if (code === 'cli/usage' && message.endsWith(USAGE_SUFFIX)) {
-    return `[${code}] ${formatTerminalText(message.slice(0, -USAGE_SUFFIX.length))}${USAGE_SUFFIX}`;
-  }
-  return `[${code}] ${formatTerminalText(message)}`;
+  const usage = code === 'cli/usage' && message.endsWith(USAGE_SUFFIX) ? USAGE_SUFFIX : '';
+  return formatTerminalText(`[${code}] ${message.slice(0, message.length - usage.length)}`) + usage;
+}
+
+function formatTerminalJson(document) {
+  // JSON.stringify escapes C0 controls inside strings. Escape DEL and C1 too.
+  return JSON.stringify(document, null, 2).replace(/[\u007f-\u009f]/g, escapeTerminalControl);
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
@@ -343,11 +355,11 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   if (!args.length || args[0] === '--help' || args[0] === '-h') console.log(USAGE);
   else {
     runCheck(args).then(({ exitCode, receipt: r }) => {
-      console.log(json ? JSON.stringify(r, null, 2) : formatText(r));
+      console.log(json ? formatTerminalJson(r) : formatText(r));
       process.exitCode = exitCode;
     }).catch((error) => {
       const diagnostics = error instanceof DiagnosticError ? error.diagnostics : [{ code: 'internal/unclassified', severity: 'error', message: error.message, subject: {}, evidence: {}, supportedFixes: [] }];
-      if (json) console.log(JSON.stringify(receipt('error', { command: 'check', diagnostics }), null, 2));
+      if (json) console.log(formatTerminalJson(receipt('error', { command: 'check', diagnostics })));
       else console.error(diagnostics.map(formatTerminalDiagnostic).join('\n'));
       process.exitCode = 2;
     });
