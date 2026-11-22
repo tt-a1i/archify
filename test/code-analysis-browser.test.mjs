@@ -388,9 +388,10 @@ test('Code Analysis refuses changed IR and preserves captured source in the curr
     const localized = render({
       ...source, meta: { ...source.meta, locale: 'zh-CN', repository: publicRepository },
     }, 'localized');
-    for (const [file, theme, label, title, prompt, repositoryLine] of [
-      [view.delivered, 'dark', 'Code Analysis', 'Architecture Diagnosis', 'Start Architecture Diagnosis for this repository.', null],
-      [localized, 'light', '架构诊断', '架构诊断', '启动架构诊断', `仓库：${url} @ ${repository.revision.slice(0, 7)}`],
+    // The prompt targets the reader's own project, so a pinned public repository stays out of it.
+    for (const [file, theme, label, title, prompt] of [
+      [view.delivered, 'dark', 'Code Analysis', 'Architecture Diagnosis', 'Use Archify to create an architecture diagram for this project and start Architecture Diagnosis.'],
+      [localized, 'light', '架构诊断', '架构诊断', '用 Archify 为当前项目生成架构图，并启动架构诊断'],
     ]) {
       const html = fs.readFileSync(file, 'utf8');
       assertOfflineArtifact(html, file);
@@ -411,12 +412,12 @@ test('Code Analysis refuses changed IR and preserves captured source in the curr
           rect.left >= 8 && rect.right <= innerWidth - 8 && rect.top >= 8 && rect.bottom <= innerHeight - 8,
           getComputedStyle(dialog).backgroundColor === getComputedStyle(document.querySelector('.diagram-container')).backgroundColor];
       })()`), [title, 4, 'analysis-info-close', true, true]);
-      assert.equal(await run("document.getElementById('code-analysis-repository')?.innerText ?? null"), repositoryLine);
+      assert.equal(await run("document.querySelector('dialog:modal').innerText.includes(" + JSON.stringify(url) + ")"), false);
       await run("Object.defineProperty(navigator, 'clipboard', { value: { writeText: async text => { window.copiedPrompt = text; } } })");
       await key('Tab', 9);
       assert.equal(await run('document.activeElement.id'), 'code-analysis-copy');
       await key('Enter', 13);
-      assert.equal(await run('window.copiedPrompt'), repositoryLine ? `${prompt}\n${repositoryLine}` : prompt);
+      assert.equal(await run('window.copiedPrompt'), prompt);
       await key('Escape', 27);
       await wait("document.getElementById('code-analysis-info').getAttribute('aria-expanded') === 'false'");
       assert.equal(await run('document.activeElement.id'), 'code-analysis-info');

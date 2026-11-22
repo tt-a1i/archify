@@ -3665,14 +3665,6 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       color: var(--text);
     }
     .analysis-info-start q:lang(zh) { quotes: "「" "」"; }
-    .analysis-info-start #code-analysis-repository {
-      margin-top: 0.3rem;
-      color: var(--text-muted);
-      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      font-size: 0.75rem;
-      line-height: 1.45;
-      word-break: break-all;
-    }
     #code-analysis-dialog button {
       display: inline-flex;
       align-items: center;
@@ -6311,7 +6303,6 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       <div class="analysis-info-bubble">
         <div class="analysis-info-prompt">
           <p><q id="code-analysis-prompt">{{i18n:viewer.diagnosis.prompt}}</q></p>
-          <!-- ARCHIFY:DIAGNOSIS_REPOSITORY -->
         </div>
         <button id="code-analysis-copy" type="button">
           <span class="analysis-info-glyph" aria-hidden="true"></span>
@@ -6419,8 +6410,6 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       });
       document.getElementById('code-analysis-copy').addEventListener('click', function () {
         var prompt = document.getElementById('code-analysis-prompt').textContent;
-        var repository = document.getElementById('code-analysis-repository');
-        if (repository) prompt += '\n' + repository.textContent;
         copyReaderText(prompt, dialog).then(function (copied) {
           status.textContent = viewerText(copied ? 'viewer.common.copied' : 'viewer.common.copyFailed');
         });

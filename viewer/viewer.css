@@ -3495,14 +3495,6 @@ html[data-reader-rail="bottom"] .node-outline-item::after {
   color: var(--text);
 }
 .analysis-info-start q:lang(zh) { quotes: "「" "」"; }
-.analysis-info-start #code-analysis-repository {
-  margin-top: 0.3rem;
-  color: var(--text-muted);
-  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 0.75rem;
-  line-height: 1.45;
-  word-break: break-all;
-}
 #code-analysis-dialog button {
   display: inline-flex;
   align-items: center;

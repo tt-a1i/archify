@@ -730,7 +730,6 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       <div class="analysis-info-bubble">
         <div class="analysis-info-prompt">
           <p><q id="code-analysis-prompt">{{i18n:viewer.diagnosis.prompt}}</q></p>
-          <!-- ARCHIFY:DIAGNOSIS_REPOSITORY -->
         </div>
         <button id="code-analysis-copy" type="button">
           <span class="analysis-info-glyph" aria-hidden="true"></span>
@@ -838,8 +837,6 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       });
       document.getElementById('code-analysis-copy').addEventListener('click', function () {
         var prompt = document.getElementById('code-analysis-prompt').textContent;
-        var repository = document.getElementById('code-analysis-repository');
-        if (repository) prompt += '\n' + repository.textContent;
         copyReaderText(prompt, dialog).then(function (copied) {
           status.textContent = viewerText(copied ? 'viewer.common.copied' : 'viewer.common.copyFailed');
         });
