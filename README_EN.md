@@ -286,6 +286,12 @@ Show 8–12 core components, one primary path, external dependencies, and trust 
 Put supporting detail in cards instead of adding more edges.
 ```
 
+Archify’s built-in **Architecture Diagnosis** maps repository dependencies as a radial star map and a rotatable 3D model. It also shows issue counts on each component of your architecture diagram, with links to the source behind findings such as dependency cycles and dependencies missing from the diagram. Archify offers it once after delivering a repository-backed architecture diagram and starts it only if you say yes. First use automatically installs the analysis components. See the [Code Analysis guide](archify/modules/code-analysis/docs/USAGE.md).
+
+```text
+Use archify Code Analysis on this repository: show module coupling, dependency cycles and hotspots.
+```
+
 ### 3. Refine in chat
 
 Continue with focused requests such as `add Redis`, `move auth to the left`, or `highlight the rollback path`. Archify keeps the typed source available for targeted iteration.
