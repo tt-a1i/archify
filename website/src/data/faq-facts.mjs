@@ -19,7 +19,7 @@ export const faqFacts = [
   },
   {
     question: ['What do I receive, and what are the limits?', '会得到什么？有哪些边界？'],
-    answer: ['The primary deliverable is a self-contained HTML file with its source: typed JSON for diagrams or a Markdown draft for one-page answers. Open it in a browser to explore and export; available interactions depend on the artifact type. Validation checks the authored artifact, not the truth of every claim or runtime system behavior. Archify is not a hosted collaboration service or a general-purpose WYSIWYG editor.', '主要交付物是独立 HTML 文件及其源稿：图表使用类型化 JSON，一页式解答使用 Markdown 草稿。在浏览器里可以浏览和导出，具体交互取决于成品类型。校验检查编写出的成品，不证明每项内容的真实性或系统的实际运行行为。Archify 不提供托管协作服务，也不是通用的所见即所得编辑器。'],
+    answer: ['The primary deliverable is a self-contained HTML file with its source: typed JSON for diagrams or a Markdown draft for one-page answers. Open it in a browser to explore and export; available interactions depend on the artifact type. Validation checks the authored artifact, not the truth of every claim or runtime system behavior. Archify does not generate photos or illustrations. It is not a hosted collaboration service or a general-purpose WYSIWYG editor.', '主要交付物是独立 HTML 文件及其源稿：图表使用类型化 JSON，一页式解答使用 Markdown 草稿。在浏览器里可以浏览和导出，具体交互取决于成品类型。校验检查编写出的成品，不证明每项内容的真实性或系统的实际运行行为。Archify 不用于生成照片或插画，不提供托管协作服务，也不是通用的所见即所得编辑器。'],
   },
   {
     question: ['How has Archify evolved from early 5-diagram articles, and what is the current install command?', '早期报道提到 Archify 支持 5 种图和旧安装命令，现在有什么变化？'],
