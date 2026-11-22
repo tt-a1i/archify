@@ -2338,12 +2338,13 @@ export function createRouter(components, connections = [], {
     return true;
   }
 
+  const shortJogPx = 28;
   const jogs = points => points.slice(3).flatMap((d, offset) => {
     const [a, b, c] = points.slice(offset, offset + 3);
     const axis = a[0] === b[0] ? 1 : 0;
     return b[axis] === c[axis] && c[1 - axis] === d[1 - axis]
       && (b[axis] - a[axis]) * (d[axis] - c[axis]) > 0
-      && Math.abs(c[1 - axis] - b[1 - axis]) < 28 ? [{ offset, axis }] : [];
+      && Math.abs(c[1 - axis] - b[1 - axis]) < shortJogPx ? [{ offset, axis }] : [];
   });
 
   // Work on the finished plan. Changing a port during the greedy pass can
@@ -2480,8 +2481,9 @@ export function createRouter(components, connections = [], {
   }
 
   // Compare finished geometry with the complete scene. Each accepted change
-  // removes a counted signal and preserves bend counts, jogs and previously
-  // uncrossed pairs. A pair can exchange space before either route is installed.
+  // removes a counted signal or a jog, without adding bends or crossing
+  // previously uncrossed pairs. A pair can exchange space before either
+  // route is installed.
   function repairFinishedRoutes(viewBox, borders, accept) {
     const entries = routedEntries();
     const movable = entry => entry.conn.from !== entry.conn.to
@@ -2532,12 +2534,13 @@ export function createRouter(components, connections = [], {
         if (points.length < 2 || points.length > maxPoints || terminal(points) < minimumApproach
           || points.slice(1).some((end, index) => end[0] !== points[index][0] && end[1] !== points[index][1])
           || points.some(([x, y]) => x < 0 || y < 0 || x > viewBox[0] || y > viewBox[1])) return;
-        if (!joint && !crossed.size && !stretch && points.length > 4) return;
+        if (!joint && !crossed.size && !stretch && !(keepEndpointSides && oldJogs) && points.length > 4) return;
         const length = routeLength(points);
         const metrics = budget({ points });
         const bendGain = bends - metrics.routesOverSuggestedBends;
         const stretchGain = stretch - metrics.routesOverSuggestedStretch;
-        if (bendGain < 0 || stretchGain < 0 || jogs(points).length > oldJogs || parallelFrameRunLength(points, borders)) return;
+        const jogGain = oldJogs - jogs(points).length;
+        if (bendGain < 0 || stretchGain < 0 || jogGain < 0 || parallelFrameRunLength(points, borders)) return;
         const key = JSON.stringify(points);
         if (seen.has(key)) return;
         seen.add(key);
@@ -2553,7 +2556,8 @@ export function createRouter(components, connections = [], {
           removed -= 1;
         }
         const gain = bendGain + stretchGain + removed;
-        if ((!joint && !gain) || (!gain && length > oldLength + interiorSegmentPx)) return;
+        const shorterJog = keepEndpointSides && jogGain > 0 && length <= oldLength + 0.0001;
+        if (!gain && ((!joint && !shorterJog) || length > oldLength + interiorSegmentPx)) return;
         candidates.push({ ...next, metrics, gain, length });
       }
       function ports(box, side, axis, preferred, oldPort) {
@@ -2579,6 +2583,28 @@ export function createRouter(components, connections = [], {
           if (cut === undefined) continue;
           consider(before.map((point, i) => i === index - 1 || i === index ? onLane(point, axis, cut) : point),
             oldSides, fromBox, toBox);
+        }
+      }
+      if (keepEndpointSides && before.length === 6 && !joint && (stretch || crossed.size)) {
+        const axis = axisOf(oldSides.fromSide);
+        const bypass = before[2][axis];
+        // Keep the clear bypass corridor and move the contacts toward it.
+        // The original turn stations still leave room to clear the blocker.
+        if (axis === axisOf(oldSides.toSide) && bypass === before[3][axis]) {
+          const nearBypass = (box, port) => {
+            const [low, high] = portLaneLimits(box, axis);
+            const clamp = lane => Math.min(high, Math.max(low, lane));
+            const near = clamp(bypass);
+            const readable = clamp(bypass + Math.sign(port[axis] - bypass) * shortJogPx);
+            return [...new Set([port[axis], near, readable, (port[axis] + readable) / 2])];
+          };
+          for (const source of nearBypass(fromBox, before[0])) {
+            for (const target of nearBypass(toBox, before.at(-1))) {
+              consider([onLane(before[0], axis, source), onLane(before[1], axis, source),
+                before[2], before[3], onLane(before[4], axis, target), onLane(before[5], axis, target)],
+              oldSides, fromBox, toBox);
+            }
+          }
         }
       }
       for (const sides of candidateSidePairs(conn)) {
@@ -2677,13 +2703,13 @@ export function createRouter(components, connections = [], {
     }
   }
 
-  // Keep the current plan unless a bounded port and lane search can expose
-  // a masked approach without adding a crossover or exceeding a route budget.
-  function repairMaskedApproach(conn, [width, height], accept) {
+  // Keep the current plan unless a bounded search can expose a masked
+  // approach or find room for a blocked label within the route budgets.
+  function repairMaskedApproach(conn, [width, height], accept, blockedLabel = false) {
     if (hasAuthoredRouteGeometry(conn) || hasAuthoredLabelPlacement(conn)
         || [conn.fromSide, conn.toSide].some(side => side && side !== 'auto')) return false;
     const current = pathFor(conn);
-    if (current.points.length !== 4) return false;
+    if (current.points.length !== 4 && !(blockedLabel && current.points.length >= 2)) return false;
     const sides = selectedSides.get(conn);
     const from = components.get(conn.from);
     const to = components.get(conn.to);

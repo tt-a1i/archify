@@ -588,6 +588,26 @@ function routeArrowheads(routes) {
   }));
 }
 
+function labelShaftSlots(points, label, transverseAxis) {
+  return points.slice(1).flatMap((end, index) => {
+    const start = points[index];
+    const axis = start[1] === end[1] ? 0 : 1;
+    if (start[1 - axis] !== end[1 - axis]) return [];
+    if (transverseAxis !== undefined && axis !== transverseAxis) return [];
+    const low = Math.min(start[axis], end[axis]);
+    const high = Math.max(start[axis], end[axis]);
+    const size = axis === 0 ? label.width : label.height;
+    return high - low >= size + 16 ? [{ start, end, axis, low, high }] : [];
+  });
+}
+
+function labelFitsShaft(rect, slot) {
+  const [edge, size] = slot.axis === 0 ? [rect.x, rect.width] : [rect.y, rect.height];
+  const reach = rect.height * 2;
+  return edge >= slot.low && edge + size <= slot.high
+    && segmentRectClearanceWithin(slot, rect, reach) <= reach;
+}
+
 function facingGapLabelPlacement(routes, labels, boxes) {
   if (qualityProfile !== 'showcase') return undefined;
   const sideSlots = new Map();
@@ -612,25 +632,14 @@ function facingGapLabelPlacement(routes, labels, boxes) {
       : Math.max(from.x + from.width, to.x + to.width);
     if (!points.every(point => point[axis] >= low && point[axis] <= high
         && point[across] >= crossLow && point[across] <= crossHigh)) continue;
-    const size = axis === 0 ? label.height : label.width;
-    sideSlots.set(relationIndex, points.slice(1).flatMap((end, i) => {
-      const start = points[i];
-      if (start[axis] !== end[axis] || Math.abs(end[across] - start[across]) < size + 16) return [];
-      return [{ start, end, axis: across, low: Math.min(start[across], end[across]),
-        high: Math.max(start[across], end[across]) }];
-    }));
+    sideSlots.set(relationIndex, labelShaftSlots(points, label, across));
   }
   if (!sideSlots.size) return undefined;
   // In a short gap, only a full slot beside a transverse shaft still
   // reads as a relationship label. Keep the collision when no slot fits.
   return rect => {
     const slots = sideSlots.get(rect.relationIndex);
-    return !slots || slots.some(slot => {
-      const [start, size] = slot.axis === 0 ? [rect.x, rect.width] : [rect.y, rect.height];
-      const reach = rect.height * 2;
-      return start >= slot.low && start + size <= slot.high
-        && segmentRectClearanceWithin(slot, rect, reach) <= reach;
-    });
+    return !slots || slots.some(slot => labelFitsShaft(rect, slot));
   };
 }
 
@@ -980,7 +989,7 @@ function frameOutline(frame) {
   return prepareCrossingPath(segments);
 }
 
-function finishAutomaticLabels(scene, repairFixedCanvas = false, { canMove, sideOnly = false } = {}) {
+function finishAutomaticLabels(scene, repairFixedCanvas = false, { canMove, sideOnly = false, requiresSlot } = {}) {
   if ((!auto && !canMove) || !scene.labels.length) return scene;
   // A standard diagram with authored layout and canvas keeps its default
   // label, so a collision still reaches the placement diagnostic.
@@ -994,10 +1003,13 @@ function finishAutomaticLabels(scene, repairFixedCanvas = false, { canMove, side
       halfWidth: routeStrokeWidth(relation) / 2 };
   });
   const strokesByIndex = repairFixedCanvas && new Map(strokes.map(stroke => [stroke.relationIndex, stroke]));
+  const allowsGapPlacement = facingGapLabelPlacement(scene.routes, scene.labels, scene.boxes);
   const labels = placeAutomaticLabels({
     ...scene,
     canMove,
-    allowsPlacement: facingGapLabelPlacement(scene.routes, scene.labels, scene.boxes),
+    allowsPlacement: requiresSlot
+      ? rect => requiresSlot(rect) && (!allowsGapPlacement || allowsGapPlacement(rect))
+      : allowsGapPlacement,
     arrowheads,
     clearanceBorders,
     // The quadratic outline approximates the SVG's round corners within
@@ -1136,21 +1148,32 @@ function fixedCanvasComposition(initial) {
 function repairFixedCanvasLabels(scene) {
   if (!auto || !arch.meta?.viewBox || connections.some(relation => relation.labelAt)) return scene;
   let repaired = finishAutomaticLabels(scene, true);
+  const boxes = [...scene.boxes.values()];
   const ownMarker = (composition, label) => composition.arrowheads.find(marker => marker.relationIndex === label.relationIndex)?.marker;
   for (const [index] of repaired.labels.entries()) {
     const before = repaired;
     const label = before.labels[index];
-    if (!maskCoversArrowhead(label, ownMarker(before, label))) continue;
+    const blocked = qualityProfile === 'showcase' && boxes.some(box => rectsOverlap(label, box, -2));
+    if (!blocked && !maskCoversArrowhead(label, ownMarker(before, label))) continue;
     const baseline = labelProblems(before, automaticLabelOwnershipMargin);
+    // A short facing dogleg can leave no legal plate position. Try another
+    // route with a full shaft slot and keep the usual collision checks.
     router.repairMaskedApproach(label.relation, before.viewBox, (next, sides, shorter) => {
       const routes = before.routes.map(route => route.relation === label.relation ? { ...route, ...next } : route);
       const arrowheads = routeArrowheads(routes);
-      const candidate = finishAutomaticLabels({ ...before, routes, arrowheads }, true);
+      const slots = blocked ? labelShaftSlots(next.points, label) : null;
+      if (slots && !slots.length) return false;
+      const requiresSlot = slots ? rect => slots.some(slot => labelFitsShaft(rect, slot)) : undefined;
+      const labels = blocked ? before.labels.map((rect, i) => i === index
+        ? { ...rect, ...connectionLabelBoxAt(label.relation, labelPoint(label.relation, next.points)) } : rect) : before.labels;
+      const candidate = finishAutomaticLabels({ ...before, labels, routes, arrowheads }, true, blocked ? {
+        canMove: rect => rect.relation === label.relation, sideOnly: true, requiresSlot,
+      } : undefined);
       const placed = candidate.labels[index];
       const path = prepareCrossingPath(roundedPathSegments(next.points, 8));
       const halfWidth = routeStrokeWidth(label.relation) / 2;
-      if (placed === label || maskCoversArrowhead(placed, ownMarker(candidate, placed))
-          || candidate.labels.some(rect => (rect !== placed || !shorter)
+      if (placed === label || (requiresSlot && !requiresSlot(placed)) || maskCoversArrowhead(placed, ownMarker(candidate, placed))
+          || candidate.labels.some(rect => (rect !== placed || blocked || !shorter)
             && drawnPathRectClearance(path, rect, halfWidth) < halfWidth)
           || !preservesLabels(baseline, labelProblems(candidate, automaticLabelOwnershipMargin))) return false;
       const proposedRouter = {
@@ -1166,7 +1189,7 @@ function repairFixedCanvasLabels(scene) {
       }
       repaired = candidate;
       return true;
-    });
+    }, blocked);
   }
   return repaired;
 }
