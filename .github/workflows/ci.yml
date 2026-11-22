@@ -53,6 +53,7 @@ jobs:
           fi
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
+          package-manager-cache: false
           node-version: 22
       - name: Classify changed paths
         id: classify
@@ -90,6 +91,7 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
+          package-manager-cache: false
           node-version: 22
       - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
         with:
@@ -152,6 +154,7 @@ jobs:
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         if: needs.scope.outputs.compatibility == 'true'
         with:
+          package-manager-cache: false
           node-version: ${{ matrix.node-version }}
       - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
         if: needs.scope.outputs.compatibility == 'true'
@@ -194,6 +197,7 @@ jobs:
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         if: needs.scope.outputs.scope == 'core'
         with:
+          package-manager-cache: false
           node-version: 22
       - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
         if: needs.scope.outputs.scope == 'core'
@@ -231,6 +235,7 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
+          package-manager-cache: false
           node-version: 22
       - name: Provision a known Chrome runtime
         id: setup-chrome
@@ -260,6 +265,7 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
+          package-manager-cache: false
           node-version: 22
       - name: Provision a known Chrome runtime
         id: setup-chrome
@@ -359,6 +365,7 @@ jobs:
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         if: needs.scope.outputs.package == 'true'
         with:
+          package-manager-cache: false
           node-version: 22
       - name: Rebuild archify.zip and compare exact bytes
         if: needs.scope.outputs.package == 'true'
@@ -390,6 +397,7 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
+          package-manager-cache: false
           node-version: 22
       - name: Public notifier manifest must reference an existing stable Release
         env:
@@ -467,6 +475,7 @@ jobs:
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         if: needs.scope.outputs.package == 'true' || (needs.scope.outputs.windows == 'true' && runner.os != 'Linux')
         with:
+          package-manager-cache: false
           node-version: 22
       - name: Extract packaged skill
         if: needs.scope.outputs.package == 'true' && (runner.os != 'Windows')
@@ -553,6 +562,7 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
+          package-manager-cache: false
           node-version: 22
       - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
         with:
@@ -666,6 +676,7 @@ jobs:
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         if: needs.scope.outputs.windows == 'true'
         with:
+          package-manager-cache: false
           node-version: ${{ matrix.node-version }}
       - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
         if: needs.scope.outputs.windows == 'true'
@@ -785,6 +796,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
+          package-manager-cache: false
           node-version: 22
       - name: Validate Cloudflare destination
         env:
