@@ -8,8 +8,8 @@
   "provenance": "unknown",
   "artifact": {
     "path": "examples/drilldown-overview.html",
-    "sha256": "e91938c5a1b7d8a4e1ade2e20a5ccd8b6618be8ebf85b7149c93304d01c54e46",
-    "bytes": 915342
+    "sha256": "b9d1ea1e76cad640b4e3786f3e705bcd6b6fa1aa79f3b53f4b4909787aa08c7b",
+    "bytes": 915981
   },
   "state": {
     "detail": "read",
@@ -94,13 +94,13 @@
         "diagramType": "architecture",
         "documentScrollUnclipped": true,
         "ok": true,
-        "readerWidth": 1516,
-        "diagramWidth": 1486,
+        "readerWidth": 1512,
+        "diagramWidth": 1482,
         "pageComposition": {
           "bodyPaddingPx": 64,
           "headerPx": 86,
           "diagramChromePx": 84,
-          "svgPx": 693,
+          "svgPx": 692,
           "cardsPx": 0,
           "viewBoxHeight": 420
         },
@@ -146,13 +146,13 @@
         "diagramType": "architecture",
         "documentScrollUnclipped": true,
         "ok": true,
-        "readerWidth": 1688,
-        "diagramWidth": 1658,
+        "readerWidth": 1682,
+        "diagramWidth": 1652,
         "pageComposition": {
           "bodyPaddingPx": 64,
           "headerPx": 86,
           "diagramChromePx": 84,
-          "svgPx": 774,
+          "svgPx": 771,
           "cardsPx": 0,
           "viewBoxHeight": 420
         },
@@ -355,13 +355,13 @@
         "diagramType": "architecture",
         "documentScrollUnclipped": true,
         "ok": true,
-        "readerWidth": 1516,
-        "diagramWidth": 1486,
+        "readerWidth": 1512,
+        "diagramWidth": 1482,
         "pageComposition": {
           "bodyPaddingPx": 64,
           "headerPx": 86,
           "diagramChromePx": 84,
-          "svgPx": 693,
+          "svgPx": 692,
           "cardsPx": 0,
           "viewBoxHeight": 420
         },
@@ -407,13 +407,13 @@
         "diagramType": "architecture",
         "documentScrollUnclipped": true,
         "ok": true,
-        "readerWidth": 1688,
-        "diagramWidth": 1658,
+        "readerWidth": 1682,
+        "diagramWidth": 1652,
         "pageComposition": {
           "bodyPaddingPx": 64,
           "headerPx": 86,
           "diagramChromePx": 84,
-          "svgPx": 774,
+          "svgPx": 771,
           "cardsPx": 0,
           "viewBoxHeight": 420
         },
@@ -568,13 +568,13 @@
         "diagramType": "architecture",
         "documentScrollUnclipped": true,
         "ok": true,
-        "readerWidth": 1516,
-        "diagramWidth": 1486,
+        "readerWidth": 1512,
+        "diagramWidth": 1482,
         "pageComposition": {
           "bodyPaddingPx": 64,
           "headerPx": 86,
           "diagramChromePx": 84,
-          "svgPx": 693,
+          "svgPx": 692,
           "cardsPx": 0,
           "viewBoxHeight": 420
         },
@@ -620,13 +620,13 @@
         "diagramType": "architecture",
         "documentScrollUnclipped": true,
         "ok": true,
-        "readerWidth": 1688,
-        "diagramWidth": 1658,
+        "readerWidth": 1682,
+        "diagramWidth": 1652,
         "pageComposition": {
           "bodyPaddingPx": 64,
           "headerPx": 86,
           "diagramChromePx": 84,
-          "svgPx": 774,
+          "svgPx": 771,
           "cardsPx": 0,
           "viewBoxHeight": 420
         },
