@@ -16,10 +16,14 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       scope: ${{ steps.classify.outputs.scope }}
+      compatibility: ${{ steps.classify.outputs.compatibility }}
       website: ${{ steps.classify.outputs.website }}
       generated: ${{ steps.classify.outputs.generated }}
       browser: ${{ steps.classify.outputs.browser }}
+      browserProfile: ${{ steps.classify.outputs.browserProfile }}
+      browserTests: ${{ steps.classify.outputs.browserTests }}
       webm: ${{ steps.classify.outputs.webm }}
+      webmProfile: ${{ steps.classify.outputs.webmProfile }}
       package: ${{ steps.classify.outputs.package }}
       windows: ${{ steps.classify.outputs.windows }}
       manifest: ${{ steps.classify.outputs.manifest }}
@@ -49,6 +53,7 @@ jobs:
           fi
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
+          package-manager-cache: false
           node-version: 22
       - name: Classify changed paths
         id: classify
@@ -57,12 +62,14 @@ jobs:
           CI_EVENT_NAME: ${{ github.event_name }}
           CI_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
           CI_REF: ${{ github.ref }}
+      - uses: ./.github/actions/setup-pnpm
+        if: steps.classify.outputs.scope == 'docs' && (contains(fromJSON(steps.classify.outputs.owners), 'readme') || contains(fromJSON(steps.classify.outputs.owners), 'changelog'))
       - name: Install documentation check dependencies
         if: steps.classify.outputs.scope == 'docs' && (contains(fromJSON(steps.classify.outputs.owners), 'readme') || contains(fromJSON(steps.classify.outputs.owners), 'changelog'))
-        run: npm ci --ignore-scripts --no-audit --no-fund
+        run: pnpm --filter archify-repository install --frozen-lockfile --ignore-scripts
       - name: Check affected documentation contracts
         if: steps.classify.outputs.scope == 'docs'
-        run: npm run test:affected
+        run: node scripts/run-affected-tests.mjs
         env:
           CI_TEST_OWNERS: ${{ steps.classify.outputs.owners }}
           CI_CHANGED_TESTS: ${{ steps.classify.outputs.changedTests }}
@@ -84,18 +91,16 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
+          package-manager-cache: false
           node-version: 22
-          cache: npm
-          cache-dependency-path: |
-            package-lock.json
-            archify/package-lock.json
+      - uses: ./.github/actions/setup-pnpm
       - name: Install regression dependencies
-        run: npm ci && npm --prefix archify ci
+        run: pnpm install --frozen-lockfile
       # Reuse a shard's installed runtime instead of bootstrapping after all
       # shards finish. These checks still run exactly once in complete CI.
       - name: Generated outputs and representative goldens
         if: matrix.shard == 2
-        run: npm run test:generated
+        run: pnpm run test:generated
       - name: Verify community Hermes adapter
         if: matrix.shard == 2
         run: node --test integrations/hermes-agent/test/plugin-contract.test.mjs
@@ -110,7 +115,7 @@ jobs:
       # The root runner enumerates only test/; the module suite lives with the module.
       - name: Verify generated Code Analysis Python parser
         if: matrix.module-shard == 1
-        run: npm run check:python
+        run: pnpm run check:python
         working-directory: archify/modules/code-analysis
       - name: Code Analysis module suite
         if: matrix.module-shard
@@ -123,54 +128,6 @@ jobs:
       - name: Run a complete regression shard
         if: '!matrix.module-shard'
         run: node scripts/run-tests.mjs --shard=${{ matrix.shard }}/4
-
-  js-ts-platform:
-    needs: scope
-    if: needs.scope.outputs.scope == 'full'
-    name: JS/TS project SDK (${{ matrix.os }})
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
-        with:
-          node-version: 22
-      - name: Install Code Analysis dependencies
-        run: npm ci --prefix archify/modules/code-analysis --ignore-scripts --no-audit --no-fund
-      - name: Verify JS/TS project selection, resolution and calls
-        run: >-
-          node --test
-          archify/modules/code-analysis/test/ts-sdk.test.mjs
-          archify/modules/code-analysis/test/ts-projects.test.mjs
-          archify/modules/code-analysis/test/ts-snapshot.test.mjs
-          archify/modules/code-analysis/test/ts-upstream-alignment.test.mjs
-          archify/modules/code-analysis/test/ts-upstream-ledger.test.mjs
-          archify/modules/code-analysis/test/ts-official-projects.test.mjs
-          archify/modules/code-analysis/test/ts-official-modules.test.mjs
-          archify/modules/code-analysis/test/ts-official-syntax.test.mjs
-          archify/modules/code-analysis/test/ts-official-definitions.test.mjs
-          archify/modules/code-analysis/test/calls.test.mjs
-      - name: Install boundary TypeScript SDKs in temporary directories
-        if: matrix.os == 'ubuntu-latest'
-        shell: bash
-        run: |
-          for version in 5.6.3 6.0.3; do
-            npm install --prefix "$RUNNER_TEMP/archify-ts-$version" --ignore-scripts --no-audit --no-fund --no-save "typescript@$version"
-          done
-      - name: Compare official engines at supported version boundaries
-        if: matrix.os == 'ubuntu-latest'
-        shell: bash
-        run: |
-          for version in 5.6.3 6.0.3; do
-            ARCHIFY_TEST_TYPESCRIPT_SDK="$RUNNER_TEMP/archify-ts-$version/node_modules/typescript" node --test \
-              archify/modules/code-analysis/test/ts-official-projects.test.mjs \
-              archify/modules/code-analysis/test/ts-official-modules.test.mjs \
-              archify/modules/code-analysis/test/ts-official-syntax.test.mjs \
-              archify/modules/code-analysis/test/ts-official-definitions.test.mjs
-          done
 
   test:
     needs: scope
@@ -185,30 +142,30 @@ jobs:
         env:
           SCOPE_RESULT: ${{ needs.scope.result }}
           CI_SCOPE: ${{ needs.scope.outputs.scope }}
+          CI_COMPATIBILITY: ${{ needs.scope.outputs.compatibility }}
         shell: bash
         run: |
           test "$SCOPE_RESULT" = success
-          case "$CI_SCOPE" in docs|core|full) ;; *) exit 1 ;; esac
+          case "$CI_SCOPE:$CI_COMPATIBILITY" in docs:false|core:false|core:true|full:true) ;; *) exit 1 ;; esac
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-        if: needs.scope.outputs.scope != 'docs'
+        if: needs.scope.outputs.compatibility == 'true'
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
-        if: needs.scope.outputs.scope != 'docs'
+        if: needs.scope.outputs.compatibility == 'true'
         with:
+          package-manager-cache: false
           node-version: ${{ matrix.node-version }}
-          cache: npm
-          cache-dependency-path: |
-            package-lock.json
-            archify/package-lock.json
+      - uses: ./.github/actions/setup-pnpm
+        if: needs.scope.outputs.compatibility == 'true'
       - name: Install renderer dependencies
-        if: needs.scope.outputs.scope != 'docs'
-        run: npm ci && npm --prefix archify ci
+        if: needs.scope.outputs.compatibility == 'true'
+        run: pnpm install --frozen-lockfile
       - name: Supported Node runtime compatibility
-        if: needs.scope.outputs.scope != 'docs'
-        run: npm run test:compat
+        if: needs.scope.outputs.compatibility == 'true'
+        run: pnpm run test:compat
 
   canonical-test:
     name: test (22)
-    needs: [scope, full-regression, js-ts-platform]
+    needs: [scope, full-regression]
     if: always() && !cancelled()
     runs-on: ubuntu-latest
     steps:
@@ -231,107 +188,78 @@ jobs:
             full:success|core:skipped|docs:skipped) ;;
             *) exit 1 ;;
           esac
-      - name: Require JS/TS platform matrix
-        env:
-          CI_SCOPE: ${{ needs.scope.outputs.scope }}
-          JS_TS_RESULT: ${{ needs['js-ts-platform'].result }}
-        shell: bash
-        run: |
-          case "$CI_SCOPE:$JS_TS_RESULT" in
-            full:success|core:skipped|docs:skipped) ;;
-            *) exit 1 ;;
-          esac
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         if: needs.scope.outputs.scope == 'core'
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         if: needs.scope.outputs.scope == 'core'
         with:
+          package-manager-cache: false
           node-version: 22
-          cache: npm
-          cache-dependency-path: |
-            package-lock.json
-            archify/package-lock.json
+      - uses: ./.github/actions/setup-pnpm
+        if: needs.scope.outputs.scope == 'core'
       - name: Install renderer dependencies
         if: needs.scope.outputs.scope == 'core'
-        run: npm ci && npm --prefix archify ci
+        run: pnpm install --frozen-lockfile
       - name: Core public CLI contracts
-        if: needs.scope.outputs.scope == 'core'
-        run: npm test
+        if: needs.scope.outputs.scope == 'core' && needs.scope.outputs.compatibility == 'true'
+        run: pnpm test
       - name: Generated outputs and representative goldens
         if: needs.scope.outputs.scope == 'core' && needs.scope.outputs.generated == 'true'
-        run: npm run test:generated
+        run: pnpm run test:generated
+      - name: Check site builders with changed render inputs
+        if: needs.scope.outputs.scope == 'core' && needs.scope.outputs.generated == 'true' && needs.scope.outputs.website == 'false'
+        run: node --test --test-name-pattern='custom site builders' test/site-language-integration.mjs
       - name: Changed tests and owned regression suites
         if: needs.scope.outputs.scope == 'core'
-        run: npm run test:affected
+        run: pnpm run test:affected
         env:
           CI_TEST_OWNERS: ${{ needs.scope.outputs.owners }}
           CI_CHANGED_TESTS: ${{ needs.scope.outputs.changedTests }}
 
   browser-regression:
     needs: scope
-    if: always() && !cancelled()
+    if: needs.scope.result == 'success' && needs.scope.outputs.browser == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4]
+        # Share setup across up to four focused suites.
+        shard: ${{ fromJSON((needs.scope.outputs.browserProfile != 'changed' || fromJSON(needs.scope.outputs.browserTests || '[]')[4]) && '[1,2,3,4]' || '[1]') }}
     steps:
-      - name: Require successful scope checks
-        env:
-          SCOPE_RESULT: ${{ needs.scope.result }}
-          CI_SCOPE: ${{ needs.scope.outputs.scope }}
-        shell: bash
-        run: |
-          test "$SCOPE_RESULT" = success
-          case "$CI_SCOPE" in docs|core|full) ;; *) exit 1 ;; esac
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-        if: needs.scope.outputs.browser == 'true'
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
-        if: needs.scope.outputs.browser == 'true'
         with:
+          package-manager-cache: false
           node-version: 22
       - name: Provision a known Chrome runtime
-        if: needs.scope.outputs.browser == 'true'
         id: setup-chrome
         uses: browser-actions/setup-chrome@48ad923757ca74d66703209fe939badbdf80f2f4 # v2.2.0
         with:
           chrome-version: stable
           install-dependencies: true
+      - uses: ./.github/actions/setup-pnpm
       - name: Install browser test dependencies
-        if: needs.scope.outputs.browser == 'true'
-        run: |
-          npm ci --ignore-scripts --no-audit --no-fund
-          npm --prefix archify ci --ignore-scripts --no-audit --no-fund
-          npm --prefix archify/modules/code-analysis ci --ignore-scripts --no-audit --no-fund
+        run: pnpm install --frozen-lockfile --ignore-scripts
       - name: Run shared browser regression gate
-        if: needs.scope.outputs.browser == 'true'
-        run: npm run test:browser -- --shard=${{ matrix.shard }}/4
+        run: pnpm run test:browser --shard=${{ matrix.shard }}/${{ strategy.job-total }}
         env:
           ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
           ARCHIFY_CHROME_NO_SANDBOX: '1'
+          CI_BROWSER_PROFILE: ${{ needs.scope.outputs.browserProfile }}
+          CI_BROWSER_TESTS: ${{ needs.scope.outputs.browserTests }}
+          CI_STORY_BROWSER_OWNER: ${{ needs.scope.outputs.webm == 'true' && needs.scope.outputs.webmProfile != 'viewer' && 'webm' || 'browser' }}
 
   webm-decode:
     needs: scope
-    if: always() && !cancelled()
+    if: needs.scope.result == 'success' && needs.scope.outputs.webm == 'true'
     runs-on: ubuntu-latest
     steps:
-      # Keep every required matrix check present; fail closed if classification/checks fail.
-      - name: Require successful scope checks
-        env:
-          SCOPE_RESULT: ${{ needs.scope.result }}
-          CI_SCOPE: ${{ needs.scope.outputs.scope }}
-        shell: bash
-        run: |
-          test "$SCOPE_RESULT" = success
-          case "$CI_SCOPE" in docs|core|full) ;; *) exit 1 ;; esac
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-        if: needs.scope.outputs.webm == 'true'
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
-        if: needs.scope.outputs.webm == 'true'
         with:
+          package-manager-cache: false
           node-version: 22
       - name: Provision a known Chrome runtime
-        if: needs.scope.outputs.webm == 'true'
         id: setup-chrome
         uses: browser-actions/setup-chrome@48ad923757ca74d66703209fe939badbdf80f2f4 # v2.2.0
         with:
@@ -343,7 +271,6 @@ jobs:
       # permission with its own AppArmor profile, as Chromium documents, rather than
       # disabling the sandbox or relaxing the restriction for the whole runner.
       - name: Let the provisioned Chrome start with its sandbox
-        if: needs.scope.outputs.webm == 'true'
         env:
           CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
         shell: bash
@@ -368,12 +295,11 @@ jobs:
           timeout 60 "$CHROME_PATH" --headless=new --disable-gpu --user-data-dir="$profile_dir" --dump-dom about:blank >/dev/null
           rm -rf "$profile_dir"
       - name: Install the WebM decoder
-        if: needs.scope.outputs.webm == 'true'
         run: sudo apt-get update && sudo apt-get install --no-install-recommends -y ffmpeg
-      - name: Decode a real motion export and reject static frames
-        if: needs.scope.outputs.webm == 'true'
-        run: npm run test:webm
+      - name: Verify selected media exports with FFmpeg
+        run: node test/webm-artifact.smoke.mjs "$CI_WEBM_PROFILE"
         env:
+          CI_WEBM_PROFILE: ${{ needs.scope.outputs.webmProfile }}
           ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
           ARCHIFY_CHROME_NO_SANDBOX: '1'
 
@@ -382,18 +308,35 @@ jobs:
     if: always() && !cancelled()
     runs-on: ubuntu-latest
     steps:
-      - name: Require every browser and WebM gate to succeed
+      - name: Verify media jobs against the CI plan
         env:
           SCOPE_RESULT: ${{ needs.scope.result }}
           CI_SCOPE: ${{ needs.scope.outputs.scope }}
+          CI_BROWSER: ${{ needs.scope.outputs.browser }}
+          CI_BROWSER_PROFILE: ${{ needs.scope.outputs.browserProfile }}
+          CI_WEBM: ${{ needs.scope.outputs.webm }}
+          CI_WEBM_PROFILE: ${{ needs.scope.outputs.webmProfile }}
           BROWSER_RESULT: ${{ needs.browser-regression.result }}
           WEBM_RESULT: ${{ needs.webm-decode.result }}
         shell: bash
         run: |
           test "$SCOPE_RESULT" = success
-          case "$CI_SCOPE" in docs|core|full) ;; *) exit 1 ;; esac
-          test "$BROWSER_RESULT" = success
-          test "$WEBM_RESULT" = success
+          case "$CI_SCOPE:$CI_BROWSER:$CI_BROWSER_PROFILE:$CI_WEBM" in
+            docs:false:full:false|full:true:full:*|core:false:full:*|core:true:full:*|core:true:atlas:false|core:true:changed:*) ;;
+            *) echo "Invalid media scope $CI_SCOPE/$CI_BROWSER/$CI_BROWSER_PROFILE/$CI_WEBM"; exit 1 ;;
+          esac
+          case "$CI_SCOPE:$CI_WEBM:$CI_WEBM_PROFILE" in
+            *:false:full|*:true:full|core:true:viewer|core:true:story) ;;
+            *) echo "Invalid WebM profile '$CI_WEBM_PROFILE'"; exit 1 ;;
+          esac
+          require_media_result() {
+            case "$2:$3" in
+              true:success|false:skipped) ;;
+              *) echo "Unexpected $1 result '$3' with requested flag '$2'"; exit 1 ;;
+            esac
+          }
+          require_media_result browser "$CI_BROWSER" "$BROWSER_RESULT"
+          require_media_result WebM "$CI_WEBM" "$WEBM_RESULT"
 
   zip-freshness:
     needs: scope
@@ -414,6 +357,7 @@ jobs:
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         if: needs.scope.outputs.package == 'true'
         with:
+          package-manager-cache: false
           node-version: 22
       - name: Rebuild archify.zip and compare exact bytes
         if: needs.scope.outputs.package == 'true'
@@ -426,7 +370,9 @@ jobs:
 
   published-update-manifest:
     needs: scope
-    if: always() && !cancelled()
+    if: >-
+      always() && !cancelled() && !(needs.scope.result == 'success' && needs.scope.outputs.manifest == 'false'
+      && (needs.scope.outputs.scope == 'docs' || needs.scope.outputs.scope == 'core'))
     runs-on: ubuntu-latest
     steps:
       # Keep every required matrix check present; fail closed if classification/checks fail.
@@ -434,18 +380,18 @@ jobs:
         env:
           SCOPE_RESULT: ${{ needs.scope.result }}
           CI_SCOPE: ${{ needs.scope.outputs.scope }}
+          RUN_MANIFEST: ${{ needs.scope.outputs.manifest }}
         shell: bash
         run: |
           test "$SCOPE_RESULT" = success
+          test "$RUN_MANIFEST" = true
           case "$CI_SCOPE" in docs|core|full) ;; *) exit 1 ;; esac
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-        if: needs.scope.outputs.manifest == 'true'
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
-        if: needs.scope.outputs.manifest == 'true'
         with:
+          package-manager-cache: false
           node-version: 22
       - name: Public notifier manifest must reference an existing stable Release
-        if: needs.scope.outputs.manifest == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -517,10 +463,11 @@ jobs:
           test "$SCOPE_RESULT" = success
           case "$CI_SCOPE" in docs|core|full) ;; *) exit 1 ;; esac
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-        if: needs.scope.outputs.package == 'true'
+        if: needs.scope.outputs.package == 'true' || (needs.scope.outputs.windows == 'true' && runner.os != 'Linux')
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
-        if: needs.scope.outputs.package == 'true'
+        if: needs.scope.outputs.package == 'true' || (needs.scope.outputs.windows == 'true' && runner.os != 'Linux')
         with:
+          package-manager-cache: false
           node-version: 22
       - name: Extract packaged skill
         if: needs.scope.outputs.package == 'true' && (runner.os != 'Windows')
@@ -540,21 +487,58 @@ jobs:
       - name: Validate packaged skill without installing dependencies
         if: needs.scope.outputs.package == 'true'
         run: node scripts/package-smoke.mjs
-      - name: Install delivery-lock test dependencies
-        if: needs.scope.outputs.windows == 'true' && runner.os != 'Linux'
-        run: npm ci --ignore-scripts && npm --prefix archify ci --ignore-scripts
+      - uses: ./.github/actions/setup-pnpm
+        if: needs.scope.outputs.scope == 'full' || (needs.scope.outputs.windows == 'true' && runner.os != 'Linux')
+      - name: Install repository test dependencies
+        if: needs.scope.outputs.scope == 'full' || (needs.scope.outputs.windows == 'true' && runner.os != 'Linux')
+        run: pnpm install --frozen-lockfile --ignore-scripts
       - name: Verify delivery-lock ownership with real subprocesses
         if: needs.scope.outputs.windows == 'true' && runner.os != 'Linux'
         run: >-
           node --test
           --test-name-pattern="cli: portable delivery lock:"
-          test/cli.test.mjs
+          test/cli-delivery-lock.test.mjs
       - name: Verify macOS opener stays behind delivery-lock release
         if: needs.scope.outputs.windows == 'true' && runner.os == 'macOS'
         run: >-
           node --test
           --test-name-pattern="cli: lock release failure does not invoke the requested opener"
-          test/cli.test.mjs
+          test/cli-delivery-lock.test.mjs
+
+      # Linux covers the bundled SDK in the complete module suite. Keep both
+      # additional SDK versions here, plus the native macOS and Windows runs.
+      - name: Verify JS/TS project selection, resolution and calls
+        if: needs.scope.outputs.scope == 'full' && runner.os != 'Linux'
+        run: >-
+          node --test
+          archify/modules/code-analysis/test/ts-sdk.test.mjs
+          archify/modules/code-analysis/test/ts-projects.test.mjs
+          archify/modules/code-analysis/test/ts-snapshot.test.mjs
+          archify/modules/code-analysis/test/ts-upstream-alignment.test.mjs
+          archify/modules/code-analysis/test/ts-upstream-ledger.test.mjs
+          archify/modules/code-analysis/test/ts-official-projects.test.mjs
+          archify/modules/code-analysis/test/ts-official-modules.test.mjs
+          archify/modules/code-analysis/test/ts-official-syntax.test.mjs
+          archify/modules/code-analysis/test/ts-official-definitions.test.mjs
+          archify/modules/code-analysis/test/calls.test.mjs
+      - name: Install boundary TypeScript SDKs in temporary directories
+        if: needs.scope.outputs.scope == 'full' && runner.os == 'Linux'
+        shell: bash
+        run: |
+          for version in 5.6.3 6.0.3; do
+            npm install --prefix "$RUNNER_TEMP/archify-ts-$version" --ignore-scripts --no-audit --no-fund --no-save "typescript@$version"
+          done
+      - name: Compare official engines at supported version boundaries
+        if: needs.scope.outputs.scope == 'full' && runner.os == 'Linux'
+        shell: bash
+        run: |
+          for version in 5.6.3 6.0.3; do
+            ARCHIFY_TEST_TYPESCRIPT_SDK="$RUNNER_TEMP/archify-ts-$version/node_modules/typescript" node --test \
+              archify/modules/code-analysis/test/ts-official-projects.test.mjs \
+              archify/modules/code-analysis/test/ts-official-modules.test.mjs \
+              archify/modules/code-analysis/test/ts-official-syntax.test.mjs \
+              archify/modules/code-analysis/test/ts-official-definitions.test.mjs
+          done
 
   website:
     needs: scope
@@ -568,15 +552,17 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
+          package-manager-cache: false
           node-version: 22
-          cache: npm
-          cache-dependency-path: website/package-lock.json
+      - uses: ./.github/actions/setup-pnpm
+        with:
+          workspace: website
       - name: Install website dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
         working-directory: website
       - name: Typecheck and build website
         if: matrix.target == 'pages'
-        run: npm run check && npm run build && npm test
+        run: pnpm run check && pnpm run build && pnpm test
         working-directory: website
       - uses: browser-actions/setup-chrome@48ad923757ca74d66703209fe939badbdf80f2f4 # v2.2.0
         id: website-chrome
@@ -587,9 +573,14 @@ jobs:
         run: |
           sudo apt-get install --yes --no-install-recommends fonts-noto-cjk
           fc-match 'sans-serif:lang=zh-cn'
+      - name: Verify checked-in site language and navigation
+        if: matrix.target == 'cloudflare'
+        run: node --test test/site-language-integration.mjs
+        env:
+          ARCHIFY_CHROME: ${{ steps.website-chrome.outputs.chrome-path }}
       - name: Verify built website navigation and language continuity
         if: matrix.target == 'pages'
-        run: npm run test:browser
+        run: pnpm run test:browser
         working-directory: website
         env:
           ARCHIFY_SITE_ROOT: ${{ github.workspace }}/website/dist
@@ -598,13 +589,13 @@ jobs:
           ARCHIFY_CHROME_NO_SANDBOX: '1'
       - name: Build and validate the Cloudflare static website
         if: matrix.target == 'cloudflare'
-        run: npm run build && node scripts/check-cloudflare-output.mjs && node --test test/deployment-target.test.mjs
+        run: pnpm run build && node scripts/check-cloudflare-output.mjs && node --test test/deployment-target.test.mjs
         working-directory: website
         env:
           ARCHIFY_SITE_TARGET: cloudflare
       - name: Verify Cloudflare navigation and language continuity
         if: matrix.target == 'cloudflare'
-        run: npm run test:browser
+        run: pnpm run test:browser
         working-directory: website
         env:
           ARCHIFY_SITE_ROOT: ${{ github.workspace }}/website/dist-cloudflare
@@ -635,7 +626,10 @@ jobs:
 
   windows-test-portability:
     needs: scope
-    if: always() && !cancelled()
+    # Reserve Windows runners for relevant changes and fail if classification is invalid.
+    if: >-
+      always() && !cancelled() && !(needs.scope.result == 'success' && needs.scope.outputs.windows == 'false'
+      && (needs.scope.outputs.scope == 'docs' || needs.scope.outputs.scope == 'core'))
     name: Windows test portability (Node ${{ matrix.node-version }})${{ matrix.suffix }}
     strategy:
       fail-fast: false
@@ -656,27 +650,28 @@ jobs:
             profile: --smoke
     runs-on: windows-latest
     steps:
-      # Keep every required matrix check present; fail closed if classification/checks fail.
       - name: Require successful scope checks
         env:
           SCOPE_RESULT: ${{ needs.scope.result }}
           CI_SCOPE: ${{ needs.scope.outputs.scope }}
+          RUN_WINDOWS: ${{ needs.scope.outputs.windows }}
         shell: bash
         run: |
           test "$SCOPE_RESULT" = success
           case "$CI_SCOPE" in docs|core|full) ;; *) exit 1 ;; esac
+          test "$RUN_WINDOWS" = true
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         if: needs.scope.outputs.windows == 'true'
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         if: needs.scope.outputs.windows == 'true'
         with:
+          package-manager-cache: false
           node-version: ${{ matrix.node-version }}
+      - uses: ./.github/actions/setup-pnpm
+        if: needs.scope.outputs.windows == 'true'
       - name: Install test dependencies
         if: needs.scope.outputs.windows == 'true'
-        run: npm ci --ignore-scripts && npm --prefix archify ci --ignore-scripts
-      - name: Install Code Analysis task-command test dependencies
-        if: needs.scope.outputs.windows == 'true' && (matrix.profile == '--controlled' || matrix.profile == '--smoke')
-        run: npm ci --prefix archify/modules/code-analysis --ignore-scripts --no-audit --no-fund
+        run: pnpm install --frozen-lockfile --ignore-scripts
       - name: Verify Java source bindings and Maven evidence on Windows
         if: needs.scope.outputs.windows == 'true' && matrix.profile == '--controlled'
         shell: pwsh
@@ -705,6 +700,7 @@ jobs:
         if: needs.scope.outputs.windows == 'true' && (matrix.profile == '--controlled' || matrix.profile == '--smoke')
         run: node --test archify/modules/code-analysis/test/task-command-shell.test.mjs
       - name: Provision controlled Windows path fixtures
+        id: windows-path-fixtures
         if: needs.scope.outputs.windows == 'true'
         shell: pwsh
         run: scripts/windows-path-fixtures.ps1 -NodeVersion '${{ matrix.node-version }}'
@@ -715,7 +711,7 @@ jobs:
           ARCHIFY_REQUIRE_WINDOWS_8DOT3: '1'
           ARCHIFY_REQUIRE_WINDOWS_REAL_PATHS: ${{ (matrix.profile == '--controlled' || matrix.profile == '--smoke') && '1' || '0' }}
       - name: Clean up controlled Windows path fixtures
-        if: ${{ always() && needs.scope.outputs.windows == 'true' }}
+        if: ${{ always() && steps.windows-path-fixtures.outcome != 'skipped' }}
         shell: pwsh
         run: scripts/windows-path-fixtures.ps1 -NodeVersion '${{ matrix.node-version }}' -Cleanup
 
@@ -787,6 +783,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
+          package-manager-cache: false
           node-version: 22
       - name: Validate Cloudflare destination
         env:

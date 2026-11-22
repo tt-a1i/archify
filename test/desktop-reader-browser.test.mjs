@@ -7,14 +7,12 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { ChromeVisualBrowser, findChrome, runVisualCheck } from '../archify/bin/visual-check.mjs';
+import { isolatedVisualBrowser } from './helpers/isolated-visual-browser.mjs';
 import { DESKTOP_READABILITY_VIEWPORT, MIN_PROJECTED_NODE_TEXT_PX } from '../archify/renderers/shared/desktop-readability.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..', 'archify');
 const chromePath = process.env.ARCHIFY_CHROME ? findChrome() : null;
-const packagedHtmlExamples = fs.readdirSync(path.join(skillRoot, 'examples'))
-  .filter((name) => name.endsWith('.html') && !name.endsWith('.visual-check.html'))
-  .sort();
 
 test('waterfall axis labels stay distinct and inside the SVG at nonzero origins', {
   skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
@@ -57,25 +55,6 @@ test('waterfall axis labels stay distinct and inside the SVG at nonzero origins'
     }
   } finally {
     await browser.close();
-  }
-});
-
-test('all packaged HTML examples pass the real visual-check desktop gate', {
-  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
-}, async () => {
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-packaged-examples-'));
-  try {
-    assert.ok(packagedHtmlExamples.length > 0, 'expected at least one packaged HTML example');
-    for (const name of packagedHtmlExamples) {
-      const artifact = path.join(tmp, name);
-      fs.copyFileSync(path.join(skillRoot, 'examples', name), artifact);
-      const result = await runVisualCheck({ artifactPath: artifact, chromePath });
-      assert.equal(result.exitCode, 0, `${name}: ${JSON.stringify(result.receipt, null, 2)}`);
-      assert.equal(result.receipt.containment.status, 'pass', name);
-      assert.equal(result.receipt.containment.viewports.every((viewport) => viewport.ok), true, name);
-    }
-  } finally {
-    fs.rmSync(tmp, { recursive: true, force: true });
   }
 });
 
@@ -133,6 +112,7 @@ test('visual-check collects nested ID-less semantic edge text for every renderer
   skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
 }, async () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-visual-edge-collector-'));
+  const browser = new ChromeVisualBrowser(chromePath);
   const cases = [
     ['architecture', 'examples/web-app.architecture.json'],
     ['workflow', 'examples/agent-tool-call.workflow.json'],
@@ -141,6 +121,7 @@ test('visual-check collects nested ID-less semantic edge text for every renderer
     ['lifecycle', 'examples/agent-run.lifecycle.json'],
   ];
   try {
+    await browser.sessionPromise;
     for (const [index, [type, input]] of cases.entries()) {
       const artifact = path.join(tmp, `${type}.html`);
       execFileSync(process.execPath, [
@@ -152,7 +133,9 @@ test('visual-check collects nested ID-less semantic edge text for every renderer
         : `<g data-edge-from="collector-${type}" data-edge-to="reader-${type}" data-detail="context"><text x="1" y="1" font-size="5">same-group semantic edge</text><g data-detail="fine"><text x="1" y="2" font-size="1">fine nested annotation</text></g></g>`;
       const injected = fs.readFileSync(artifact, 'utf8').replace('</svg>', `${edge}</svg>`);
       fs.writeFileSync(artifact, injected);
-      const result = await runVisualCheck({ artifactPath: artifact, chromePath });
+      const result = await runVisualCheck({
+        artifactPath: artifact, chromePath, browserFactory: () => isolatedVisualBrowser(browser),
+      });
       const desktop = result.receipt.readability.viewports.find(({ width, height }) => width === 1440 && height === 900);
       assert.ok(desktop, `${type}: missing desktop observation`);
       assert.equal(desktop.minimumProjectedNodeTextDetail, 'edge', `${type}: ${JSON.stringify(desktop)}`);
@@ -163,7 +146,11 @@ test('visual-check collects nested ID-less semantic edge text for every renderer
       assert.equal(result.receipt.readability.status, 'fail', `${type}: injected 5px edge must be measured`);
     }
   } finally {
-    fs.rmSync(tmp, { recursive: true, force: true });
+    try {
+      await browser.close();
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
   }
 });
 

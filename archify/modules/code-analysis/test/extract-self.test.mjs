@@ -26,7 +26,7 @@ function edges(facts, from) {
   return facts.imports.filter((i) => i.from === from && i.resolved).map((i) => i.to).sort();
 }
 
-test('extract: archify/ self-bootstrap passes schema and is byte-for-byte deterministic', { skip: SKIP }, (t) => {
+test('extract: archify/ self-bootstrap is deterministic and preserves known imports and roles', { skip: SKIP }, (t) => {
   const { config, output } = workspace(t);
   const OUT_A = output('facts-a.json');
   const OUT_B = output('facts-b.json');
@@ -42,14 +42,7 @@ test('extract: archify/ self-bootstrap passes schema and is byte-for-byte determ
   assert.equal(facts.repository.sourceKind, 'working-tree');
   assert.equal(facts.repository.revision, null);
   assert.match(facts.repository.baseRevision, /^[a-f0-9]{40}$/);
-});
 
-test('extract: hand-verified import lists for two archify files', { skip: SKIP }, (t) => {
-  // Independent of test ordering: this test produces its own extraction.
-  const { config, output } = workspace(t);
-  const OUT_C = output('facts.json');
-  assert.equal(runExtract([ARCHIFY, '--language', 'ts', '--config', config, '--out', OUT_C], process.env, 60000).status, 0);
-  const facts = JSON.parse(fs.readFileSync(OUT_C, 'utf8'));
   // renderers/shared/validator.mjs — verified by hand against its two import lines.
   assert.deepEqual(edges(facts, 'renderers/shared/validator.mjs'), [
     'renderers/shared/diagnostics.mjs',

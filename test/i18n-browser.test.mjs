@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { ChromeVisualBrowser, findChrome, runVisualCheck } from '../archify/bin/visual-check.mjs';
+import { isolatedVisualBrowser } from './helpers/isolated-visual-browser.mjs';
 import {
   skillRoot, cli, EXAMPLES, example, localeDocument, FR_PARTIAL_TRANSLATIONS, createLocaleFixture,
 } from './helpers/i18n-fixture.mjs';
@@ -282,8 +283,11 @@ async function assertLocalizedViewer(browser, locale, expected) {
     // Keep every locale/type's real viewport, theme, font and capture checks.
     // The delivered fixtures above retain the public visual-check CLI receipt
     // contract; this matrix calls the same checker without another CLI process.
-    // Its default factory still creates a fresh Chrome profile for each artifact.
-    const visual = await runVisualCheck({ artifactPath: result.output, chromePath });
+    // Each artifact gets a separate browser context and page.
+    const visual = await runVisualCheck({
+      artifactPath: result.output, chromePath,
+      browserFactory: () => isolatedVisualBrowser(browser),
+    });
     assert.ok([0, 1].includes(visual.exitCode), `${locale}/${type}: ${JSON.stringify(visual.receipt)}`);
     const receipt = visual.receipt;
     assert.equal(receipt.visualReview, 'pending', `${locale}/${type}`);

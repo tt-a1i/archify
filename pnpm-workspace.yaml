@@ -1,0 +1,9 @@
+packages:
+  - archify
+  - archify/modules/code-analysis
+
+overrides:
+  fast-uri: ^3.1.7
+
+allowBuilds:
+  esbuild: true

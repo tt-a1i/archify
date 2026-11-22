@@ -19,7 +19,7 @@ const DEPENDENCY_FIELDS = [
 ];
 
 
-test('adapter source lives only under integrations/deepseek-harness with no root workspace', () => {
+test('adapter source lives only under integrations/deepseek-harness outside the development workspace', () => {
   const rootManifest = JSON.parse(fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf8'));
   assert.equal(rootManifest.private, true, 'repository test tooling must not be publishable');
   assert.equal(Object.hasOwn(rootManifest, 'workspaces'), false, 'adapter must not join a root workspace');
@@ -34,12 +34,9 @@ test('adapter source lives only under integrations/deepseek-harness with no root
     assert.doesNotMatch(script, /deepseek-harness|archify-dsh|\bdsh\b/,
       'root scripts must not couple ordinary tests to the opt-in adapter');
   }
-  const rootLock = JSON.parse(fs.readFileSync(path.join(repoRoot, 'package-lock.json'), 'utf8'));
-  for (const [location, entry] of Object.entries(rootLock.packages)) {
-    assert.doesNotMatch(location, /deepseek-harness|archify-dsh|@deepseek-ai\//);
-    assert.notEqual(entry.link, true, 'root lock must not link adapter workspaces');
-  }
-  assert.equal(fs.existsSync(path.join(repoRoot, 'pnpm-workspace.yaml')), false);
+  const rootLock = fs.readFileSync(path.join(repoRoot, 'pnpm-lock.yaml'), 'utf8');
+  assert.doesNotMatch(rootLock, /deepseek-harness|archify-dsh|@deepseek-ai\//,
+    'the frozen development install must exclude the adapter and its host');
   assert.equal(fs.existsSync(path.join(repoRoot, 'integrations/deepseek-harness/package.json')), true);
 });
 

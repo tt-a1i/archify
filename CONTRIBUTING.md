@@ -95,7 +95,7 @@ See [Skill sources](.agents/README.md) for provenance and update procedure.
 
 Skill instructions, authored examples, build inputs, and generated-site sources are behavioral inputs even when they look like documentation. Policy changes need process review; runtime evidence depends on whether they affect runtime inputs.
 
-Start with `npm test` for the core product smoke or focused checks for the affected behavior. Use `npm run test:full` when shared infrastructure, broad changes, or findings require wider coverage. Final review needs sufficient evidence for the impact above; relevant CI results can supply that coverage without repeating the same run locally. Identify the revision and coverage of reused results, and explain material gaps. Required remote CI and branch protection still apply.
+Use the [local test commands](#local-setup-and-verification) to check the affected behavior. Use `pnpm test` for the core CLI smoke and `pnpm run test:full` when shared infrastructure, broad changes, or findings require wider coverage. Final review needs sufficient evidence for the impact above; relevant CI results can supply that coverage without repeating the same run locally. Identify the revision and coverage of reused results, and explain material gaps. Required remote CI and branch protection still apply.
 
 Tests should protect a user outcome or a real failure boundary. Prefer rendered
 content, successful interaction, preserved authored intent, and bounded work to
@@ -105,6 +105,20 @@ test merely because it differs from the old implementation. Delete redundant
 source assertions when a behavior test owns that protection. Keep explicit
 geometry, compatibility, accessibility, failure cleanup, and protection against
 lost or corrupted output as observable contracts.
+
+### Measuring test and CI improvements
+
+Time the command developers actually wait for, before and after the change, on
+the same machine with the same runtime, tools, and browser settings. Report
+which cases ran or skipped. If the difference is close to normal variation,
+repeat the comparison before claiming a speedup. For CI, use elapsed workflow
+time to measure PR wait time and job timings to identify where time was saved.
+
+When removing repeated work, identify the surviving check that would catch the
+original failure. When narrowing a CI trigger, replay representative changed
+paths on both sides of the rule. Verify that an unrelated edit skips the job,
+an affected edit runs it, and shared or unknown inputs retain the coverage
+they need.
 
 ### Real generation comparisons
 
@@ -128,12 +142,20 @@ dependency installation. README and changelog files are not website build inputs
 Mixed product changes retain those documentation checks alongside product gates;
 changed tests still run through the core path. Unknown README language names and
 other Markdown paths do not automatically qualify for this fast path.
+The DeepSeek Harness README and its docs contract use the documentation path
+and run that contract. The separate DSH workflow still runs its adapter and
+distribution checks. Isolated Explainer rendering changes run the Explainer
+Node suites and Chrome suite, core CLI compatibility, and packaged delivery on
+Linux, macOS, and Windows. Shared or unclassified Explainer changes retain full CI.
 
 Unknown paths, an empty comparison, and an unavailable development-push base
-select full coverage. An invalid PR comparison fails classification. Required
-job names remain present, and a failed classification cannot turn into successful
-skips. Main pushes and manual CI runs use complete coverage; releases explicitly
-run `test:full`. New pushes cancel obsolete CI runs for the same PR.
+select full coverage. An invalid PR comparison fails classification. Changes
+confined to independent Code Analysis inputs can retain full regression without
+running the Viewer and Story media checks. The package job still compares the
+regenerated ZIP when a change includes the archive. Required job names remain present,
+and failed classification blocks the required checks. Main pushes and manual
+CI runs use complete coverage. Releases explicitly run `test:full`. New pushes
+cancel obsolete CI runs for the same PR.
 
 ## Product and compatibility contracts
 
@@ -146,27 +168,35 @@ run `test:full`. New pushes cancel obsolete CI runs for the same PR.
 
 ## Local setup and verification
 
-The renderer package is in `archify/`; repository tests and their dependencies live at the root. Install both dependency sets before running tests. The supported Node range is defined in both package manifests.
+Use the pnpm version pinned in the root `package.json`. On a machine with Node and npm, `npm install --global pnpm@12.21.0` installs that version. A root install provisions the repository tests, renderer and Code Analysis. Run `pnpm --dir website install --frozen-lockfile` for the separate website workspace. Its dependency changes can run website CI independently. The packaged Code Analysis module keeps its npm lockfile for first use on machines with Node and npm.
 
 ```sh
-npm ci
-npm --prefix archify ci
-npm test
-npm run test:focus -- test/geometry.test.mjs
+pnpm install --frozen-lockfile
+pnpm test
+pnpm run test:focus test/geometry.test.mjs
 ```
 
 For the development loop, select the files covering the changed behavior with
-`npm run test:focus -- test/<name>.test.mjs [test/<other>.test.mjs ...]`.
+`pnpm run test:focus test/<name>.test.mjs [test/<other>.test.mjs ...]`.
 This runs only those suites, without the generated-output checks or golden pass.
 It requires at least one file and rejects unknown files rather than silently
 running the full suite. Paths are relative to the repository root; absolute
 paths also work. Use `--list` with the same selection to inspect it without
 running tests. A focused pass is evidence for that selection only.
 
+Run `pnpm run test:changed` to select local checks from staged, unstaged, and
+untracked files Git reports using the same ownership rules as CI. Add
+`--base=origin/dev` to include commits since the branch diverged. It runs
+affected Node suites, focused browser selections, and directly changed suites
+in the browser inventory. It lists other checks selected by CI, such as the
+core CLI smoke or generated output checks. If the selection is empty or the
+changes need wider verification, it exits with guidance on choosing the
+relevant checks.
+
 To narrow a large file further, add a quoted Node test-name pattern (Node 18.11+):
 
 ```sh
-npm run test:focus -- test/cli.test.mjs '--test-name-pattern=cli: validate'
+pnpm run test:focus test/cli.test.mjs '--test-name-pattern=cli: validate'
 ```
 
 Nested tests follow Node's filtering rules: include their parent test names in
@@ -174,10 +204,10 @@ the pattern as well. Check the reported pass/skip counts for the intended cases.
 
 | Command | What it establishes |
 | --- | --- |
-| `npm test` / `npm run test:core` | Ten diagram types run through the public CLI, frozen v1 inputs remain usable, delivery receipts bind the actual files, and failed delivery preserves the previous artifact. No browser or perceptual acceptance is implied. |
-| `npm run test:focus -- test/<name>.test.mjs` | Only the selected behavior or regression. |
-| `npm run test:generated` | Viewer, brand marks, validators, release identity, and checked-in examples match their authoritative sources. Freshness does not establish visual quality. |
-| `npm run test:full` | Generated checks, the Code Analysis module suite, and every discovered root Node test file, including the detailed process, filesystem, installation, and failure matrices. |
+| `pnpm test` / `pnpm run test:core` | Ten diagram types run through the public CLI, frozen v1 inputs remain usable, delivery receipts bind the actual files, and failed delivery preserves the previous artifact. No browser or perceptual acceptance is implied. |
+| `pnpm run test:focus test/<name>.test.mjs` | Only the selected behavior or regression. |
+| `pnpm run test:generated` | Viewer, brand marks, validators, release identity, and checked-in examples match their authoritative sources. Freshness does not establish visual quality. |
+| `pnpm run test:full` | Generated checks, the Code Analysis module suite, and every discovered root Node test file, including the detailed process, filesystem, installation, and failure matrices. |
 
 The Node 18, 20, and 24 compatibility lanes run the same core product smoke via
 `test:compat`. Detailed fault-injection matrices run on canonical Node 22 when
@@ -194,17 +224,19 @@ start these shards. Node 18, 20 and 24 compatibility checks start after scope
 classification, without waiting for the complete regression shards.
 `--list --shard=1/2` shows the selected files; shards cannot
 be combined with explicit files or test-name filtering. Locally and in tagged
-releases, `npm run test:full` still runs the complete inventory without sharding.
+releases, `pnpm run test:full` still runs the complete inventory without sharding.
 
 The Windows Node 22 lane owns the complete filesystem and fault-injection
 matrices. Node 24 runs the core CLI smoke instead of repeating those matrices.
+CI starts the Windows portability runners only when the affected scope needs
+them or when classification requires an explicit failure.
 Both lanes, including tagged releases, still run the controlled case-sensitive
 NTFS, UNC, extended-path, and 8.3-path scenarios. Use
 `node scripts/run-windows-path-tests.mjs --list` (or `--smoke --list`) to inspect
 the selected groups without running tests or creating Windows fixtures.
 
 The test runners accept `--concurrency=N` to tune the number of simultaneous
-test files on Node 18.19+, for example `npm run test:focus -- test/geometry.test.mjs --concurrency=4`. Headless
+test files on Node 18.19+, for example `pnpm run test:focus test/geometry.test.mjs --concurrency=4`. Headless
 repository and compatibility runs default to the available CPU count, capped
 at 4. Setting `ARCHIFY_CHROME` or running `test:browser` keeps the default at 2.
 Older Node versions that lack this concurrency option retain Node's default.
@@ -222,14 +254,14 @@ Static SVG/XML checks cannot establish browser layout, font settling, or interac
 In a POSIX shell:
 
 ```sh
-ARCHIFY_CHROME="/path/to/chrome" npm run test:browser -- test/desktop-reader-browser.test.mjs
+ARCHIFY_CHROME="/path/to/chrome" pnpm run test:browser test/desktop-reader-browser.test.mjs
 ```
 
 In Windows PowerShell:
 
 ```powershell
 $env:ARCHIFY_CHROME = 'C:\Program Files\Google\Chrome\Application\chrome.exe'
-npm run test:browser -- test/desktop-reader-browser.test.mjs
+pnpm run test:browser test/desktop-reader-browser.test.mjs
 ```
 
 Replace the example Chrome path with your installed executable's path. In
@@ -240,22 +272,38 @@ A browser test skipped because Chrome was unavailable is **skipped**, not passed
 PR CI and tag releases run the same browser regression gate:
 
 ```sh
-ARCHIFY_CHROME="/path/to/chrome" npm run test:browser
+ARCHIFY_CHROME="/path/to/chrome" pnpm run test:browser
 ```
 
 This command requires a usable Chrome/Chromium and fails when none is available.
 Its maintained file list is in `scripts/browser-test-inventory.mjs`; add new browser
-suites there so both workflows keep the same coverage. `npm run test:full`
-retains optional browser skips. Real WebM decoding and site-language integration
-remain in the separate `npm run test:webm` gate used by both workflows.
+suites there so both workflows keep the same coverage. `pnpm run test:full`
+retains optional browser skips. `pnpm run test:webm` runs the Viewer artifacts,
+Story media, and checked-in site-language integration. Website CI runs the
+site-language integration. When render inputs change without a website job,
+the generated-output job also exercises the site builders without Chrome.
 
-PR CI divides the maintained browser inventory into four disjoint file shards
-with `npm run test:browser -- --shard=1/4` through `--shard=4/4`. They run alongside
-the independent WebM gate. The required `webm-artifact` check succeeds after
-every browser shard, WebM, and scope check succeeds. Tag releases and an
-unqualified `npm run test:browser` still run the complete browser inventory.
+PR CI divides broad browser coverage into four disjoint file shards. Atlas-only
+client changes run the Code Analysis browser inventory, the related Node suites,
+and package validation. Shared and mixed browser-impacting changes keep the full
+browser inventory. When a change touches only tests already in the browser
+inventory, Chrome runs the changed suites, including their Node-only cases. Up
+to four such suites share one job. Larger selections run in four shards.
+Deleted, renamed, or type-changed root test files trigger full CI.
+Changes confined to known Viewer interactions run the Viewer artifact checks,
+including live WebM decode. Rebuilt Viewer HTML, golden files and the package
+still go through the generated-output and package checks. Story-only changes
+run Story's media checks with FFmpeg. Shared Viewer CSS, shell, export and motion
+changes keep both media checks. To run one group locally, pass `viewer` or
+`story` to `node test/webm-artifact.smoke.mjs`.
+When selected, Story media runs the Story browser file with FFmpeg. The browser
+shards retain that file when Story media is outside the change scope.
+The required `webm-artifact` check validates the scope and requires each media job
+to pass when selected or be skipped when outside the scope. Tag releases cover
+the full browser inventory across the browser and WebM commands. An unqualified
+`pnpm run test:browser` selects the full browser inventory.
 `--list --shard=1/2` lists a shard without requiring Chrome. Shards cannot be
-combined with explicit files or test-name filtering; every maintained file runs
+combined with explicit files or test-name filtering; every selected file runs
 in exactly one shard, and every executing shard still requires Chrome.
 
 Only set `ARCHIFY_CHROME` for the browser run when you also plan to run the full
@@ -267,8 +315,8 @@ final-head CI results instead of repeating an unchanged full suite locally.
 ## Packages and generated artifacts
 
 Viewer maintenance starts in [`viewer/`](viewer/README.md). Edit its source
-files, then run `npm run generate:viewer` from `archify/`; the delivered template
-is generated and its freshness is checked by `npm run test:generated` (also part
+files, then run `pnpm run generate:viewer` from `archify/`; the delivered template
+is generated and its freshness is checked by `pnpm run test:generated` (also part
 of `test:full`).
 
 Published artifacts must be reproducible from tracked content. Use a tracked-only, symlink-safe staging path or explicit allowlist, with negative coverage for untracked files and external symlinks. Test the extracted package outside the repository on the affected advertised hosts.
@@ -297,7 +345,7 @@ Use this single checklist in the release PR or its linked release record. Link e
 
 1. [ ] **Scope and revision.** Record the intended version/channel, release scope, final source SHA, comparison base, release notes, known issues, and required integration follow-ups. Follow the `dev` trial-use → `main` promotion process below. Pin evidence to its tested SHA; refresh the record when the candidate changes.
 2. [ ] **Identity and build.** Verify package/Skill identity and generated outputs using the candidate revision's existing checks. Use the canonical Node/zlib toolchain above for `scripts/build-zip.sh`; confirm the committed `archify.zip` matches the clean tracked-source build. Do not change versions or regenerate unrelated artifacts in ordinary feature PRs. Preserve the previous stable manifest until the new stable Release exists.
-3. [ ] **Final-head validation.** Account for the latest target base and verify required CI at the final candidate: identity and ZIP gates, schema/renderer tests, installation parser and real Skills CLI discovery, package smoke on Linux/macOS/Windows, browser/WebM checks, and affected website checks. Record run URLs, SHA, real-use evidence, and any skipped or unavailable checks; an earlier green head or zero checks is not final acceptance. Use commands from that revision's manifests/workflows: current `dev` installs root and renderer dependencies and runs `npm run test:full`, `npm run test:browser`, and `npm run test:webm` at the repository root (see [Local setup](#local-setup-and-verification)); older `main`/release revisions may run these from `archify/`. Website commands run in `website/`. Do not transplant a command or its working directory across revisions without checking.
+3. [ ] **Final-head validation.** Account for the latest target base and verify required CI at the final candidate: identity and ZIP gates, schema/renderer tests, installation parser and real Skills CLI discovery, package smoke on Linux/macOS/Windows, browser/WebM checks, and affected website checks. Record run URLs, SHA, real-use evidence, and any skipped or unavailable checks; an earlier green head or zero checks is not final acceptance. Use commands from that revision's manifests/workflows: current `dev` installs root and renderer dependencies and runs `pnpm run test:full`, `pnpm run test:browser`, and `pnpm run test:webm` at the repository root (see [Local setup](#local-setup-and-verification)); older `main`/release revisions may run these from `archify/`. Website commands run in `website/`. Do not transplant a command or its working directory across revisions without checking.
 4. [ ] **Authorized publication.** Confirm authorization for the exact release version/channel and source SHA before pushing a release tag. Stable `v<version>` tags must be annotated and resolve to the verified commit; the workflow checks tag/package identity and the release channel. Verify the resulting GitHub Release and its `archify.zip` asset, digest, and expected stable/prerelease status. Do not overwrite existing versions, tags, or assets to repair a release. Installing or updating a user's live installation requires its own authorization.
 5. [ ] **Manifest, website, and integrations.** After the stable Release exists, publish `docs/skill-updates/archify/stable.json` in a follow-up commit through the normal branch process. Retain the `published-update-manifest` result that compares the actual Release ZIP, tagged archive, digest, and tagged Skill tree; wait for the gated `main` Pages deployment. Development/prerelease tags do not advance the stable notifier. Complete the [DSH synchronization checklist](#release-checklist-dsh-synchronization) or record an explicit deferral. Evaluate other integrations by their actual distribution mechanism: [Hermes](integrations/hermes-agent/README.md#install-shows-up-in-available-skills) installs the main Skill identifier; do not invent a separate Hermes release simply because Archify changed. Record any documentation/compatibility update or indexing lag that needs follow-up.
 6. [ ] **Public acceptance and closure.** Check the public download and advertised installation/discovery paths against the released artifact in an isolated environment, without changing live user installations. Verify the public stable manifest, Pages version, installation instructions, and community catalog source/evidence/compatibility links describe what users can actually obtain; distinguish published, pending, and explicitly deferred integration versions. Record the final release/tag/SHA, asset digest, CI and deployment receipts, public acceptance result, and every remaining owner/follow-up. Only describe each channel as complete after its own verification.

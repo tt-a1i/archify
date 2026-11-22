@@ -35,6 +35,7 @@ const EXCLUDED_FILES = new Set([
   'archify/package-lock.json',
   'archify/scripts/generate-brand-marks.mjs',
   'archify/scripts/generate-validators.mjs',
+  'archify/scripts/install-code-analysis.mjs',
 ]);
 const EXCLUDED_SEGMENTS = new Set([
   '.DS_Store',

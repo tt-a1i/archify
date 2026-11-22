@@ -1,0 +1,31 @@
+name: Set up pnpm
+description: Restore the pinned pnpm CLI and the store for a frozen workspace install
+inputs:
+  workspace:
+    description: Directory containing the package manifest and lockfile
+    default: '.'
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      id: cache
+      with:
+        path: ${{ runner.temp }}/archify-pnpm
+        key: archify-pnpm-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles(format('{0}/pnpm-lock.yaml', inputs.workspace)) }}
+    - name: Install the pinned pnpm CLI on a cache miss
+      if: steps.cache.outputs.cache-hit != 'true'
+      shell: bash
+      working-directory: ${{ inputs.workspace }}
+      env:
+        PNPM_HOME: ${{ runner.temp }}/archify-pnpm
+      run: |
+        package_manager=$(node -p "require('./package.json').packageManager")
+        npm install --prefix "$PNPM_HOME" --no-save --no-package-lock --no-audit --no-fund "$package_manager"
+    - name: Use the cached CLI and store
+      shell: bash
+      env:
+        PNPM_HOME: ${{ runner.temp }}/archify-pnpm
+      run: |
+        echo "$PNPM_HOME/node_modules/.bin" >> "$GITHUB_PATH"
+        echo "PNPM_HOME=$PNPM_HOME" >> "$GITHUB_ENV"

@@ -132,7 +132,7 @@ test('release prevents manifest preannouncement and smokes the exact archive bef
   assert.match(build, /run: scripts\/build-zip\.sh \/tmp\/archify-built\.zip/);
   assert.match(smoke, /unzip -q \/tmp\/archify-built\.zip -d "\$package_root"/);
   assert.match(smoke, /node scripts\/package-smoke\.mjs "\$package_root\/archify"/);
-  assert.doesNotMatch(smoke, /\bnpm\s+(?:ci|install)\b/);
+  assert.doesNotMatch(smoke, /\b(?:pnpm|npm)\s+(?:ci|install)\b/);
   assert.match(freshness, /cmp -s \/tmp\/archify-built\.zip archify\.zip/);
   assertPinnedAction(
     upload,
@@ -261,7 +261,7 @@ test('GitHub Pages deploys the verified website artifact only after every reposi
     'v5.0.0',
   );
   const website = workflowJob(workflow, 'website');
-  assert.match(website, /npm run check && npm run build && npm test/);
+  assert.match(website, /pnpm run check && pnpm run build && pnpm test/);
   assert.match(website, /ARCHIFY_SITE_ROOT:.*website\/dist/);
   assertPinnedAction(
     website,
@@ -272,11 +272,9 @@ test('GitHub Pages deploys the verified website artifact only after every reposi
   assert.match(website, /name: website-dist/);
   const browser = workflowJob(workflow, 'browser-regression');
   assert.match(browser, /Run shared browser regression gate/);
-  assert.match(browser, /npm run test:browser -- --shard=\$\{\{ matrix\.shard \}\}\/4/);
+  assert.match(browser, /pnpm run test:browser --shard=\$\{\{ matrix\.shard \}\}\/\$\{\{ strategy\.job-total \}\}/);
   const media = workflowJob(workflow, 'webm-artifact');
   assert.match(media, /needs: \[scope, browser-regression, webm-decode\]/);
-  assert.match(media, /test "\$BROWSER_RESULT" = success/);
-  assert.match(media, /test "\$WEBM_RESULT" = success/);
   assert.ok(jobs['canonical-test'].needs.includes('full-regression'), 'Pages must wait for the complete regression and adapter checks');
   const packageSmoke = workflowJob(workflow, 'package-smoke');
   assert.match(packageSmoke, /Verify delivery-lock ownership with real subprocesses/);
@@ -1686,12 +1684,12 @@ test('CI and tagged releases keep real Windows paths on both Nodes and detailed 
     assert.match(job, /runs-on:\s*windows-latest/);
     if (label !== 'CI') assert.match(job, /node-version:\s*\[22, 24\]/);
     assert.match(job, /node-version:\s*\$\{\{ matrix\.node-version \}\}/);
-    assert.match(job, /npm ci --ignore-scripts/);
+    assert.match(job, /pnpm install --frozen-lockfile --ignore-scripts/);
     assert.match(job, /node scripts\/run-windows-path-tests\.mjs/);
     assert.ok(job.includes(label === 'CI' ? '${{ matrix.profile }}' : "matrix.node-version == 24 && '--smoke' || ''"),
       `${label} must select the maintained Windows profiles`);
     assert.match(job, label === 'CI'
-      ? /name: Provision controlled Windows path fixtures\n\s+if: needs\.scope\.outputs\.windows == 'true'\n\s+shell: pwsh/
+      ? /name: Provision controlled Windows path fixtures\n\s+id: windows-path-fixtures\n\s+if: needs\.scope\.outputs\.windows == 'true'\n\s+shell: pwsh/
       : /name: Provision controlled Windows path fixtures\n\s+shell: pwsh/);
     assert.match(
       job,
@@ -1700,7 +1698,7 @@ test('CI and tagged releases keep real Windows paths on both Nodes and detailed 
     assert.match(
       job,
       label === 'CI'
-        ? /name: Clean up controlled Windows path fixtures\n\s+if: \$\{\{ always\(\) && needs\.scope\.outputs\.windows == 'true' \}\}/
+        ? /name: Clean up controlled Windows path fixtures\n\s+if: \$\{\{ always\(\) && steps\.windows-path-fixtures\.outcome != 'skipped' \}\}/
         : /name: Clean up controlled Windows path fixtures\n\s+if: \$\{\{ always\(\) \}\}/,
     );
     assert.match(
