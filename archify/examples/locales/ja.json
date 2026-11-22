@@ -484,8 +484,9 @@
   "viewer.feedback.issueHint": "不具合報告や改善提案",
   "viewer.feedback.email": "メールで送る",
   "viewer.feedback.copyEmail": "メールアドレスをコピー",
-  "viewer.feedback.star": "Star",
+  "viewer.feedback.starPrompt": "Archify が役に立ったら",
+  "viewer.feedback.star": "Star を付ける",
   "viewer.feedback.starLabel": "GitHub で Archify にスターを付ける",
-  "viewer.feedback.starTitle": "Archify は役に立ちましたか？",
-  "viewer.feedback.starBody": "GitHub でスターをいただけると開発の励みになります。"
+  "viewer.feedback.starTitle": "GitHub で Archify を応援",
+  "viewer.feedback.starBody": "ひとつひとつのスターが、オープンソース開発を続ける励みになります。"
 }

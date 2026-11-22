@@ -507,8 +507,9 @@
   "viewer.feedback.issueHint": "Signaler un bug ou une idée",
   "viewer.feedback.email": "Envoyer un e-mail",
   "viewer.feedback.copyEmail": "Copier l’adresse e-mail",
-  "viewer.feedback.star": "Star",
+  "viewer.feedback.starPrompt": "Si Archify vous a aidé",
+  "viewer.feedback.star": "Mettre une Star",
   "viewer.feedback.starLabel": "Mettre une étoile à Archify sur GitHub",
-  "viewer.feedback.starTitle": "Archify vous a-t-il aidé ?",
-  "viewer.feedback.starBody": "Une étoile sur GitHub nous aide à continuer de l’améliorer."
+  "viewer.feedback.starTitle": "Soutenir Archify sur GitHub",
+  "viewer.feedback.starBody": "Chaque étoile nous aide à continuer de le développer en open source."
 }

@@ -484,8 +484,9 @@
   "viewer.feedback.issueHint": "Relatar um erro ou sugestão",
   "viewer.feedback.email": "Enviar e-mail",
   "viewer.feedback.copyEmail": "Copiar endereço de e-mail",
-  "viewer.feedback.star": "Star",
+  "viewer.feedback.starPrompt": "Se o Archify ajudou você",
+  "viewer.feedback.star": "Dar Star",
   "viewer.feedback.starLabel": "Dar uma estrela ao Archify no GitHub",
-  "viewer.feedback.starTitle": "O Archify ajudou você?",
-  "viewer.feedback.starBody": "Uma estrela no GitHub nos ajuda a continuar evoluindo o projeto."
+  "viewer.feedback.starTitle": "Apoie o Archify no GitHub",
+  "viewer.feedback.starBody": "Cada estrela nos ajuda a continuar evoluindo o projeto em código aberto."
 }
