@@ -1,6 +1,5 @@
 # Generated diagram artifacts and built documentation surfaces.
 # Keep source templates and the hand-authored landing page visible to Linguist.
-/archify/examples/*.html linguist-generated=true
 /examples/*.html linguist-generated=true
 /docs/cases/*.html linguist-generated=true
 /docs/cases/life/*.html linguist-generated=true

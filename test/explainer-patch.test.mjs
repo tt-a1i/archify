@@ -25,7 +25,7 @@ test('patch payload errors preserve their specific repair advice',async t=>{
   fs.writeFileSync(replacement,replacementText);
   const script=text=>`<script type="application/json" id="archify-explainer-prepared">${text}</script>`;
   const cases=[
-    [fs.readFileSync('archify/examples/lifecycle-agent-run.html','utf8'),'The artifact must contain one original draft and prepared resource payload.','Use an artifact produced by the formal explainer CLI.'],
+    [fs.readFileSync('examples/lifecycle-agent-run.html','utf8'),'The artifact must contain one original draft and prepared resource payload.','Use an artifact produced by the formal explainer CLI.'],
     [script('{}')+script('{}'),'The artifact must contain one original draft and prepared resource payload.','Use an artifact produced by the formal explainer CLI.'],
     [script('{invalid'),'Embedded draft payload is invalid.','Rebuild the artifact from its original draft.'],
     [script(JSON.stringify({preparedDiagrams:{diagrams:{flow:{htmlGzip:'not-gzip'}}}})),'Embedded native diagram payload cannot be inflated.','Rebuild the original artifact before patching.'],

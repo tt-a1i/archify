@@ -1,5 +1,6 @@
-// Re-render every bundled example from its JSON IR. Installed skills keep HTML
-// beside the JSON examples; the development script passes the golden directory.
+// Re-render every bundled example from its JSON IR. Installed skills ship only the
+// JSON inputs; `archify examples` writes HTML beside them on demand, and the
+// development script passes the repository's golden examples directory.
 
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';

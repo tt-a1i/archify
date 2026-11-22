@@ -291,7 +291,7 @@ test('standalone multi-view component choreography validates, compiles dual-them
 });
 
 function writeLegacyStoryBrief(dir) {
-  const htmlPath = path.join(skillRoot, 'examples', 'workflow-agent-tool-call-rendered.html');
+  const htmlPath = path.join(skillRoot, '..', 'examples', 'workflow-agent-tool-call-rendered.html');
   const briefPath = path.join(dir, 'brief.json');
   const scanRes = run(['story', 'scan', htmlPath, '--json'], dir);
   assert.equal(scanRes.status, 0, scanRes.stderr);

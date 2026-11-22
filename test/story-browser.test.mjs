@@ -264,7 +264,7 @@ test('flowless guides stay out of the story opening clock',{
 },async t=>{
   const dir=fs.mkdtempSync(path.join(os.tmpdir(),'archify-story-opening-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
   const cli=path.join(skill,'bin/archify.mjs');
-  const waterfall=fs.readFileSync(path.join(skill,'examples/waterfall-checkout-request-rendered.html'),'utf8');
+  const waterfall=fs.readFileSync(path.join(skill,'../examples/waterfall-checkout-request-rendered.html'),'utf8');
   const svgEnd=waterfall.indexOf('</svg>',waterfall.indexOf('data-waterfall-ui'));
   // A late card plus one long unanimated guide crosses the 6s opening only when that guide is counted.
   const extended=waterfall.slice(0,svgEnd)+'<g id="node-late" data-node-id="late" data-node-label="Late span"><rect x="20" y="250" width="40" height="14" data-animate="node" style="--step:20"/></g><path data-edge-from="request" data-edge-to="late" data-edge-key="9" d="M 20 260 H 620" fill="none" stroke="#888"/>'+waterfall.slice(svgEnd);
@@ -290,7 +290,7 @@ test('flowless guides stay out of the story opening clock',{
   const stretched=await attach('stretched',extended);
   assert.equal(stretched.rate,1,'a long flowless guide does not speed up the opening');
   assert.equal(stretched.span,stretched.wireStart);
-  const traced=await attach('workflow',fs.readFileSync(path.join(skill,'examples/workflow-agent-tool-call-rendered.html'),'utf8'));
+  const traced=await attach('workflow',fs.readFileSync(path.join(skill,'../examples/workflow-agent-tool-call-rendered.html'),'utf8'));
   assert.ok(Number.isFinite(traced.rate)&&traced.rate>=1,'native transfers keep a finite opening rate');
   assert.ok(traced.span>traced.wireStart,'native transfers still extend the opening clock');
   assert.deepEqual(errors,[]);
@@ -301,7 +301,7 @@ test('story snapshots preserve appearance across styles, cascade capabilities an
   timeout:120000,skip:chrome?false:'Set ARCHIFY_CHROME for story snapshot compatibility.'
 },async t=>{
   const dir=fs.mkdtempSync(path.join(os.tmpdir(),'archify-story-snapshot-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
-  const cli=path.join(skill,'bin/archify.mjs'),input=path.join(skill,'examples/workflow-agent-tool-call-rendered.html'),brief=path.join(dir,'brief.json'),output=path.join(dir,'story.html');
+  const cli=path.join(skill,'bin/archify.mjs'),input=path.join(skill,'../examples/workflow-agent-tool-call-rendered.html'),brief=path.join(dir,'brief.json'),output=path.join(dir,'story.html');
   const facts=JSON.parse(execFileSync(process.execPath,[cli,'story','scan',input,'--json'],{encoding:'utf8'}));
   fs.writeFileSync(brief,JSON.stringify({version:2,title:'Snapshot compatibility',intro:'Establish the source.',outro:'Return to the whole graph.',scenes:[{title:'Inspect',points:[{anchor:facts.nodes[0].id,title:'Selected node',text:'Read the original node and its context.'}]}]}));
   execFileSync(process.execPath,[cli,'story','attach',input,brief,output,'--json']);
@@ -340,7 +340,7 @@ test('Story keeps WebM as the default and explicit MP4 preserves the file bounda
   timeout:120000,skip:chrome?false:'Set ARCHIFY_CHROME for story MP4 export.'
 },async t=>{
   const dir=fs.mkdtempSync(path.join(os.tmpdir(),'archify-story-mp4-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
-  const cli=path.join(skill,'bin/archify.mjs'),input=path.join(skill,'examples/workflow-agent-tool-call-rendered.html'),brief=path.join(dir,'brief.json'),output=path.join(dir,'story.html');
+  const cli=path.join(skill,'bin/archify.mjs'),input=path.join(skill,'../examples/workflow-agent-tool-call-rendered.html'),brief=path.join(dir,'brief.json'),output=path.join(dir,'story.html');
   fs.writeFileSync(brief,JSON.stringify({version:2,title:'Follow a tool call',intro:'A request enters the agent.',outro:'The result returns to the caller.',scenes:[{title:'Execute',points:[{anchor:'tool',title:'Use the tool',text:'The runtime executes the selected call.'}]}]}));
   const scan=JSON.parse(execFileSync(process.execPath,[cli,'story','scan',input,'--json'],{encoding:'utf8'}));
   const plan=JSON.parse(fs.readFileSync(brief));plan.scenes[0].points[0].anchor=scan.nodes[0].id;fs.writeFileSync(brief,JSON.stringify(plan));
