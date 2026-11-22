@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { automaticComponentPositions } from '../archify/renderers/architecture/automatic-placement.mjs';
 import { placeAutomaticLabels } from '../archify/renderers/shared/automatic-labels.mjs';
 import { arrowheadTriangle, maskCoversArrowhead } from '../archify/renderers/shared/arrowhead.mjs';
-import { measuredCrossingPairs } from '../archify/renderers/architecture/automatic-placement-candidates.mjs';
+import { measuredCrossingPairs, routeSpanMeasures, sharedNeighborCandidates } from '../archify/renderers/architecture/automatic-placement-candidates.mjs';
 import { connectionLabelBoxAt, createArchitectureRouter, parallelRunMeasures } from '../archify/renderers/architecture/routing.mjs';
 import { properSegmentIntersection, rectsOverlap, roundedPath, segmentRectClearance } from '../archify/renderers/shared/geometry.mjs';
 
@@ -438,4 +438,49 @@ test('an automatic label beside a return keeps a visible ownership margin', () =
   const distance = ({ points: [start, end] }) => segmentRectClearance({ start, end }, label);
   assert.ok(distance(routes[1]) >= distance(routes[0]) + 4);
   assert.notDeepEqual(label, between);
+});
+
+test('a pinned card leaves a full band available for automatic marker clearance', () => {
+  const [dispatch] = [...measuredLayout('C-pinned-card-arrowhead-mask').values()];
+  const relation = load('C-pinned-card-arrowhead-mask').connections[0];
+  assert.deepEqual(dispatch.points, [[777, 386.375], [869, 386.375]]);
+  const rect = connectionLabelBoxAt(relation, dispatch.labelAt);
+  const marker = arrowheadTriangle(dispatch.points[1], dispatch.points[0], relation.width);
+  assert.equal(maskCoversArrowhead(rect, marker), false);
+  assert.ok(rect.y + rect.height < dispatch.points[0][1]);
+});
+
+test('the final automatic label belongs to the drawn authorization route', () => {
+  const { status, receipt } = validate(fileURLToPath(fixtureUrl('C-showcase-label-wrong-owner')), 'showcase', '--layout-json');
+  assert.equal(status, 0, JSON.stringify(receipt.diagnostics));
+  const owner = receipt.connections.find(relation => relation.label === 'Check authorization');
+  const spec = load('C-showcase-label-wrong-owner').connections.find(relation => relation.label === owner.label);
+  const rect = connectionLabelBoxAt(spec, owner.labelAt);
+  const distance = ({ points }) => Math.min(...points.slice(1).map((end, index) =>
+    segmentRectClearance({ start: points[index], end }, rect)));
+  for (const other of receipt.connections.filter(relation => relation !== owner)) {
+    assert.ok(distance(other) >= distance(owner) + 4, JSON.stringify({ owner, other, rect }));
+  }
+});
+
+
+test('shared long input routes can be shortened by moving their inferred cards as one ordered group', () => {
+  const uid = (id, x, y) => ({ id, x, y, width: 100, height: 60, cx: x + 50, cy: y + 30 });
+  const cards = [uid('first', 48, 48), uid('second', 48, 212), uid('target', 502, 452), uid('other', 900, 650)];
+  const boxes = new Map(cards.map(box => [box.id, box]));
+  const routes = [
+    { relation: { from: 'first', to: 'target' }, points: [[148, 78], [480, 78], [480, 470], [502, 470]] },
+    { relation: { from: 'second', to: 'target' }, points: [[148, 242], [458, 242], [458, 490], [502, 490]] },
+  ];
+  const viewBox = [1040, 750];
+  const { spans } = routeSpanMeasures(routes, boxes, viewBox);
+  const [{ moved, gain }] = sharedNeighborCandidates({ boxes, routes, viewBox, titles: { boundaries: [] } }, spans);
+  const first = moved.get('first');
+  const second = moved.get('second');
+  assert.notDeepEqual(first, cards[0]);
+  assert.notDeepEqual(second, cards[1]);
+  assert.deepEqual(moved.get('target'), cards[2]);
+  assert.deepEqual(moved.get('other'), cards[3]);
+  assert.ok(first.x < second.x || first.x === second.x && first.y < second.y);
+  assert.ok(gain > 300);
 });

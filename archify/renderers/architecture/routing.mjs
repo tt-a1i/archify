@@ -418,7 +418,7 @@ export function createRouter(components, connections = [], {
   function routeConflictsWithResolved(conn, points, resolvedRoutes) {
     const unrelated = unrelatedResolvedRoutes(conn, resolvedRoutes);
     for (const entry of unrelated) {
-      if (countSharedEndpointCrossings && crossingPoints(points, entry, 1, conn)) return true;
+      if (countSharedEndpointCrossings && crossingPoints(points, entry, 1)) return true;
       for (let left = 0; left < points.length - 1; left += 1) {
         for (let right = 0; right < entry.points.length - 1; right += 1) {
           if (!countSharedEndpointCrossings && properSegmentIntersection(
@@ -1110,14 +1110,14 @@ export function createRouter(components, connections = [], {
   }
 
   const crossingPaths = new WeakMap();
-  function crossingPath(points, conn) {
-    if (!crossingPaths.has(points)) crossingPaths.set(points, prepareCrossingPath(roundedPathSegments(points, 8), conn?.via));
+  function crossingPath(points) {
+    if (!crossingPaths.has(points)) crossingPaths.set(points, prepareCrossingPath(roundedPathSegments(points, 8)));
     return crossingPaths.get(points);
   }
 
-  function crossingPoints(points, other, limit = Infinity, conn) {
+  function crossingPoints(points, other, limit = Infinity) {
     if (countSharedEndpointCrossings) {
-      return visibleCrossings(crossingPath(points, conn), crossingPath(other.points, other.conn), limit).length;
+      return visibleCrossings(crossingPath(points), crossingPath(other.points), limit).length;
     }
     let count = 0;
     for (let index = 1; index < points.length; index += 1) {
@@ -1133,7 +1133,7 @@ export function createRouter(components, connections = [], {
     return resolvedRoutes.reduce((count, other) => {
       if (!countSharedEndpointCrossings && relationshipsShareEndpoint(conn, other.conn)
           && (!distinctAutomaticPorts || hasAuthoredRouteGeometry(other.conn) || other.conn.labelAt || conn.labelAt)) return count;
-      return count + crossingPoints(points, other, 1, conn);
+      return count + crossingPoints(points, other, 1);
     }, 0);
   }
 
@@ -1856,7 +1856,7 @@ export function createRouter(components, connections = [], {
               const { entry: left, side } = leftEndpoint;
               const { entry: right } = rightEndpoint;
               if (left === right || left.points.length < 3 || right.points.length < 3
-                  || (countSharedEndpointCrossings && !crossingPoints(left.points, right, 1, left.conn))) continue;
+                  || (countSharedEndpointCrossings && !crossingPoints(left.points, right, 1))) continue;
               const leftPort = endpointPoint(leftEndpoint, 0);
               const leftElbow = endpointPoint(leftEndpoint, 1);
               const rightPort = endpointPoint(rightEndpoint, 0);

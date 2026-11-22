@@ -8,7 +8,7 @@ import { arrowheadTriangle, maskCoversArrowhead } from '../renderers/shared/arro
 import { textUnits } from '../renderers/shared/utils.mjs';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
-import { collectAmbiguousCorridors, collectArrowheadCollisions, collectBorderRuns, collectLabelCanvasOverflow, collectLabelRouteClearance, collectRouteRhythmIssues, describeLabelCanvasOverflow, formatRect, forwardCollinearAnalysisSegments, minimumLabelRouteClearance, normalizeRoutePoints, roundedPath, routeBudgetMetrics } from '../renderers/shared/geometry.mjs';
+import { collectAmbiguousCorridors, collectArrowheadCollisions, collectBorderRuns, collectLabelCanvasOverflow, collectLabelRouteClearance, collectRouteRhythmIssues, describeLabelCanvasOverflow, formatRect, forwardCollinearAnalysisSegments, minimumLabelRouteClearance, normalizeRoutePoints, routeBudgetMetrics, segmentRectClearanceWithin } from '../renderers/shared/geometry.mjs';
 import {
   DESKTOP_READABILITY_VIEWPORT,
   DESKTOP_READER_DIAGRAM_WIDTH,
@@ -460,6 +460,7 @@ if (svgBlocks.length === 1) {
   const cardinalityPorts = svgAttrs['data-erd-ui'] ? coincidentCardinalityPorts(arrows) : [];
   const relationshipLabels = collectRelationshipLabelMasks(beforeLegend, arrows);
   const labelArrowheadMasks = architecture ? collectLabelArrowheadMasks(relationshipLabels, arrows) : [];
+  const labelOwnership = architecture ? collectLabelOwnership(relationshipLabels, arrows) : [];
   const leadingSpace = collectArchitectureLeadingSpace({
     svgAttrs, fragment: beforeLegend, nodeRects, frames: compositionFrames,
     arrows, labels: relationshipLabels,
@@ -565,6 +566,7 @@ if (svgBlocks.length === 1) {
     desktopReadability: desktopReadability.evidence,
     issues: [
       ...labelArrowheadMasks,
+      ...labelOwnership,
       ...containerBorderRuns.map((hit) => ({
         severity: qualityGatesEnforced ? 'error' : 'warning',
         code: 'composition/container-border-run',
@@ -793,10 +795,6 @@ function collectArrows(fragment, useActualPoints = false, architecture = false) 
     const authoredPoints = !useActualPoints && (line || parsed.subpaths.length === 1)
       ? parseRoutePoints(attrs['data-composition-points']) : null;
     if (authoredPoints) routeSubpaths = [authoredPoints];
-    // A retained straight waypoint is encoded as a collinear rounded control
-    // in older exports. Verify the metadata against the actual visible path.
-    const authoredWaypoints = architecture && !line && authoredPoints && attrs.d === roundedPath(authoredPoints, 8)
-      ? authoredPoints.slice(1, -1) : [];
     arrows.push({
       kind: name,
       index: index += 1,
@@ -821,7 +819,7 @@ function collectArrows(fragment, useActualPoints = false, architecture = false) 
       role: attrs['data-edge-role'],
       segments,
       ...(architecture ? { visiblePaths: line ? [prepareCrossingPath(segments)]
-        : parsed.subpaths.map(part => prepareCrossingPath(part.commands, authoredWaypoints)) } : {}),
+        : parsed.subpaths.map(part => prepareCrossingPath(part.commands)) } : {}),
       borderSegments,
       routePoints: routeSubpaths.length === 1 ? routeSubpaths[0] : [],
       routeSubpaths,
@@ -835,6 +833,36 @@ function collectArrows(fragment, useActualPoints = false, architecture = false) 
   }
 
   return arrows;
+}
+
+function collectLabelOwnership(labels, arrows) {
+  const gap = (rect, route, limit) => route.segments.reduce((nearest, segment) =>
+    Math.min(nearest, segmentRectClearanceWithin(segment, rect, nearest)), limit);
+  return labels.flatMap(({ rect, label, relation }) => {
+    const own = gap(rect, relation, Infinity);
+    if (!Number.isFinite(own)) return [];
+    let nearest = own;
+    let competing = null;
+    for (const other of arrows) {
+      if (other === relation || (other.key !== undefined && other.key === relation.key)) continue;
+      const distance = gap(rect, other, nearest);
+      if (distance + 0.0001 < nearest) {
+        nearest = distance;
+        competing = other;
+      }
+    }
+    return competing ? [{
+      severity: 'info',
+      code: 'composition/label-route-ownership',
+      label,
+      labelRelationship: relationshipRecord(relation),
+      otherRelationship: relationshipRecord(competing),
+      ownClearance: Math.round(own * 10) / 10,
+      otherClearance: Math.round(nearest * 10) / 10,
+      labelRect: roundedRect(rect),
+      detail: `Label "${label}" is closer to ${relationshipName(competing)} than to its own route.`,
+    }] : [];
+  });
 }
 
 function collectLabelArrowheadMasks(labels, arrows) {

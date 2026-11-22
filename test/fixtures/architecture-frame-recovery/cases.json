@@ -138,5 +138,13 @@
   "fixture/layers-with-dashed-branch": {
     "file": "../architecture-route-regressions/layers-with-dashed-branch.json",
     "passes": true
+  },
+  "review7/A-fixed-canvas-reciprocal-detour": {
+    "file": "review7-fixed-canvas-reciprocal-detour.json",
+    "passes": true
+  },
+  "review7/A-fixed-canvas-new-arrowhead-mask": {
+    "file": "review7-fixed-canvas-new-arrowhead-mask.json",
+    "passes": true
   }
 }

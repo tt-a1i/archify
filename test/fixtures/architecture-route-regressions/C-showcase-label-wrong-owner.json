@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "layout": {
+    "mode": "auto"
+  },
+  "meta": {
+    "title": "Canvas 203",
+    "output": "output.html",
+    "legend": {
+      "mode": "hidden"
+    },
+    "quality_profile": "showcase"
+  },
+  "components": [
+    {
+      "id": "n0",
+      "label": "Queue 1",
+      "type": "frontend",
+      "size": [
+        160,
+        52
+      ]
+    },
+    {
+      "id": "n1",
+      "label": "Policy 2",
+      "type": "external",
+      "size": [
+        140,
+        52
+      ]
+    },
+    {
+      "id": "n2",
+      "label": "Worker 3",
+      "type": "frontend"
+    },
+    {
+      "id": "n3",
+      "label": "Queue 4",
+      "type": "backend",
+      "size": [
+        105,
+        60
+      ]
+    },
+    {
+      "id": "n4",
+      "label": "Worker 5",
+      "type": "frontend"
+    }
+  ],
+  "connections": [
+    {
+      "id": "e0",
+      "from": "n0",
+      "to": "n1",
+      "label": "Commit transaction",
+      "width": 5
+    },
+    {
+      "id": "e1",
+      "from": "n1",
+      "to": "n0",
+      "width": 5
+    },
+    {
+      "id": "e2",
+      "from": "n0",
+      "to": "n2",
+      "label": "Commit transaction"
+    },
+    {
+      "id": "e3",
+      "from": "n2",
+      "to": "n0",
+      "label": "Check authorization",
+      "width": 9
+    },
+    {
+      "id": "e4",
+      "from": "n2",
+      "to": "n3",
+      "label": "Publish audit events"
+    },
+    {
+      "id": "e5",
+      "from": "n0",
+      "to": "n4",
+      "label": "Dispatch",
+      "width": 3
+    }
+  ],
+  "boundaries": []
+}

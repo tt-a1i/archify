@@ -4,8 +4,8 @@ import { prepareCrossingPath, visibleCrossings } from '../shared/route-crossings
 import { horizontalLabelClearance } from './routing.mjs';
 
 export function measuredCrossingPairs(routes) {
-  const paths = routes.map(({ d, relation }) => analyzeSvgPath(d).subpaths
-    .map(({ commands }) => prepareCrossingPath(commands, relation?.via)));
+  const paths = routes.map(({ d }) => analyzeSvgPath(d).subpaths
+    .map(({ commands }) => prepareCrossingPath(commands)));
   return routes.flatMap(({ relation }, index) => routes.slice(index + 1).flatMap(({ relation: other }, offset) =>
     paths[index].some(a => paths[index + offset + 1].some(b => visibleCrossings(a, b, 1).length))
       ? [[relation, other]] : []));
@@ -127,6 +127,134 @@ export function terminalBranchCandidates({ boxes, routes, viewBox, titles }, spa
     }
   }
   return moves.sort((a, b) => b.longest - a.longest || b.gain - a.gain);
+}
+
+// Compact several long links to the same card. Keep their spatial order
+// along the new strip. An existing frame moves as a unit so its membership
+// and internal layout do not interfere with the shared approach.
+export function sharedNeighborCandidates({ boxes, routes, viewBox, titles }, spans) {
+  const groups = new Map();
+  const threshold = Math.max(280, Math.hypot(...viewBox) / 4);
+  routes.forEach(({ relation }, index) => {
+    if (spans[index].length < threshold || relation.from === relation.to) return;
+    for (const [anchor, peer, direction] of [[relation.to, relation.from, 'in'], [relation.from, relation.to, 'out']]) {
+      const key = JSON.stringify([anchor, direction]);
+      if (!groups.has(key)) groups.set(key, { anchor, peers: new Map() });
+      const { peers } = groups.get(key);
+      peers.set(peer, Math.max(peers.get(peer) ?? 0, spans[index].length));
+    }
+  });
+  const frames = titles.boundaries;
+  const moves = [];
+  const seen = new Set();
+  const distance = (a, b) => Math.abs(a.cx - b.cx) + Math.abs(a.cy - b.cy);
+  const oldLength = routes.reduce((sum, { relation }) => sum + distance(boxes.get(relation.from), boxes.get(relation.to)), 0);
+  const content = {
+    right: Math.max(...[...boxes.values()].map(box => box.x + box.width)),
+    bottom: Math.max(...[...boxes.values()].map(box => box.y + box.height)),
+  };
+  const gap = 28;
+
+  function propose(changed, group, anchor, movedFrames = []) {
+    if (changed.some(box => box.pos || box.x < 40 || box.y < 40
+        || box.x + box.width > content.right + 0.0001 || box.y + box.height > content.bottom + 0.0001)) return;
+    const moved = new Map(boxes);
+    const ids = new Set(changed.map(box => box.id));
+    const others = [...boxes.values()].filter(box => !ids.has(box.id));
+    for (const box of changed) {
+      if (others.some(other => rectsOverlap(box, other, gap))
+          || frames.some(frame => !frame.wraps.includes(box.id) && rectsOverlap(box, frame, 12))) return;
+      moved.set(box.id, box);
+    }
+    if (movedFrames.some(frame => others.some(box => rectsOverlap(frame, box, 12)))) return;
+    const sharedGain = group.reduce((sum, id) => sum + distance(anchor, boxes.get(id)) - distance(anchor, moved.get(id)), 0);
+    if (sharedGain < 48) return;
+    const gain = oldLength - routes.reduce((sum, { relation }) =>
+      sum + distance(moved.get(relation.from), moved.get(relation.to)), 0);
+    const key = JSON.stringify(changed.map(({ id, x, y }) => [id, x, y]));
+    if (gain < 48 || seen.has(key)) return;
+    seen.add(key);
+    moves.push({ moved, gain });
+  }
+
+  for (const { anchor: anchorId, peers } of groups.values()) {
+    if (peers.size < 2) continue;
+    const anchor = boxes.get(anchorId);
+    const ids = [...peers].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([id]) => id);
+    const peerFrames = ids.map(id => frames.filter(frame => frame.wraps.includes(id)));
+    const outer = frames.filter(frame => frame.wraps.includes(anchorId)).sort((a, b) =>
+      b.width * b.height - a.width * a.height)[0] ?? anchor;
+    if (peerFrames.every(list => list.length === 1 && list[0] === peerFrames[0][0]) && peerFrames[0][0] !== outer) {
+      const frame = peerFrames[0][0];
+      const members = frame.wraps.map(id => boxes.get(id));
+      const positions = [
+        [outer.x - frame.width - gap, frame.y],
+        [outer.x + outer.width + gap, frame.y],
+        [frame.x, outer.y - frame.height - gap],
+        [frame.x, outer.y + outer.height + gap],
+      ];
+      for (const [x, y] of positions) {
+        const moved = members.map(box => move(box, box.x + x - frame.x, box.y + y - frame.y));
+        propose(moved, ids, anchor, [{ ...frame, x, y }]);
+      }
+
+      // A nearby card or frame can block translation of the whole scope.
+      // In that case line up the peers on the face already toward the
+      // anchor, retaining their order and leaving the other members put.
+      const horizontal = Math.abs(anchor.cy - (frame.y + frame.height / 2))
+        >= Math.abs(anchor.cx - (frame.x + frame.width / 2));
+      const along = horizontal ? 'x' : 'y';
+      const across = horizontal ? 'y' : 'x';
+      const extent = horizontal ? 'width' : 'height';
+      const thickness = horizontal ? 'height' : 'width';
+      const boundary = horizontal ? content.right : content.bottom;
+      const peers = ids.map(id => boxes.get(id)).sort((a, b) => a[along] - b[along] || a[across] - b[across]);
+      const run = peers.reduce((sum, box) => sum + box[extent], (peers.length - 1) * gap);
+      const near = (horizontal ? anchor.cy : anchor.cx) < frame[across] + frame[thickness] / 2;
+      const rail = near ? Math.min(...peers.map(box => box[across]))
+        : Math.max(...peers.map(box => box[across] + box[thickness]));
+      const midpoint = horizontal ? anchor.cx : anchor.cy;
+      for (const start of new Set([peers[0][along], frame[along] + gap, Math.min(boundary - run, midpoint - run / 2)])) {
+        let at = start;
+        const moved = peers.map(box => {
+          const lane = near ? rail : rail - box[thickness];
+          const candidate = move(box, horizontal ? at : lane, horizontal ? lane : at);
+          at += box[extent] + gap;
+          return candidate;
+        });
+        propose(moved, ids, anchor);
+      }
+    }
+    const unframed = ids.filter((_, index) => !peerFrames[index].length);
+    const sets = unframed.flatMap((first, index) => unframed.slice(index + 1).map(second => [first, second]));
+    if (unframed.length > 2) sets.unshift(unframed);
+    for (const set of sets) for (const horizontal of [true, false]) {
+      const along = horizontal ? 'x' : 'y';
+      const across = horizontal ? 'y' : 'x';
+      const extent = horizontal ? 'width' : 'height';
+      const thickness = horizontal ? 'height' : 'width';
+      const members = set.map(id => boxes.get(id)).sort((a, b) => a[along] - b[along] || a[across] - b[across]);
+      const run = members.reduce((sum, box) => sum + box[extent], (members.length - 1) * gap);
+      const near = Math.max(...members.map(box => box[thickness]));
+      const clearance = horizontal ? 48 : Math.max(52, ...routes.filter(({ relation }) =>
+        set.includes(relation.from) && relation.to === anchorId || set.includes(relation.to) && relation.from === anchorId)
+        .map(({ relation }) => horizontalLabelClearance(relation)));
+      const low = outer[along];
+      const high = low + outer[extent];
+      for (const start of [low - run, low, (low + high - run) / 2, high - run, high]) {
+        for (const lane of [outer[across] - near - clearance, outer[across] + outer[thickness] + clearance]) {
+          let at = start;
+          const changed = members.map(box => {
+            const candidate = move(box, horizontal ? at : lane, horizontal ? lane : at);
+            at += box[extent] + gap;
+            return candidate;
+          });
+          propose(changed, set, anchor);
+        }
+      }
+    }
+  }
+  return moves.sort((a, b) => b.gain - a.gain);
 }
 
 export function foldedChain({ boxes, routes, titles, viewBox }) {

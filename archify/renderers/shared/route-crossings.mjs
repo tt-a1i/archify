@@ -19,33 +19,21 @@ function overlaps(a, b) {
     && a[1] <= b[3] + EPSILON && b[1] <= a[3] + EPSILON;
 }
 
-export function prepareCrossingPath(commands, authoredWaypoints = []) {
-  const touches = [];
-  const segments = commands.flatMap((command, index) => {
+export function prepareCrossingPath(commands) {
+  const segments = commands.flatMap(command => {
     const { start, end, control } = command;
     const chord = subtract(end, start);
     const direction = control && subtract(control, start);
     const length = Math.hypot(...chord);
-    if (!direction) {
-      if (length && authoredWaypoints.some(point => coincides(point, end))) {
-        const next = commands[index + 1];
-        if (next && !next.control && coincides(next.start, end)) {
-          const onward = subtract(next.end, end);
-          if (Math.abs(cross(chord, onward)) <= ROUND_OFF * length * Math.hypot(...onward)
-            && chord[0] * onward[0] + chord[1] * onward[1] > 0) touches.push(end);
-        }
-      }
-      return length ? [command] : [];
-    }
+    if (!direction) return length ? [command] : [];
     if (!length && coincides(start, control)) return [];
     if (length && Math.abs(cross(chord, direction)) > ROUND_OFF * length * Math.hypot(...direction)) return [command];
 
-    // A straight quadratic generated for a collinear via preserves the old
-    // authored touch. It is otherwise exactly the same centreline as a line.
+    // A straight quadratic with a monotone trace has the same centerline
+    // as a line, including when it came from an explicit via.
     const axis = Math.abs(chord[0]) >= Math.abs(chord[1]) ? 0 : 1;
     const fraction = length ? direction[axis] / chord[axis] : Infinity;
     if (fraction >= 0 && fraction <= 1) {
-      if (authoredWaypoints.some(point => coincides(point, control))) touches.push(control);
       return [{ ...command, control: undefined }];
     }
     const turn = length ? fraction / (2 * fraction - 1) : 0.5;
@@ -59,7 +47,7 @@ export function prepareCrossingPath(commands, authoredWaypoints = []) {
     bounds[2] = Math.max(bounds[2], r);
     bounds[3] = Math.max(bounds[3], b);
   }
-  return { segments, bounds, touches };
+  return { segments, bounds };
 }
 
 function lineRoots(a, b) {
@@ -216,9 +204,7 @@ export function visibleCrossings(left, right, limit = Infinity, consume = null) 
         const direct = t > EPSILON && t < 1 - EPSILON && s > EPSILON && s < 1 - EPSILON;
         if (direct ? !changesSide : !alternating(raysAt(left.segments, i, t), raysAt(right.segments, j, s))) continue;
         const point = pointAt(a, t);
-        if (hits.some(hit => coincides(point, hit.point))
-          || left.touches.some(waypoint => coincides(point, waypoint))
-          || right.touches.some(waypoint => coincides(point, waypoint))) continue;
+        if (hits.some(hit => coincides(point, hit.point))) continue;
         hits.push({
           point,
           leftSegment: (t > 0.5 ? a.nextSourceSegment : undefined) ?? a.sourceSegment ?? i,

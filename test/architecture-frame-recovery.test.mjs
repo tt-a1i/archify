@@ -32,3 +32,26 @@ for (const [name, { file, passes, diagnostic, round5Svg }] of Object.entries(cas
     }
   });
 }
+
+for (const [name, expectedLengths] of [
+  ['fixed-canvas-reciprocal-detour', [80, 92, 92]],
+  ['fixed-canvas-new-arrowhead-mask', [60]],
+]) {
+  test(`fixed-canvas placement preserves the earlier route quality in ${name}`, t => {
+    const fixture = fileURLToPath(new URL(`review7-${name}.json`, fixtures));
+    const scratch = mkdtempSync(join(tmpdir(), 'archify-fixed-quality-'));
+    t.after(() => rmSync(scratch, { recursive: true, force: true }));
+    const output = join(scratch, 'chart.html');
+    const render = spawnSync(process.execPath, [cli, 'render', 'architecture', fixture, output], { encoding: 'utf8' });
+    assert.equal(render.status, 0, render.stdout + render.stderr);
+    const checked = spawnSync(process.execPath, [cli, 'check', output, '--json'], { encoding: 'utf8' });
+    const receipt = JSON.parse(checked.stdout);
+    assert.equal(checked.status, 0, checked.stdout + checked.stderr);
+    assert.ok(!receipt.composition.issues.some(issue => issue.code === 'composition/label-arrowhead-mask'));
+    const diagnostic = spawnSync(process.execPath, [cli, 'validate', 'architecture', fixture, '--layout-json'], { encoding: 'utf8' });
+    const { connections } = JSON.parse(diagnostic.stdout);
+    const lengths = connections.map(({ points }) => points.slice(1).reduce((length, [x, y], index) =>
+      length + Math.abs(x - points[index][0]) + Math.abs(y - points[index][1]), 0));
+    assert.ok(lengths.every((length, index) => length <= expectedLengths[index]), JSON.stringify(lengths));
+  });
+}

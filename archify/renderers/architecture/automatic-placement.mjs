@@ -601,7 +601,7 @@ function avoidPinnedComponents(byId, connections, boundaries, viewBox, composedT
         item.y += dy;
       }
     }
-    if (!viewBox) return;
+    if (!viewBox || fixedCanvasRecovery === 'card-bounds') return;
     const [right, bottom] = viewBox;
     const cardsFit = items.every(item => item.x + item.width <= right && item.y + item.height <= bottom);
     const framesFit = boundaries.every(boundary => asArray(boundary.wraps).every(id => {
@@ -634,7 +634,7 @@ function avoidPinnedComponents(byId, connections, boundaries, viewBox, composedT
 
   const clearance = 24;
   const canvasInsets = new Map();
-  if (viewBox) {
+  if (viewBox && fixedCanvasRecovery !== 'card-bounds') {
     for (const boundary of boundaries) {
       const padding = boundaryInsets(boundary.pad, composedTitle);
       for (const id of asArray(boundary.wraps)) {
@@ -720,8 +720,8 @@ function avoidPinnedComponents(byId, connections, boundaries, viewBox, composedT
     } : canvasInsets.get(item) ?? { side: 0, top: 0, bottom: 0 };
     const maxX = viewBox ? viewBox[0] - item.width - side : Infinity;
     const maxY = viewBox ? viewBox[1] - item.height - bottom : Infinity;
-    const lowerX = viewBox && fixedCanvasRecovery !== 'packing' ? side : minX;
-    const lowerY = viewBox && fixedCanvasRecovery !== 'packing' ? top : minY;
+    const lowerX = viewBox && fixedCanvasRecovery !== 'packing' && fixedCanvasRecovery !== 'card-bounds' ? side : minX;
+    const lowerY = viewBox && fixedCanvasRecovery !== 'packing' && fixedCanvasRecovery !== 'card-bounds' ? top : minY;
     [item.x, item.y] = nearestFreePosition(x, y, lowerX, lowerY, obstacles, maxX, maxY)
       ?? nearestFreePosition(x, y, lowerX, lowerY, basic, maxX, maxY)
       ?? (viewBox ? nearestFreePosition(x, y, minX, minY, obstacles) : undefined)
