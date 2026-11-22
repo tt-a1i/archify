@@ -276,6 +276,49 @@ test('Motion Governor preserves mode, ownership, continuous Live flow and real c
     }
   });
 
+  await t.test('Sequence WebM records every authored row in order without overlapping heads', async () => {
+    await load('sequence');
+    const result = await run(`(async () => {
+      const svg = document.querySelector('.diagram-container svg');
+      const rows = [...svg.querySelectorAll('[data-animate="edge"]')].map(element =>
+        Math.round(element.getPointAtLength(element.getTotalLength() / 2).y)).sort((a, b) => a - b);
+      const canvas = CanvasRenderingContext2D.prototype;
+      const originalArc = canvas.arc, originalClear = canvas.clearRect;
+      const current = new WeakMap(), seen = [];
+      let peak = 0, last = 0;
+      const started = performance.now();
+      try {
+        canvas.clearRect = function () {
+          current.set(this, 0);
+          return originalClear.apply(this, arguments);
+        };
+        canvas.arc = function (x, y, radius) {
+          // The overlaid comet has a circular head. Capture its actual painted
+          // Sequence row, before encoding, through the normal recording path.
+          if (radius === 4.8) {
+            const count = (current.get(this) || 0) + 1;
+            current.set(this, count);
+            peak = Math.max(peak, count);
+            const row = Math.round(y);
+            if (seen.at(-1) !== row) seen.push(row);
+            last = performance.now() - started;
+          }
+          return originalArc.apply(this, arguments);
+        };
+        const video = await Archify.motion.recordWebm({ fps: 24, duration: 6000 });
+        return { rows, seen, peak, last, size: video.size, type: video.type };
+      } finally {
+        canvas.arc = originalArc;
+        canvas.clearRect = originalClear;
+      }
+    })()`);
+    assert.match(result.type, /^video\/webm/);
+    assert.ok(result.size > 1000);
+    assert.deepEqual(result.seen, result.rows);
+    assert.equal(result.peak, 1);
+    assert.ok(result.last > 3700, 'the final authored message remains animated near the end of the timeline');
+  });
+
   await t.test('settled Live node glow preserves Classic card depth across themes', async () => {
     const samples=[];
     for (const theme of ['dark', 'light']) {
