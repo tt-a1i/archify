@@ -23,6 +23,10 @@
     "**/.git/**",
     "**/_archive/**"
   ],
+  "typescript": {
+    "sdk": "bundled",
+    "requireProjectSdk": false
+  },
   "roles": {
     "test": [
       "**/test/**",

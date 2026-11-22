@@ -124,6 +124,54 @@ jobs:
         if: '!matrix.module-shard'
         run: node scripts/run-tests.mjs --shard=${{ matrix.shard }}/4
 
+  js-ts-platform:
+    needs: scope
+    if: needs.scope.outputs.scope == 'full'
+    name: JS/TS project SDK (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 22
+      - name: Install Code Analysis dependencies
+        run: npm ci --prefix archify/modules/code-analysis --ignore-scripts --no-audit --no-fund
+      - name: Verify JS/TS project selection, resolution and calls
+        run: >-
+          node --test
+          archify/modules/code-analysis/test/ts-sdk.test.mjs
+          archify/modules/code-analysis/test/ts-projects.test.mjs
+          archify/modules/code-analysis/test/ts-snapshot.test.mjs
+          archify/modules/code-analysis/test/ts-upstream-alignment.test.mjs
+          archify/modules/code-analysis/test/ts-upstream-ledger.test.mjs
+          archify/modules/code-analysis/test/ts-official-projects.test.mjs
+          archify/modules/code-analysis/test/ts-official-modules.test.mjs
+          archify/modules/code-analysis/test/ts-official-syntax.test.mjs
+          archify/modules/code-analysis/test/ts-official-definitions.test.mjs
+          archify/modules/code-analysis/test/calls.test.mjs
+      - name: Install boundary TypeScript SDKs in temporary directories
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
+        run: |
+          for version in 5.6.3 6.0.3; do
+            npm install --prefix "$RUNNER_TEMP/archify-ts-$version" --ignore-scripts --no-audit --no-fund --no-save "typescript@$version"
+          done
+      - name: Compare official engines at supported version boundaries
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
+        run: |
+          for version in 5.6.3 6.0.3; do
+            ARCHIFY_TEST_TYPESCRIPT_SDK="$RUNNER_TEMP/archify-ts-$version/node_modules/typescript" node --test \
+              archify/modules/code-analysis/test/ts-official-projects.test.mjs \
+              archify/modules/code-analysis/test/ts-official-modules.test.mjs \
+              archify/modules/code-analysis/test/ts-official-syntax.test.mjs \
+              archify/modules/code-analysis/test/ts-official-definitions.test.mjs
+          done
+
   test:
     needs: scope
     if: always() && !cancelled()
@@ -160,7 +208,7 @@ jobs:
 
   canonical-test:
     name: test (22)
-    needs: [scope, full-regression]
+    needs: [scope, full-regression, js-ts-platform]
     if: always() && !cancelled()
     runs-on: ubuntu-latest
     steps:
@@ -180,6 +228,16 @@ jobs:
         shell: bash
         run: |
           case "$CI_SCOPE:$REGRESSION_RESULT" in
+            full:success|core:skipped|docs:skipped) ;;
+            *) exit 1 ;;
+          esac
+      - name: Require JS/TS platform matrix
+        env:
+          CI_SCOPE: ${{ needs.scope.outputs.scope }}
+          JS_TS_RESULT: ${{ needs['js-ts-platform'].result }}
+        shell: bash
+        run: |
+          case "$CI_SCOPE:$JS_TS_RESULT" in
             full:success|core:skipped|docs:skipped) ;;
             *) exit 1 ;;
           esac

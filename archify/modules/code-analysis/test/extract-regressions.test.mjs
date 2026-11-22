@@ -21,6 +21,9 @@ function extract(root, extra = [], env = process.env) {
 }
 test('CommonJS directory requires find the captured JS entry behind separate declarations', (t) => {
   const root = fixture(t, {
+    // NodeNext rejects a dynamic directory import. Inferred projects follow
+    // VS Code's Bundler default, which intentionally accepts that module path.
+    'jsconfig.json': JSON.stringify({ compilerOptions: { module: 'NodeNext', moduleResolution: 'NodeNext' } }),
     'package.json': JSON.stringify({ main: './index.js', types: './types/index.d.ts' }),
     'index.js': 'exports.value = 1;',
     'types/index.d.ts': 'export declare const value: number;',
