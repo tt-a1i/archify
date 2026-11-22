@@ -11,7 +11,7 @@ const fixtures = new URL('fixtures/architecture-frame-recovery/', import.meta.ur
 const cases = JSON.parse(readFileSync(new URL('cases.json', fixtures), 'utf8'));
 const cli = fileURLToPath(new URL('../archify/bin/archify.mjs', import.meta.url));
 
-for (const [name, { file, passes, diagnostic, round5Svg, round7Svg, routeLengthLimits }] of Object.entries(cases)) {
+for (const [name, { file, passes, diagnostic, round5Svg, round7Svg, round8Svg, routeLengthLimits }] of Object.entries(cases)) {
   test(`frame recovery preserves the validated layout for ${name}`, t => {
     const scratch = mkdtempSync(join(tmpdir(), 'archify-fixed-canvas-'));
     t.after(() => rmSync(scratch, { recursive: true, force: true }));
@@ -24,11 +24,12 @@ for (const [name, { file, passes, diagnostic, round5Svg, round7Svg, routeLengthL
     const failure = result.stdout + result.stderr;
     assert.equal(result.status === 0, passes, failure);
     if (diagnostic) assert.ok(failure.includes(`[${diagnostic}]`), failure);
-    if (round5Svg || round7Svg) {
+    const expectedSvg = round5Svg ?? round7Svg ?? round8Svg;
+    if (expectedSvg) {
       // Fixed-canvas compatibility includes routes, labels and frames.
       const svg = readFileSync(output, 'utf8').match(/<svg\b[\s\S]*?<\/svg>/g)
         .reduce((longest, match) => match.length > longest.length ? match : longest);
-      assert.equal(createHash('sha256').update(svg).digest('hex'), round5Svg ?? round7Svg);
+      assert.equal(createHash('sha256').update(svg).digest('hex'), expectedSvg);
     }
     if (routeLengthLimits) {
       const checked = spawnSync(process.execPath, [cli, 'check', output, '--json'], { encoding: 'utf8', env });

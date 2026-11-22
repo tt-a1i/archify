@@ -171,5 +171,10 @@
       "API request": 125,
       "Fetch preferences": 125
     }
+  },
+  "fixture/pinned-canvas-label-clearance": {
+    "file": "pinned-canvas-label-clearance.json",
+    "passes": true,
+    "round8Svg": "45035a6a66103d6fb2427ea2371e2fcb8325d5dc6f58fc695cdbe71076a8f506"
   }
 }
