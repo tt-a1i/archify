@@ -8,8 +8,8 @@
   "provenance": "unknown",
   "artifact": {
     "path": "examples/drilldown-overview.html",
-    "sha256": "88e2d1a8a1b08fd2058c0f1ecba557dad2b00586825bbb5ef79ec04992b5794a",
-    "bytes": 904079
+    "sha256": "e91938c5a1b7d8a4e1ade2e20a5ccd8b6618be8ebf85b7149c93304d01c54e46",
+    "bytes": 915342
   },
   "state": {
     "detail": "read",
@@ -94,13 +94,13 @@
         "diagramType": "architecture",
         "documentScrollUnclipped": true,
         "ok": true,
-        "readerWidth": 1529,
-        "diagramWidth": 1499,
+        "readerWidth": 1516,
+        "diagramWidth": 1486,
         "pageComposition": {
           "bodyPaddingPx": 64,
           "headerPx": 86,
           "diagramChromePx": 84,
-          "svgPx": 700,
+          "svgPx": 693,
           "cardsPx": 0,
           "viewBoxHeight": 420
         },
@@ -146,13 +146,13 @@
         "diagramType": "architecture",
         "documentScrollUnclipped": true,
         "ok": true,
-        "readerWidth": 1699,
-        "diagramWidth": 1669,
+        "readerWidth": 1688,
+        "diagramWidth": 1658,
         "pageComposition": {
           "bodyPaddingPx": 64,
           "headerPx": 86,
           "diagramChromePx": 84,
-          "svgPx": 779,
+          "svgPx": 774,
           "cardsPx": 0,
           "viewBoxHeight": 420
         },
@@ -355,13 +355,13 @@
         "diagramType": "architecture",
         "documentScrollUnclipped": true,
         "ok": true,
-        "readerWidth": 1529,
-        "diagramWidth": 1499,
+        "readerWidth": 1516,
+        "diagramWidth": 1486,
         "pageComposition": {
           "bodyPaddingPx": 64,
           "headerPx": 86,
           "diagramChromePx": 84,
-          "svgPx": 700,
+          "svgPx": 693,
           "cardsPx": 0,
           "viewBoxHeight": 420
         },
@@ -407,13 +407,13 @@
         "diagramType": "architecture",
         "documentScrollUnclipped": true,
         "ok": true,
-        "readerWidth": 1699,
-        "diagramWidth": 1669,
+        "readerWidth": 1688,
+        "diagramWidth": 1658,
         "pageComposition": {
           "bodyPaddingPx": 64,
           "headerPx": 86,
           "diagramChromePx": 84,
-          "svgPx": 779,
+          "svgPx": 774,
           "cardsPx": 0,
           "viewBoxHeight": 420
         },
@@ -568,13 +568,13 @@
         "diagramType": "architecture",
         "documentScrollUnclipped": true,
         "ok": true,
-        "readerWidth": 1529,
-        "diagramWidth": 1499,
+        "readerWidth": 1516,
+        "diagramWidth": 1486,
         "pageComposition": {
           "bodyPaddingPx": 64,
           "headerPx": 86,
           "diagramChromePx": 84,
-          "svgPx": 700,
+          "svgPx": 693,
           "cardsPx": 0,
           "viewBoxHeight": 420
         },
@@ -620,13 +620,13 @@
         "diagramType": "architecture",
         "documentScrollUnclipped": true,
         "ok": true,
-        "readerWidth": 1699,
-        "diagramWidth": 1669,
+        "readerWidth": 1688,
+        "diagramWidth": 1658,
         "pageComposition": {
           "bodyPaddingPx": 64,
           "headerPx": 86,
           "diagramChromePx": 84,
-          "svgPx": 779,
+          "svgPx": 774,
           "cardsPx": 0,
           "viewBoxHeight": 420
         },
@@ -762,7 +762,7 @@
         "viewerChromeActive": true,
         "viewerChromeOk": true,
         "resolvedTheme": "light",
-        "file": "drilldown-overview.1440x900.light.png"
+        "file": "drilldown-overview.visual-check.1440x900.light.png"
       },
       {
         "width": 1440,
@@ -815,7 +815,7 @@
         "viewerChromeActive": true,
         "viewerChromeOk": true,
         "resolvedTheme": "dark",
-        "file": "drilldown-overview.1440x900.dark.png"
+        "file": "drilldown-overview.visual-check.1440x900.dark.png"
       },
       {
         "width": 2048,
@@ -924,7 +924,8 @@
         "file": "drilldown-overview.visual-check.2048x1320.dark.png"
       }
     ],
-    "contactSheet": "drilldown-overview.visual-check.html"
+    "contactSheet": "drilldown-overview.visual-check.html",
+    "directory": "docs/assets"
   },
   "sidecars": {
     "receipt": "drilldown-overview.visual-check.json",
@@ -938,16 +939,16 @@
       {
         "sha256": "6f913847fdf0afba360094beec9582b6268b656dcd016398c65405afb1ab3542",
         "bytes": 76654,
-        "file": "drilldown-overview.1440x900.light.png"
+        "file": "drilldown-overview.visual-check.1440x900.light.png"
       },
       {
         "sha256": "5fcd569aeb9ccc786e122e8e9f282c3b3965a963ab6572024a558947c2cab542",
         "bytes": 80267,
-        "file": "drilldown-overview.1440x900.dark.png"
+        "file": "drilldown-overview.visual-check.1440x900.dark.png"
       },
       {
-        "sha256": "c2228b48c6c101fafdd927d30e8c3b676d32af870bd1e2165179b2be47c859ee",
-        "bytes": 106865,
+        "sha256": "40c59153260db2d031ec2534193d54eb1bae4e231fbf4582c18253e9213a26b4",
+        "bytes": 106772,
         "file": "drilldown-overview.visual-check.2048x1320.light.png"
       },
       {
@@ -955,7 +956,6 @@
         "bytes": 113037,
         "file": "drilldown-overview.visual-check.2048x1320.dark.png"
       }
-    ],
-    "directory": "docs/assets"
+    ]
   }
 }
