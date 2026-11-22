@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { execFileSync, spawn } from 'node:child_process';
 import { once } from 'node:events';
+import { setTimeout as delay } from 'node:timers/promises';
 import fs from 'node:fs';
 import net from 'node:net';
 import os from 'node:os';
@@ -243,15 +244,11 @@ execFileSync(process.execPath, [
 
 assert.equal(typeof WebSocket, 'function', 'Node.js 22+ is required for the Chrome DevTools smoke harness');
 
-function delay(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 async function waitForExit(child, timeoutMs) {
   if (child.exitCode !== null || child.signalCode !== null) return true;
   return Promise.race([
     once(child, 'exit').then(() => true),
-    delay(timeoutMs).then(() => false),
+    delay(timeoutMs, false, { ref: false }),
   ]);
 }
 
