@@ -131,3 +131,13 @@ test('the artifact checker names the route competing for a relationship label', 
   assert.equal(issue.otherClearance, 7);
   assert.equal(issue.otherRelationship.from, 'b');
 });
+
+test('the artifact checker measures ownership against the drawn quadratic', t => {
+  const output = join(scratch(t), 'chart.html');
+  const render = run(['render', 'architecture', spec('review8-rounded-ownership'), output]);
+  assert.equal(render.status, 0, render.stdout + render.stderr);
+  const checked = run(['check', output, '--json']);
+  assert.equal(checked.status, 0, checked.stdout + checked.stderr);
+  assert.ok(!JSON.parse(checked.stdout).composition.issues.some(({ code }) =>
+    code === 'composition/label-route-ownership'));
+});

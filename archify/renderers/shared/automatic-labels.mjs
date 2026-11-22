@@ -8,6 +8,7 @@ export function placeAutomaticLabels({
   labels, routes, components, titles, viewBox, placementBottom = viewBox[1], fallbackRing = true, keepFallbackNearRoute = false,
   gridSweep = false, maxOwnRouteDistance = Infinity, protectedEndpoints = new Map(), onlyProtectedEndpoints = false,
   arrowheads = [], clearanceBorders = [], ownershipMargin = 0, repairOwnership = false, searchBand = false,
+  coversRouteStroke = () => false,
 }) {
   const placed = [...labels];
   const obstacles = [...components, ...titles];
@@ -66,7 +67,8 @@ export function placeAutomaticLabels({
   const clear = (rect, index) => (
     inside(rect) && rect.y + rect.height <= placementBottom
     && !obstacles.some(obstacle => rectsOverlap(rect, obstacle, 2))
-    && !overlapsLabel(rect, index, 2) && !masksRoute(rect) && !coversEndpoint(rect) && !touchesBorder(rect) && keepsOwner(rect)
+    && !overlapsLabel(rect, index, 2) && !masksRoute(rect) && !coversRouteStroke(rect)
+    && !coversEndpoint(rect) && !touchesBorder(rect) && keepsOwner(rect)
     && (!Number.isFinite(maxOwnRouteDistance) || segments.some(segment =>
       segment.relationIndex === rect.relationIndex
       && segmentRectClearanceWithin(segment, rect, maxOwnRouteDistance) <= maxOwnRouteDistance))
@@ -239,7 +241,7 @@ export function placeAutomaticLabels({
 
   const pinned = label => ['labelAt', 'labelDx', 'labelDy', 'labelSegment']
     .some(key => label.relation[key] !== undefined);
-  const needsPlacement = (label, index) => coversEndpoint(label) || touchesBorder(label)
+  const needsPlacement = (label, index) => coversEndpoint(label) || touchesBorder(label) || coversRouteStroke(label)
     || (repairOwnership && !keepsOwner(label)) || (!onlyProtectedEndpoints && (!inside(label)
     || components.some(component => rectsOverlap(label, component, -2))
     || titles.some(title => rectsOverlap(label, title))

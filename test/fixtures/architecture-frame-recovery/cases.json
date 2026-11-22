@@ -146,5 +146,30 @@
   "review7/A-fixed-canvas-new-arrowhead-mask": {
     "file": "review7-fixed-canvas-new-arrowhead-mask.json",
     "passes": true
+  },
+  "review8/frame-recovery": {
+    "file": "review8-frame-recovery.json",
+    "passes": true,
+    "round7Svg": "fbf36efd308563b628158edf3d981d4bc8ae3b446f6321e13fde62508520c30d"
+  },
+  "review8/frame-recovery-second": {
+    "file": "review8-frame-recovery-second.json",
+    "passes": true,
+    "round7Svg": "02b777161db1bbe88486b10b10c165c4135810d7a5b0a57ed20a0a905b86e365"
+  },
+  "review8/load-inventory-detour": {
+    "file": "review8-load-inventory-detour.json",
+    "passes": true,
+    "routeLengthLimits": {
+      "Load inventory": 100
+    }
+  },
+  "review8/reciprocal-detour": {
+    "file": "review8-reciprocal-detour.json",
+    "passes": true,
+    "routeLengthLimits": {
+      "API request": 125,
+      "Fetch preferences": 125
+    }
   }
 }

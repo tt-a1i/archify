@@ -8,9 +8,10 @@ import { fileURLToPath } from 'node:url';
 import { automaticComponentPositions } from '../archify/renderers/architecture/automatic-placement.mjs';
 import { placeAutomaticLabels } from '../archify/renderers/shared/automatic-labels.mjs';
 import { arrowheadTriangle, maskCoversArrowhead } from '../archify/renderers/shared/arrowhead.mjs';
+import { drawnPathRectClearance, prepareCrossingPath } from '../archify/renderers/shared/route-crossings.mjs';
 import { measuredCrossingPairs, routeSpanMeasures, sharedNeighborCandidates } from '../archify/renderers/architecture/automatic-placement-candidates.mjs';
 import { connectionLabelBoxAt, createArchitectureRouter, parallelRunMeasures } from '../archify/renderers/architecture/routing.mjs';
-import { properSegmentIntersection, rectsOverlap, roundedPath, segmentRectClearance } from '../archify/renderers/shared/geometry.mjs';
+import { properSegmentIntersection, rectsOverlap, roundedPath, roundedPathSegments, segmentRectClearance } from '../archify/renderers/shared/geometry.mjs';
 
 const fixtureUrl = name => new URL(`fixtures/architecture-route-regressions/${name}.json`, import.meta.url);
 const load = name => JSON.parse(readFileSync(fixtureUrl(name), 'utf8'));
@@ -486,4 +487,34 @@ test('shared long input routes can be shortened by moving their inferred cards a
 
   const invalidFrame = { x: 24, y: 24, width: 148, height: 272, wraps: ['first', 'second', 'missing'] };
   assert.deepEqual(sharedNeighborCandidates({ boxes, routes, viewBox, titles: { boundaries: [invalidFrame] } }, spans), []);
+});
+
+test('grouping distant links keeps a straight main-chain connection direct', () => {
+  const { status, receipt } = validate(fileURLToPath(fixtureUrl('review8-group-detour')), 'standard', '--layout-json');
+  assert.equal(status, 0, JSON.stringify(receipt.diagnostics));
+  const link = receipt.connections.find(route => route.from === 'n1' && route.to === 'n2');
+  assert.equal(link.points.length, 2);
+  assert.ok(Math.hypot(link.points[0][0] - link.points[1][0], link.points[0][1] - link.points[1][1]) <= 131);
+});
+
+test('group proposals that cannot preserve a nearby route spend no additional routed candidates', () => {
+  const { status, receipt } = validate(fileURLToPath(fixtureUrl('review8-group-runtime')), 'standard', '--layout-json');
+  assert.equal(status, 0, JSON.stringify(receipt.diagnostics));
+  assert.ok(receipt.routedPlacementCandidates <= 4, JSON.stringify(receipt.routedPlacementCandidates));
+});
+
+test('an inferred return label keeps its elbows and competing shafts visible', () => {
+  const { status, receipt } = validate(fileURLToPath(fixtureUrl('rounded-return-label')), 'showcase', '--layout-json');
+  assert.equal(status, 0, JSON.stringify(receipt.diagnostics));
+  const label = receipt.labels.find(({ text }) => text === 'first passing candidate');
+  const owner = receipt.connections.find(({ from, to }) => from === 'judge' && to === 'runner');
+  const ownPath = prepareCrossingPath(roundedPathSegments(owner.points, 8));
+  const corners = { ...ownPath, segments: ownPath.segments.filter(segment => segment.control) };
+  assert.ok(drawnPathRectClearance(corners, label) >= 0.75);
+  const ownDistance = drawnPathRectClearance(ownPath, label);
+  for (const route of receipt.connections) {
+    if (route === owner) continue;
+    const path = prepareCrossingPath(roundedPathSegments(route.points, 8));
+    assert.ok(drawnPathRectClearance(path, label) >= ownDistance + 4);
+  }
 });

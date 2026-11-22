@@ -1,3 +1,5 @@
+import { segmentRectClearanceWithin } from './geometry.mjs';
+
 // Test visible path commands, including the quadratic arcs used for corner
 // rounding. A junction between commands is interior to the path.
 const EPSILON = 1e-9;
@@ -115,6 +117,58 @@ function curveTerms({ start, control, end }) {
   const first = subtract(control, start);
   const last = subtract(end, control);
   return [first.map(value => 2 * value), subtract(last, first)];
+}
+
+export function drawnPathRectClearance({ segments, bounds }, rect, limit = Infinity) {
+  const low = [rect.x, rect.y];
+  const high = [rect.x + rect.width, rect.y + rect.height];
+  const beyond = ([left, top, right, bottom], distance) =>
+    Math.max(low[0] - right, low[1] - bottom, left - high[0], top - high[1]) > distance;
+  let nearest = Infinity;
+  if (beyond(bounds, limit)) return nearest;
+  for (const segment of segments) {
+    const cutoff = Math.min(nearest, limit);
+    if (beyond(segment.box, cutoff)) continue;
+    if (!segment.control) {
+      nearest = Math.min(nearest, segmentRectClearanceWithin(segment, rect, cutoff));
+    } else {
+      const [linear, quadratic] = curveTerms(segment);
+      const cuts = [0, 1];
+      for (const axis of [0, 1]) {
+        for (const bound of [low[axis], high[axis]]) {
+          cuts.push(...polynomialRoots([segment.start[axis] - bound, linear[axis], quadratic[axis]])
+            .map(([t]) => t));
+        }
+      }
+      cuts.sort((a, b) => a - b);
+      const distanceAt = t => Math.hypot(...pointAt(segment, t).map((value, axis) =>
+        Math.max(0, low[axis] - value, value - high[axis])));
+      for (const [index, start] of cuts.entries()) {
+        nearest = Math.min(nearest, distanceAt(start));
+        const end = cuts[index + 1];
+        if (!(end > start) || !nearest) continue;
+        // Between rectangle-side intersections, the axes contributing to the
+        // squared distance are fixed. Its extrema solve a cubic.
+        const derivative = [0, 0, 0, 0];
+        const midpoint = pointAt(segment, (start + end) / 2);
+        for (const [axis, value] of midpoint.entries()) {
+          if (value >= low[axis] && value <= high[axis]) continue;
+          const a = segment.start[axis] - (value < low[axis] ? low[axis] : high[axis]);
+          const b = linear[axis];
+          const c = quadratic[axis];
+          derivative[0] += a * b;
+          derivative[1] += b * b + 2 * a * c;
+          derivative[2] += 3 * b * c;
+          derivative[3] += 2 * c * c;
+        }
+        for (const [t] of polynomialRoots(derivative)) {
+          if (t > start && t < end) nearest = Math.min(nearest, distanceAt(t));
+        }
+      }
+    }
+    if (!nearest) return nearest;
+  }
+  return nearest;
 }
 
 function lineCurveRoots(line, curve, consume) {

@@ -3,12 +3,12 @@
 import fs from 'node:fs';
 import { isExplainerHtml, checkExplainerHtml } from '../explainer/check.mjs';
 import { analyzeSvgPath } from '../renderers/shared/svg-path-analysis.mjs';
-import { prepareCrossingPath, visibleCrossings } from '../renderers/shared/route-crossings.mjs';
+import { drawnPathRectClearance, prepareCrossingPath, visibleCrossings } from '../renderers/shared/route-crossings.mjs';
 import { arrowheadTriangle, maskCoversArrowhead } from '../renderers/shared/arrowhead.mjs';
 import { textUnits } from '../renderers/shared/utils.mjs';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
-import { collectAmbiguousCorridors, collectArrowheadCollisions, collectBorderRuns, collectLabelCanvasOverflow, collectLabelRouteClearance, collectRouteRhythmIssues, describeLabelCanvasOverflow, formatRect, forwardCollinearAnalysisSegments, minimumLabelRouteClearance, normalizeRoutePoints, routeBudgetMetrics, segmentRectClearanceWithin } from '../renderers/shared/geometry.mjs';
+import { collectAmbiguousCorridors, collectArrowheadCollisions, collectBorderRuns, collectLabelCanvasOverflow, collectLabelRouteClearance, collectRouteRhythmIssues, describeLabelCanvasOverflow, formatRect, forwardCollinearAnalysisSegments, minimumLabelRouteClearance, normalizeRoutePoints, routeBudgetMetrics } from '../renderers/shared/geometry.mjs';
 import {
   DESKTOP_READABILITY_VIEWPORT,
   DESKTOP_READER_DIAGRAM_WIDTH,
@@ -836,8 +836,8 @@ function collectArrows(fragment, useActualPoints = false, architecture = false) 
 }
 
 function collectLabelOwnership(labels, arrows) {
-  const gap = (rect, route, limit) => route.segments.reduce((nearest, segment) =>
-    Math.min(nearest, segmentRectClearanceWithin(segment, rect, nearest)), limit);
+  const gap = (rect, route, limit) => route.visiblePaths.reduce((nearest, path) =>
+    Math.min(nearest, drawnPathRectClearance(path, rect, nearest)), limit);
   return labels.flatMap(({ rect, label, relation }) => {
     const own = gap(rect, relation, Infinity);
     if (!Number.isFinite(own)) return [];

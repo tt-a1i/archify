@@ -14,14 +14,14 @@ import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeFrameAttrs, changeLeg
 import { gridLayout, resolveComponentPos, validateGridPlacement } from './grid.mjs';
 import { automaticComponentPositions, boundaryInsets } from './automatic-placement.mjs';
 import { placeCrossedLeaf, placeCrossedSinks, facingFramePlacements } from './crossed-leaf-placement.mjs';
-import { crossingPlacementCandidates, foldedChain, frameAttachmentCandidates, frameEnclosureCandidates, measuredCrossingPairs, routeSpanMeasures, sharedNeighborCandidates, strongestLayerOrder, terminalBranchCandidates } from './automatic-placement-candidates.mjs';
+import { crossingPlacementCandidates, foldedChain, frameAttachmentCandidates, frameEnclosureCandidates, groupMoveCanPreserveRoutes, groupMovePreservesRoutes, measuredCrossingPairs, routeSpanMeasures, sharedNeighborCandidates, strongestLayerOrder, terminalBranchCandidates } from './automatic-placement-candidates.mjs';
 import {
   closeReciprocalLanes, createArchitectureRouter, connectionLabelBoxAt, parallelFrameRunLength,
   MIN_PARALLEL_DEPARTURE, parallelRunMeasures, READABLE_FRAME_GAP, READABLE_PORT_GAP,
 } from './routing.mjs';
 import { placeAutomaticLabels } from '../shared/automatic-labels.mjs';
 import { arrowheadTriangle, maskCoversArrowhead } from '../shared/arrowhead.mjs';
-import { prepareCrossingPath, visibleCrossings } from '../shared/route-crossings.mjs';
+import { drawnPathRectClearance, prepareCrossingPath, visibleCrossings } from '../shared/route-crossings.mjs';
 import { cleanRouteDetourProblems } from '../shared/route-quality.mjs';
 import {
   asArray,
@@ -557,7 +557,7 @@ function routeArrowheads(routes) {
   }));
 }
 
-function resolveConnectionComposition(boxes, routeFor, measuredBoundaries = boundsFor(boxes), protectFixedLabels = false) {
+function resolveConnectionComposition(boxes, routeFor, measuredBoundaries = boundsFor(boxes)) {
   const routes = connections.flatMap((relation, relationIndex) => {
     if (!boxes.has(relation.from) || !boxes.has(relation.to)) return [];
     const routed = routeFor(relation);
@@ -579,7 +579,7 @@ function resolveConnectionComposition(boxes, routeFor, measuredBoundaries = boun
   const protectedEndpoints = new Map(whollyInferred ? routes
     .filter(({ relation }) => relation.label && hasAutomaticRouteGeometry(relation))
     .map(route => [route.relationIndex, endpointLabelZones(route)]) : []);
-  const arrowheads = auto && (!arch.meta?.viewBox || protectFixedLabels) ? routeArrowheads(routes) : [];
+  const arrowheads = auto && !arch.meta?.viewBox ? routeArrowheads(routes) : [];
   const showcase = arch.meta?.quality_profile === 'showcase';
   const hitEndpoint = !showcase && labels.some(label => protectedEndpoints.get(label.relationIndex)
     ?.some(zone => rectsOverlap(label, zone)) || arrowheads.some(({ marker }) => maskCoversArrowhead(label, marker)));
@@ -589,7 +589,7 @@ function resolveConnectionComposition(boxes, routeFor, measuredBoundaries = boun
     routes,
     protectedEndpoints,
     arrowheads,
-    ownershipMargin: protectFixedLabels || (auto && !whollyInferred && !arch.meta?.viewBox) ? automaticLabelOwnershipMargin : 0,
+    ownershipMargin: auto && !whollyInferred && !arch.meta?.viewBox ? automaticLabelOwnershipMargin : 0,
     onlyProtectedEndpoints: !showcase,
     components: [...boxes.values()],
     titles: boundaries.map(boundary => boundary.title),
@@ -736,7 +736,8 @@ function chooseAutomaticPlacement() {
           || (nextEnclosures.length - best.enclosures.length || order) >= 0) return;
     } else if (kind === 'group') {
       if (nextCrossings.length > best.crossings.length || next.bends > best.bends || next.stretch > best.stretch
-          || next.longest > best.longest + 0.0001 || next.area > best.area || next.length >= best.length - 0.0001) return;
+          || next.longest > best.longest + 0.0001 || next.area > best.area || next.length >= best.length - 0.0001
+          || !groupMovePreservesRoutes(best.spans, next.spans)) return;
     } else if (kind === 'span') {
       // Both normalizations matter: shrinking a mostly empty canvas must
       // still leave the longest route shorter relative to the whole view.
@@ -849,6 +850,7 @@ function chooseAutomaticPlacement() {
     const origin = ['x', 'y'].map(axis => Math.min(...[...best.scene.boxes.values()].map(box => box[axis])));
     for (const { moved } of sharedNeighborCandidates(best.scene, best.spans).slice(0, 4)) {
       if (!remainingPlacementRoutes) break;
+      if (!groupMoveCanPreserveRoutes(moved, best.scene.routes, best.spans)) continue;
       // Moving the only cards on an outer band can strand leading space.
       // Keep the existing outer inset by translating the inferred scene.
       const [dx, dy] = ['x', 'y'].map((axis, index) =>
@@ -870,6 +872,11 @@ function finishAutomaticLabels(scene) {
   if (!auto || !scene.labels.length || !arch.components.some(box => !box.pos)) return scene;
   const clearanceBorders = whollyInferred ? forRouting(scene.titles.boundaries).flatMap(frameBorderSegments) : [];
   const arrowheads = scene.arrowheads.length ? scene.arrowheads : routeArrowheads(scene.routes);
+  const strokes = scene.routes.map(({ points, relation, relationIndex }) => {
+    const path = prepareCrossingPath(roundedPathSegments(points, 8));
+    return { path, relationIndex, corners: { ...path, segments: path.segments.filter(segment => segment.control) },
+      halfWidth: (relation.width || (relation.variant === 'emphasis' ? 1.8 : 1.5)) / 2 };
+  });
   const labels = placeAutomaticLabels({
     ...scene,
     arrowheads,
@@ -879,96 +886,118 @@ function finishAutomaticLabels(scene) {
     searchBand: true,
     keepFallbackNearRoute: true,
     onlyProtectedEndpoints: true,
+    // A label can interrupt its own straight shaft where space is tight.
+    // Keep its bends, and every part of every competing route, visible.
+    coversRouteStroke: label => strokes.some(({ path, corners, halfWidth, relationIndex }) =>
+      drawnPathRectClearance(relationIndex === label.relationIndex ? corners : path, label, halfWidth) < halfWidth),
     components: [...scene.boxes.values()],
     titles: scene.titles.boundaries.map(frame => frame.title),
     placementBottom: architectureLegendEntries.length
       ? scene.viewBox[1] - 48 - legendFootprint(architectureLegendEntries, { width: scene.viewBox[0] - layout.margin * 2 }).extraHeight
       : scene.viewBox[1],
   });
-  return { ...scene, arrowheads, labels };
+  return labels.some((label, index) => label !== scene.labels[index]) ? { ...scene, arrowheads, labels } : scene;
 }
 
 function fixedCanvasComposition(initial) {
-  if (!automaticPositions || !arch.meta?.viewBox) return initial;
-  function assess(scene, candidate) {
-    let errors = 0;
+  if (!automaticPositions || !arch.meta?.viewBox) return finishAutomaticLabels(initial);
+  const compare = (left, right) => {
+    for (const [index, value] of left.entries()) {
+      if (Math.abs(value - right[index]) > 0.0001) return value - right[index];
+    }
+    return 0;
+  };
+  function errorsFor(scene, candidate) {
     try {
       withIsolatedDiagnosticRecording(() => validateArchitecture(scene, candidate));
+      return 0;
     } catch (error) {
       if (!error.archifyDiagnostics?.length) throw error;
-      errors = error.archifyDiagnostics.filter(diagnostic => diagnostic.severity === 'error').length;
+      return error.archifyDiagnostics.filter(diagnostic => diagnostic.severity === 'error').length;
     }
-    const labels = labelProblems({ ...scene, arrowheads: routeArrowheads(scene.routes) }, automaticLabelOwnershipMargin);
-    const { routesOverSuggestedBends: bends, routesOverSuggestedStretch: stretch } =
-      routeBudgetMetrics({ routedRelations: scene.routes });
-    const { length } = routeSpanMeasures(scene.routes, scene.boxes, scene.viewBox);
-    return {
-      scene, candidate, errors, labels, bends, stretch,
-      score: [errors, measuredCrossingPairs(scene.routes).length, bends, stretch,
-        labels.size, [...labels.values()].reduce((sum, value) => sum + value, 0),
-        length, scene.viewBox[0] * scene.viewBox[1]],
-    };
+  }
+  let passing;
+  let fewestErrors;
+  let labelRescues = 2;
+  function assess(scene, candidate) {
+    let errors = errorsFor(scene, candidate);
+    // Leave a failing scene with an enclosure to frame recovery. Fixing its
+    // label alone can pass the standard profile while hiding a repairable frame.
+    const rescueLabels = errors && labelRescues && scene.labels.length
+      && !frameEnclosures(scene.boxes, scene.titles.boundaries).length
+      && !errorsFor({ ...scene, labels: [] }, candidate);
+    if (!errors || rescueLabels) {
+      const { routesOverSuggestedBends: bends, routesOverSuggestedStretch: stretch } =
+        routeBudgetMetrics({ routedRelations: scene.routes });
+      const leadingScore = [measuredCrossingPairs(scene.routes).length, bends, stretch];
+      if (!passing || compare(leadingScore, passing.leadingScore) <= 0) {
+        if (errors) labelRescues -= 1;
+        const finished = finishAutomaticLabels(scene);
+        errors = finished === scene ? errors : errorsFor(finished, candidate);
+        scene = finished;
+        if (!errors) {
+          const labels = labelProblems({ ...scene, arrowheads: routeArrowheads(scene.routes) }, automaticLabelOwnershipMargin);
+          const { length } = routeSpanMeasures(scene.routes, scene.boxes, scene.viewBox);
+          const score = [...leadingScore, labels.size, [...labels.values()].reduce((sum, value) => sum + value, 0),
+            length, scene.viewBox[0] * scene.viewBox[1]];
+          if (!passing || compare(score, passing.score) < 0) passing = { scene, candidate, score, leadingScore };
+        }
+      }
+    }
+    const result = { scene, candidate, errors };
+    if (!fewestErrors || errors < fewestErrors.errors) fewestErrors = result;
+    return result;
   }
 
-  const better = (left, right) => {
-    for (const [index, value] of left.score.entries()) {
-      if (Math.abs(value - right.score[index]) > 0.0001) return value < right.score[index];
-    }
-    return false;
-  };
-  let best = assess(initial, router);
-  const seen = new Set();
+  const first = assess(initial, router);
   const positionKey = boxes => JSON.stringify([...boxes.values()].map(({ x, y }) => [x, y]));
-  seen.add(positionKey(components));
+  const seen = new Set([positionKey(components)]);
   function consider(boxes) {
     const key = positionKey(boxes);
-    if (seen.has(key)) return;
+    if (seen.has(key)) return null;
     seen.add(key);
     const bounds = boundsFor(boxes);
     const candidate = routePlacement(boxes, bounds);
-    if (!candidate) return;
-    const scene = resolveConnectionComposition(boxes, candidate.pathFor, bounds);
-    const assessed = assess(scene, candidate);
-    if (better(assessed, best)) best = assessed;
+    return candidate && assess(resolveConnectionComposition(boxes, candidate.pathFor, bounds), candidate);
   }
 
-  // A legal frame can still force a needless detour or leave no room for
-  // an arrowhead. Include the original card-bounded placement in the same
-  // routed comparison, with identical pins, sizes and frame membership.
+  // Compare the original card-bounded placement with the initial placement.
+  // Inset and packing alternatives are only needed to recover an invalid canvas.
   if (arch.components.some(component => !component.pos)) {
     for (const fixedCanvasRecovery of ['card-bounds', 'insets', 'packing']) {
-      if (!remainingPlacementRoutes || (!best.errors && fixedCanvasRecovery !== 'card-bounds')) break;
+      if (!remainingPlacementRoutes || (passing && fixedCanvasRecovery !== 'card-bounds')) break;
       const positions = automaticComponentPositions(placementInput, undefined, { fixedCanvasRecovery });
       consider(new Map(sizedComponents.map(([component, size]) =>
         [component.id, measureComponent(component, size, positions)])));
     }
   }
-  while (best.errors && remainingPlacementRoutes && components.size <= 40 && rawBoundaries.length <= 24) {
-    const start = best;
-    const enclosures = frameEnclosures(best.scene.boxes, best.scene.titles.boundaries);
-    const proposals = [...frameEnclosureCandidates(best.scene.boxes, enclosures)]
+  // The first placement may have an enclosure we can repair even when a
+  // different invalid placement has fewer errors. Keep that starting point.
+  let repair = first;
+  while (!passing && remainingPlacementRoutes && components.size <= 40 && rawBoundaries.length <= 24) {
+    const start = repair;
+    const enclosures = frameEnclosures(start.scene.boxes, start.scene.titles.boundaries);
+    const proposals = [...frameEnclosureCandidates(start.scene.boxes, enclosures)]
       .filter(moved => [...moved.values()].every(box => !box.pos || (box.x === box.pos[0] && box.y === box.pos[1])))
       .map(moved => ({ moved, count: frameEnclosures(moved, boundsFor(moved)).length }))
       .sort((a, b) => a.count - b.count);
     for (const { moved } of proposals.slice(0, Math.min(4, remainingPlacementRoutes))) {
-      if (!best.errors) break;
-      consider(moved);
+      const attempt = consider(moved);
+      if (passing) break;
+      if (attempt && attempt.errors < repair.errors) repair = attempt;
     }
-    if (start === best) break;
+    if (start === repair) break;
   }
 
-  if (!best.errors && [...best.labels.keys()].some(key => key.startsWith('marker/'))) {
-    const { scene, candidate } = best;
-    const next = assess(resolveConnectionComposition(scene.boxes, candidate.pathFor, boundsFor(scene.boxes), true), candidate);
-    if (better(next, best) && preservesLabels(best.labels, next.labels)) best = next;
-  }
+  const best = passing ?? fewestErrors;
   router = best.candidate;
   for (const [id, box] of best.scene.boxes) components.set(id, box);
   return best.scene;
 }
 
-const composition = finishAutomaticLabels(chooseAutomaticPlacement()
-  ?? fixedCanvasComposition(resolveConnectionComposition(components, pathFor, rawBoundaries)));
+const automaticComposition = chooseAutomaticPlacement();
+const composition = automaticComposition ? finishAutomaticLabels(automaticComposition)
+  : fixedCanvasComposition(resolveConnectionComposition(components, pathFor, rawBoundaries));
 const {
   titles: { boundaries }, labels: connectionLabels, viewBox,
 } = composition;

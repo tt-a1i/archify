@@ -1,4 +1,4 @@
-import { properSegmentIntersection, rectsOverlap } from '../shared/geometry.mjs';
+import { normalizeRoutePoints, properSegmentIntersection, rectsOverlap } from '../shared/geometry.mjs';
 import { analyzeSvgPath } from '../shared/svg-path-analysis.mjs';
 import { prepareCrossingPath, visibleCrossings } from '../shared/route-crossings.mjs';
 import { horizontalLabelClearance } from './routing.mjs';
@@ -22,13 +22,39 @@ export function routeSpanMeasures(routes, boxes, viewBox) {
     const separation = Math.abs(to.cx - from.cx) + Math.abs(to.cy - from.cy);
     const length = points.slice(1).reduce((total, [x, y], index) =>
       total + Math.abs(x - points[index][0]) + Math.abs(y - points[index][1]), 0);
-    return { length, centerRatio: separation ? length / separation : null };
+    return { length, bends: Math.max(0, normalizeRoutePoints(points).length - 2),
+      centerRatio: separation ? length / separation : null };
   });
   return {
     spans,
     length: spans.reduce((total, route) => total + route.length, 0),
     longest: Math.max(0, ...spans.map(route => route.length)) / Math.hypot(...viewBox),
   };
+}
+
+function groupRouteLengthLimit(length) {
+  return Math.max(length * 2, length + 200);
+}
+
+export function groupMoveCanPreserveRoutes(moved, routes, spans) {
+  return routes.every(({ relation }, index) => {
+    const a = moved.get(relation.from);
+    const b = moved.get(relation.to);
+    // The shortest possible orthogonal route is bounded by the gaps
+    // between the card rectangles, regardless of ports or obstacles.
+    const dx = Math.max(0, b.x - a.x - a.width, a.x - b.x - b.width);
+    const dy = Math.max(0, b.y - a.y - a.height, a.y - b.y - b.height);
+    return dx + dy <= groupRouteLengthLimit(spans[index].length) + 0.0001;
+  });
+}
+
+export function groupMovePreservesRoutes(before, after) {
+  return after.every((next, index) => {
+    const old = before[index];
+    // Keep straight links intact, including every straight main-path link.
+    return next.bends <= (old.bends ? old.bends + 1 : 0)
+      && next.length <= groupRouteLengthLimit(old.length) + 0.0001;
+  });
 }
 
 // Pull a terminal branch toward the layer beside its first shared card.
