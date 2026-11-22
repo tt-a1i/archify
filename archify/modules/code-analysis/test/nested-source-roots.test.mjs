@@ -59,7 +59,11 @@ test('nested source roots preserve feature boundaries, stable root anchors, and 
   assert.equal(comparability(evaluateGraph(historicalGraph, config, facts).analysis, after.analysis).comparable, false, 'the grouping correction is not misreported as a code fix');
   const override = extractFacts(root, { language: 'ts', config: { ...loadConfig(), roles: { test: [], generated: [] } } }).facts;
   assert.equal(override.files.find(f => f.path === 'vitest.config.ts').role, 'source');
-  const rootFacts = { ...facts, files: facts.files.filter(f => f.path.startsWith('src/')), imports: [] };
+  const rootFacts = { ...facts, files: facts.files.filter(f => f.path.startsWith('src/')), imports: [],
+    languageScope: { ...facts.languageScope, projects: facts.languageScope.projects
+      .map(project => ({ ...project, files: project.files.filter(file => file.startsWith('src/')),
+        members: project.members.filter(file => file.startsWith('src/')) }))
+      .filter(project => project.files.length) } };
   const single = buildGraph(rootFacts, config);
   assert.deepEqual(single.modules.map(m => m.path), ['src/cli', 'src/server', 'src/shared']);
   assert.equal(single.grouping.typescript, undefined);

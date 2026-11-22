@@ -62,7 +62,10 @@ test('check: a retained TypeScript source with only recovery facts is excluded f
   const overview = JSON.parse(fs.readFileSync(path.join(out, 'overview.json'), 'utf8'));
   assert.equal(receipt.files, 1, 'the source is still captured');
   assert.equal(receipt.verdict, 'none-found');
-  assert.deepEqual(receipt.coverage, { parseErrors: ['src/broken.ts'], analyzedFiles: 0, otherLanguages: [] });
+  const { languageScope, ...coverage } = receipt.coverage;
+  assert.deepEqual(coverage, { parseErrors: ['src/broken.ts'], analyzedFiles: 0, otherLanguages: [] });
+  assert.equal(languageScope.language, 'ts');
+  assert.deepEqual(languageScope.projects.flatMap(project => project.files), ['src/broken.ts']);
   assert.equal(overview.coverage.files.analyzed, 0);
   assert.match(formatText(receipt), /Graph\/rule scope: 0 source files analyzed/);
 });

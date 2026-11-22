@@ -31,7 +31,11 @@ test('all maintained Node check names remain and publication uses exhaustive ver
     assert.equal(ci.jobs[id].strategy, undefined, `${id} must keep a single stable check name`);
   }
   assert.equal(canonical.name, 'test (22)');
-  assert.deepEqual(canonical.needs, ['scope', 'full-regression']);
+  assert.deepEqual(canonical.needs, ['scope', 'full-regression', 'js-ts-platform']);
+  const jsTsPlatform = ci.jobs['js-ts-platform'];
+  assert.equal(jsTsPlatform.if, "needs.scope.outputs.scope == 'full'");
+  assert.deepEqual(jsTsPlatform.strategy.matrix.os, ['ubuntu-latest', 'macos-latest', 'windows-latest']);
+  assert.ok(canonical.steps.some(step => step.name === 'Require JS/TS platform matrix'));
   assert.ok(canonical.steps.some(step => step.with?.['node-version'] === 22));
   const full = ci.jobs['full-regression'];
   assert.equal(full.if, "needs.scope.outputs.scope == 'full'");

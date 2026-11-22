@@ -1,0 +1,61 @@
+{
+  "upstreamVersion": "v6.0.3",
+  "upstreamCommit": "050880ce59e30b356b686bd3144efe24f875ebc8",
+  "comparisonSdk": "bundled TypeScript 5.9.3",
+  "cases": [
+    {
+      "id": "project/sibling-jsconfig/import-target",
+      "upstream": "src/testRunner/unittests/tsserver/configuredProjects.ts",
+      "options": "jsconfig paths alias; allowJs",
+      "field": "languageScope.projects; imports[].to",
+      "expected": "src/lib/helper.js",
+      "status": "匹配",
+      "test": "upstream configured-project theme: sibling jsconfig changes the import target"
+    },
+    {
+      "id": "syntax/jsx-file-kind",
+      "upstream": "tests/cases/compiler/jsxPreserveWithJsInput.ts",
+      "options": "allowJs; jsx preserve; .js/.jsx/.tsx virtual files",
+      "field": "files; parse_errors",
+      "expected": "same selected files and syntax coverage as same-version createSourceFile",
+      "status": "匹配",
+      "test": "upstream JSX-in-JS theme: syntax coverage follows the selected file kind"
+    },
+    {
+      "id": "definition/js-member-call",
+      "upstream": "tests/cases/fourslash/goToDefinitionJsModuleExports.ts",
+      "options": "allowJs; member access",
+      "field": "calls[].resolution",
+      "expected": "unresolved: definition navigation does not prove runtime dispatch",
+      "status": "有意保留差异",
+      "test": "upstream definition theme: navigation does not prove a runtime member-call target"
+    },
+    {
+      "id": "reference/commonjs-require-function",
+      "upstream": "tests/cases/fourslash/findAllRefsCommonJsRequire2.ts",
+      "options": "allowJs; two virtual .js files; derived direct call",
+      "field": "imports[].to; calls[].target",
+      "expected": "a.js; a.js:f at 1:1 when export and binding are stable",
+      "status": "匹配",
+      "test": "upstream CommonJS reference theme: a stable destructured require reaches one function"
+    },
+    {
+      "id": "syntax/binary-expression-stress",
+      "upstream": "tests/cases/compiler/binderBinaryExpressionStressJs.ts",
+      "options": "allowJs; long arithmetic binary chains; derived function and require",
+      "field": "functions[].complexity; imports[].to; calls[].target; parse_errors",
+      "expected": "no adapter stack overflow; complexity 2; static CommonJS function target retained",
+      "status": "匹配",
+      "test": "upstream binary-expression stress retains function metrics, imports and CommonJS targets"
+    },
+    {
+      "id": "module/declaration-only-package",
+      "upstream": "tests/cases/compiler/nodeNextModuleResolution2.ts",
+      "options": "moduleResolution NodeNext; .d.ts package export",
+      "field": "imports[].resolved; unresolved.external",
+      "expected": "no captured runtime edge; external count one",
+      "status": "有意保留差异",
+      "test": "upstream declaration-only package stays outside captured runtime edges"
+    }
+  ]
+}

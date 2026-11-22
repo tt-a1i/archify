@@ -26,8 +26,12 @@ function fixture(t) {
   write('b.ts','export function b(){return 1;}\n');
   write('added.ts','export function added(){return 2;}\n');
   fs.unlinkSync(path.join(root,'removed.ts'));
+  const sdkManifest = 'node_modules/typescript/package.json';
+  fs.mkdirSync(path.dirname(path.join(root, sdkManifest)), { recursive: true });
+  write(sdkManifest, JSON.stringify({ name: 'typescript', version: '99.0.0' }));
+  git(root, ['add', '-f', sdkManifest]);
   const head=commit();
-  const files=[{filename:'a.ts',status:'modified'},{filename:'b.ts',status:'modified'},{filename:'added.ts',status:'added'},{filename:'removed.ts',status:'removed'}];
+  const files=[{filename:'a.ts',status:'modified'},{filename:'b.ts',status:'modified'},{filename:'added.ts',status:'added'},{filename:'removed.ts',status:'removed'},{filename:sdkManifest,status:'added'}];
   const meta={number:42,title:'native PR flow',state:'open',changed_files:files.length,base:{sha:base,ref:'main'},head:{sha:head},updated_at:'2026-11-14T05:02:16Z'};
   let fail=false;
   const fetchJSON=async route=>{if(fail)throw Error('simulated capture failure');return route.includes('/files?')?files:route.includes('/compare/')?{merge_base_commit:{sha:base}}:meta;};

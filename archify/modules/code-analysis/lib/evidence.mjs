@@ -22,7 +22,8 @@
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { createRangeDigest, findRanges, rangeDigest, splitLines } from '../core/index.mjs';
+import { createRangeDigest, decodeTypeScriptText, findRanges, rangeDigest, splitLines } from '../core/index.mjs';
+import { decodeSource as decodePythonSource } from '../core/source-decoding.mjs';
 
 // Kept as an export of this module for existing callers; it lives in core/.
 export { createRangeDigest };
@@ -52,9 +53,11 @@ export function readInside(root, rel) {
   } catch (error) { return { status: 'unverifiable', reason: `file cannot be read (${error.code || error.message})` }; }
 }
 
-// Shared with the parser so capture and source freshness decode identical bytes.
-export { decodeSource } from '../core/source-decoding.mjs';
-import { decodeSource } from '../core/source-decoding.mjs';
+// Match the producer's decoding when checking captured source.
+export function decodeSource(bytes, file) {
+  if (/\.(?:[mc]?[jt]s|[jt]sx)$/i.test(file)) return decodeTypeScriptText(bytes, true);
+  return decodePythonSource(bytes, file);
+}
 
 // Python decodes a UTF-8 BOM away; Node keeps it. Hash both forms so the
 // same bytes are recognized whichever extractor captured them.
