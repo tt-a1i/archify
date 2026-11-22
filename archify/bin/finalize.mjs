@@ -19,7 +19,6 @@ import {
 } from './visual-check.mjs';
 import { startDeliveryUpdateCheck } from './delivery-update.mjs';
 import { declaredExplainerInputPaths } from '../explainer/prepare.mjs';
-import { hasDefaultAnalysisSources } from '../modules/code-analysis/extract/shared/files.mjs';
 
 export const FINALIZE_STAGES = Object.freeze(['validate', 'deliver', 'check', 'browser-check']);
 const FINALIZE_UPDATE_DEADLINE_MS = 4_000;
@@ -1272,11 +1271,18 @@ export async function runFinalize({
         ? { status: 'verified', revision: source.revision, count: source.references }
         : { status: 'not-declared', count: 0,
           guidance: 'For a repository diagram, pin meta.repository and cite the source ranges on its primary elements, then rerun finalize.' };
-      if (type === 'architecture' && hasDefaultAnalysisSources(repoRoot)) {
-        const missingDependencies = await checkMissingAnalysisDependencies();
-        receipt.codeAnalysisOffer = codeAnalysisOffer({
-          cliPath, repoRoot, candidate: resolvedInput, bytes: finalizedCandidate.bytes, quality, missingDependencies,
-        });
+      if (type === 'architecture') {
+        try {
+          const { hasDefaultAnalysisSources } = await import('../modules/code-analysis/extract/shared/files.mjs');
+          if (hasDefaultAnalysisSources(repoRoot)) {
+            const missingDependencies = await checkMissingAnalysisDependencies();
+            receipt.codeAnalysisOffer = codeAnalysisOffer({
+              cliPath, repoRoot, candidate: resolvedInput, bytes: finalizedCandidate.bytes, quality, missingDependencies,
+            });
+          }
+        } catch {
+          // The optional Diagnosis offer must never invalidate a successful delivery.
+        }
       }
     }
     receipt.artifact = receipt.ok

@@ -211,7 +211,7 @@ test('finalize offers Architecture Diagnosis only for supported repository-backe
     dependencyChecks += 1;
     return ['typescript'];
   };
-  const finalizeWith = async ({ type, repoRoot, navigation, quality = 'showcase' }) => {
+  const finalizeWith = async ({ type, repoRoot, navigation, quality = 'showcase', checkDependencies = checkMissingAnalysisDependencies }) => {
     const source = JSON.stringify({ meta: { quality_profile: 'showcase' }, ...navigation });
     fs.writeFileSync(input, source);
     const stages = [];
@@ -225,7 +225,8 @@ test('finalize offers Architecture Diagnosis only for supported repository-backe
       return result(passingBrowserCheck({ output, artifact: delivery.artifact, deliveryReceiptId: delivery.receiptId, outDir }));
     };
     const finalized = await runFinalize({
-      cliPath: '/fake/archify.mjs', type, input, output, outDir, repoRoot, quality, runCommand, checkMissingAnalysisDependencies,
+      cliPath: '/fake/archify.mjs', type, input, output, outDir, repoRoot, quality, runCommand,
+      checkMissingAnalysisDependencies: checkDependencies,
     });
     assert.equal(finalized.exitCode, 0);
     assert.deepEqual(stages, ['deliver', 'check', 'browser-check']);
@@ -273,6 +274,26 @@ test('finalize offers Architecture Diagnosis only for supported repository-backe
     const linked = await finalizeWith({ type: 'architecture', repoRoot: directory, navigation });
     assert.equal(linked.codeAnalysisOffer.linkedDiagrams, true, label);
   }
+
+  await t.test('finalize keeps a successful delivery when the Diagnosis dependency check throws', async () => {
+    let attempted = false;
+    const summary = await finalizeWith({
+      type: 'architecture',
+      repoRoot: directory,
+      checkDependencies: async () => {
+        attempted = true;
+        throw new Error('Code Analysis module unavailable');
+      },
+    });
+    assert.equal(attempted, true);
+    assert.equal(summary.ok, true);
+    assert.deepEqual(summary.gates, { validate: 'pass', deliver: 'pass', check: 'pass', 'browser-check': 'pass' });
+    assert.equal('codeAnalysisOffer' in summary, false);
+    const receipt = JSON.parse(fs.readFileSync(summary.evidence.receipt, 'utf8'));
+    assert.equal(receipt.ok, true);
+    assert.equal('codeAnalysisOffer' in receipt, false);
+    assert.equal(fs.readFileSync(output, 'utf8'), '<!doctype html><title>verified</title>');
+  });
 });
 
 test('finalize stops at the failed gate and persists actionable failure evidence', async t => {
