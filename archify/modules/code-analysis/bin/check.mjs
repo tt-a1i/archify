@@ -31,13 +31,14 @@ one accepted id without re-running analysis. Both require --baseline.
 Exit codes: 0 passed, 1 gate failed, 2 analysis or usage error.
 Outputs with --out: raw-facts, module-graph, findings, review, overview (.json).`;
 
+const USAGE_SUFFIX = `\n${USAGE}`;
 const VALUE_OPTIONS = ['--language', '--config', '--ir', '--map', '--baseline', '--compare', '--out', '--fail-on', '--reason', '--accept', '--revoke'];
 const FLAG_OPTIONS = ['--new-only', '--update-baseline', '--json'];
 const SEVERITY = { error: 0, warning: 1, info: 2 };
 
 export function parseCheckArgs(argv) {
   const [repo, ...rest] = argv;
-  const usage = (message) => fail('cli/usage', `${message}\n${USAGE}`, { supportedFixes: ['see the usage above'] });
+  const usage = (message) => fail('cli/usage', message + USAGE_SUFFIX, { supportedFixes: ['see the usage above'] });
   if (!repo || repo.startsWith('-')) usage('check requires a <repo-root>.');
   const options = { '--fail-on': 'warning' };
   for (let i = 0; i < rest.length; i += 1) {
@@ -329,6 +330,13 @@ function formatTerminalText(value) {
     .replace(/[\u0000-\u001f\u007f-\u009f]/g, (character) => `\\u${character.codePointAt(0).toString(16).padStart(4, '0')}`);
 }
 
+function formatTerminalDiagnostic({ code, message }) {
+  if (code === 'cli/usage' && message.endsWith(USAGE_SUFFIX)) {
+    return `[${code}] ${formatTerminalText(message.slice(0, -USAGE_SUFFIX.length))}${USAGE_SUFFIX}`;
+  }
+  return `[${code}] ${formatTerminalText(message)}`;
+}
+
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const args = process.argv.slice(2);
   const json = args.includes('--json');
@@ -340,7 +348,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     }).catch((error) => {
       const diagnostics = error instanceof DiagnosticError ? error.diagnostics : [{ code: 'internal/unclassified', severity: 'error', message: error.message, subject: {}, evidence: {}, supportedFixes: [] }];
       if (json) console.log(JSON.stringify(receipt('error', { command: 'check', diagnostics }), null, 2));
-      else console.error(diagnostics.map((d) => `[${d.code}] ${formatTerminalText(d.message)}`).join('\n'));
+      else console.error(diagnostics.map(formatTerminalDiagnostic).join('\n'));
       process.exitCode = 2;
     });
   }

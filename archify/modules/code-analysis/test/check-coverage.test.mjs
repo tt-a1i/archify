@@ -143,6 +143,22 @@ test('check: terminal diagnostics escape controls in a TypeScript config error',
   assert.ok(diagnostic.evidence.errors.some(error => error.includes(missingConfig)));
 });
 
+test('check: argument errors preserve built-in usage layout and escape option text', () => {
+  const option = '--unknown\toption\nmore\u001b\u009d';
+  const help = check('--help', []);
+  assert.equal(help.status, 0);
+  const text = check('.', [option]);
+  assert.equal(text.status, 2);
+  const firstLine = '[cli/usage] Invalid option: --unknown\\u0009option\\u000amore\\u001b\\u009d';
+  assert.equal(text.stderr, firstLine + '\n' + help.stdout);
+
+  const json = check('.', [option, '--json']);
+  assert.equal(json.status, 2);
+  const [diagnostic] = JSON.parse(json.stdout).diagnostics;
+  assert.equal(diagnostic.code, 'cli/usage');
+  assert.equal(diagnostic.message, 'Invalid option: ' + option + '\n' + help.stdout.trimEnd());
+});
+
 test('check: the summary shows a parse failure and a language that was not analyzed', (t) => {
   const root = fixture(t, {
     'src/ok.py': 'value = 1\n',
