@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "include": [
+    "**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
+    "**/*.py",
+    "**/*.java",
+    "**/*.go",
+    "**/*.rs"
+  ],
+  "exclude": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/target/**/*.java",
+    "**/coverage/**",
+    "**/*.d.ts",
+    "**/venv/**",
+    "**/venv-*/**",
+    "**/.venv/**",
+    "**/site-packages/**",
+    "**/__pycache__/**",
+    "**/.pytest_cache/**",
+    "**/.git/**",
+    "**/_archive/**"
+  ],
+  "typescript": {
+    "sdk": "bundled",
+    "requireProjectSdk": false
+  },
+  "roles": {
+    "test": [
+      "**/test/**",
+      "**/tests/**",
+      "**/__tests__/**",
+      "**/*.test.*",
+      "**/*.spec.*",
+      "**/test_*.py",
+      "**/*_test.py",
+      "**/conftest.py",
+      "**/*_test.go",
+      "**/{vitest,jest,playwright,cypress}.config.*",
+      "**/vitest.workspace.*",
+      "**/karma.conf.*"
+    ],
+    "generated": [
+      "**/extract/py/upstream/**",
+      "**/extract/py/analyze.mjs",
+      "**/generated-*",
+      "**/*.generated.*",
+      "**/vendor/**",
+      "**/vendored/**",
+      "**/third_party/**",
+      "**/third-party/**"
+    ]
+  }
+}

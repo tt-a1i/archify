@@ -121,6 +121,8 @@ npx -y skills@latest add https://archify.si --skill archify --agent cursor --glo
 npx -y skills@latest add https://archify.si --skill archify --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes
 ```
 
+선택형 PR 컴패니언 Skill(저장소 소스 설치 전용, 기본 설치는 계속 `archify`만): `archify`를 설치한 뒤 `npx -y skills@latest add tt-a1i/archify --skill archify-pr --agent cursor --global --copy --yes`를 실행하면 PR 변경 워크스루를 추가할 수 있습니다. 문서, 잠금 파일, 포맷팅 같은 작은 변경에는 조용히 있고 실질적인 diff에만 다이어그램을 제안합니다. 에이전트 전역 규칙 파일에 `[archify pr: on-demand]`를 추가하면 제안을 완전히 끌 수 있습니다.
+
 <details>
 <summary>다른 설치 방법과 업데이트 확인 동작</summary>
 
@@ -138,6 +140,12 @@ Archify는 선택적 업데이트 알림을 위해 고정된 stable manifest를 
 
 ```text
 Archify로 그려 줘: Browser -> API -> Redis cache -> PostgreSQL fallback.
+```
+
+Archify에 내장된 **아키텍처 진단**은 저장소의 의존성을 방사형 별 지도와 회전할 수 있는 3D 모델로 보여줍니다. 기존 아키텍처 다이어그램의 구성 요소별로 발견 사항의 개수를 표시하며, 순환 의존성이나 다이어그램에 빠진 의존성을 선택하면 관련 소스 코드를 확인할 수 있습니다. Archify는 저장소를 바탕으로 만든 아키텍처 다이어그램을 전달한 뒤 진단을 한 번 제안하며, 사용자가 동의할 때만 시작합니다. 별도로 설치할 필요가 없습니다. 자세한 내용은 [Code Analysis 사용 가이드](archify/modules/code-analysis/docs/USAGE.md)를 참고하세요.
+
+```text
+Use archify Code Analysis on this repository: show module coupling, dependency cycles and hotspots.
 ```
 
 ### 3. 대화로 다듬기

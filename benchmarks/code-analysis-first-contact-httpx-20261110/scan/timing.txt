@@ -1,0 +1,4 @@
+Code Analysis: installing typescript and ajv and java-parser and @xmldom/xmldom into archify/modules/code-analysis (first run only)…
+real 5.00
+user 3.93
+sys 1.06

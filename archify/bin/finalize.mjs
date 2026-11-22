@@ -27,13 +27,18 @@ function sha256(buffer) {
   return createHash('sha256').update(buffer).digest('hex');
 }
 
-function identity(file) {
+function readFileIdentity(file) {
+  const resolved = path.resolve(file);
   try {
     const bytes = fs.readFileSync(file);
-    return { path: path.resolve(file), sha256: sha256(bytes), bytes: bytes.byteLength };
+    return { identity: { path: resolved, sha256: sha256(bytes), bytes: bytes.byteLength }, bytes };
   } catch {
-    return { path: path.resolve(file) };
+    return { identity: { path: resolved } };
   }
+}
+
+function identity(file) {
+  return readFileIdentity(file).identity;
 }
 
 function durationMs(start) {
@@ -586,8 +591,7 @@ function reservedFinalizePaths({ input, output, outDir, deliveryPaths, inputPath
   return [path.resolve(input), ...inputPaths, path.resolve(output), ...Object.values(deliveryPaths(output)), browser.receipt];
 }
 
-// Node moves that remove the measured crossings and detours, most specific
-// first. Only positions and sizes change; every relationship keeps its endpoints.
+// Review the measured crossings and detours without changing relationships.
 function placementHints({ crossings = [], detours = [], crowdedSides = [] }) {
   const name = (relation) => `${relation.from} → ${relation.to}`;
   const other = (relation, shared) => (relation.from === shared ? relation.to : relation.from);
@@ -597,9 +601,16 @@ function placementHints({ crossings = [], detours = [], crowdedSides = [] }) {
   }
   for (const crossing of crossings) {
     const shared = crossing.sharedNode;
-    hints.push(shared
-      ? `${name(crossing.left)} and ${name(crossing.right)} cross next to ${shared}: move node ${other(crossing.left, shared)} or ${other(crossing.right, shared)} so the two reach ${shared} from different sides (for example one level with it, one directly above or below it).`
-      : `${name(crossing.left)} crosses ${name(crossing.right)}: move the node of whichever is a branch, return, or second entrance to the other side of the main path, so that relationship runs through an empty corridor.`);
+    if (!shared) {
+      hints.push(`${name(crossing.left)} crosses ${name(crossing.right)}: move the node of whichever is a branch, return, or second entrance to the other side of the main path, so that relationship runs through an empty corridor.`);
+      continue;
+    }
+    const leftNeighbour = other(crossing.left, shared);
+    const rightNeighbour = other(crossing.right, shared);
+    const location = `${name(crossing.left)} and ${name(crossing.right)} cross next to ${shared}`;
+    hints.push(leftNeighbour === rightNeighbour
+      ? `${location}: trace both routes near ${shared} and check whether each has room for a separate approach.`
+      : `${location}: move node ${leftNeighbour} or ${rightNeighbour} so the two reach ${shared} from different sides (for example one level with it, one directly above or below it).`);
   }
   for (const detour of detours) {
     if (detour.directCorridorBlockers?.length) continue;
@@ -684,6 +695,7 @@ export function compactFinalizeReceipt(receipt) {
     },
     evidence: receipt.evidence,
     ...(receipt.repositoryReferences ? { repositoryReferences: receipt.repositoryReferences } : {}),
+    ...(receipt.codeAnalysisOffer ? { codeAnalysisOffer: receipt.codeAnalysisOffer } : {}),
     ...(receipt.update && receipt.update.status !== 'unavailable'
       ? { update: receipt.update }
       : {}),
@@ -861,6 +873,27 @@ function repairSourceRanges(candidatePath, diagnostics, specification, expected)
   }
 }
 
+async function getMissingAnalysisDependencies() {
+  const { missingAnalysisDependencies } = await import('../modules/code-analysis/bin/serve.mjs');
+  return missingAnalysisDependencies();
+}
+
+function codeAnalysisOffer({ cliPath, repoRoot, candidate, bytes, quality, missingDependencies }) {
+  const doc = parsedReceipt(bytes);
+  const linkedDiagrams = doc?.meta?.parentHref
+    || doc?.components?.some(component => component.href || component.drilldowns?.length);
+  return {
+    action: 'offer-code-analysis',
+    reason: 'Archify’s built-in Architecture Diagnosis adds component findings, a radial star map, and a rotatable 3D view of repository dependencies.',
+    instruction: 'Use the referenced pitch once per repository and wait for consent before starting.',
+    dependencies: missingDependencies.length ? 'missing' : 'installed',
+    quality,
+    start: { argv: [process.execPath, cliPath, 'start', path.resolve(repoRoot), '--ir', candidate, '--quality', quality] },
+    ...(linkedDiagrams ? { linkedDiagrams: true } : {}),
+    reference: 'references/delivery-contract.md#architecture-diagnosis-offer',
+  };
+}
+
 export async function runFinalize({
   cliPath,
   type,
@@ -881,6 +914,7 @@ export async function runFinalize({
   runCommand = defaultRunner,
   runBrowserCheck,
   startUpdateCheck = startDeliveryUpdateCheck,
+  checkMissingAnalysisDependencies = getMissingAnalysisDependencies,
   resolveChrome = findChrome,
   createBrowser = (chromePath, options) => new ChromeVisualBrowser(chromePath, options),
 } = {}) {
@@ -1219,7 +1253,8 @@ export async function runFinalize({
         receipt.diagnostics = [diagnostic];
       }
     }
-    if (receipt.ok && !identitiesMatch(specification, identity(resolvedInput))) {
+    const finalizedCandidate = receipt.ok ? readFileIdentity(resolvedInput) : null;
+    if (finalizedCandidate && !identitiesMatch(specification, finalizedCandidate.identity)) {
       exitCode = 1;
       receipt.ok = false;
       receipt.status = 'fail';
@@ -1228,7 +1263,7 @@ export async function runFinalize({
         code: 'finalize/candidate-changed', severity: 'error',
         message: 'The frozen candidate changed before the final handoff.',
         subject: { candidate: resolvedInput },
-        evidence: { expected: specification, actual: identity(resolvedInput) },
+        evidence: { expected: specification, actual: finalizedCandidate.identity },
         supportedFixes: ['restore the frozen candidate, or finalize the edited candidate as a new attempt'],
       }];
     }
@@ -1242,6 +1277,19 @@ export async function runFinalize({
         ? { status: 'verified', revision: source.revision, count: source.references }
         : { status: 'not-declared', count: 0,
           guidance: 'For a repository diagram, pin meta.repository and cite the source ranges on its primary elements, then rerun finalize.' };
+      if (type === 'architecture') {
+        try {
+          const { hasDefaultAnalysisSources } = await import('../modules/code-analysis/extract/shared/files.mjs');
+          if (hasDefaultAnalysisSources(repoRoot)) {
+            const missingDependencies = await checkMissingAnalysisDependencies();
+            receipt.codeAnalysisOffer = codeAnalysisOffer({
+              cliPath, repoRoot, candidate: resolvedInput, bytes: finalizedCandidate.bytes, quality, missingDependencies,
+            });
+          }
+        } catch {
+          // The optional Diagnosis offer must never invalidate a successful delivery.
+        }
+      }
     }
     receipt.artifact = receipt.ok
       ? { path: resolvedOutput, ...receipt.stages.deliver.receipt.artifact }

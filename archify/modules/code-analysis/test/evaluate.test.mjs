@@ -1,0 +1,200 @@
+// evaluate: coupling/cycle (Tarjan) and coupling/hub on hand-built graphs.
+import assert from 'node:assert/strict';
+import { test } from 'node:test';
+import { evaluate } from '../evaluate/index.mjs';
+import { schemaErrors } from '../extract/shared/schema.mjs';
+
+function graphOf(edges, extra = {}) {
+  const ids = [...new Set(edges.flat())].sort();
+  const modules = ids.map((id) => ({ id, label: id, path: id, files: 1, loc: 10, fanIn: edges.filter((e) => e[1] === id).length, fanOut: edges.filter((e) => e[0] === id).length, instability: null, entry: [`${id}/index.mjs`] }));
+  return {
+    schema_version: 1, repository: { root: '.', revision: null, url: null, language: 'ts', adapter: 't' },
+    grouping: { depth: 2, packageBoundaries: true, groups: [] }, excluded: { roles: [], files: 0 },
+    modules, unresolved: { external: 0, outside: 0, unknown: 0, opaque: 0 },
+    edges: edges.map(([from, to]) => ({ from, to, weight: 1, kinds: { static: 1 }, evidence: [{ file: `${from}/index.mjs`, line: 1, to: `${to}/index.mjs` }] })),
+    ...extra,
+  };
+}
+
+test('cycle: a DAG yields no finding; a 3-cycle yields one finding naming exactly its members', () => {
+  assert.deepEqual(evaluate(graphOf([['a', 'b'], ['b', 'c'], ['a', 'c']])).diagnostics, []);
+  const out = evaluate(graphOf([['a', 'b'], ['b', 'c'], ['c', 'a'], ['c', 'd']]));
+  assert.equal(out.diagnostics.length, 1);
+  const f = out.diagnostics[0];
+  assert.equal(f.code, 'coupling/cycle');
+  assert.equal(f.severity, 'error', 'a module-scope cycle between modules is a structural problem to fix');
+  assert.equal(f.evidence.kind, 'eager');
+  assert.equal(f.confidence, 1);
+  assert.deepEqual(f.subject.modules, ['a', 'b', 'c']);
+  assert.deepEqual(f.evidence.path, ['a', 'b', 'c']);
+  assert.equal(f.evidence.edges.length, 3, 'd is outside the cycle and its edge is not evidence');
+  assert.match(f.id, /^COUP-[0-9a-f]{12}$/);
+  assert.deepEqual(schemaErrors('findings', out), []);
+});
+
+test('cycle: two separate cycles are two findings; a self-contained 2-cycle quotes both imports', () => {
+  const out = evaluate(graphOf([['a', 'b'], ['b', 'a'], ['x', 'y'], ['y', 'z'], ['z', 'x']]));
+  // evaluate() orders findings by code, then subject, so ids are stable across runs.
+  assert.deepEqual(out.diagnostics.map((d) => d.subject.modules), [['a', 'b'], ['x', 'y', 'z']]);
+  assert.equal(out.diagnostics[0].evidence.imports.length, 2);
+  assert.equal(out.summary.errors, 2);
+});
+
+test('import-cycle: overlapping all/eager partitions retain canonical eager path evidence', () => {
+  const graph = graphOf([['a', 'b'], ['b', 'a'], ['b', 'c'], ['c', 'a']]);
+  const facts = factsOf([
+    { from: 'a/x.py', to: 'b/y.py', line: 9, lazy: true },
+    { from: 'a/x.py', to: 'b/y.py', line: 4 },
+    { from: 'b/y.py', to: 'a/x.py', line: 3 },
+    { from: 'b/y.py', to: 'c/z.py', line: 2, lazy: true },
+    { from: 'c/z.py', to: 'a/x.py', line: 1 },
+  ]);
+  const run = () => evaluate(graph, {}, facts).diagnostics.filter(f => f.code === 'coupling/import-cycle');
+  const first = run();
+  assert.equal(first.length, 2);
+  const deferred = first.find(f => f.evidence.kind === 'deferred'), eager = first.find(f => f.evidence.kind === 'eager');
+  assert.deepEqual(deferred.subject.files, ['a/x.py', 'b/y.py', 'c/z.py']);
+  assert.deepEqual(eager.subject.files, ['a/x.py', 'b/y.py']);
+  const pathImports = [
+    { file: 'a/x.py', to: 'b/y.py', line: 4, deferred: false },
+    { file: 'b/y.py', to: 'a/x.py', line: 3, deferred: false },
+  ];
+  assert.deepEqual(deferred.evidence.pathImports, pathImports);
+  assert.deepEqual(eager.evidence.pathImports, pathImports);
+  assert.equal(deferred.evidence.totalImports, 5);
+  assert.equal(eager.evidence.totalImports, 2);
+  facts.imports.reverse();
+  assert.deepEqual(run(), first);
+});
+
+test('ids: a finding keeps its id when an unrelated finding sorting before it appears or disappears', () => {
+  const alone = evaluate(graphOf([['x', 'y'], ['y', 'x']])).diagnostics;
+  const withEarlier = evaluate(graphOf([['a', 'b'], ['b', 'a'], ['x', 'y'], ['y', 'x']])).diagnostics;
+  assert.equal(alone.length, 1);
+  assert.equal(withEarlier.length, 2);
+  assert.deepEqual(withEarlier.map((d) => d.subject.modules), [['a', 'b'], ['x', 'y']], 'the new finding sorts first');
+  assert.equal(withEarlier[1].id, alone[0].id, 'x <-> y is the same problem in both runs');
+  assert.notEqual(withEarlier[0].id, withEarlier[1].id);
+});
+
+test('ids: module findings are identified by grouping path, not by the generated module id', () => {
+  const withPaths = (graph, paths) => ({ ...graph, modules: graph.modules.map((m) => ({ ...m, path: paths[m.id] })) });
+  // Same directories; the second run's module id carries a collision suffix.
+  const before = evaluate(withPaths(graphOf([['a', 'b'], ['b', 'a']]), { a: 'src/a', b: 'src/b' })).diagnostics[0];
+  const after = evaluate(withPaths(graphOf([['a-1f2e3d4c5b6a', 'b'], ['b', 'a-1f2e3d4c5b6a']]), { 'a-1f2e3d4c5b6a': 'src/a', b: 'src/b' })).diagnostics[0];
+  assert.equal(after.id, before.id);
+  // A different directory behind the same module id is a different problem.
+  const moved = evaluate(withPaths(graphOf([['a', 'b'], ['b', 'a']]), { a: 'lib/a', b: 'src/b' })).diagnostics[0];
+  assert.notEqual(moved.id, before.id);
+});
+
+test('evidenceDigest: tracks only the files a finding is about, and is omitted without facts', () => {
+  const graph = graphOf([['a', 'b'], ['b', 'a']]);
+  const imports = [{ from: 'a/x.py', to: 'b/y.py' }, { from: 'b/y.py', to: 'a/x.py' }];
+  const run = (texts) => {
+    const facts = factsOf(imports);
+    facts.files.push({ path: 'c/z.py', loc: 1, role: 'source' });
+    for (const f of facts.files) f.sourceText = texts[f.path] ?? `# ${f.path}`;
+    const out = evaluate(graph, {}, facts);
+    assert.deepEqual(schemaErrors('findings', out), []);
+    return out.diagnostics.find((d) => d.code === 'coupling/import-cycle');
+  };
+  const base = run({});
+  assert.deepEqual(base.evidenceDigest.files, ['a/x.py', 'b/y.py']);
+  assert.match(base.evidenceDigest.sha256, /^[0-9a-f]{64}$/);
+  const unrelated = run({ 'c/z.py': '# edited elsewhere' });
+  assert.deepEqual(unrelated.evidenceDigest, base.evidenceDigest, 'an edit outside the cycle keeps the evidence current');
+  const involved = run({ 'a/x.py': '# edited inside the cycle' });
+  assert.notEqual(involved.evidenceDigest.sha256, base.evidenceDigest.sha256);
+  assert.equal(involved.id, base.id, 'same problem, stale evidence');
+  assert.ok(!('evidenceDigest' in evaluate(graph).diagnostics[0]), 'no facts, no digest');
+});
+
+test('evidenceDigest: module findings cover every file of their modules', () => {
+  const graph = { ...graphOf([['a', 'b'], ['b', 'a']]), fileModules: { 'a/x.py': 'a', 'a/w.py': 'a', 'b/y.py': 'b', 'c/z.py': 'c' } };
+  const facts = factsOf([{ from: 'a/x.py', to: 'b/y.py' }, { from: 'b/y.py', to: 'a/w.py' }]);
+  const cycle = evaluate(graph, {}, facts).diagnostics.find((d) => d.code === 'coupling/cycle');
+  assert.deepEqual(cycle.evidenceDigest.files, ['a/w.py', 'a/x.py', 'b/y.py']);
+});
+
+test('hub: fires only when both fan-in and fan-out meet the configured thresholds, echoed in evidence', () => {
+  const edges = [];
+  for (const d of ['d1', 'd2', 'd3', 'd4', 'd5']) edges.push([d, 'core']);
+  for (const u of ['u1', 'u2', 'u3', 'u4', 'u5']) edges.push(['core', u]);
+  const out = evaluate(graphOf(edges));
+  const hub = out.diagnostics.find((d) => d.code === 'coupling/hub');
+  assert.ok(hub, 'core is a hub at the default 5/5 threshold');
+  assert.deepEqual(hub.evidence.threshold, { fanIn: 5, fanOut: 5 });
+  assert.equal(hub.evidence.dependents.length, 5);
+  const stricter = evaluate(graphOf(edges), { rules: { coupling: { hub: { fanIn: 6, fanOut: 6 } } } });
+  assert.ok(!stricter.diagnostics.some((d) => d.code === 'coupling/hub'));
+});
+
+test('evaluate: ignore list suppresses a rule and counts it', () => {
+  const out = evaluate(graphOf([['a', 'b'], ['b', 'a']]), { ignore: ['coupling/cycle'] });
+  assert.deepEqual(out.diagnostics, []);
+  assert.equal(out.summary.suppressed, 1);
+});
+
+function factsOf(imports, roles = {}) {
+  const files = [...new Set(imports.flatMap((i) => [i.from, i.to]))].sort().map((path) => ({ path, loc: 1, role: roles[path] || 'source' }));
+  return { schema_version: 1, repository: { root: '.', revision: null, url: null, language: 'py', adapter: 'python@test' }, files, symbols: [], calls: [],
+    imports: imports.map((i) => ({ from: i.from, to: i.to, specifier: i.to, kind: 'static', line: i.line || 1, resolved: true, ...(i.names ? { names: i.names } : {}), ...(i.lazy ? { lazy: true } : {}) })),
+    unresolved: { external: 0, outside: 0, unknown: 0, opaque: 0 } };
+}
+
+test('import-cycle: eager cycles are errors and deferred cycles warn, never asserted safe', () => {
+  const graph = graphOf([['a', 'b'], ['b', 'a']]);
+  const eager = evaluate(graph, {}, factsOf([{ from: 'a/x.py', to: 'b/y.py' }, { from: 'b/y.py', to: 'a/x.py' }]));
+  const f = eager.diagnostics.find((d) => d.code === 'coupling/import-cycle');
+  assert.equal(f.severity, 'error', 'structure to fix; the message still does not claim an execution proof');
+  assert.equal(f.evidence.kind, 'eager');
+  assert.equal(f.evidence.risk.loading, 'potential-at-import');
+  assert.deepEqual(f.subject.files, ['a/x.py', 'b/y.py']);
+  assert.deepEqual(f.evidence.path, ['a/x.py', 'b/y.py']);
+  const lazy = evaluate(graph, {}, factsOf([{ from: 'a/x.py', to: 'b/y.py' }, { from: 'b/y.py', to: 'a/x.py', lazy: true, line: 40 }]));
+  const g = lazy.diagnostics.find((d) => d.code === 'coupling/import-cycle');
+  assert.equal(g.severity, 'warning');
+  assert.equal(g.evidence.kind, 'deferred');
+  assert.equal(g.evidence.risk.loading, 'not-proven');
+  assert.equal(g.evidence.lazyImports, 1);
+  assert.ok(g.evidence.imports.some((i) => i.lazy && i.line === 40));
+});
+
+test('import-cycle: binding line order produces a partial-init candidate with its assumptions exposed', () => {
+  const graph = graphOf([['a', 'b'], ['b', 'a']]);
+  // a.py: line 1 `from b import foo`, line 3 `def bar`. b.py: line 1 `from a import bar`, line 3 `def foo`.
+  const facts = factsOf([{ from: 'a/x.py', to: 'b/y.py', line: 1, names: ['foo'] }, { from: 'b/y.py', to: 'a/x.py', line: 1, names: ['bar'] }]);
+  facts.symbols = [
+    { file: 'a/x.py', name: 'foo', kind: 'import', line: 1 }, { file: 'a/x.py', name: 'bar', kind: 'function', line: 3 },
+    { file: 'b/y.py', name: 'bar', kind: 'import', line: 1 }, { file: 'b/y.py', name: 'foo', kind: 'function', line: 3 },
+  ];
+  const f = evaluate(graph, {}, facts).diagnostics.find((d) => d.code === 'coupling/import-cycle');
+  assert.equal(f.severity, 'error');
+  assert.equal(f.evidence.risk.loading, 'potential-partial-init');
+  // Both load orders fail here; the rule reports the first in deterministic (edge) order: b imported first, a asks it for foo too early.
+  assert.deepEqual(f.evidence.partialInitCandidate, { entry: 'b/y.py', module: 'b/y.py', name: 'foo', boundAt: 3, viaLine: 1, importer: 'a/x.py', line: 1, chain: ['b/y.py', 'a/x.py'] });
+  assert.match(f.message, /does not prove failure/);
+  // Same shape but the name is bound before the import that closes the loop: nothing to prove; the cycle is an error either way.
+  const safe = factsOf([{ from: 'a/x.py', to: 'b/y.py', line: 5, names: ['foo'] }, { from: 'b/y.py', to: 'a/x.py', line: 5, names: ['bar'] }]);
+  safe.symbols = [
+    { file: 'a/x.py', name: 'bar', kind: 'function', line: 2 }, { file: 'a/x.py', name: 'foo', kind: 'import', line: 5 },
+    { file: 'b/y.py', name: 'foo', kind: 'function', line: 2 }, { file: 'b/y.py', name: 'bar', kind: 'import', line: 5 },
+  ];
+  assert.equal(evaluate(graph, {}, safe).diagnostics.find((d) => d.code === 'coupling/import-cycle').severity, 'error');
+});
+
+test('import-cycle: a package-level cycle made of two different files is not a file cycle', () => {
+  // tools/a.py -> news/w.py -> tools/t.py : directories tools <-> news cycle, files do not.
+  const graph = graphOf([['tools', 'news'], ['news', 'tools']]);
+  const out = evaluate(graph, {}, factsOf([{ from: 'tools/a.py', to: 'news/w.py' }, { from: 'news/w.py', to: 'tools/t.py' }]));
+  assert.ok(!out.diagnostics.some((d) => d.code === 'coupling/import-cycle'), 'no file imports itself back');
+  assert.ok(out.diagnostics.some((d) => d.code === 'coupling/cycle' && d.severity === 'error'), 'the module cycle is still reported, as an error');
+});
+
+test('import-cycle: test files are excluded like the module graph excludes them', () => {
+  const graph = graphOf([['a', 'b']]);
+  const facts = factsOf([{ from: 'a/x.py', to: 'tests/t.py' }, { from: 'tests/t.py', to: 'a/x.py' }], { 'tests/t.py': 'test' });
+  const out = evaluate({ ...graph, excluded: { roles: ['test'], files: 1 } }, {}, facts);
+  assert.ok(!out.diagnostics.some((d) => d.code === 'coupling/import-cycle'));
+});

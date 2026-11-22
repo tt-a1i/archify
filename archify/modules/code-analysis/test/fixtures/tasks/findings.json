@@ -1,0 +1,426 @@
+{
+  "schema_version": 1,
+  "repository": {
+    "revision": null,
+    "baseRevision": null,
+    "sourceKind": "working-tree",
+    "root": ".",
+    "url": null,
+    "language": "py",
+    "adapter": "pyright-parser@1.1.414/python-3.14",
+    "adapterRevision": 17,
+    "snapshotId": "f1c9bfd491749465032c6b9299dd131d39314bfd3bf4c6874ec3f06bfa494ad2"
+  },
+  "rules": [
+    "coupling/import-cycle",
+    "coupling/cycle",
+    "coupling/hub",
+    "coupling/concentration",
+    "coupling/internal-leak",
+    "architecture/boundary",
+    "complexity/function"
+  ],
+  "summary": {
+    "errors": 2,
+    "warnings": 1,
+    "info": 3,
+    "suppressed": 0
+  },
+  "analysis": {
+    "analyzer": {
+      "name": "@archify/code-analysis",
+      "version": "0.1.0-dev.1"
+    },
+    "language": "py",
+    "adapter": "pyright-parser@1.1.414/python-3.14",
+    "adapterRevision": 17,
+    "configDigest": "599882652663586cb0e066002b72326f877ae1c90d9e48907e424e422a98f502",
+    "ruleVersions": {
+      "architecture/boundary": 1,
+      "complexity/function": 1,
+      "coupling/concentration": 1,
+      "coupling/cycle": 2,
+      "coupling/hub": 1,
+      "coupling/import-cycle": 3,
+      "coupling/internal-leak": 1
+    },
+    "coverage": {
+      "files": 9,
+      "excludedRoles": [
+        "generated",
+        "test"
+      ],
+      "parseErrors": []
+    }
+  },
+  "diagnostics": [
+    {
+      "id": "ARCH-e60012440cac",
+      "code": "architecture/boundary",
+      "dimension": "architecture",
+      "severity": "warning",
+      "confidence": 1,
+      "message": "2 imports in 1 file of layer \"domain\" depend on layer \"ui\", which the configured rule forbids: domain logic stays independent of presentation.",
+      "subject": {
+        "boundary": {
+          "from": "domain",
+          "to": "ui"
+        }
+      },
+      "evidence": {
+        "threshold": null,
+        "rule": {
+          "from": "domain",
+          "disallow": [
+            "ui"
+          ],
+          "reason": "domain logic stays independent of presentation"
+        },
+        "totalImports": 2,
+        "files": [
+          "domain/order.py"
+        ],
+        "imports": [
+          {
+            "file": "domain/order.py",
+            "line": 3,
+            "to": "ui/__init__.py"
+          },
+          {
+            "file": "domain/order.py",
+            "line": 3,
+            "to": "ui/view.py"
+          }
+        ]
+      },
+      "supportedFixes": [
+        "move what domain needs behind an interface owned by domain or by a layer it may depend on",
+        "move the shared code into a layer both domain and ui may depend on",
+        "if the dependency is intended, update the boundary rule in the analysis config"
+      ],
+      "evidenceDigest": {
+        "files": [
+          "domain/order.py",
+          "ui/__init__.py",
+          "ui/view.py"
+        ],
+        "sha256": "6ee477ffcab510c8381f8d026390f49a369cca8ee3a9d4efc28d200722ad5cfb"
+      }
+    },
+    {
+      "id": "COMP-bcd966585099",
+      "code": "complexity/function",
+      "dimension": "complexity",
+      "severity": "info",
+      "confidence": 1,
+      "message": "route in app/engine.py has cyclomatic complexity 20 (35 lines). More independent paths make it harder to read and to test fully; this is a maintenance signal, not a defect.",
+      "subject": {
+        "file": "app/engine.py",
+        "function": "route",
+        "line": 4,
+        "endLine": 38
+      },
+      "evidence": {
+        "threshold": {
+          "complexity": 15,
+          "nesting": 5
+        },
+        "thresholds": {
+          "info": {
+            "complexity": 15,
+            "nesting": 5
+          },
+          "warning": {
+            "complexity": 25,
+            "nesting": 6
+          }
+        },
+        "complexity": 20,
+        "nesting": 3,
+        "deepestLine": 18,
+        "length": 35
+      },
+      "supportedFixes": [
+        "start at the deepest nested block: extract it into a named helper with its own tests",
+        "replace long if/elif chains on one value with a lookup table or dispatch",
+        "return early for edge cases so the main path is not nested",
+        "if the branching is inherent, raise the threshold in the analysis config rather than splitting artificially"
+      ],
+      "evidenceDigest": {
+        "files": [
+          "app/engine.py"
+        ],
+        "lines": [
+          4,
+          38
+        ],
+        "sha256": "c0eb49a8f79eb88e5ac368cf58c55dee1a9d368aee06d4a8549bbf3b708cd1b0"
+      }
+    },
+    {
+      "id": "COUP-543346eb7923",
+      "code": "coupling/cycle",
+      "dimension": "coupling",
+      "severity": "error",
+      "confidence": 1,
+      "message": "2 modules depend on each other at package level: domain → ui → domain. See coupling/import-cycle for whether any file actually cycles.",
+      "subject": {
+        "modules": [
+          "domain",
+          "ui"
+        ]
+      },
+      "evidence": {
+        "kind": "eager",
+        "path": [
+          "domain",
+          "ui"
+        ],
+        "edges": [
+          {
+            "from": "domain",
+            "to": "ui",
+            "weight": 2,
+            "lazy": 0,
+            "deferred": false
+          },
+          {
+            "from": "ui",
+            "to": "domain",
+            "weight": 2,
+            "lazy": 0,
+            "deferred": false
+          }
+        ],
+        "closingLazyImports": [],
+        "imports": [
+          {
+            "file": "domain/order.py",
+            "line": 3,
+            "to": "ui/__init__.py"
+          },
+          {
+            "file": "domain/order.py",
+            "line": 3,
+            "to": "ui/view.py"
+          },
+          {
+            "file": "ui/view.py",
+            "line": 2,
+            "to": "domain/__init__.py"
+          },
+          {
+            "file": "ui/view.py",
+            "line": 2,
+            "to": "domain/model.py"
+          }
+        ],
+        "totalImports": 4,
+        "threshold": null
+      },
+      "supportedFixes": [
+        "move the shared piece both sides need into a new leaf module",
+        "invert one edge by passing the dependency in as a parameter",
+        "if one direction is a single import, check whether it is a convenience re-export that can be dropped"
+      ],
+      "evidenceDigest": {
+        "files": [
+          "domain/__init__.py",
+          "domain/model.py",
+          "domain/order.py",
+          "ui/__init__.py",
+          "ui/view.py"
+        ],
+        "sha256": "60196ed4d4a03173e23371a8bae2178c56d339ac040addb1e22bd609e0582a60"
+      }
+    },
+    {
+      "id": "COUP-65773eadb104",
+      "code": "coupling/import-cycle",
+      "dimension": "coupling",
+      "confidence": 0.7,
+      "severity": "error",
+      "message": "2 files form a module-scope import cycle with a possible partial-initialization read: app/a.py:2 imports Handler from app/b.py, whose recorded binding is at line 5, after its line-2 import. Inspect the candidate load order starting with app/b.py; static line ordering alone does not prove failure.",
+      "subject": {
+        "files": [
+          "app/a.py",
+          "app/b.py"
+        ]
+      },
+      "evidence": {
+        "kind": "eager",
+        "risk": {
+          "loading": "potential-partial-init",
+          "coupling": "present",
+          "loadingNote": "inspect the candidate order starting with app/b.py; failure is not proven"
+        },
+        "path": [
+          "app/a.py",
+          "app/b.py"
+        ],
+        "pathImports": [
+          {
+            "file": "app/a.py",
+            "to": "app/b.py",
+            "line": 2,
+            "deferred": false
+          },
+          {
+            "file": "app/b.py",
+            "to": "app/a.py",
+            "line": 2,
+            "deferred": false
+          }
+        ],
+        "imports": [
+          {
+            "file": "app/a.py",
+            "line": 2,
+            "to": "app/b.py",
+            "names": [
+              "Handler"
+            ],
+            "kind": "static"
+          },
+          {
+            "file": "app/b.py",
+            "line": 2,
+            "to": "app/a.py",
+            "names": [
+              "DEFAULT_TIMEOUT"
+            ],
+            "kind": "static"
+          }
+        ],
+        "lazyImports": 0,
+        "totalImports": 2,
+        "partialInitCandidate": {
+          "entry": "app/b.py",
+          "module": "app.b",
+          "name": "Handler",
+          "boundAt": 5,
+          "viaLine": 2,
+          "importer": "app/a.py",
+          "line": 2,
+          "chain": [
+            "app/b.py",
+            "app/a.py"
+          ]
+        },
+        "threshold": null
+      },
+      "supportedFixes": [
+        "verify the load order and binding of `Handler` in app/b.py before changing code",
+        "move shared definitions into a module both sides import if the cycle is unintended",
+        "pass the dependency in as a parameter instead of importing it"
+      ],
+      "evidenceDigest": {
+        "files": [
+          "app/a.py",
+          "app/b.py"
+        ],
+        "sha256": "d1c02b515886c5360db7ca128d1ea09403eccb6cd38fabb337571456504e7578"
+      }
+    },
+    {
+      "id": "COUP-2c7a6dad8b09",
+      "code": "coupling/internal-leak",
+      "dimension": "coupling",
+      "severity": "info",
+      "confidence": 1,
+      "message": "domain has an entry point (domain/__init__.py), but 1 import from 1 module reach 1 of its internal files directly.",
+      "subject": {
+        "module": "domain"
+      },
+      "evidence": {
+        "entries": [
+          "domain/__init__.py"
+        ],
+        "entrySource": "detected",
+        "internalFiles": [
+          "domain/model.py"
+        ],
+        "moduleFiles": 3,
+        "consumers": [
+          "ui"
+        ],
+        "viaEntry": 1,
+        "totalImports": 1,
+        "files": [
+          "ui/view.py"
+        ],
+        "imports": [
+          {
+            "file": "ui/view.py",
+            "line": 2,
+            "to": "domain/model.py"
+          }
+        ],
+        "threshold": {
+          "minFiles": 3
+        }
+      },
+      "supportedFixes": [
+        "export what consumers need from domain/__init__.py and change the cited imports to use it",
+        "if a file is meant to be public, add it to rules.coupling.internalLeak.entries"
+      ],
+      "evidenceDigest": {
+        "files": [
+          "domain/model.py",
+          "ui/view.py"
+        ],
+        "sha256": "3af49bf23d2671819b40d9009eaa856746f4910d135ad74693702bad740e3bfd"
+      }
+    },
+    {
+      "id": "COUP-81b9df85cf15",
+      "code": "coupling/internal-leak",
+      "dimension": "coupling",
+      "severity": "info",
+      "confidence": 1,
+      "message": "ui has an entry point (ui/__init__.py), but 1 import from 1 module reach 1 of its internal files directly.",
+      "subject": {
+        "module": "ui"
+      },
+      "evidence": {
+        "entries": [
+          "ui/__init__.py"
+        ],
+        "entrySource": "detected",
+        "internalFiles": [
+          "ui/view.py"
+        ],
+        "moduleFiles": 2,
+        "consumers": [
+          "domain"
+        ],
+        "viaEntry": 1,
+        "totalImports": 1,
+        "files": [
+          "domain/order.py"
+        ],
+        "imports": [
+          {
+            "file": "domain/order.py",
+            "line": 3,
+            "to": "ui/view.py"
+          }
+        ],
+        "threshold": {
+          "minFiles": 3
+        }
+      },
+      "supportedFixes": [
+        "export what consumers need from ui/__init__.py and change the cited imports to use it",
+        "if a file is meant to be public, add it to rules.coupling.internalLeak.entries"
+      ],
+      "evidenceDigest": {
+        "files": [
+          "domain/order.py",
+          "ui/view.py"
+        ],
+        "sha256": "32567b9facb6745b8eb919959e6d336b8f865ab31438a088323090989a79df8b"
+      }
+    }
+  ]
+}

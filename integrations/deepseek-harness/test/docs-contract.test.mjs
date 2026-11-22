@@ -77,6 +77,11 @@ test('default-root behavior is documented for both published releases', () => {
   assert.match(section, /Published \*\*1\.0\.0\*\* set `includeDefaultRoots: false`/);
   assert.match(section, /macOS Desktop `0\.2\.0-rc\.2`/);
   assert.match(section, /verification remains pending/);
+  assert.match(section, /one shadowing warning per personal or project Skill on every uncached catalog read/);
+  assert.match(section, /both providers keep a watcher on each of those roots/);
+  assert.match(section, /carries the default roots into every preset scope/);
+  assert.match(section, /1336/);
+  assert.match(section, /no patch-side switch/);
 });
 
 test('English, Chinese, and Japanese docs cover install, invoke, uninstall, community wording, and Produced Files', () => {

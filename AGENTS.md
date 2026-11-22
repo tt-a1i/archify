@@ -8,7 +8,9 @@ Before requesting final review, follow the scoped [PR improvement check](CONTRIB
 
 ## Test selection
 
-Before running tests, read [Choose evidence by impact](CONTRIBUTING.md#choose-evidence-by-impact) to select coverage for the changed behavior. Use the [focused test workflow](CONTRIBUTING.md#local-setup-and-verification) for local iteration. Before integration, follow [Final integration and follow-up](CONTRIBUTING.md#final-integration-and-follow-up) to verify CI and reused evidence against the final revision.
+In the edit loop, use `pnpm run test:changed` for working-tree changes or [run the specific suite](CONTRIBUTING.md#local-setup-and-verification) that reproduces the issue. Use [Choose evidence by impact](CONTRIBUTING.md#choose-evidence-by-impact) when the change needs broader coverage.
+
+When adding a regression test, use the least expensive suite that can reproduce the failure. When speeding up tests or narrowing CI triggers, [measure the improvement and verify coverage](CONTRIBUTING.md#measuring-test-and-ci-improvements). Before integration, [verify CI and reused evidence against the final revision](CONTRIBUTING.md#final-integration-and-follow-up).
 
 ## Live Archify installations
 

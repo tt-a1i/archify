@@ -2190,7 +2190,28 @@ function invalidProvenance(artifactPath, sidecar, reason, evidence = {}) {
 }
 
 const COMMAND_USAGE = {
-  story: ['scan <native.html> [--json]', 'draft <native.html> <brief.json> [--json]', 'attach <native.html> <brief.json> <enhanced.html> [--json] [--repo-root path]'],
+  start: '<repo-root> [--ir <architecture.json>] [--locale en|zh-CN] [--out <dir>] [--pr <URL-or-number>] [--repository OWNER/REPO] [--scope path] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
+  'code-analysis': [
+    'prepare <repo-root> --out <dir> [--ir <architecture.json>] [--locale en|zh-CN] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
+    'serve <repo-root> --out <dir> [--ir <architecture.json>] [--locale en|zh-CN] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
+    'check <repo-root> [--language ts|py|java|go|rust] [--config file] [--ir <architecture.json> [--map file]] [--baseline file] [--compare findings.json] [--out dir] [--fail-on error|warning|info|never] [--new-only] [--update-baseline | --accept id | --revoke id] [--reason text] [--json]',
+    'verify-change <analysis-dir> --task <task.json> [--checks <checks.json> | --checks-template]',
+    'drift <git-repo> --base <full-sha> --head <full-sha> --ir <architecture.json> --out <new-directory> [--map file] [--config file] [--from-report <original-drift.json>] [--locale en|zh-CN] [--json]',
+    'verify-drift <original-drift.json> --task <task.json> --after <follow-up-drift.json> [--checks <checks.json> | --checks-template]',
+    'import-review <github-pr-url> --out report.json [--author login] [--json]',
+    'task <analysis-dir> --finding <id> [--finding <id> …] [--root <repo-root>] [--command cmd] [--format md|json] [--out file] [--require-valid]',
+    'task [<analysis-dir>] --question <text> --entry <file> [--base-root <base>] --root <repo-root> [--function <name>] [--config file] [--format md|json] [--out file]',
+    'task --verify <task.json> --root <repo-root> [--format md|json] [--out file] [--require-valid]',
+  ],
+  story: [
+    'scan <native.html> [--json]',
+    'draft <native.html> <brief.json> [--json]',
+    'attach <native.html> <brief.json> <enhanced.html> [--json] [--repo-root path]',
+    'validate <choreography.json> [--repo-root path] [--quality standard|showcase] [--json]',
+    'svg <choreography.json> <output.svg|stem> [--theme both|light|dark] [--preset name] [--still] [--repo-root path] [--json]',
+    'stage <choreography.json> <output.html> [--theme light|dark] [--preset name] [--repo-root path] [--json]',
+    'video <choreography.json> <output.mp4|output.webm> [--format mp4|webm] [--fps 30|60] [--theme light|dark] [--preset name] [--repo-root path] [--json]',
+  ],
   render: '<type> <input.json> [output.html] [--quality standard|showcase] [--repo-root path]',
   compare: 'architecture <base.json> <head.json> [output.html] [--receipt path] [--json] [--quality standard|showcase] [--repo-root path]',
   deliver: '<type> <input.json> [output.html] [--json] [--open] [--quality standard|showcase] [--repo-root path]',
@@ -2198,6 +2219,8 @@ const COMMAND_USAGE = {
   finalize: '<type> <input.json> <output.html> [--json] [--browser-check] [--receipt path] [--out-dir <dir>] [--quality standard|showcase] [--repo-root path] [--candidate-sha256 hex]',
   preview: '<type> <input.json> [output.html] [--no-open] [--quality standard|showcase] [--repo-root path]',
   validate: '<type> <input.json> [--json] [--layout-json] [--quality standard|showcase] [--repo-root path]',
+  'export-svg': '<type> <input.json> <output.svg|stem> [--theme both|light|dark] [--preset name] [--animate-flow] [--json] [--quality standard|showcase] [--repo-root path]',
+  pr: ['preflight [--repo-root path] [--base ref] [--head ref] [--init dir] [--mode ask|on-demand|proactive] [--target body|comment] [--global-rules path] [--json]', 'validate <manifest.json> [--repo-root path] [--json]', 'build <manifest.json> --out-dir <dir> [--repo-root path] [--platform github|gitlab|generic] [--no-html] [--animate-flow] [--quality standard|showcase] [--json]', 'attach <pr-number-or-url|gitlab-mr-url> --manifest <build-receipt.json> [--target body|comment] [--repo owner/name] [--allow-stale] [--dry-run] [--json]'],
   migrate: 'workflow <old.json> <new.json> --to-schema 2 [--output portable.html] [--json] [--repo-root path]',
   inspect: '<type> <input.json>',
   check: '<output.html> [--json] [--require-provenance]',
@@ -4292,6 +4315,60 @@ function commandRender(args) {
   if (result.status !== 0) exitFrom(result);
 }
 
+async function commandExportSvg(args) {
+  const qualityArgs = extractQualityArgs(args);
+  const repoArgs = extractRepoRootArgs(qualityArgs.rest);
+  const positional = [];
+  let theme = 'both';
+  let preset;
+  let animateFlow = false;
+  let json = false;
+  const rest = repoArgs.rest;
+  for (let index = 0; index < rest.length; index += 1) {
+    const arg = rest[index];
+    if (arg === '--json') json = true;
+    else if (arg === '--animate-flow') animateFlow = true;
+    else if (arg === '--theme' || arg === '--preset') {
+      const value = rest[index + 1];
+      if (value === undefined || value.startsWith('--')) {
+        rejectCliArgument(`${arg} requires a value.`, { code: 'cli/missing-option-value', subject: { command: 'export-svg', option: arg } });
+      }
+      if (arg === '--theme') theme = value; else preset = value;
+      index += 1;
+    } else if (arg.startsWith('--theme=')) theme = arg.slice('--theme='.length);
+    else if (arg.startsWith('--preset=')) preset = arg.slice('--preset='.length);
+    else if (arg.startsWith('--')) {
+      rejectCliArgument(`Unknown export-svg option "${arg}".`, { code: 'cli/unsupported-option', subject: { command: 'export-svg', option: arg } });
+    } else positional.push(arg);
+  }
+  const [type, input, output] = positional;
+  if (!type || !input || !output || positional.length > 3) {
+    rejectCliArgument(`export-svg expects <type> <input.json> <output.svg|stem>.\n\n${usage()}`, { code: 'cli/invalid-arguments', subject: { command: 'export-svg' } });
+  }
+  const { exportSvgArtifacts, SvgExportError } = await import('../renderers/shared/svg-export.mjs');
+  try {
+    const receipt = await exportSvgArtifacts({ type, input, output, theme, preset, animateFlow, env: rendererEnv(qualityArgs.quality, repoArgs.repoRoot) });
+    if (json) console.log(JSON.stringify(receipt, null, 2));
+    else for (const entry of receipt.outputs) console.log(entry.path);
+  } catch (error) {
+    if (!(error instanceof SvgExportError)) throw error;
+    const diagnostics = error.diagnostics.length
+      ? error.diagnostics
+      : [diagnostic({ code: error.code || 'export/failed', message: error.message, subject: { command: 'export-svg', type } })];
+    reportArtifactFailure({
+      command: 'export-svg',
+      json,
+      stage: error.stage || 'export',
+      type,
+      input: path.resolve(input),
+      output: path.resolve(output),
+      error: error.message,
+      diagnostics,
+      status: error.stage === 'arguments' ? 2 : 1,
+    });
+  }
+}
+
 function reportArtifactFailure({ command, json, stage, type, input, output, error, diagnostics = [], status = 1, checker, receiptId, provenance, update }) {
   const receipt = {
     schemaVersion: 1,
@@ -6043,6 +6120,12 @@ async function commandFinalize(rawArgs) {
     for (const entry of result.summary.diagnostics || []) {
       if (entry.severity === 'warning') console.error(`warning [${entry.code}] ${entry.message}`);
     }
+    const offer = result.summary.codeAnalysisOffer;
+    if (offer) {
+      const { nodeCommand } = await import('../modules/code-analysis/lib/task-command.mjs');
+      const installNotice = offer.dependencies === 'missing' ? ' (analysis components are missing; reinstall Archify first)' : '';
+      console.log(`Architecture Diagnosis available (not run)${installNotice}: ${nodeCommand(offer.start.argv.slice(1))}`);
+    }
     if (result.summary.update?.noticeRequired) console.log(result.summary.update.noticeText);
   }
   process.exitCode = result.exitCode;
@@ -6221,7 +6304,7 @@ async function commandDoctor(args) {
   const missingExplainerRuntime = explainerRuntime.filter(file => !fs.existsSync(path.join(skillRoot, 'explainer', file))).length;
   checks.push({label:'Explainer runtime and reader assets',ok:missingExplainerRuntime===0,missing:missingExplainerRuntime});
 
-  const storyRuntime = ['cli.mjs','tool.mjs','output.mjs','story-plan.mjs','story.js','story.css','story-audio.js','story-webm.js','story-export.js','story-attachment.mjs','story-attachment.js','story-attachment.css','messages.json','scope-field.js','brand.svg','native-motion.js','vendor/html-parser.mjs'];
+  const storyRuntime = ['cli.mjs','tool.mjs','output.mjs','svg-bake.mjs','component-stage.mjs','choreography-plan.mjs','story-svg.mjs','story-stage-html.mjs','story-stage-runtime.js','story-plan.mjs','story.js','story.css','story-audio.js','story-container.js','story-export.js','story-attachment.mjs','story-attachment.js','story-attachment.css','messages.json','scope-field.js','brand.svg','native-motion.js','vendor/html-parser.mjs'];
   const missingStoryRuntime = storyRuntime.filter(file => !fs.existsSync(path.join(skillRoot, 'story', file))).length;
   checks.push({label:'Story runtime and playback assets',ok:missingStoryRuntime===0,missing:missingStoryRuntime});
 
@@ -7043,14 +7126,6 @@ async function commandValidate(args, invocation = {}) {
   });
   const renderer = rendererPath(type);
 
-  if (layoutJson && !['architecture', 'workflow'].includes(type)) {
-    rejectCliArgument('--layout-json is currently supported for architecture and workflow diagrams only.', {
-      code: 'cli/unsupported-option',
-      subject: { option: '--layout-json', type },
-      supportedFixes: ['remove --layout-json or use an architecture or workflow diagram'],
-    });
-  }
-
   const inputPath = path.resolve(input);
   let specification;
   let explainerBundle;
@@ -7274,11 +7349,41 @@ try {
     case 'help':
       console.log(usage());
       break;
+    case 'start': {
+      if (!args.length || args[0] === '--help' || args[0] === '-h') {
+        console.log('Usage: archify start <repo-root> [--ir <architecture.json>] [--locale en|zh-CN] [--out <dir>] [--pr <URL-or-number>] [--repository OWNER/REPO] [--scope path] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]');
+        break;
+      }
+      const { startAnalysisView } = await import('../modules/code-analysis/bin/serve.mjs');
+      const launchArgs = [...args];
+      if (!launchArgs.includes('--out')) launchArgs.push('--out', fs.mkdtempSync(path.join(os.tmpdir(), 'archify-' + createHash('sha256').update(path.resolve(args[0])).digest('hex').slice(0, 16) + '-')));
+      let view;
+      try { view = await startAnalysisView(launchArgs); }
+      catch (error) { console.error(error.message); process.exitCode = error.exitCode === 2 ? 2 : 1; break; }
+      const { url, delivered, out } = view;
+      console.log(`Archify: ${url}\n${delivered ? `Diagram: ${delivered}\nOpen the URL, then click "Code Analysis" to analyze.` : `Analysis: ${path.join(out, 'analysis/repo.analysis.html')}\nOpen the URL to analyze the repository.`} Press Ctrl+C to stop.`);
+      break;
+    }
+    case 'code-analysis': {
+      // serve: deliver the authored diagram, serve it, analyze on click.
+      // check: headless analysis with baseline, comparison and an exit code for CI.
+      // task: an AI optimization task from a finished run, with an evidence check.
+      const commands = { prepare: 'prepare.mjs', serve: 'serve.mjs', check: 'check.mjs', task: 'task.mjs', 'verify-change': 'verify-change.mjs', drift: 'drift.mjs', 'verify-drift': 'verify-drift.mjs', 'import-review': 'import-review.mjs' };
+      if (!commands[args[0]]) {
+        console.error(`archify code-analysis commands: prepare, serve, check, task, verify-change, drift, verify-drift, import-review.\n${usage()}`);
+        process.exitCode = 1;
+        break;
+      }
+      const result = runNode([path.join(skillRoot, 'modules', 'code-analysis', 'bin', commands[args[0]]), ...args.slice(1)]);
+      if (result.error) throw result.error;
+      process.exitCode = result.status ?? 1;
+      break;
+    }
     case 'render':
       commandRender(args);
       break;
     case 'story':
-      (await import('../story/cli.mjs')).commandStory(args);
+      await (await import('../story/cli.mjs')).commandStory(args);
       break;
     case 'compare':
       await commandCompare(args);
@@ -7298,6 +7403,12 @@ try {
     case 'validate':
       await commandValidate(args);
       break;
+    case 'export-svg':
+      await commandExportSvg(args);
+      break;
+    case 'pr':
+      await (await import('../pr/cli.mjs')).commandPr(args, { rejectCliArgument, usage });
+      break;
     case 'migrate':
       await commandMigrate(args);
       break;
@@ -7306,7 +7417,7 @@ try {
         rejectCliArgument('inspect is currently supported for architecture diagrams only.', {
           code: 'cli/unsupported-option',
           subject: { command: 'inspect', type: args[0] },
-          supportedFixes: ['use an architecture diagram', 'use validate <type> <input.json> --layout-json for workflow diagrams'],
+          supportedFixes: ['use an architecture diagram', 'use validate <type> <input.json> --layout-json for other diagram types'],
         });
       }
       await commandValidate([...args, '--layout-json'], { command: 'inspect' });
@@ -7340,7 +7451,7 @@ try {
   }
 } catch (error) {
   if (!error.archifyArgument) throw error;
-  if (['validate', 'deliver', 'finalize', 'inspect', 'patch'].includes(command) && args.includes('--json')) {
+  if (['validate', 'deliver', 'finalize', 'inspect', 'patch', 'export-svg', 'pr'].includes(command) && args.includes('--json')) {
     reportArtifactArgumentFailure(command, error);
   } else {
     fail(error.message);

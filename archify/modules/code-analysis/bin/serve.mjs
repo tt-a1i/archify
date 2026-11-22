@@ -1,0 +1,456 @@
+#!/usr/bin/env node
+// Interactive Code Analysis entry:
+//   Without IR, a standalone workbench starts analysis on page load.
+//   With IR, Archify delivers the authored diagram and waits for a click.
+//   2. The page is served locally with one extra toolbar button, "Code Analysis".
+//   3. Clicking it runs the analysis (extract → graphs → evaluate → overlay) for the
+//      repository and switches the page to the analysis view. Nothing runs before the click.
+//   4. "Re-analyze" on the overview runs it again after code changes, without a restart.
+//   5. POST /task builds an AI optimization task for selected findings of the current
+//      result and checks its evidence against the working tree (lib/task.mjs, lib/evidence.mjs).
+// Each run happens in a child process (bin/analyze-run.mjs) so the server stays
+// responsive, writes to a fresh directory, and replaces <out>/analysis only when it
+// succeeds; the run it replaces moves to <out>/analysis.previous and is the
+// comparison for the next one. A failed run leaves the last good result in place.
+// The delivered HTML is never modified; the analysis page is written next to it.
+import http from 'node:http';
+import { analysisLocale, messagesFor, createTranslator } from '../overlay/i18n.mjs';
+import fs from 'node:fs';
+import path from 'node:path';
+import { randomBytes } from 'node:crypto';
+import { execFile, spawn } from 'node:child_process';
+import { promisify } from 'node:util';
+import { fileURLToPath } from 'node:url';
+import { DiagnosticError, fail } from '../core/index.mjs';
+import { analysisStartCommand } from '../lib/task-command.mjs';
+import { standaloneShell } from '../overlay/standalone.mjs';
+import { clientAsset } from '../overlay/client-assets.mjs';
+import { preparePullRequest } from '../lib/pull-request.mjs';
+
+const execute = promisify(execFile);
+const here = path.dirname(fileURLToPath(import.meta.url));
+const moduleRoot = path.resolve(here, '..');
+const archify = path.resolve(here, '../../../bin/archify.mjs');
+const worker = path.join(here, 'analyze-run.mjs');
+const TASK_BODY_LIMIT = 16 * 1024;
+
+// Runs one analysis in a child process and resolves with its receipt.
+// Failures come back as the worker's structured diagnostics.
+export function runWorker(options) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, [worker], { stdio: ['pipe', 'pipe', 'pipe'] });
+    let stdout = '', stderr = '';
+    child.stdout.setEncoding('utf8').on('data', (chunk) => { stdout += chunk; });
+    child.stderr.setEncoding('utf8').on('data', (chunk) => { stderr += chunk; });
+    child.on('error', reject);
+    child.on('close', (code) => {
+      let message = null;
+      try { message = JSON.parse(stdout.trim().split('\n').pop()); } catch { /* no JSON line */ }
+      if (message && message.status !== 'error' && code === 0) return resolve(message);
+      if (message && message.diagnostics) return reject(new DiagnosticError(message.diagnostics.map((d) => d.message).join('\n'), message.diagnostics));
+      reject(new Error(`analysis process exited with ${code}: ${(stderr || stdout).trim().split('\n').slice(-3).join(' ')}`));
+    });
+    child.stdin.end(JSON.stringify(options));
+  });
+}
+
+// Parser and schema packages ship pre-bundled in vendor/ (scripts/build-vendor.mjs),
+// so a plain copy of the Skill needs no install. Only a damaged copy lacks them.
+export function missingAnalysisDependencies(root = moduleRoot) {
+  return ['typescript.cjs', 'deps.cjs'].filter(name => !fs.existsSync(path.join(root, 'vendor', name)));
+}
+
+export const USAGE = `Usage:
+  archify code-analysis serve <repo-root> --out <dir> [--ir <architecture.json>] [--locale en|zh-CN]
+                              [--pr <GitHub-URL-or-number>] [--repository OWNER/REPO] [--scope path] [--language ts|py|java|go|rust|c|cpp] [--map overlay-map.json] [--config file.json]
+                              [--baseline baseline.json] [--quality standard|showcase]
+
+Without --ir, opens a standalone workbench with Atlas and analyzes on page load.
+With --ir, delivers the authored diagram and waits for a Code Analysis click.
+Re-analyze runs again after source changes; --locale overrides the IR locale.
+The page can request an AI optimization task for selected findings (POST /task),
+checked against the current working tree.
+Output: with --ir, <dir>/architecture.html (Archify's artifact, untouched); always
+<dir>/analysis/{raw-facts,module-graph,findings,review,overview}.json + repo.analysis.html;
+the run before is kept in <dir>/analysis.previous and compared with.`;
+
+const usageError = message => Object.assign(new Error(message), { exitCode: 2 });
+
+export function parseArgs(argv) {
+  const [repo, ...rest] = argv;
+  if (!repo || repo.startsWith('-')) throw usageError(USAGE);
+  const options = {};
+  for (let i = 0; i < rest.length; i += 2) {
+    const key = rest[i];
+    if (!['--ir', '--out', '--language', '--config', '--map', '--quality', '--baseline', '--locale', '--pr', '--repository', '--scope'].includes(key) || !rest[i + 1] || rest[i + 1].startsWith('--')) throw usageError(`Invalid option: ${key}\n${USAGE}`);
+    options[key] = rest[i + 1];
+  }
+  if (!options['--out']) throw usageError(`serve requires --out\n${USAGE}`);
+  if (options['--map'] && !options['--ir']) throw usageError('--map requires --ir: mapping belongs to an authored architecture diagram.');
+  if (options['--locale'] && !['en', 'zh-CN'].includes(options['--locale'])) throw usageError('--locale must be en or zh-CN.');
+  if (!options['--pr'] && (options['--repository'] || options['--scope'])) throw usageError('--repository and --scope require --pr.');
+  return { repo, options };
+}
+
+export async function prepareAnalysisSession(argv) {
+  const { repo, options } = parseArgs(argv);
+  const root = path.resolve(repo), ir = options['--ir'] ? path.resolve(options['--ir']) : null, out = path.resolve(options['--out']);
+  const irBytes = ir ? fs.readFileSync(ir) : null;
+  const input = irBytes ? JSON.parse(irBytes.toString('utf8')) : null;
+  const locale = analysisLocale(options['--locale'] || input?.meta?.locale);
+  const doc = input ? { ...input, meta: { ...input.meta, locale } } : null;
+  const pullRequest = options['--pr'] ? await (await import('../lib/pull-request.mjs')).resolvePullRequest(root, options['--pr'], options['--repository'], options['--scope']) : null;
+  fs.mkdirSync(out, { recursive: true });
+
+  // 1. Archify delivers the diagram. Repository evidence is checked when the IR pins a repository.
+  const delivered = ir ? path.join(out, 'architecture.html') : null;
+  let evidenceArgs = [];
+  if (doc?.meta?.repository) {
+    const top = await execute('git', ['-C', root, 'rev-parse', '--show-toplevel']);
+    evidenceArgs = ['--repo-root', top.stdout.trim()];
+  }
+  const quality = options['--quality'] || doc?.meta?.quality_profile || 'standard';
+  if (ir) {
+    // Deliver exactly the bytes captured for this session, without touching the original IR.
+    const deliveryInput = path.join(out, `.analysis-input-${randomBytes(12).toString('hex')}.json`);
+    fs.writeFileSync(deliveryInput, options['--locale'] ? JSON.stringify(doc) : irBytes, { flag: 'wx' });
+    try {
+      await execute(process.execPath, [archify, 'deliver', 'architecture', deliveryInput, delivered, '--quality', quality, ...evidenceArgs, '--json'], { maxBuffer: 16 * 1024 * 1024 });
+    } catch (error) {
+      // Archify refused the diagram. Show its receipt, not a bare "command failed": the IR needs
+      // repair (validate → fix what the diagnostics point at → validate again) before it can be served.
+      let receipt = null;
+      try { receipt = JSON.parse(error.stdout); } catch { /* not JSON */ }
+      const lines = receipt?.diagnostics?.length
+        ? receipt.diagnostics.map((d) => `  - [${d.code}] ${d.message.replace(/^\[[^\]]+\]\s*/, '')}`)
+        : [`  ${(receipt?.error || error.stderr || error.message).split('\n').join('\n  ')}`];
+      throw new Error([
+        `Archify did not deliver ${path.basename(ir)} (${receipt?.stage || 'deliver'} failed, quality "${quality}"). The diagram must pass before it can be served:`,
+        ...lines.slice(0, 12),
+        lines.length > 12 ? `  … ${lines.length - 12} more` : null,
+        `Repair the IR, then check with:`,
+        `  node ${path.relative(process.cwd(), archify)} validate architecture ${path.relative(process.cwd(), ir)} --quality ${quality}${evidenceArgs.length ? ` --repo-root ${evidenceArgs[1]}` : ''} --json`,
+      ].filter(Boolean).join('\n'));
+    } finally {
+      fs.rmSync(deliveryInput, { force: true });
+    }
+  }
+
+  const baselineFile = options['--baseline'] ? path.resolve(options['--baseline']) : path.join(out, 'baseline.json');
+  const resume = { command: analysisStartCommand(archify, root, {
+    ir, out, locale, language: options['--language'], quality,
+    config: options['--config'] ? path.resolve(options['--config']) : null,
+    map: options['--map'] ? path.resolve(options['--map']) : null,
+    baseline: baselineFile, pr: options['--pr'], repository: options['--repository'], scope: options['--scope'],
+  }), shell: process.platform === 'win32' ? 'cmd.exe' : 'POSIX sh' };
+  return { root, ir, out, options, irBytes, doc, locale, delivered, baselineFile, resume, pullRequest };
+}
+
+export async function runSessionAnalysis({ root, ir, doc, locale, delivered, out, options, baselineFile, resume, pullRequest = null, openAnalysis = false }, { preparePRSources = preparePullRequest } = {}) {
+  const analysisDir = path.join(out, 'analysis');
+  const next = path.join(out, `analysis.next-${randomBytes(6).toString('hex')}`);
+  let capture = null;
+  try {
+    let language = options['--language'] || null, config = options['--config'] ? path.resolve(options['--config']) : null;
+    if (pullRequest) {
+      const { loadConfig, stableJson } = await import('../lib/analysis.mjs');
+      const { selectAdapter } = await import('../extract/index.mjs');
+      capture = await preparePRSources({ ...pullRequest, out });
+      fs.mkdirSync(next, { recursive: true });
+      const cfg = loadConfig(config);
+      config = path.join(next, 'captured-config.json');
+      fs.writeFileSync(config, stableJson(cfg));
+      if (!language) {
+        try { language = selectAdapter(capture.roots.head, cfg).id; }
+        catch (error) {
+          if (!error.diagnostics?.some(d => d.code === 'extract/adapter-undetected')) throw error;
+          language = selectAdapter(capture.roots.base, cfg).id;
+        }
+      }
+      await runWorker({ root: capture.roots.base, out: path.join(next, 'base'), locale, language, config,
+        source: capture.source('base'), openAnalysis: true });
+    }
+    await runWorker({
+      root: capture?.roots.head || root, ir, irSnapshot: doc, html: delivered, locale, out: next, resume, openAnalysis: !ir || openAnalysis,
+      language, config, source: capture?.source('head') || null,
+      pullRequest: capture ? { pr: capture.pr, scope: capture.scope, changedFiles: capture.changedFiles, manifests: capture.manifests, sourceRoot: capture.roots.head, baseSourceRoot: capture.roots.base, sourceGitRoot: capture.sourceGitRoot } : null,
+      map: options['--map'] ? path.resolve(options['--map']) : null, baseline: fs.existsSync(baselineFile) ? baselineFile : null,
+      previous: capture ? path.join(next, 'base/findings.json') : path.join(analysisDir, 'findings.json'),
+    });
+  } catch (error) {
+    fs.rmSync(next, { recursive: true, force: true });
+    if (capture) fs.rmSync(capture.directory, { recursive: true, force: true });
+    throw error;
+  }
+  const previousDir = path.join(out, 'analysis.previous');
+  fs.rmSync(previousDir, { recursive: true, force: true });
+  if (fs.existsSync(analysisDir)) fs.renameSync(analysisDir, previousDir);
+  fs.renameSync(next, analysisDir);
+  return fs.readFileSync(path.join(analysisDir, 'repo.analysis.html'), 'utf8');
+}
+
+export async function startAnalysisView(argv, dependencies = {}) {
+  const session = await prepareAnalysisSession(argv);
+  const { root, ir, out, options, irBytes, doc, locale, delivered, baselineFile } = session;
+  const token = randomBytes(24).toString('hex');
+  const page = (delivered ? fs.readFileSync(delivered, 'utf8') : standaloneShell({ locale, title: path.basename(root) })).replace('</body>', `<script>(${client.toString()})(${JSON.stringify(token)}, ${JSON.stringify(messagesFor(locale))}, ${createTranslator.toString()}, ${!ir}, ${JSON.stringify(clientAsset('entry.css'))})</script></body>`);
+  let pending = null, result = null, origin, reviewing = false;
+  const analysisDir = path.join(out, 'analysis');
+  const runAnalysis = () => runSessionAnalysis(session, dependencies);
+  const currentRoot = () => {
+    if (!session.pullRequest) return root;
+    const file = path.join(analysisDir, 'view-context.json');
+    if (!fs.existsSync(file)) fail('overlay/context-invalid', 'The captured PR view context is missing. Re-analyze before building a task or saving a review.');
+    const sourceRoot = JSON.parse(fs.readFileSync(file, 'utf8')).run?.pullRequest?.sourceRoot;
+    if (!sourceRoot) fail('overlay/context-invalid', 'The captured PR source root is missing. Re-analyze the PR.');
+    return sourceRoot;
+  };
+  const comparisonFile = () => path.join(analysisDir, session.pullRequest ? 'base/findings.json' : '../analysis.previous/findings.json');
+  const server = http.createServer(async (req, res) => {
+    const send = (status, body, type = 'application/json') => { res.writeHead(status, { 'Content-Type': type, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' }); res.end(body); };
+    if (req.headers.host !== new URL(origin).host) return send(403, '{}');
+    if (req.method === 'GET' && new URL(req.url, origin).pathname === '/') return send(200, page, 'text/html; charset=utf-8');
+    if (req.method !== 'POST' || !['/analyze', '/task', '/review'].includes(req.url)) return send(404, '{}');
+    if (req.headers.origin !== origin || req.headers['x-analysis-token'] !== token) return send(403, '{}');
+    if (req.url === '/task') return handleTask(req, send);
+    if (req.url === '/review') return handleReview(req, send);
+    if (reviewing) return send(409, JSON.stringify({ error: 'A review decision is being saved; retry when it has finished.' }));
+    // Check before cached results as well: this page belongs to the delivered IR.
+    let unchanged = !ir;
+    try { if (ir) unchanged = fs.readFileSync(ir).equals(irBytes); } catch { /* Removed or unreadable input also requires redelivery. */ }
+    if (!unchanged) return send(409, JSON.stringify({
+      error: 'Architecture has changed. Please regenerate the diagram.',
+      diagnostics: [{ code: 'analysis/architecture-changed', severity: 'error', message: 'Architecture has changed. Please regenerate the diagram.', subject: { file: ir }, evidence: {}, supportedFixes: ['restart with the updated IR to regenerate the diagram'] }],
+    }));
+    // 3. The click returns the latest result; 4. a refresh request runs a new one.
+    // Concurrent requests share the run in progress.
+    try {
+      if (!pending && (!result || req.headers['x-analysis-refresh'] === '1')) pending = runAnalysis().then((html) => { result = html; return html; }).finally(() => { pending = null; });
+      send(200, pending ? await pending : result, 'text/html; charset=utf-8');
+    } catch (error) {
+      const diagnostics = error instanceof DiagnosticError ? error.diagnostics : [{ code: 'internal/unclassified', severity: 'error', message: error.message, subject: {}, evidence: {}, supportedFixes: [] }];
+      send(500, JSON.stringify({ error: diagnostics.map((d) => d.message).join('\n'), diagnostics }));
+    }
+  });
+  // 5. A task for findings of the result on disk, checked against the working tree now.
+  // Page requests bind the displayed claims; ids-only clients read the current
+  // result. Files and directories are fixed by the server in both cases.
+  const handleTask = async (req, send) => {
+    const fail409 = (code, message, fixes) => send(409, JSON.stringify({ error: message, diagnostics: [{ code, severity: 'error', message, subject: {}, evidence: {}, supportedFixes: fixes }] }));
+    let body = '';
+    req.setEncoding('utf8');
+    try {
+      for await (const chunk of req) { body += chunk; if (Buffer.byteLength(body) > TASK_BODY_LIMIT) return send(413, JSON.stringify({ error: 'request too large' })); }
+    } catch { return send(400, JSON.stringify({ error: 'request could not be read' })); }
+    let ids, expected;
+    try { ({ ids, expected } = JSON.parse(body || '{}')); } catch { return send(400, JSON.stringify({ error: 'request body must be JSON: {"ids": [...]}' })); }
+    if (!Array.isArray(ids) || !ids.length || ids.length > 20 || !ids.every((id) => typeof id === 'string' && /^[A-Z]{2,4}-(?:[0-9a-f]{12}|[0-9]{4,})$/.test(id))) return send(400, JSON.stringify({ error: 'ids must list 1–20 finding ids' }));
+    if (expected !== undefined && (!expected || typeof expected !== 'object' || Array.isArray(expected) || ids.some((id) => typeof expected[id] !== 'string' || !/^[0-9a-f]{64}$/.test(expected[id])))) return send(400, JSON.stringify({ error: 'expected must map every selected finding id to its displayed reviewTarget digest' }));
+    if (pending || reviewing) return fail409('task/analysis-running', 'An analysis or review update is running; build the task when it has finished.', ['retry after the analysis completes']);
+    if (!fs.existsSync(path.join(analysisDir, 'findings.json'))) return fail409('task/no-analysis', 'Run the analysis before building a task.', ['click Code Analysis first']);
+    try {
+      const { buildTask, renderTaskMarkdown } = await import('../lib/task.mjs');
+      const { verifyTask } = await import('../lib/evidence.mjs');
+      const { loadBaseline, loadPrevious } = await import('../lib/analysis.mjs');
+      const { reviewFindings, reviewTargetDigest } = await import('../lib/review.mjs');
+      const read = (name) => JSON.parse(fs.readFileSync(path.join(analysisDir, name), 'utf8'));
+      const findings = read('findings.json'), facts = read('raw-facts.json');
+      if (expected && findings.diagnostics.some((finding) => ids.includes(finding.id) && reviewTargetDigest(finding) !== expected[finding.id])) return fail409('task/finding-changed', 'The finding changed since this page was loaded. Re-analyze to refresh the displayed claim before exporting its task.', ['refresh the analysis page and review the current finding']);
+      const review = reviewFindings(findings.diagnostics, { baseline: fs.existsSync(baselineFile) ? loadBaseline(baselineFile) : null, previous: loadPrevious(comparisonFile()), analysis: findings.analysis, files: [...facts.files, ...(findings.externalEvidence || [])].map((f) => f.path) });
+      const task = verifyTask(buildTask({ findings, facts, ids, review }), currentRoot());
+      send(200, JSON.stringify({ task, markdown: renderTaskMarkdown(task) }));
+    } catch (error) {
+      const diagnostics = error instanceof DiagnosticError ? error.diagnostics : [{ code: 'internal/unclassified', severity: 'error', message: error.message, subject: {}, evidence: {}, supportedFixes: [] }];
+      send(error instanceof DiagnosticError ? 422 : 500, JSON.stringify({ error: diagnostics.map((d) => d.message).join('\n'), diagnostics }));
+    }
+  };
+  // A fixed baseline destination and one id per decision. Paths are never supplied
+  // by the request, and an acceptance is bound to evidence checked now.
+  const handleReview = async (req, send) => {
+    let body = '';
+    req.setEncoding('utf8');
+    try { for await (const chunk of req) { body += chunk; if (Buffer.byteLength(body) > TASK_BODY_LIMIT) return send(413, JSON.stringify({ error: 'request too large' })); } }
+    catch { return send(400, JSON.stringify({ error: 'request could not be read' })); }
+    let input;
+    try { input = JSON.parse(body); } catch { return send(400, JSON.stringify({ error: 'request body must be JSON' })); }
+    if (!input || !['accept', 'revoke'].includes(input.action) || typeof input.id !== 'string' || !/^[A-Z]{2,4}-[0-9a-f]{12}$/.test(input.id)) return send(400, JSON.stringify({ error: 'review requires action accept/revoke and a stable finding id' }));
+    if (input.action === 'accept' && (typeof input.expected !== 'string' || !/^[0-9a-f]{64}$/.test(input.expected))) return send(400, JSON.stringify({ error: 'accept requires the reviewTarget digest shown with the finding' }));
+    if (pending || reviewing) return send(409, JSON.stringify({ error: 'An analysis or review update is running; retry after it finishes.' }));
+    if (!fs.existsSync(path.join(analysisDir, 'findings.json'))) return send(409, JSON.stringify({ error: 'Run an analysis before reviewing a finding.' }));
+    reviewing = true;
+    let phase = 'prepare';
+    try {
+      const { loadBaseline, saveBaseline, loadPrevious } = await import('../lib/analysis.mjs');
+      const { acceptFinding, revokeFinding, reviewFindings, reviewTargetDigest } = await import('../lib/review.mjs');
+      const { buildTask } = await import('../lib/task.mjs');
+      const { verifyTask } = await import('../lib/evidence.mjs');
+      const { renderAnalysisSnapshot, writeAnalysisView } = await import('../overlay/page.mjs');
+      const findings = JSON.parse(fs.readFileSync(path.join(analysisDir, 'findings.json'), 'utf8'));
+      const facts = JSON.parse(fs.readFileSync(path.join(analysisDir, 'raw-facts.json'), 'utf8'));
+      const existing = fs.existsSync(baselineFile) ? loadBaseline(baselineFile) : null;
+      let next;
+      if (input.action === 'accept') {
+        const diagnostic = findings.diagnostics.find((d) => d.id === input.id);
+        if (!diagnostic) return send(409, JSON.stringify({ error: 'This finding is not in the current analysis; refresh the result.' }));
+        if (reviewTargetDigest(diagnostic) !== input.expected) return send(409, JSON.stringify({ error: 'The finding changed since this page was loaded. Refresh the result before accepting.' }));
+        const checked = verifyTask(buildTask({ findings, facts, ids: [input.id] }), currentRoot()).evidence.findings[input.id];
+        if ((checked.sourceStatus || checked.status) !== 'valid' || checked.reportBinding === 'changed') return send(409, JSON.stringify({ error: 'The captured evidence changed or cannot be checked. Re-analyze before accepting.', evidence: checked }));
+        next = acceptFinding(diagnostic, { existing, reason: input.reason });
+      } else next = revokeFinding(input.id, { existing });
+      const review = reviewFindings(findings.diagnostics, { baseline: next, previous: loadPrevious(comparisonFile()), analysis: findings.analysis, files: [...facts.files, ...(findings.externalEvidence || [])].map((f) => f.path) });
+      const overlay = renderAnalysisSnapshot({ dir: analysisDir, html: delivered, root: currentRoot(), review });
+      phase = 'save';
+      saveBaseline(baselineFile, next);
+      result = overlay.html;
+      const response = { saved: true, baseline: baselineFile, review, html: overlay.html, refreshRequired: false, artifactsSaved: true };
+      try { writeAnalysisView(analysisDir, overlay, review); }
+      catch (error) {
+        response.artifactsSaved = false;
+        response.warnings = [{ code: 'review/artifacts-not-updated', message: `The baseline was saved and this server has the updated view, but disk view artifacts could not all be updated (${error.message}). Re-analyze when the output directory is writable to refresh the saved files.` }];
+      }
+      send(200, JSON.stringify(response));
+    } catch (error) {
+      const diagnostics = error instanceof DiagnosticError ? error.diagnostics : [{ code: phase === 'save' ? 'baseline/write-failed' : 'review/preparation-failed', severity: 'error', message: error.message, subject: {}, evidence: {}, supportedFixes: [phase === 'save' ? 'check that the configured baseline can be written, then retry' : 're-analyze the repository to rebuild its captured view, then retry'] }];
+      send(error instanceof DiagnosticError ? 422 : 500, JSON.stringify({ error: diagnostics.map((d) => d.message).join('\n'), diagnostics }));
+    } finally { reviewing = false; }
+  };
+  await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
+  origin = `http://127.0.0.1:${server.address().port}`;
+  return { server, url: origin, token, delivered, baseline: baselineFile, out };
+}
+
+// Runs in the page. One toolbar button: click → analysis runs → the analysis
+// layer is added to this page and switched on. From then on the layer's own
+// toggle (the same button, now owned by the layer) shows or hides it.
+function client(token, messages, makeTranslator, standalone, entryCss) {
+  var tr = makeTranslator(messages);
+  var toolbar = document.querySelector('.toolbar');
+  if (!toolbar) return;
+  var button = document.createElement('button');
+  button.id = 'code-analysis-start'; button.type = 'button'; button.className = 'analysis-entry';
+  button.title = tr("Analyze the repository and show the result on this diagram");
+  // Icon + label in its own capsule before Export (overlay/client/entry.css).
+  var entryStyle = document.createElement('style'); entryStyle.id = 'code-analysis-entry-style'; entryStyle.textContent = entryCss;
+  document.head.appendChild(entryStyle);
+  var entryLabel = document.createElement('span');
+  var setLabel = function (text) { entryLabel.textContent = text; };
+  button.innerHTML = '<span class="analysis-entry-icon" aria-hidden="true"></span>'; button.appendChild(entryLabel);
+  setLabel(tr("Code Analysis"));
+  toolbar.insertBefore(button, toolbar.querySelector('.export-wrap'));
+  var note = document.createElement('div');
+  note.id = 'code-analysis-note'; note.setAttribute('role', 'status');
+  note.style.cssText = 'position:fixed;z-index:59;width:max-content;max-width:min(420px,calc(100vw - 16px));box-sizing:border-box;overflow-wrap:anywhere;padding:8px 12px;border-radius:8px;background:var(--panel,#0f172a);color:var(--text-muted,#94a3b8);border:1px solid var(--panel-border,#1e293b);font:12px ui-monospace,Menlo,Consolas,monospace;display:none';
+  document.body.appendChild(note);
+  button.setAttribute('aria-describedby', note.id);
+  var positionNote = function () {
+    if (note.style.display === 'none' || !button.isConnected) return;
+    var bounds = button.getBoundingClientRect();
+    note.style.top = (bounds.bottom + 8) + 'px';
+    note.style.left = Math.max(8, Math.min(bounds.right - note.offsetWidth, window.innerWidth - note.offsetWidth - 8)) + 'px';
+  };
+  // The Viewer can move the toolbar after a resize (its layout settles over a few
+  // frames, and a move without a size change fires no ResizeObserver). While the
+  // note is shown, follow the button for a short while after any trigger and stop
+  // once its position has been stable for 30 frames.
+  var followFrame = 0, lastRight = null, lastBottom = null, stableFrames = 0;
+  var follow = function () {
+    followFrame = 0;
+    if (note.style.display === 'none' || !button.isConnected) return;
+    var bounds = button.getBoundingClientRect();
+    if (bounds.right !== lastRight || bounds.bottom !== lastBottom) { lastRight = bounds.right; lastBottom = bounds.bottom; stableFrames = 0; positionNote(); }
+    else stableFrames += 1;
+    if (stableFrames < 30) followFrame = requestAnimationFrame(follow);
+  };
+  var reposition = function () {
+    positionNote();
+    stableFrames = 0;
+    if (!followFrame && typeof requestAnimationFrame === 'function') followFrame = requestAnimationFrame(follow);
+  };
+  window.addEventListener('resize', reposition);
+  window.addEventListener('scroll', reposition, true);
+  toolbar.addEventListener('transitionend', reposition);
+  var toolbarObserver = typeof ResizeObserver === 'function' ? new ResizeObserver(reposition) : null;
+  if (toolbarObserver) toolbarObserver.observe(toolbar);
+  var say = function (text) { note.textContent = text; note.style.display = text ? 'block' : 'none'; reposition(); };
+  window.__archifyBuildTask = async function (id, expected) {
+    var input = { ids: [id] };
+    if (expected !== undefined) input.expected = { [id]: expected };
+    var response = await fetch('/task', { method: 'POST', headers: { 'X-Analysis-Token': token, 'Content-Type': 'application/json' }, body: JSON.stringify(input) });
+    var body = await response.json();
+    if (!response.ok) {
+      var error = new Error(body.error || (body.diagnostics || []).map(function (d) { return d.message; }).join(' ') || tr("Task request failed"));
+      error.status = response.status;
+      throw error;
+    }
+    return body;
+  };
+  window.__archifySaveReview = async function (decision) {
+    var response = await fetch('/review', { method: 'POST', headers: { 'X-Analysis-Token': token, 'Content-Type': 'application/json' }, body: JSON.stringify(decision) });
+    var body = await response.json();
+    if (!response.ok) {
+      var error = new Error(body.error || tr("Review decision could not be saved"));
+      error.status = response.status;
+      throw error;
+    }
+    return body;
+  };
+  // Re-analysis: the server runs a new analysis; the page then reloads and opens it,
+  // which re-mounts the layer cleanly instead of patching a live one.
+  window.__archifyReanalyze = async function () {
+    var response = await fetch('/analyze', { method: 'POST', headers: { 'X-Analysis-Token': token, 'X-Analysis-Refresh': '1' } });
+    if (!response.ok) {
+      var body = {};
+      try { body = await response.json(); } catch (e) { /* not JSON */ }
+      throw new Error(body.error || tr("analysis failed"));
+    }
+    location.replace(location.pathname + '?analysis=open');
+  };
+  button.addEventListener('click', async function () {
+    button.disabled = true; button.setAttribute('aria-busy', 'true'); setLabel(tr("Analyzing…")); say(tr("Reading the repository — imports, modules, rules."));
+    try {
+      var response = await fetch('/analyze', { method: 'POST', headers: { 'X-Analysis-Token': token } });
+      if (!response.ok) {
+        var body = await response.json();
+        if (response.status === 409 && body.diagnostics?.[0]?.code === 'analysis/architecture-changed') {
+          button.disabled = true; button.removeAttribute('aria-busy'); setLabel(tr("Code Analysis"));
+          say(tr("Architecture has changed. Please regenerate the diagram."));
+          return;
+        }
+        throw new Error(body.error || tr("analysis failed"));
+      }
+      var parsed = new DOMParser().parseFromString(await response.text(), 'text/html');
+      var required = ['bauify-analysis', 'bauify-style', 'bauify-script'];
+      for (var i = 0; i < required.length; i++) if (!parsed.getElementById(required[i])) throw new Error(tr("analysis result is incomplete"));
+      // In document order; the Atlas parts are present only when raw facts were available,
+      // the Atlas 3D parts only below a diagram. three.js arrives as inert text/plain.
+      var ids = ['bauify-analysis', 'bauify-atlas-data', 'bauify-style', 'bauify-script', 'bauify-atlas3d-data', 'bauify-three', 'bauify-atlas-style', 'bauify-atlas-script', 'bauify-atlas3d-style', 'bauify-atlas3d-script'].filter(function (id) { return parsed.getElementById(id); });
+      // Hand over to the layer: it adds its own toggle to the toolbar, so this button retires.
+      button.remove(); say('');
+      window.removeEventListener('resize', reposition);
+      window.removeEventListener('scroll', reposition, true);
+      toolbar.removeEventListener('transitionend', reposition);
+      if (followFrame) cancelAnimationFrame(followFrame);
+      if (toolbarObserver) toolbarObserver.disconnect();
+      for (var j = 0; j < ids.length; j++) {
+        var original = parsed.getElementById(ids[j]), element = document.createElement(original.tagName);
+        element.id = ids[j]; if (original.getAttribute('type')) element.type = original.getAttribute('type');
+        element.textContent = original.textContent; document.body.appendChild(element);
+      }
+      var toggle = document.getElementById('btn-bauify');
+      if (toggle && document.documentElement.getAttribute('data-bauify') !== 'on') toggle.click();
+      var params = new URLSearchParams(location.search), selectedFinding = params.get('finding');
+      if (selectedFinding && window.__archifyShowFinding) window.__archifyShowFinding(selectedFinding, params.get('from') === 'findings' ? 'findings' : 'summary');
+      if (location.search) history.replaceState(null, '', location.pathname);
+    } catch (error) {
+      button.disabled = false; button.removeAttribute('aria-busy'); setLabel(tr("Code Analysis"));
+      say(tr("Analysis failed: ") + error.message + tr(" — click Code Analysis to retry."));
+    }
+  });
+  if (standalone || new URLSearchParams(location.search).get('analysis') === 'open') button.click();
+}
+
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const args = process.argv.slice(2);
+  if (!args.length || args[0] === '--help' || args[0] === '-h') { console.log(USAGE); }
+  else startAnalysisView(args).then(({ url, delivered }) => console.log(`${delivered ? `Diagram delivered: ${delivered}` : "Standalone analysis"}\nCode Analysis: ${url}\n${delivered ? 'Open the URL and click "Code Analysis".' : 'Open the URL to analyze the repository.'} Press Ctrl+C to stop.`)).catch((error) => { console.error(error.message); process.exitCode = error.exitCode === 2 ? 2 : 1; });
+}

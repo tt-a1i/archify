@@ -33,8 +33,10 @@ fact has supporting source evidence.
    for a convenient label. When a dispatcher selects between runtimes, follow
    each supported branch that the diagram groups under the same node. If those
    branches execute in different places or reach the outside world through
-   different components, show the distinction or name the narrower scope on
-   the diagram.
+   different components, show where each runs. When the reader asks about
+   process or machine boundaries, trace the default path and any optional path
+   that crosses the requested boundary. Label the optional path with its
+   enabling condition and connect it to the component that actually handles it.
 
 3. **Trace ownership.** Derive runtime and I/O relationships from the observed
    actor, operation, and target at their call sites; deployment and trust
@@ -62,8 +64,9 @@ fact has supporting source evidence.
    site and the conditions that permit it; an upstream caller alone does not
    establish those conditions.
 
-   Trace each direction of a round trip separately. A request and its reply can
-   use one channel while state updates use another. For a state transition,
+   Trace each direction of a round trip separately, including the return
+   through any relay. If the interface fetches state on a separate channel,
+   show how that update reaches the reader's endpoint. For a state transition,
    read the branch that assigns the next state. An error reported to the user
    can accompany an ordinary transition, so an error label alone does not
    establish a separate state.
@@ -101,7 +104,13 @@ Waterfall spans. Relationships, messages, flows and transitions have none: cite
 the call, write or transition site on the element that owns it (the caller, the
 writer, the state being left) and keep further evidence in a note or card. A
 folder node cites its own README or entry file, or else the file that defines
-or runs it. A Timeline event cites a file at the pinned revision that records
+or runs it. A directory-only reference such as `{"path":"src/cli"}` is also
+accepted for a folder or source boundary. It verifies only that directory at the
+pinned revision, has no `line` or `end_line`, and links to the forge's tree view;
+it does not establish behavior or verification of every descendant. `.` names the
+repository root; a leading `./` and one trailing `/` are normalized, while
+internal dot/parent segments remain forbidden. Use a file and inspected lines
+for behavioral claims. A Timeline event cites a file at the pinned revision that records
 it, such as a changelog entry, and takes its time from a tag or commit in that
 history, or noon local time for a date-only record. A tag or commit outside
 that history is not citable. Say either in a card. A Waterfall without a

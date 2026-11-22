@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "layout": {"mode": "auto"},
+  "meta": {"title": "Change review", "output": "diagram.html", "quality_profile": "showcase"},
+  "components": [
+    {"id": "client", "type": "external", "label": "Client", "size": [160, 64]},
+    {"id": "scan", "type": "backend", "label": "Scan", "size": [170, 64]},
+    {"id": "plan", "type": "backend", "label": "Plan", "size": [180, 64]},
+    {"id": "apply", "type": "backend", "label": "Apply", "size": [180, 64]},
+    {"id": "files", "type": "database", "label": "Input files", "size": [170, 64]},
+    {"id": "records", "type": "database", "label": "Records", "size": [180, 64]},
+    {"id": "output", "type": "database", "label": "Output", "size": [180, 64]}
+  ],
+  "connections": [
+    {"id": "start", "from": "client", "to": "scan", "label": "start", "variant": "emphasis"},
+    {"id": "inspect", "from": "scan", "to": "plan", "label": "inspect"},
+    {"id": "apply", "from": "plan", "to": "apply", "label": "approve", "variant": "emphasis"},
+    {"id": "read", "from": "files", "to": "scan", "label": "read"},
+    {"id": "save", "from": "plan", "to": "records", "label": "save plan"},
+    {"id": "write", "from": "apply", "to": "output", "label": "write"},
+    {"id": "record", "from": "apply", "to": "records", "label": "record"}
+  ]
+}

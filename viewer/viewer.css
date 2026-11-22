@@ -3,6 +3,9 @@
    ========================================================== */
 :root,
 [data-theme="dark"] {
+  /* Native browser UI (scrollbars, form controls, popups) follows the
+     chosen theme instead of the OS preference. */
+  color-scheme: dark;
   --bg: #020617;
   --grid: #1e293b;
   --canvas-dot: rgba(148, 163, 184, 0.16);
@@ -48,6 +51,7 @@
 }
 
 [data-theme="light"] {
+  color-scheme: light;
   --bg: #f4f5f7;
   --grid: #e9edf2;
   --canvas-dot: #e2e7ec;
@@ -1990,6 +1994,139 @@ a.semantic-passport-source:focus-visible {
   line-height: 1.4;
 }
 .semantic-passport-reach-status[hidden] { display: none; }
+/* Payload review: reader-only before/after field diff for a pinned message or
+   flow. Field states reuse the change palette (backend = added, security =
+   removed, cloud = modified) so Passport and canvas agree. */
+.semantic-passport-payload {
+  display: grid;
+  gap: 0.3rem;
+  margin-top: 0.52rem;
+  padding-top: 0.48rem;
+  border-top: 1px solid color-mix(in srgb, var(--toolbar-border) 76%, transparent);
+}
+.semantic-passport-payload[hidden] { display: none; }
+.semantic-passport-payload-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.3rem 0.45rem;
+}
+.semantic-passport-payload-label {
+  color: var(--text-faint);
+  font-size: 0.5rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.semantic-passport-payload-role {
+  padding: 0.05rem 0.34rem;
+  border: 1px solid color-mix(in srgb, var(--frontend-stroke) 56%, var(--toolbar-border));
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.semantic-passport-payload-type {
+  color: var(--text-faint);
+  font-size: 0.5rem;
+}
+.semantic-passport-payload-role[hidden],
+.semantic-passport-payload-type[hidden],
+.semantic-passport-payload-summary[hidden],
+.semantic-passport-payload-status[hidden] { display: none; }
+.semantic-passport-payload-summary {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.6rem;
+  line-height: 1.45;
+}
+.semantic-passport-payload-status {
+  color: var(--text-faint);
+  font-size: 0.525rem;
+  line-height: 1.4;
+}
+.semantic-passport-payload-body {
+  display: grid;
+  gap: 0.14rem;
+  max-height: min(14rem, 36vh);
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+.semantic-passport-payload-body:empty { display: none; }
+.semantic-passport-payload-body:focus-visible {
+  outline: 2px solid var(--frontend-stroke);
+  outline-offset: 2px;
+}
+.semantic-passport-payload-field {
+  --payload-color: var(--text-muted);
+  display: grid;
+  grid-template-columns: 0.75rem minmax(0, auto) minmax(0, 1fr);
+  align-items: baseline;
+  gap: 0.3rem;
+  padding: 0.14rem 0.3rem 0.14rem 0.2rem;
+  border-left: 2px solid color-mix(in srgb, var(--payload-color) 70%, transparent);
+  background: color-mix(in srgb, var(--payload-color) 9%, transparent);
+  color: var(--text);
+  font-size: 0.575rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.semantic-passport-payload-field[data-diff="added"] { --payload-color: var(--backend-stroke); }
+.semantic-passport-payload-field[data-diff="removed"] { --payload-color: var(--security-stroke); }
+.semantic-passport-payload-field[data-diff="modified"] { --payload-color: var(--cloud-stroke); }
+.semantic-passport-payload-field[data-diff="unchanged"] {
+  border-left-color: color-mix(in srgb, var(--toolbar-border) 80%, transparent);
+  background: transparent;
+  color: var(--text-muted);
+}
+.semantic-passport-payload-sign {
+  color: var(--payload-color);
+  font-weight: 800;
+  text-align: center;
+}
+.semantic-passport-payload-path {
+  color: var(--text-muted);
+  font-size: 0.55rem;
+}
+.semantic-passport-payload-value {
+  color: var(--text);
+}
+.semantic-passport-payload-field[data-diff="removed"] .semantic-passport-payload-value {
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--security-stroke) 70%, transparent);
+}
+.semantic-passport-payload-value del {
+  color: color-mix(in srgb, var(--security-stroke) 80%, var(--text));
+  text-decoration-color: color-mix(in srgb, var(--security-stroke) 70%, transparent);
+}
+.semantic-passport-payload-value ins {
+  color: color-mix(in srgb, var(--backend-stroke) 80%, var(--text));
+  text-decoration: none;
+}
+.semantic-passport-payload-unchanged {
+  margin-top: 0.1rem;
+}
+.semantic-passport-payload-unchanged > summary {
+  cursor: pointer;
+  color: var(--text-faint);
+  font-size: 0.525rem;
+  list-style: none;
+}
+.semantic-passport-payload-unchanged > summary::before {
+  content: '\25B8';
+  display: inline-block;
+  width: 0.75rem;
+  color: var(--text-faint);
+}
+.semantic-passport-payload-unchanged[open] > summary::before { content: '\25BE'; }
+.semantic-passport-payload-unchanged > summary:focus-visible {
+  outline: 2px solid var(--frontend-stroke);
+  outline-offset: 1px;
+}
+.semantic-passport-payload-unchanged > .semantic-passport-payload-field { margin-top: 0.14rem; }
 .relationship-lens-list {
   max-height: min(18rem, 46vh);
   overflow: auto;
@@ -4278,6 +4415,70 @@ svg [data-node-id]:focus-visible [data-detail-anchor] { transform: none; }
 .m-emphasis  { fill: var(--arrow-emphasis); }
 .m-security  { fill: var(--security-stroke); }
 .m-dashed    { fill: var(--database-stroke); }
+
+/* ==========================================================
+   CHANGE REVIEW MARKS — authored `change` / `emphasis` on elements.
+   Added = Proof Green, Modified = Cloud Amber, Removed = Boundary Rose
+   ghost. Every value is a theme/preset variable, so the eight theme ×
+   preset surfaces and the baked SVG export share one rule set.
+   ========================================================== */
+.c-change-swatch-added    { fill: var(--backend-fill);  stroke: var(--backend-stroke); }
+.c-change-swatch-modified { fill: var(--cloud-fill);    stroke: var(--cloud-stroke); }
+.c-change-swatch-removed  { fill: var(--security-fill); stroke: var(--security-stroke); }
+.c-change-badge-added     { fill: color-mix(in srgb, var(--backend-stroke) 18%, var(--mask));  stroke: var(--backend-stroke); }
+.c-change-badge-modified  { fill: color-mix(in srgb, var(--cloud-stroke) 18%, var(--mask));    stroke: var(--cloud-stroke); }
+.c-change-badge-removed   { fill: color-mix(in srgb, var(--security-stroke) 18%, var(--mask)); stroke: var(--security-stroke); }
+.c-change-swatch-removed { stroke-dasharray: 3,2; }
+.c-change-swatch-unchanged { fill: var(--mask); stroke: var(--text-dim); }
+.t-change-added, .t-change-badge-added       { fill: var(--backend-stroke); }
+.t-change-modified, .t-change-badge-modified { fill: var(--cloud-stroke); }
+.t-change-removed, .t-change-badge-removed   { fill: var(--security-stroke); }
+.m-change-added    { fill: var(--backend-stroke); }
+.m-change-modified { fill: var(--cloud-stroke); }
+.m-change-removed  { fill: var(--security-stroke); }
+
+svg [data-change="added"] > :is(rect, circle, ellipse, polygon, path)[class^="c-"]:not(.c-mask) {
+  stroke: var(--backend-stroke);
+  stroke-width: 2.4;
+}
+svg [data-change="modified"] > :is(rect, circle, ellipse, polygon, path)[class^="c-"]:not(.c-mask) {
+  stroke: var(--cloud-stroke);
+  stroke-width: 2.4;
+}
+svg [data-change="removed"] > :is(rect, circle, ellipse, polygon, path)[class^="c-"]:not(.c-mask) {
+  stroke: var(--security-stroke);
+  stroke-width: 1.6;
+  stroke-dasharray: 5,4;
+}
+svg rect[data-change="added"][data-graph-role],
+svg [data-change="added"] > rect.c-lane-wash,
+svg [data-change="added"] > rect.c-lane-rule { stroke: var(--backend-stroke); stroke-width: 2; stroke-dasharray: none; }
+svg rect[data-change="modified"][data-graph-role],
+svg [data-change="modified"] > rect.c-lane-wash,
+svg [data-change="modified"] > rect.c-lane-rule { stroke: var(--cloud-stroke); stroke-width: 2; stroke-dasharray: none; }
+svg rect[data-change="removed"][data-graph-role],
+svg [data-change="removed"] > rect.c-lane-wash,
+svg [data-change="removed"] > rect.c-lane-rule { stroke: var(--security-stroke); stroke-width: 1.4; stroke-dasharray: 5,4; }
+svg path[data-change="added"][data-edge-from],
+svg [data-change="added"][data-edge-from] > path { stroke: var(--backend-stroke); stroke-width: 2.4; }
+svg path[data-change="modified"][data-edge-from],
+svg [data-change="modified"][data-edge-from] > path { stroke: var(--cloud-stroke); stroke-width: 2.4; }
+svg path[data-change="removed"][data-edge-from],
+svg [data-change="removed"][data-edge-from] > path { stroke: var(--security-stroke); stroke-width: 1.6; stroke-dasharray: 5,4; }
+svg [data-change="removed"],
+svg text[data-change="removed"] { opacity: 0.62; }
+svg [data-change="removed"] > text[data-node-label],
+svg [data-change="removed"][data-graph-role] > text,
+svg [data-change="removed"][data-edge-from] text,
+svg text[data-change="removed"],
+svg [data-er-row][data-change="removed"] > text,
+svg [data-class-row][data-change="removed"] > text { text-decoration: line-through; }
+svg [data-emphasis] > :is(rect, circle, ellipse, polygon, path)[class^="c-"]:not(.c-mask),
+svg path[data-emphasis][data-edge-from],
+svg [data-emphasis][data-edge-from] > path { stroke-width: 3.2; }
+svg [data-emphasis] > text[data-node-label] { font-weight: 800; }
+svg [data-change-context="subdued"] { opacity: 0.48; }
+svg [data-change-context="subdued"] > :is(rect, circle, ellipse, polygon, path)[class^="c-"]:not(.c-mask) { stroke-dasharray: none; }
 
 /* Stable semantic exploration hooks emitted by every renderer. */
 svg [data-node-id] {

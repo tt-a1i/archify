@@ -14,13 +14,22 @@ const testFiles = fs.readdirSync(testRoot)
   .sort()
   .map((entry) => path.join('test', entry));
 
+// These suites repeatedly dominated hosted Node 22 runs. This is a scheduling
+// hint only: discovery still supplies every file, including new suites.
+const shardFirst = new Set([
+  'architecture-delta', 'cli-delivery-lock', 'cli', 'dataflow-automatic-layout',
+  'i18n', 'output-path', 'repository-evidence-types', 'story',
+].map(name => path.join('test', `${name}.test.mjs`)));
+
 let options;
 try {
   // Node-only files benefit from independent CPU slots. Keep Chrome's lower
   // ceiling when a full run explicitly enables browser cases.
   const parallelism = os.availableParallelism?.() ?? os.cpus().length;
   const defaultConcurrency = process.env.ARCHIFY_CHROME ? 2 : Math.max(1, Math.min(4, parallelism));
-  options = testRunnerOptions(process.argv.slice(2), { repoRoot, testFiles, allowRequireFiles: true, defaultConcurrency, allowShards: true });
+  options = testRunnerOptions(process.argv.slice(2), {
+    repoRoot, testFiles, allowRequireFiles: true, defaultConcurrency, allowShards: true, shardFirst,
+  });
 } catch (error) {
   console.error(error.message);
   process.exit(1);
@@ -35,10 +44,16 @@ console.error(`Repository tests: ${options.files.length} files, concurrency ${op
 const updateCache = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'archify-test-update-')));
 let result;
 try {
+  const env = { ...process.env, ARCHIFY_UPDATE_CACHE_DIRECTORY: updateCache };
+  // The CLI subprocesses repeatedly import the same renderer modules. Share
+  // compiled code within this run. V8 coverage needs fresh compilation.
+  if (!env.NODE_V8_COVERAGE && !env.NODE_OPTIONS?.includes('--experimental-test-coverage')) {
+    env.NODE_COMPILE_CACHE ??= path.join(updateCache, 'compile');
+  }
   result = spawnSync(process.execPath, options.args, {
     cwd: repoRoot,
     stdio: 'inherit',
-    env: { ...process.env, ARCHIFY_UPDATE_CACHE_DIRECTORY: updateCache },
+    env,
   });
 } finally {
   fs.rmSync(updateCache, { recursive: true, force: true });

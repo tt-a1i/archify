@@ -6,6 +6,9 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { automaticComponentPositions } from '../archify/renderers/architecture/automatic-placement.mjs';
+import { createArchitectureRouter } from '../archify/renderers/architecture/routing.mjs';
+import { properSegmentIntersection } from '../archify/renderers/shared/geometry.mjs';
 
 const cli = fileURLToPath(new URL('../archify/bin/archify.mjs', import.meta.url));
 
@@ -81,6 +84,36 @@ test('architecture placement resolves missing positions through inspect and fina
   assert.equal(provenance.specification.sha256, createHash('sha256').update(bytes).digest('hex'));
 });
 
+test('automatic architecture keeps reciprocal elbows separate on a shared endpoint side', t => {
+  const { input, run } = workspace(t);
+  const spec = {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: { title: 'Hive 本地任务运行时', locale: 'zh-CN', output: 'diagram.html', quality_profile: 'showcase' },
+    layout: { mode: 'auto' },
+    components: [
+      ['runtime', 'Hive runtime', '本机服务：派发、状态与 PTY'],
+      ['orchestrator', 'Orchestrator', '独立 CLI 进程：规划与协调'],
+      ['worker', 'Worker', '独立 CLI 进程：执行任务'],
+    ].map(([id, label, sublabel]) => ({ id, label, sublabel, type: 'backend' })),
+    connections: [
+      ['input-pty', 'runtime', 'orchestrator', '写入 PTY'],
+      ['send', 'orchestrator', 'runtime', 'team send · HTTP'],
+      ['dispatch', 'runtime', 'worker', '启动并写入任务'],
+      ['report', 'worker', 'runtime', 'team report · HTTP'],
+      ['return', 'runtime', 'orchestrator', '转发报告'],
+    ].map(([id, from, to, label]) => ({ id, from, to, label })),
+  };
+  fs.writeFileSync(input, JSON.stringify(spec));
+
+  const { connections } = run(['inspect', 'architecture', input], 0);
+  assert.deepEqual(connections.map(({ from, to, label }) => ({ from, to, label })),
+    spec.connections.map(({ from, to, label }) => ({ from, to, label })));
+  const [outgoing, incoming] = connections.map(edge => edge.points);
+  assert.ok(!outgoing.slice(1).some((end, index) => incoming.slice(1).some((otherEnd, otherIndex) =>
+    properSegmentIntersection(outgoing[index], end, incoming[otherIndex], otherEnd))));
+});
+
 test('architecture placement reports conflicting grid fields before publishing an artifact', t => {
   const { input, output, run } = workspace(t);
   const spec = mixedPlacementSpec();
@@ -131,24 +164,41 @@ test('architecture straight chains honor explicit sides around pinned endpoints'
     ['left', 'right', 0, -1], ['right', 'left', 0, 1],
     ['top', 'bottom', 1, -1], ['bottom', 'top', 1, 1],
   ];
-  for (const [fromSide, toSide, axis, sign] of directions) {
-    for (const pinned of [null, 'a', 'b']) {
+  function assertStraight(points, axis, sign, label) {
+    assert.equal(points.length, 2, label);
+    const [start, end] = points;
+    assert.equal(start[1 - axis], end[1 - axis], label);
+    assert.ok((end[axis] - start[axis]) * sign > 0, `${label}: ${JSON.stringify(points)}`);
+  }
+  for (const [directionIndex, [fromSide, toSide, axis, sign]] of directions.entries()) {
+    for (const [pinIndex, pinned] of [null, 'a', 'b'].entries()) {
       spec.components = ['a', 'b'].map(id => ({
         id, type: 'backend', label: id, size: [120, 60], ...(id === pinned ? { pos: pin } : {}),
       }));
-      for (const sides of [{ fromSide, toSide }, { fromSide }, { toSide }]) {
-        spec.connections = [{ from: 'a', to: 'b', route: 'straight', ...sides }];
-        fs.writeFileSync(input, JSON.stringify(spec));
-        const report = run(['inspect', 'architecture', input], 0);
-        if (pinned) {
-          const fixed = report.components.find(card => card.id === pinned);
-          assert.deepEqual([fixed.x, fixed.y], pin);
+      for (const [sideIndex, sides] of [{ fromSide, toSide }, { fromSide }, { toSide }].entries()) {
+        const connection = { from: 'a', to: 'b', route: 'straight', ...sides };
+        spec.connections = [connection];
+        const label = `${fromSide}, ${pinned} pinned, ${JSON.stringify(sides)}`;
+        const positions = automaticComponentPositions(spec);
+        if (pinned) assert.deepEqual(positions.get(pinned), pin, label);
+        const boxes = new Map(spec.components.map(({ id, size: [width, height] }) => {
+          const [x, y] = positions.get(id);
+          return [id, { x, y, width, height, cx: x + width / 2, cy: y + height / 2 }];
+        }));
+        const router = createArchitectureRouter(boxes, spec.connections);
+        assertStraight(router.pathFor(connection).points, axis, sign, label);
+
+        // Exercise the public receipt in every direction and pin state. Rotate
+        // which side options it uses; the router above checks every combination.
+        if (sideIndex === (directionIndex + pinIndex) % 3) {
+          fs.writeFileSync(input, JSON.stringify(spec));
+          const report = run(['inspect', 'architecture', input], 0);
+          if (pinned) {
+            const fixed = report.components.find(card => card.id === pinned);
+            assert.deepEqual([fixed.x, fixed.y], pin, label);
+          }
+          assertStraight(report.connections[0].points, axis, sign, label);
         }
-        const [route] = report.connections;
-        assert.equal(route.points.length, 2);
-        const [start, end] = route.points;
-        assert.equal(start[1 - axis], end[1 - axis]);
-        assert.ok((end[axis] - start[axis]) * sign > 0, `${pinned} pinned, ${JSON.stringify(sides)}: ${JSON.stringify(route)}`);
       }
     }
   }

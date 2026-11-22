@@ -219,6 +219,8 @@ npx -y skills@latest add https://archify.si --skill archify --agent cursor --glo
 npx -y skills@latest add https://archify.si --skill archify --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes
 ```
 
+任意の PR コンパニオン Skill（リポジトリソースからのインストールのみ。既定のインストールは引き続き `archify` のみ）: `archify` をインストールした後、`npx -y skills@latest add tt-a1i/archify --skill archify-pr --agent cursor --global --copy --yes` で PR 変更ウォークスルーを追加できます。ドキュメント、ロックファイル、整形などの小さな変更では静かに待機し、実質的な diff のときだけ図を提案します。エージェントのグローバルルールファイルに `[archify pr: on-demand]` を書くと提案を完全に止められます。
+
 <details>
 <summary>その他のインストール方法と更新チェックの詳細</summary>
 
@@ -248,6 +250,12 @@ Use Archify to draw: Browser -> API -> Redis cache -> PostgreSQL fallback.
 Analyze this repository, then use archify to create a high-level runtime architecture diagram.
 Show 8–12 core components, one primary path, external dependencies, and trust boundaries.
 Put supporting detail in cards instead of adding more edges.
+```
+
+Archify の組み込み機能 **アーキテクチャ診断**では、リポジトリ内の依存関係を放射状の星図と回転できる 3D モデルで確認できます。アーキテクチャ図の各コンポーネントに指摘件数を表示し、循環依存や図にない依存関係の根拠となるソースコードを開けます。リポジトリに基づくアーキテクチャ図を作成した後、Archify は診断を一度だけ提案し、同意を得てから起動します。追加のインストールは不要です。[Code Analysis の使い方](archify/modules/code-analysis/docs/USAGE.md)を参照してください。
+
+```text
+Use archify Code Analysis on this repository: show module coupling, dependency cycles and hotspots.
 ```
 
 ### 3. チャットで調整する
