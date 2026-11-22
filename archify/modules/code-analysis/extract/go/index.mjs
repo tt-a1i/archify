@@ -10,6 +10,7 @@ import { describeRepository } from '../shared/git.mjs';
 import { fail } from '../shared/diagnostics.mjs';
 
 export const id = 'go';
+export const REQUIRED_ROOT_MANIFEST = 'go.mod';
 export const REVISION = 7;
 export const CALL_MODEL = 'go-source-direct-v4';
 export const detect = (root, config) => listFiles(root, config).some(file => file.endsWith('.go'));
@@ -28,7 +29,7 @@ export function extract(root, config, { onCapture } = {}) {
     subject: { option: 'config.go' }, supportedFixes: ['choose an explicit source build scope; cgo is not loaded'],
   });
   const tree = snapshotTree(root, file => file.endsWith('.go') || metadataFile(file));
-  const moduleText = tree.contents.get('go.mod')?.toString('utf8');
+  const moduleText = tree.contents.get(REQUIRED_ROOT_MANIFEST)?.toString('utf8');
   if (moduleText === undefined) fail('extract/go-module-missing', 'Go source analysis requires a captured root go.mod with a module directive.', {
     subject: { file: 'go.mod' }, supportedFixes: ['analyze the module root; nested modules and go.work are not combined'],
   });
