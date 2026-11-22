@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "layout": {
+    "mode": "auto"
+  },
+  "meta": {
+    "title": "Review architecture",
+    "output": "layout.html",
+    "quality_profile": "standard"
+  },
+  "components": [
+    {
+      "id": "n0",
+      "label": "Service 0",
+      "type": "backend",
+      "size": [
+        150,
+        56
+      ]
+    },
+    {
+      "id": "n1",
+      "label": "Service 1",
+      "type": "backend",
+      "size": [
+        120,
+        56
+      ],
+      "pos": [
+        598,
+        212
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e0",
+      "to": "n1",
+      "label": "Get audit trail",
+      "width": 7,
+      "from": "n0"
+    }
+  ],
+  "boundaries": []
+}

@@ -8,6 +8,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { automaticComponentPositions } from '../archify/renderers/architecture/automatic-placement.mjs';
 import { createArchitectureRouter } from '../archify/renderers/architecture/routing.mjs';
+import { properSegmentIntersection } from '../archify/renderers/shared/geometry.mjs';
 
 const cli = fileURLToPath(new URL('../archify/bin/archify.mjs', import.meta.url));
 
@@ -81,6 +82,36 @@ test('architecture placement resolves missing positions through inspect and fina
   const provenance = JSON.parse(fs.readFileSync(output.replace(/\.html$/, '.delivery.json'), 'utf8'));
   assert.equal(provenance.status, 'current');
   assert.equal(provenance.specification.sha256, createHash('sha256').update(bytes).digest('hex'));
+});
+
+test('automatic architecture keeps reciprocal elbows separate on a shared endpoint side', t => {
+  const { input, run } = workspace(t);
+  const spec = {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: { title: 'Hive 本地任务运行时', locale: 'zh-CN', output: 'diagram.html', quality_profile: 'showcase' },
+    layout: { mode: 'auto' },
+    components: [
+      ['runtime', 'Hive runtime', '本机服务：派发、状态与 PTY'],
+      ['orchestrator', 'Orchestrator', '独立 CLI 进程：规划与协调'],
+      ['worker', 'Worker', '独立 CLI 进程：执行任务'],
+    ].map(([id, label, sublabel]) => ({ id, label, sublabel, type: 'backend' })),
+    connections: [
+      ['input-pty', 'runtime', 'orchestrator', '写入 PTY'],
+      ['send', 'orchestrator', 'runtime', 'team send · HTTP'],
+      ['dispatch', 'runtime', 'worker', '启动并写入任务'],
+      ['report', 'worker', 'runtime', 'team report · HTTP'],
+      ['return', 'runtime', 'orchestrator', '转发报告'],
+    ].map(([id, from, to, label]) => ({ id, from, to, label })),
+  };
+  fs.writeFileSync(input, JSON.stringify(spec));
+
+  const { connections } = run(['inspect', 'architecture', input], 0);
+  assert.deepEqual(connections.map(({ from, to, label }) => ({ from, to, label })),
+    spec.connections.map(({ from, to, label }) => ({ from, to, label })));
+  const [outgoing, incoming] = connections.map(edge => edge.points);
+  assert.ok(!outgoing.slice(1).some((end, index) => incoming.slice(1).some((otherEnd, otherIndex) =>
+    properSegmentIntersection(outgoing[index], end, incoming[otherIndex], otherEnd))));
 });
 
 test('architecture placement reports conflicting grid fields before publishing an artifact', t => {

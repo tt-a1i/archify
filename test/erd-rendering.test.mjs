@@ -245,12 +245,12 @@ test('relationships sharing one target side bundle into a trunk with short branc
   assert.doesNotMatch(fs.readFileSync(mixedResult.output, 'utf8'), /data-er-trunk/);
 });
 
-test('the checker reports co-located cardinality glyphs', () => {
+test('automatic route changes clear cardinality glyphs and authored waypoints remain exact', () => {
   const diagram = {
     schema_version: 1,
     diagram_type: 'erd',
     meta: { title: 'Duplicate relationship endpoints', output: 'erd.html', quality_profile: 'standard' },
-    layout: { mode: 'grid' },
+    layout: { mode: 'grid', origin: [32, 40], gapY: 44, entityW: 240, headerH: 30, rowH: 20 },
     entities: [
       { id: 'parent', label: 'Parent', row: 0, col: 0 },
       { id: 'near', label: 'Near', row: 1, col: 0 },
@@ -266,10 +266,29 @@ test('the checker reports co-located cardinality glyphs', () => {
   const result = render(diagram, directory);
   assert.equal(result.status, 0, result.stdout + result.stderr);
   const routes = relationshipRoutes(fs.readFileSync(result.output, 'utf8'));
-  const [port] = artifactReceipt(result.output).receipt.composition.routeReview.coincidentCardinalityPorts;
+  const [near, far] = routes.map((route) => route.points.at(-1));
+  assert.equal(near[0], 32, 'the authored left side stays fixed');
+  assert.ok(Math.hypot(near[0] - far[0], near[1] - far[1]) >= 16,
+    'separate relationships need space for the full cardinality glyphs');
+  assert.equal(artifactReceipt(result.output).receipt.composition.routeReview.coincidentCardinalityPorts, undefined);
+
+  // Both explicit paths deliberately end at the same midpoint. The renderer
+  // must preserve each path and the checker must still name the conflict.
+  const nearVia = [[8, 168], [8, 68]];
+  const farVia = [[8, 268], [8, 68]];
+  Object.assign(diagram.relationships[0], { via: nearVia });
+  Object.assign(diagram.relationships[1], { fromSide: 'left', toSide: 'left', via: farVia });
+  const authored = render(diagram, directory);
+  assert.equal(authored.status, 0, authored.stdout + authored.stderr);
+  const authoredRoutes = relationshipRoutes(fs.readFileSync(authored.output, 'utf8'));
+  assert.deepEqual(authoredRoutes.map((route) => route.points), [
+    [[32, 168], ...nearVia, [32, 68]],
+    [[32, 268], ...farVia, [32, 68]],
+  ]);
+  const [port] = artifactReceipt(authored.output).receipt.composition.routeReview.coincidentCardinalityPorts;
   assert.equal(port.entityId, 'parent');
   assert.equal(port.side, 'left');
-  assert.deepEqual(port.point, routes[0].points.at(-1));
+  assert.deepEqual(port.point, authoredRoutes[0].points.at(-1));
   assert.deepEqual(port.ends.map(({ relationship, glyph, sideField }) => [relationship.id, glyph, sideField]),
     [['near_parent', 'one', 'toSide'], ['far_parent', 'one', 'toSide']]);
 });

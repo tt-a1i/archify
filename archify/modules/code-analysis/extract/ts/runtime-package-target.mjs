@@ -1,7 +1,7 @@
 // Bounded correction for TS5's conditional-null package-map ambiguity.
 // Select a target from captured metadata; never search for/load the target here.
 import path from 'node:path';
-import bundledTs from 'typescript';
+import bundledTs from '../../vendor/typescript.cjs';
 
 const NO_MATCH = { status: 'no-match' };
 const BLOCKED = { status: 'blocked' };

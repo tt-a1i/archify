@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "layout": {"mode": "auto"},
+  "meta": {"title": "Probe", "output": "probe.html", "quality_profile": "showcase"},
+  "components": [
+    {"id": "n0", "label": "Card 0", "type": "backend", "size": [134, 81], "pos": [108, 72]},
+    {"id": "n1", "label": "Card 1", "type": "backend", "size": [244, 76], "pos": [380, 85]},
+    {"id": "n2", "label": "Card 2", "type": "backend", "size": [172, 71], "pos": [702, 88]},
+    {"id": "n3", "label": "Card 3", "type": "backend", "size": [213, 51], "pos": [988, 98]},
+    {"id": "n4", "label": "Card 4", "type": "backend", "size": [198, 82], "pos": [100, 233]},
+    {"id": "n5", "label": "Card 5", "type": "backend", "size": [109, 86], "pos": [381, 231]}
+  ],
+  "connections": [
+    {"id": "r0", "from": "n0", "to": "n5", "label": "Propagates configuration to the retriever", "variant": "emphasis"},
+    {"id": "r2", "from": "n3", "to": "n2", "label": "Pass"},
+    {"id": "r3", "from": "n4", "to": "n0"},
+    {"id": "r4", "from": "n0", "to": "n4", "label": "Records events"},
+    {"id": "r7", "from": "n5", "to": "n0", "label": "Pass"},
+    {"id": "r8", "from": "n5", "to": "n3", "label": "Pass"},
+    {"id": "r10", "from": "n3", "to": "n5", "label": "Records events"},
+    {"id": "r12", "from": "n3", "to": "n1", "label": "Propagates configuration to the retriever"},
+    {"id": "r13", "from": "n1", "to": "n4", "label": "Read"},
+    {"id": "r14", "from": "n4", "to": "n3", "label": "Read"}
+  ],
+  "boundaries": [
+    {"label": "System boundary", "wraps": ["n0", "n1", "n2", "n3", "n4", "n5"], "kind": "region"}
+  ]
+}

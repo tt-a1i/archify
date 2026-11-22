@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "layout": {"mode":"auto"},
+  "meta": {"title":"Orders and audit routes","output":"orders.html","quality_profile":"showcase","legend":{"mode":"hidden"},"viewBox":[680,390]},
+  "components": [
+    {"id":"ingress","type":"backend","label":"Ingress","pos":[36,132],"size":[112,60]},
+    {"id":"work","type":"backend","label":"Worker","pos":[516,132],"size":[112,60]},
+    {"id":"ledger","type":"database","label":"Ledger","pos":[276,24],"size":[100,60]},
+    {"id":"audit","type":"backend","label":"Audit","pos":[276,256],"size":[100,60]}
+  ],
+  "connections": [
+    {"id":"orders","from":"ingress","to":"work","fromSide":"right","toSide":"left","via":[[326,162]]},
+    {"id":"audit-write","from":"ledger","to":"audit","fromSide":"bottom","toSide":"top","route":"straight"}
+  ]
+}

@@ -5,7 +5,6 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { DiagnosticError, fail, receipt } from '../core/index.mjs';
-import { ensureDependencies } from './serve.mjs';
 import { assertDriftPin, captureDriftTree, driftRepository } from '../lib/drift-capture.mjs';
 import { driftReportMaxBytes, readDriftInput } from '../lib/drift-input.mjs';
 import { validateDriftFollowup } from '../lib/drift-verification.mjs';
@@ -101,7 +100,6 @@ async function run([repoArg, ...args]) {
       if (diagnostics?.length) throw new DiagnosticError('Architecture validation failed.', diagnostics);
       fail('drift/diagram-invalid', 'Archify could not deliver the authored Architecture diagram.');
     }
-    await ensureDependencies();
     const { extractFacts, buildGraph, loadConfig, mergeConfig, stableJson } = await import('../lib/analysis.mjs');
     const { compareArchitectureDrift, checkDriftMapping } = await import('../lib/architecture-drift.mjs');
     const { renderDriftOverlay } = await import('../overlay/drift.mjs');

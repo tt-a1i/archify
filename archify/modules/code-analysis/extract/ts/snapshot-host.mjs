@@ -1,5 +1,5 @@
 import path from 'node:path';
-import bundledTs from 'typescript';
+import bundledTs from '../../vendor/typescript.cjs';
 import { fail } from '../shared/diagnostics.mjs';
 import { decodeTypeScriptText } from '../../core/index.mjs';
 

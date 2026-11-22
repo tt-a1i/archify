@@ -181,6 +181,8 @@ test('cli: examples renders from an installed skill', () => {
     'dataflow-product-analytics.html',
     'lifecycle-agent-run.html',
     'web-app-rendered.html',
+    'drilldown-overview.html',
+    'drilldown-api-sequence.html',
   ]) {
     assert.equal(fs.existsSync(path.join(installedRoot, 'examples', output)), true, output);
   }

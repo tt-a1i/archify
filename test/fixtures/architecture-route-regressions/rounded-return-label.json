@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Job runner verification",
+    "output": "output.html",
+    "quality_profile": "showcase"
+  },
+  "layout": {
+    "mode": "auto"
+  },
+  "components": [
+    {"id": "cli", "type": "frontend", "label": "HiveBench CLI", "sublabel": "run / report"},
+    {"id": "runner", "type": "backend", "label": "Host runner", "sublabel": "task × repeat × strategy"},
+    {"id": "fake", "type": "backend", "label": "Local fake executor", "sublabel": "simulated agent behavior"},
+    {"id": "hive", "type": "external", "label": "Hive Orchestrator", "sublabel": "Supervisor MCP external goal"},
+    {"id": "candidate", "type": "database", "label": "Candidate sandbox", "sublabel": "task files and edits"},
+    {"id": "judge", "type": "security", "label": "Host verifier + selection", "sublabel": "exit 0, no timeout → pass"},
+    {"id": "results", "type": "database", "label": "Run files", "sublabel": "results.jsonl + metadata"},
+    {"id": "report", "type": "backend", "label": "Report generator", "sublabel": "report.md / report.html"}
+  ],
+  "connections": [
+    {"from": "cli", "to": "runner", "label": "run manifest"},
+    {"from": "runner", "to": "fake", "label": "local strategy"},
+    {"from": "runner", "to": "hive", "label": "Hive strategy: start / wait"},
+    {"from": "fake", "to": "candidate", "label": "writes edits"},
+    {"from": "hive", "to": "candidate", "label": "works in directory"},
+    {"from": "candidate", "to": "judge", "label": "verify files"},
+    {"from": "runner", "to": "judge", "label": "runs or reuses check"},
+    {"from": "judge", "to": "runner", "label": "first passing candidate"},
+    {"from": "runner", "to": "results", "label": "records result"},
+    {"from": "cli", "to": "report", "label": "report command"},
+    {"from": "results", "to": "report", "label": "results + metadata"}
+  ]
+}

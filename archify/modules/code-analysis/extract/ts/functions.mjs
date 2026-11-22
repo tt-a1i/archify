@@ -20,7 +20,7 @@
 // not lost (`<callback of server.on("request")>`). Only callbacks with the same
 // call and literal get a `#2`, `#3` suffix in source order.
 // Overload signatures and other bodiless declarations are skipped.
-import bundledTs from 'typescript';
+import bundledTs from '../../vendor/typescript.cjs';
 import { createHash } from 'node:crypto';
 import { syntaxChildren } from './syntax-walk.mjs';
 
