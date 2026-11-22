@@ -1340,7 +1340,10 @@ export function createRouter(components, connections = [], {
           segmentIntersectsRect({ start: routed.points[index], end }, label.rect, LABEL_CLEARANCE)));
         if (displaced.length !== 1) return null;
         const owner = displaced[0].conn;
-        if (typeOwned.has(owner) || hasAuthoredRouteGeometry(owner) || hasAuthoredLabelPlacement(owner)) return null;
+        // The jointly placed lanes publish their label positions with the
+        // routes. Keep that plan intact during this single-route repair.
+        if (jointlyImproved.has(owner) || typeOwned.has(owner)
+            || hasAuthoredRouteGeometry(owner) || hasAuthoredLabelPlacement(owner)) return null;
         const labels = reservedLabels.filter((label) => label.conn !== conn && label.conn !== owner);
         const routes = [...others, { conn, points: routed.points }];
         const moved = routes.find((entry) => entry.conn === owner);
@@ -1502,7 +1505,7 @@ export function createRouter(components, connections = [], {
             for (const rightEndpoint of group.slice(index + 1)) {
               const { entry: left, side } = leftEndpoint;
               const { entry: right } = rightEndpoint;
-              if (left === right) continue;
+              if (left === right || left.points.length < 3 || right.points.length < 3) continue;
               const leftPort = endpointPoint(leftEndpoint, 0);
               const leftElbow = endpointPoint(leftEndpoint, 1);
               const rightPort = endpointPoint(rightEndpoint, 0);
@@ -1530,8 +1533,7 @@ export function createRouter(components, connections = [], {
                 const geometry = connectionGeometry(conn, selectedSides.get(conn));
                 if (!points.every(withinScene)
                     || !routeIsClear(conn, { points }, { ...geometry, start: points[0], end: points.at(-1), crowded: false },
-                      routes.filter(entry => entry.conn !== conn))
-                    || !routeClearsReservedLabels(conn, points, labels)
+                      routes.filter(entry => entry.conn !== conn), labels)
                     || others.some(entry => crossingCount(conn, points, [entry])
                       > crossingCount(conn, entries[entryIndex].points, [entry]))) return false;
                 const rect = labelRectFor?.(conn, points, {

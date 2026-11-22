@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { connectionLabelBoxAt, createArchitectureRouter, createRouter } from '../archify/renderers/architecture/routing.mjs';
-import { properSegmentIntersection, routeBudgetMetrics, segmentIntersectsRect } from '../archify/renderers/shared/geometry.mjs';
+import { reservedLabelRect } from '../archify/renderers/shared/automatic-labels.mjs';
+import { labelPoint, properSegmentIntersection, routeBudgetMetrics, segmentIntersectsRect } from '../archify/renderers/shared/geometry.mjs';
 
 function fixture() {
   const boxes = new Map(Array.from({ length: 6 }, (_, index) => {
@@ -96,6 +97,25 @@ test('automatic architecture uncrosses two fan-out elbows using their existing s
     assert.deepEqual(pointsFor(true, authoredConnections), pointsFor(false, authoredConnections),
       `authored controls prevent a port exchange: ${JSON.stringify(controls)}`);
   }
+
+  const provisionalLabel = createRouter(boxes, connections, {
+    distinctAutomaticPorts: true, preferReadableRoutes: true, repairAutomaticPorts: true, readabilityBottomMargin: 24,
+    labelRectFor: (conn, points, { routes, labels }) => {
+      // The incoming slot exchange crosses this old mask. The replacement
+      // for the same label fits beside its route after the exchange.
+      const oldSlot = conn === connections[1] && points[0][0] === before[1][0][0];
+      const label = {
+        relation: conn, label: conn.label,
+        ...connectionLabelBoxAt(conn, oldSlot ? [454, 393] : labelPoint(conn, points)),
+      };
+      return oldSlot ? label : reservedLabelRect({
+        label, points, labels, components: [...boxes.values()],
+        routes: routes.map((points, relationIndex) => ({ points, relationIndex })),
+      });
+    },
+  });
+  const repaired = connections.map(conn => provisionalLabel.pathFor(conn).points);
+  assert.equal(crossings(repaired), 0, 'a replacement label can free the exchange');
 });
 
 test('a fan-out sibling takes a free parallel channel instead of a detour', () => {
