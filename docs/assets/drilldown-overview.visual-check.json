@@ -8,8 +8,8 @@
   "provenance": "unknown",
   "artifact": {
     "path": "examples/drilldown-overview.html",
-    "sha256": "1a4e7ecd5cb4f3c614346a32fd939c76e9306873dafd9394af454fc5b1ea4a37",
-    "bytes": 919971
+    "sha256": "0c0b7620d87fcc9c33966f298596bf6fdf0badd7b4a0f91600fce3666c23b4a1",
+    "bytes": 919977
   },
   "state": {
     "detail": "read",

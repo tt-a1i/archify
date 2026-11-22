@@ -4,6 +4,8 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 ## [Unreleased]
 
+> Development identity: `v3.3.1-dev.1`. Not a stable release.
+
 ## [3.3.0] — 2026-11-23
 
 ### Release highlights
