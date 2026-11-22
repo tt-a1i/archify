@@ -40,7 +40,7 @@ export function reviewMarkdown(pr, locale) {
     const components = new Map(pr.componentDrift.components.map(component => [component.id, component.label]));
     lines.push('', '## ' + tr('Architecture diagram relations'), '');
     for (const edge of pr.componentDrift.edges) {
-      lines.push('- ' + tr(edge.state) + ' · ' + literal(components.get(edge.from)) + ' → ' + literal(components.get(edge.to)));
+      lines.push('- ' + edge.label + ' · ' + literal(components.get(edge.from)) + ' → ' + literal(components.get(edge.to)));
       if (edge.reasons.length) lines.push('  - ' + edge.reasons.map(reason => tr(reason)).join(' · '));
       for (const side of ['base', 'head']) for (const loc of edge[side]) {
         lines.push('  - ' + tr(side === 'base' ? 'Pinned base' : 'Pinned head') + ' · ' + file(loc.path) + ':' + loc.line);

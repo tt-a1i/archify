@@ -5,6 +5,7 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { compareArchitectureDrift, checkDriftMapping } from '../lib/architecture-drift.mjs';
 import { reviewMarkdown } from './pull-request-markdown.mjs';
+import { createTranslator, messagesFor } from './i18n.mjs';
 import { buildAtlas } from './atlas.mjs';
 import { buildPullRequestImpact } from '../lib/pull-request-impact.mjs';
 
@@ -60,10 +61,13 @@ export function buildPullRequestView({ pr, scope, changedFiles, manifests, sourc
       ir: { ...ir, connections: ir.connections || [] }, map,
       pins: { base: pr.baseSHA, head: pr.headSHA }, locale,
     });
+    const tr = createTranslator(messagesFor(locale));
+    const states = { 'new-undeclared': 'New in code · undeclared in diagram', 'new-declared': 'New in code · declared in diagram',
+      'not-observed-at-head': 'Not observed at head', inconclusive: 'Inconclusive' };
     // Keep evidence coordinates without duplicating source lines in the payload.
     componentDrift = { components, summary, coverage, edges: edges
       .filter(edge => edge.state !== 'previously-observed').map(edge => ({
-        from: edge.from, to: edge.to, state: edge.state, reasons: edge.reasons,
+        from: edge.from, to: edge.to, state: edge.state, label: tr(states[edge.state]), reasons: edge.reasons,
         base: edge.base.locations.map(({ path, line }) => ({ path, line })),
         head: edge.head.locations.map(({ path, line }) => ({ path, line })),
       })) };

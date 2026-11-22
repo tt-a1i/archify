@@ -823,7 +823,7 @@
     if (!drift.edges.length) h += '<p class="pr-assessment-scope">' + esc(tr('No changed component relations recorded.')) + '</p>';
     drift.edges.forEach(function (edge, index) {
       h += '<details class="pr-component-relation"><summary>' + esc(labels.get(edge.from) + ' → ' +
-        labels.get(edge.to)) + ' · ' + esc(tr(edge.state)) + '</summary>';
+        labels.get(edge.to)) + ' · ' + esc(edge.label) + '</summary>';
       h += '<button type="button" data-review-relation="' + index + '">' + esc(tr('Highlight components')) + '</button> ';
       ['base', 'head'].forEach(function (side) {
         edge[side].forEach(function (loc, locIndex) {
