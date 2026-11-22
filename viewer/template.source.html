@@ -170,6 +170,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   <style>
 /* ARCHIFY:VIEWER_CSS */
   </style>
+  <!-- ARCHIFY:DIAGNOSIS_START -->
+  <style id="code-analysis-entry-style">
+/* ARCHIFY:ANALYSIS_ENTRY_CSS */
+  </style>
+  <!-- ARCHIFY:DIAGNOSIS_END -->
 </head>
 <body>
   <!-- Toolbar: theme, live visual style, trace motion, presentation stage, and export.
@@ -235,6 +240,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       <span id="present-label">{{i18n:viewer.present.present}}</span>
     </button>
     </div>
+    <!-- ARCHIFY:DIAGNOSIS_START -->
+    <button id="code-analysis-info" class="analysis-entry" type="button"
+            aria-haspopup="dialog" aria-expanded="false" aria-controls="code-analysis-dialog">
+      <span class="analysis-entry-icon" aria-hidden="true"></span>
+      <span>{{i18n:viewer.diagnosis.button}}</span>
+    </button>
+    <!-- ARCHIFY:DIAGNOSIS_END -->
     <div class="export-wrap">
       <button id="btn-export" type="button"
               title="{{i18n:viewer.export.button.title}}"
@@ -695,6 +707,40 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
   </div>
 
+  <!-- ARCHIFY:DIAGNOSIS_START -->
+  <dialog id="code-analysis-dialog" class="no-print" aria-labelledby="code-analysis-title">
+    <header class="analysis-info-header">
+      <span class="analysis-info-mark" aria-hidden="true"></span>
+      <div class="analysis-info-heading">
+        <h2 id="code-analysis-title">{{i18n:viewer.diagnosis.title}}</h2>
+        <p class="analysis-info-badge">{{i18n:viewer.diagnosis.local}}</p>
+      </div>
+      <form method="dialog">
+        <button class="analysis-info-close" type="submit" aria-label="{{i18n:viewer.common.close}}" autofocus><span class="analysis-info-glyph" aria-hidden="true"></span></button>
+      </form>
+    </header>
+    <ul class="analysis-info-features">
+      <li data-feature="star"><span class="analysis-info-icon" aria-hidden="true"></span><span class="analysis-info-copy"><strong>{{i18n:viewer.diagnosis.starMapTitle}}</strong> <span>{{i18n:viewer.diagnosis.starMap}}</span></span></li>
+      <li data-feature="model"><span class="analysis-info-icon" aria-hidden="true"></span><span class="analysis-info-copy"><strong>{{i18n:viewer.diagnosis.modelTitle}}</strong> <span>{{i18n:viewer.diagnosis.model}}</span></span></li>
+      <li data-feature="counts"><span class="analysis-info-icon" aria-hidden="true"></span><span class="analysis-info-copy"><strong>{{i18n:viewer.diagnosis.countsTitle}}</strong> <span>{{i18n:viewer.diagnosis.counts}}</span></span></li>
+      <li data-feature="fix"><span class="analysis-info-icon" aria-hidden="true"></span><span class="analysis-info-copy"><strong>{{i18n:viewer.diagnosis.findingsTitle}}</strong> <span>{{i18n:viewer.diagnosis.findings}}</span></span></li>
+    </ul>
+    <section class="analysis-info-start">
+      <p class="analysis-info-ask">{{i18n:viewer.diagnosis.ask}}</p>
+      <div class="analysis-info-bubble">
+        <div class="analysis-info-prompt">
+          <p><q id="code-analysis-prompt">{{i18n:viewer.diagnosis.prompt}}</q></p>
+        </div>
+        <button id="code-analysis-copy" type="button">
+          <span class="analysis-info-glyph" aria-hidden="true"></span>
+          <span>{{i18n:viewer.diagnosis.copy}}</span>
+        </button>
+      </div>
+      <div id="code-analysis-copy-status" role="status"></div>
+    </section>
+  </dialog>
+  <!-- ARCHIFY:DIAGNOSIS_END -->
+
   <script>
     var Archify = {};
     var archifyI18nData = (function () {
@@ -740,7 +786,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       } catch (_) { return null; }
     }
 
-    function copyReaderText(value) {
+    function copyReaderText(value, container) {
       function fallbackCopy() {
         var previousFocus = document.activeElement;
         var field = document.createElement('textarea');
@@ -748,7 +794,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         field.setAttribute('readonly', '');
         field.style.position = 'fixed';
         field.style.opacity = '0';
-        document.body.appendChild(field);
+        (container || document.body).appendChild(field);
         field.select();
         var copied = false;
         try { copied = document.execCommand('copy'); } catch (_) {}
@@ -766,6 +812,36 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       return Promise.resolve(fallbackCopy());
     }
+
+    (function () {
+      var trigger = document.getElementById('code-analysis-info');
+      if (!trigger) return;
+      var dialog = document.getElementById('code-analysis-dialog');
+      var status = document.getElementById('code-analysis-copy-status');
+      trigger.addEventListener('click', function () {
+        status.textContent = '';
+        dialog.showModal();
+        trigger.setAttribute('aria-expanded', 'true');
+      });
+      dialog.addEventListener('close', function () {
+        trigger.setAttribute('aria-expanded', 'false');
+        trigger.focus({ preventScroll: true });
+      });
+      // Keep Viewer shortcuts outside the modal while allowing native dialog keys.
+      dialog.addEventListener('keydown', function (event) { event.stopPropagation(); });
+      dialog.addEventListener('click', function (event) {
+        if (event.target !== dialog) return;
+        var bounds = dialog.getBoundingClientRect();
+        if (event.clientX < bounds.left || event.clientX > bounds.right ||
+            event.clientY < bounds.top || event.clientY > bounds.bottom) dialog.close();
+      });
+      document.getElementById('code-analysis-copy').addEventListener('click', function () {
+        var prompt = document.getElementById('code-analysis-prompt').textContent;
+        copyReaderText(prompt, dialog).then(function (copied) {
+          status.textContent = viewerText(copied ? 'viewer.common.copied' : 'viewer.common.copyFailed');
+        });
+      });
+    })();
 
     function hasDrawableGeometry(element) {
       if (!element || element.hasAttribute('data-ambient-flow-overlay')) return false;
@@ -811,7 +887,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
       attachToolbarNavigation(
         document.querySelector('.toolbar'),
-        ':scope > .toolbar-group > button, :scope > .toolbar-group > .preset-wrap > #btn-preset, :scope > .export-wrap > #btn-export'
+        ':scope > .toolbar-group > button, :scope > .toolbar-group > .preset-wrap > #btn-preset, :scope > .analysis-entry, :scope > .export-wrap > #btn-export'
       );
       attachToolbarNavigation(document.querySelector('.diagram-nav'), ':scope > button');
       attachToolbarNavigation(document.querySelector('.rail-controls'), ':scope > button');

@@ -284,7 +284,7 @@ DeepSeek Harness（社区集成、显式启用）：运行 `dsh plugin --profile
 辅助信息放进说明卡片，不要继续增加连线。
 ```
 
-Archify 自带**架构诊断**，可以把仓库的依赖关系画成环形星图和可旋转的 3D 模型，还能在架构图上标出每个组件的问题数。循环依赖、图中遗漏的依赖等发现都能点开查看源码。交付基于仓库源码的架构图后，Archify 会询问一次是否要试用，得到同意后才会启动。无需额外安装。详见 [Code Analysis 使用指南](archify/modules/code-analysis/docs/USAGE.md)。
+Archify 自带**架构诊断**，可以把仓库的依赖关系画成环形星图和可旋转的 3D 模型，还能在架构图上标出每个组件的问题数。循环依赖、图中遗漏的依赖等发现都能点开查看源码。交付基于仓库源码的架构图后，Archify 会在总结末尾列出架构诊断能做什么，架构图右上角也有「架构诊断」按钮可以随时查看介绍。得到你的同意后才会启动。无需额外安装。详见 [Code Analysis 使用指南](archify/modules/code-analysis/docs/USAGE.md)。
 
 ```text
 用 archify 的 Code Analysis 分析这个仓库：看模块耦合、循环依赖和复杂度热点。
