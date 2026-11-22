@@ -245,6 +245,8 @@ Or, only if you want all five agents:
 npx -y skills@latest add https://archify.si --skill archify --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes
 ```
 
+Optional PR companion (repository-source installs only; the default install stays `archify`): after installing `archify`, `npx -y skills@latest add tt-a1i/archify --skill archify-pr --agent cursor --global --copy --yes` adds PR change walkthroughs. It stays silent for docs, lockfiles, formatting and other small changes and offers a diagram only for material diffs; add `[archify pr: on-demand]` to your agent's global rules file to disable even those offers.
+
 <details>
 <summary>More installation options and update-check details</summary>
 
@@ -282,6 +284,12 @@ For source evidence, open a repository and ask:
 Analyze this repository, then use archify to create a high-level runtime architecture diagram.
 Show 8–12 core components, one primary path, external dependencies, and trust boundaries.
 Put supporting detail in cards instead of adding more edges.
+```
+
+Archify’s built-in **Architecture Diagnosis** maps repository dependencies as a radial star map and a rotatable 3D model. It also shows issue counts on each component of your architecture diagram, with links to the source behind findings such as dependency cycles and dependencies missing from the diagram. Archify offers it once after delivering a repository-backed architecture diagram and starts it only if you say yes. It runs from the installed Skill with no extra install step. See the [Code Analysis guide](archify/modules/code-analysis/docs/USAGE.md).
+
+```text
+Use archify Code Analysis on this repository: show module coupling, dependency cycles and hotspots.
 ```
 
 ### 3. Refine in chat
@@ -537,6 +545,8 @@ Scan the QR code below with Alipay, or save it and open it in Alipay to scan.
 </details>
 
 Using Archify, sharing it, reporting bugs, and contributing improvements are also ways to help.
+
+[Code Analysis: setup and usage](archify/modules/code-analysis/docs/USAGE.md).
 
 ## Contributors
 

@@ -1,0 +1,212 @@
+// Evidence check: is what a task (or a finding) cites still what the working
+// tree contains? Compares the analysis snapshot with the current files and
+// reports, per location, per finding and for the whole task, one of
+//   valid         the cited lines are unchanged (possibly moved; see currentStartLine)
+//                 and the finding's evidence digest still matches
+//   changed       the cited lines, or other code the finding depends on, changed
+//   missing       a cited file no longer exists (deleted, renamed) under the root
+//   unverifiable  the snapshot holds no text or range for it, or the file cannot be read
+// Severity order for the roll-up: missing > changed > unverifiable > valid.
+//
+// Two levels are checked because they answer different questions. The
+// location hash covers exactly the cited lines, so an unrelated edit above a
+// function only moves it. The finding's evidenceDigest covers what the rule
+// read (whole files for import findings, the function's lines for
+// complexity, both cited ranges for duplicates), so an import added elsewhere
+// in a cycle's files still marks the finding changed even when the cited
+// import lines are intact.
+//
+// Paths come from a task file that may have been edited or shared: they are
+// resolved inside `root` only (no absolute paths, no `..`, no symlink
+// escapes). The check reads files; it never runs project code.
+import { createHash } from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { createRangeDigest, decodeTypeScriptText, findRanges, rangeDigest, splitLines } from '../core/index.mjs';
+import { decodeSource as decodePythonSource } from '../core/source-decoding.mjs';
+
+// Kept as an export of this module for existing callers; it lives in core/.
+export { createRangeDigest };
+
+const RANK = { valid: 0, unverifiable: 1, changed: 2, missing: 3 };
+const MAX_DIGEST_CANDIDATES = 64;
+
+export function worst(statuses) {
+  return statuses.reduce((a, b) => (RANK[b] > RANK[a] ? b : a), 'valid');
+}
+
+// Read a repository-relative file under root, or report why not.
+export function readInside(root, rel) {
+  if (typeof rel !== 'string' || !rel || path.isAbsolute(rel) || rel.split(/[\\/]/).includes('..')) return { status: 'unverifiable', reason: 'path is not a plain repository-relative path' };
+  let realRoot;
+  try { realRoot = fs.realpathSync(root); } catch { return { status: 'unverifiable', reason: 'analysis root is not readable' }; }
+  const target = path.resolve(realRoot, rel);
+  if (!fs.existsSync(target)) return { status: 'missing', reason: 'file no longer exists' };
+  let real;
+  try { real = fs.realpathSync(target); } catch { return { status: 'unverifiable', reason: 'file cannot be resolved' }; }
+  const relative = path.relative(realRoot, real);
+  if (relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) return { status: 'unverifiable', reason: 'file resolves outside the analysis root' };
+  try {
+    if (!fs.statSync(real).isFile()) return { status: 'missing', reason: 'path is no longer a file' };
+    const bytes = fs.readFileSync(real);
+    return { status: 'ok', text: decodeSource(bytes, rel), byteSha256: sha256(bytes) };
+  } catch (error) { return { status: 'unverifiable', reason: `file cannot be read (${error.code || error.message})` }; }
+}
+
+// Match the producer's decoding when checking captured source.
+export function decodeSource(bytes, file) {
+  if (/\.(?:[mc]?[jt]s|[jt]sx)$/i.test(file)) return decodeTypeScriptText(bytes, true);
+  return decodePythonSource(bytes, file);
+}
+
+// Python decodes a UTF-8 BOM away; Node keeps it. Hash both forms so the
+// same bytes are recognized whichever extractor captured them.
+function variants(text) {
+  return text.charCodeAt(0) === 0xfeff ? [text, text.slice(1)] : [text];
+}
+
+
+// Check one location against the current lines of its file.
+export function checkLocation(loc, current, { strictOccurrences = false } = {}) {
+  if (!loc.sha256 || !Number.isInteger(loc.startLine)) return { status: 'unverifiable', reason: loc.kind === 'file' ? 'no line evidence to compare' : 'source text was not captured' };
+  if (current.status !== 'ok') return { status: current.status, reason: current.reason };
+  const length = loc.endLine - loc.startLine + 1;
+  let ambiguous = false;
+  let occurrencesChanged = false;
+  for (const text of variants(current.text)) {
+    const lines = splitLines(text);
+    const matches = strictOccurrences ? findRanges(lines, length, loc.sha256) : null;
+    if (matches && matches.length !== (loc.capturedOccurrences || 1)) { occurrencesChanged = true; continue; }
+    if (loc.endLine <= lines.length && rangeDigest(lines, loc.startLine, loc.endLine) === loc.sha256) return { status: 'valid' };
+    // Moved: the same lines once elsewhere in the file (code above was edited). Only an
+    // unambiguous match counts: if the block occurred more than once when it was captured,
+    // or occurs more than once now, a match may be a twin of the cited code, not the code itself.
+    const elsewhere = matches || findRanges(lines, length, loc.sha256);
+    if (elsewhere.length === 1 && (loc.capturedOccurrences || 1) === 1) {
+      const start = elsewhere[0];
+      return { status: 'valid', currentStartLine: start, currentEndLine: start + length - 1, reason: `unchanged, moved from line ${loc.startLine} to ${start}` };
+    }
+    if (elsewhere.length) ambiguous = true;
+  }
+  if (occurrencesChanged) return { status: 'changed', reason: 'the number of identical cited ranges changed; a remaining copy cannot stand in for the captured code' };
+  return { status: 'changed', reason: ambiguous ? 'cited lines are no longer at their position, and identical code elsewhere in the file cannot be told apart from them' : 'cited lines differ from the analysis snapshot' };
+}
+
+// Recompute a finding's evidenceDigest from the current files, the way
+// evaluate/index.mjs computes it. `shift` maps a function span to where its
+// unchanged lines are now. Returns true / false, or null when it cannot tell.
+export function digestMatches(digest, readFile, shift = null) {
+  if (!digest || !Array.isArray(digest.files)) return null;
+  if (digest.ranges !== undefined) {
+    if (!Array.isArray(digest.ranges) || !digest.ranges.length) return null;
+    for (const range of digest.ranges) {
+      const result = checkLocation(range, readFile(range.file), { strictOccurrences: true });
+      if (result.status !== 'valid') return result.status === 'unverifiable' ? null : false;
+    }
+    // Each range's hash and multiplicity were checked independently, including
+    // any move. No single shift can describe both sides of a duplicate pair.
+    return sha256(JSON.stringify(digest.ranges.map((r) => [r.file, r.sha256, r.capturedOccurrences]))) === digest.sha256;
+  }
+  const span = Array.isArray(digest.lines) ? (shift || digest.lines) : null;
+  const options = [];
+  let combinations = 1;
+  for (const f of digest.files) {
+    const current = readFile(f);
+    if (current.status !== 'ok') return current.status === 'missing' ? false : null;
+    options.push(variants(current.text).map((text) => [f, sha256(span ? text.split(/\r?\n/).slice(span[0] - 1, span[1]).join('\n') : text)]));
+    combinations = Math.min(MAX_DIGEST_CANDIDATES + 1, combinations * options[options.length - 1].length);
+  }
+  // Keep the historical candidate order and digest format, but construct only
+  // one candidate at a time. Materializing the product first costs 2^N for BOMs.
+  for (let candidate = 0; candidate < Math.min(combinations, MAX_DIGEST_CANDIDATES); candidate++) {
+    let cursor = candidate;
+    const parts = new Array(options.length);
+    for (let i = options.length - 1; i >= 0; i--) {
+      parts[i] = options[i][cursor % options[i].length];
+      cursor = Math.floor(cursor / options[i].length);
+    }
+    if (sha256(JSON.stringify(parts)) === digest.sha256) return true;
+  }
+  // Unexamined representations could still match; exhaustion is not a change.
+  return combinations > MAX_DIGEST_CANDIDATES ? null : false;
+}
+
+// Returns a copy of the task with evidence status set from the current tree.
+export function verifyTask(task, root, { now = new Date() } = {}) {
+  const cache = new Map();
+  const readFile = (rel) => { if (!cache.has(rel)) cache.set(rel, readInside(root, rel)); return cache.get(rel); };
+  const rangeFindings = new Set(task.findings.filter((f) => f.evidenceDigest?.ranges).map((f) => f.id));
+  const locations = task.locations.map((loc) => {
+    const { status: _s, reason: _r, currentStartLine: _c, currentEndLine: _e, ...base } = loc;
+    const result = checkLocation(base, readFile(base.file), { strictOccurrences: rangeFindings.has(base.findingId) });
+    return { ...base, ...result };
+  });
+  const perFinding = {};
+  for (const f of task.findings) {
+    const own = locations.filter((l) => l.findingId === f.id);
+    const located = own.filter((l) => l.status !== 'unverifiable');
+    const fn = own.find((l) => l.kind === 'function' && l.currentStartLine);
+    const matches = digestMatches(f.evidenceDigest, readFile, fn ? [fn.currentStartLine, fn.currentEndLine] : null);
+    let status = located.length ? worst(located.map((l) => l.status)) : 'unverifiable';
+    let reason = own.find((l) => l.status === status && l.reason)?.reason || null;
+    // A citation that could not be read is not covered by the others being unchanged;
+    // only a digest recomputed over all the finding's files can vouch for it.
+    const unread = own.filter((l) => l.status === 'unverifiable' && l.kind !== 'file');
+    if (status === 'valid' && unread.length && matches !== true) {
+      status = 'unverifiable';
+      reason = `${unread.length} cited location${unread.length === 1 ? '' : 's'} could not be checked (${unread[0].reason})`;
+    } else if (status === 'valid' && matches === false) { status = 'changed'; reason = 'the cited lines are unchanged, but other code this finding was computed from changed; re-run the analysis to confirm it still applies'; }
+    else if (!located.length && matches === true) { status = 'valid'; reason = 'the files this finding was computed from are unchanged'; }
+    else if (!located.length && matches === false) { status = own.some((l) => readFile(l.file).status === 'missing') || f.evidenceDigest?.files?.some((x) => readFile(x).status === 'missing') ? 'missing' : 'changed'; reason = 'the files this finding was computed from changed'; }
+    else if (status === 'valid' && matches === null) {
+      if (f.evidenceDigest) { status = 'unverifiable'; reason = 'cited lines unchanged; the finding digest could not be recomputed'; }
+      else reason = 'cited lines unchanged; the finding has no evidence digest';
+    }
+    // Matching today's bytes only verifies the captured source. It cannot
+    // establish that a separately produced report checked those bytes. Preserve
+    // both results so a stale or unbound report is never promoted to valid.
+    const sourceStatus = status;
+    let reportBinding;
+    if (f.external) {
+      const source = task.source?.external?.find((entry) => entry.id === f.external.sourceId);
+      let scopeReason;
+      reportBinding = f.external.binding === 'changed' || source?.binding === 'changed' ? 'changed'
+        : source?.tool === f.external.tool && source.binding === 'verified' && f.external.binding === 'verified' ? 'verified' : 'unverified';
+      // A report may depend on scanned files beyond the cited location (for
+      // example another file's use of an exported name). Recheck each retained
+      // assertion in its original representation: bytes and decoded text differ
+      // for encodings and BOMs.
+      for (const [hashes, kind] of [[source?.sourceHashes, 'bytes'], [source?.sourceTextHashes, 'text']]) {
+        for (const [file, expected] of Object.entries(hashes || {})) {
+          const current = readFile(file);
+          const actual = current.status === 'ok' ? kind === 'text' ? sha256(current.text) : current.byteSha256 : null;
+          if (current.status === 'missing' || (current.status === 'ok' && actual !== expected)) {
+            reportBinding = 'changed'; scopeReason = `scanned file ${file} ${current.status === 'missing' ? 'is missing' : 'changed since the external report was generated'}`; break;
+          }
+          if (current.status !== 'ok' && reportBinding !== 'changed') { reportBinding = 'unverified'; scopeReason = `scanned file ${file} could not be checked (${current.reason})`; }
+        }
+        if (reportBinding === 'changed') break;
+      }
+      if (reportBinding !== 'verified') {
+        status = worst([status, reportBinding === 'changed' ? 'changed' : 'unverifiable']);
+        reason = [reason, scopeReason, reportBinding === 'changed'
+          ? 'the external report does not match the source it claims to check; regenerate and import it again'
+          : 'the external report was not verified against its source; unchanged captured code does not establish report freshness'].filter(Boolean).join('; ');
+      }
+    }
+    perFinding[f.id] = { status, ...(reason ? { reason } : {}), digestMatches: matches, ...(f.external ? { sourceStatus, reportBinding } : {}) };
+  }
+  const status = worst(Object.values(perFinding).map((f) => f.status));
+  const counts = {};
+  for (const l of locations) counts[l.status] = (counts[l.status] || 0) + 1;
+  const locationFailures = Object.entries(counts).filter(([s]) => s !== 'valid').map(([s, n]) => `${n} location${n === 1 ? '' : 's'} ${s}`).join(', ');
+  const unboundReports = Object.values(perFinding).filter((finding) => finding.reportBinding && finding.reportBinding !== 'verified').length;
+  const failures = [locationFailures, unboundReports ? `${unboundReports} external report binding${unboundReports === 1 ? '' : 's'} need verification` : ''].filter(Boolean).join('; ');
+  const reason = status === 'valid'
+    ? 'Every cited location and evidence digest matches the current working tree.'
+    : failures ? `${failures}; see each location${unboundReports ? ' and finding' : ''}.`
+      : Object.values(perFinding).find((f) => f.status !== 'valid')?.reason || 'The finding evidence could not be checked.';
+  return { ...task, locations, evidence: { status, checkedAt: now.toISOString(), reason, findings: perFinding } };
+}
+
+function sha256(text) { return createHash('sha256').update(text).digest('hex'); }

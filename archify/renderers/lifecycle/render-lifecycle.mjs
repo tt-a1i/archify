@@ -7,8 +7,10 @@ import { legendFootprint, resolveLegend, renderLegend as renderResolvedLegend } 
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth, nodeLabelLayout, nodeTextFit } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMarkFor, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
+import { layoutReportFromSvg } from '../shared/layout-report.mjs';
+import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeNodeAttrs, changeReviewFor, nodeChangeBadgePos, renderChangeBadge, renderChangeEdgePrefix, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
 import { DESKTOP_READER_DIAGRAM_WIDTH, MIN_PROJECTED_NODE_TEXT_PX } from '../shared/desktop-readability.mjs';
-import { asArray, rectsOverlap, segmentRectClearance, roundedPath, routePointsValue, arrowClassMap, edgeLabelAccent } from '../shared/geometry.mjs';
+import { asArray, rectsOverlap, properSegmentIntersection, segmentRectClearance, roundedPath, routePointsValue, arrowClassMap, edgeLabelAccent } from '../shared/geometry.mjs';
 
 // Lifecycle v3 draws one shape: the main path as a left-to-right row, loops
 // back to earlier phases as arcs above it, and every other state (exits,
@@ -99,7 +101,7 @@ function labelBox(transition) {
   const width = Math.ceil(Math.max(
     text ? textUnits(text) * LABEL_FONT * 0.6 : 0,
     note ? textUnits(note) * NOTE_FONT * 0.6 : 0,
-  ) + 12);
+  ) + 12 + changeEdgeLabelExtraWidth(transition));
   return { width, height: text && note ? 28 : 16 };
 }
 const hasLabel = (transition) => Boolean(transition.label || transition.note);
@@ -480,7 +482,7 @@ function layout({ spineGap, rowGap, drop, firstTrack, ports: portMode }) {
   }
 
   const stateRight = Math.max(...[...states.values()].map((state) => state.x + state.width));
-  const placed = placeLabels({ routes, contentRight: stateRight });
+  const placed = placeLabelsWithOutsideReturn(routes, frames, stateRight);
   const boxes = [...states.values(), ...placed.placedLabels.values()];
   const contentBottom = Math.max(
     ...boxes.map((box) => box.y + box.height),
@@ -488,6 +490,48 @@ function layout({ spineGap, rowGap, drop, firstTrack, ports: portMode }) {
   );
   const contentRight = Math.max(...boxes.map((box) => box.x + box.width));
   return { routes, junctions, frames, contentBottom, contentRight, ...placed };
+}
+
+// A return from the last row to the initial state can avoid crossing the
+// branches by using the outside margin. Keep ordinary returns in their gap.
+function placeLabelsWithOutsideReturn(routes, frames, contentRight) {
+  const place = () => placeLabels({ routes, contentRight });
+  if (rowCount < 2) return place();
+  const initial = states.get(mainPath[0]);
+  const returns = ofKind('between').filter(({ from, to }) => to === initial.id && depthOf(from) === rowCount - 1);
+  if (returns.length !== 1) return place();
+  const [transition] = returns;
+  const original = routes.get(transition);
+  if (!original || original.points.length < 4) return place();
+
+  const segments = (points) => points.slice(1).map((end, index) => ({ start: points[index], end }));
+  const obstacles = [...new Set([...routes.values()].filter((route) => route !== original).map(({ points }) => points))].map(segments);
+  const originalSegments = segments(original.points);
+  const crossed = obstacles.filter((route) => originalSegments.some((a) =>
+    route.some((b) => properSegmentIntersection(a.start, a.end, b.start, b.end))));
+  if (crossed.length < 3) return place();
+
+  const from = states.get(transition.from);
+  const routeBoxes = obstacles.flat().map(({ start, end }) => ({
+    x: Math.min(start[0], end[0]), y: Math.min(start[1], end[1]),
+    width: Math.abs(start[0] - end[0]), height: Math.abs(start[1] - end[1]),
+  }));
+  const lowest = Math.max(from.y + from.height, ...routeBoxes.map((box) => box.y + box.height));
+  const bottom = lowest + 28;
+  const rail = 18;
+  if (hasLabel(transition) && from.cx - rail < labelBox(transition).width + 2 * CORNER) return place();
+  // Enter below the UML initial marker; the left rail is outside its dot.
+  const entry = initial.cy + 18;
+  const points = [[from.cx, from.y + from.height], [from.cx, bottom], [rail, bottom], [rail, entry], [initial.x, entry]];
+  const otherStates = [...states.values()].filter((state) => state !== from && state !== initial);
+  const obstaclesOutside = [...otherStates, ...frames, ...routeBoxes];
+  if (segments(points).some((segment) => obstaclesOutside.some((box) => segmentRectClearance(segment, box) < CLEARANCE))) return place();
+
+  routes.set(transition, { points, segment: 1, labelMode: 'on' });
+  const placed = place();
+  if (!placed.unplacedLabels.length) return placed;
+  routes.set(transition, original);
+  return place();
 }
 
 // A composite exit leaves the frame directly above its target when possible,
@@ -964,12 +1008,16 @@ const LEGEND_CATALOG = ['start', 'active', 'waiting', 'decision', 'success', 'fa
   swatchWidth: kind === 'start' ? 26 : undefined,
 }));
 
+const changeReview = changeReviewFor({ nodes: asArray(lifecycle.states), edges: transitions });
+
 function legendCatalog() {
   const presentKinds = new Set([...states.values()].map((state) => state.type));
   presentKinds.add('start');
   const entries = resolveLegend(lifecycle.meta?.legend, LEGEND_CATALOG, presentKinds);
-  if (!entries.length || ![...states.values()].some(isFinal)) return entries;
-  return [...entries, { kind: 'final', label: i18nText(lifecycle.meta.locale, 'legend.lifecycle.final'), interactive: false, present: true, swatchWidth: 16 }];
+  if (entries.length && [...states.values()].some(isFinal)) {
+    entries.push({ kind: 'final', label: i18nText(lifecycle.meta.locale, 'legend.lifecycle.final'), interactive: false, present: true, swatchWidth: 16 });
+  }
+  return [...entries, ...changeLegendEntries(changeReview, lifecycle.meta?.legend, lifecycle.meta.locale)];
 }
 const legendEntries = legendCatalog();
 const canvasWidth = Math.max(640, Math.ceil(geometry.contentRight + MARGIN_X));
@@ -1028,12 +1076,14 @@ function renderState(state) {
     ...brandMetadataFor(state),
   };
   const mark = drilldowns.length ? `\n          ${renderDrilldownMark(state)}` : '';
-  return wrapSingleChildAnchor(`        <g ${focusNodeAttrs(state.id, state.label, passport, lifecycle.meta.locale)}>
+  const changeBadge = renderChangeBadge(state, nodeChangeBadgePos(state, { rx: 8, rightInset: brand ? 26 : 0 }));
+  const badge = changeBadge ? `\n          ${changeBadge}` : '';
+  return wrapSingleChildAnchor(`        <g ${focusNodeAttrs(state.id, state.label, passport, lifecycle.meta.locale)}${changeNodeAttrs(changeReview, state)}>
           ${focusNodeTitle(state.label, passport)}
           <rect x="${state.x}" y="${state.y}" width="${state.width}" height="${state.height}" rx="8" class="c-mask"/>
           <rect x="${state.x}" y="${state.y}" width="${state.width}" height="${state.height}" rx="8" class="${fill}"${animateAttr(lifecycle.meta, 'node', stateSteps.get(state.id))} stroke-width="1.5"/>${finalBorder}${initial}
           ${renderSemanticSigil(state.type, { icon, x: state.x + 6, y: state.y + labelLayout.sigilY, size: labelLayout.sigilSize })}${brand ? `\n          ${brand}` : ''}${step}
-          <text data-node-label=""${hasSub ? ' data-detail-anchor=""' : ''} x="${state.x + labelLayout.x}" y="${state.y + labelLayout.ys[0]}" class="t-primary" font-size="${labelFont}" font-weight="600" text-anchor="middle">${esc(state.label)}</text>${sub}${tag}${mark}
+          <text data-node-label=""${hasSub ? ' data-detail-anchor=""' : ''} x="${state.x + labelLayout.x}" y="${state.y + labelLayout.ys[0]}" class="t-primary" font-size="${labelFont}" font-weight="600" text-anchor="middle">${esc(state.label)}</text>${sub}${tag}${mark}${badge}
         </g>`, drilldowns);
 }
 
@@ -1049,7 +1099,7 @@ function renderTransition(transition, index) {
   const strokeWidth = variant === 'emphasis' ? 1.8 : 1.2;
   const d = roundedPath(route.points, CORNER);
   const junction = route.bracket ? ` data-composition-junction="${esc(route.bracket.key.replaceAll('\u0000', '+'))}"` : '';
-  const edge = `          <path ${focusEdgeAttrs(transition.from, transition.to, transition.label || transition.note, index, transition.id)} data-composition-points="${routePointsValue(route.points)}" data-composition-crossover="halo" data-composition-independent="true"${junction} d="${d}" class="${cls}"${animateAttr(lifecycle.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
+  const edge = `          <path ${focusEdgeAttrs(transition.from, transition.to, transition.label || transition.note, index, transition.id)}${changeEdgeAttrs(changeReview, transition)} data-composition-points="${routePointsValue(route.points)}" data-composition-crossover="halo" data-composition-independent="true"${junction} d="${d}" class="${cls}"${animateAttr(lifecycle.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${changeMarkerFor(transition, marker)})"/>`;
   const underlay = `          <path data-graph-role="automatic-crossover-underlay" d="${d}" fill="none" stroke="var(--mask)" stroke-width="${strokeWidth + 4}" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"/>`;
   return `        <g data-graph-role="automatic-crossover" style="--step:${index}">\n${underlay}\n${edge}\n        </g>`;
 }
@@ -1060,13 +1110,14 @@ function renderLabel(transition, index) {
   const variant = variantOf(transition);
   const accent = variant === 'default' ? 't-muted' : edgeLabelAccent(variant);
   const baseline = rect.y + (transition.label ? 11.5 : 11);
+  const prefix = renderChangeEdgePrefix(transition);
   const label = transition.label
-    ? `\n          <text x="${rect.cx}" y="${baseline}" class="${accent}" font-size="${LABEL_FONT}" text-anchor="middle">${esc(transition.label)}</text>`
+    ? `\n          <text x="${rect.cx}" y="${baseline}" class="${accent}" font-size="${LABEL_FONT}" text-anchor="middle">${prefix}${esc(transition.label)}</text>`
     : '';
   const note = transition.note
-    ? `\n          <text data-detail="fine" x="${rect.cx}" y="${baseline + (transition.label ? 12 : 0)}" class="t-muted" font-size="${NOTE_FONT}" text-anchor="middle">${esc(transition.note)}</text>`
+    ? `\n          <text data-detail="fine" x="${rect.cx}" y="${baseline + (transition.label ? 12 : 0)}" class="t-muted" font-size="${NOTE_FONT}" text-anchor="middle">${!transition.label ? prefix : ''}${esc(transition.note)}</text>`
     : '';
-  return `        <g data-detail="${transition.label ? 'context' : 'fine'}" ${focusEdgeAttrs(transition.from, transition.to, transition.label || transition.note, index, transition.id)}>
+  return `        <g data-detail="${transition.label ? 'context' : 'fine'}" ${focusEdgeAttrs(transition.from, transition.to, transition.label || transition.note, index, transition.id)}${changeEdgeAttrs(changeReview, transition)}>
           <rect x="${rect.x}" y="${rect.y}" width="${rect.width}" height="${rect.height}" rx="4" class="c-mask"/>${label}${note}
         </g>`;
 }
@@ -1076,6 +1127,8 @@ function initialMarkerShape(dotX, tipX, y) {
 }
 
 function renderSwatch(entry) {
+  const changeSwatch = renderChangeLegendSwatch(entry);
+  if (changeSwatch) return changeSwatch;
   if (entry.kind === 'start') return initialMarkerShape(entry.x + 4.5, entry.x + 24, entry.baseline - 3.5);
   if (entry.kind === 'final') {
     return `<rect x="${entry.x}" y="${entry.baseline - 8}" width="14" height="9" rx="2" class="c-external" stroke-width="1"/><rect x="${entry.x + 2.5}" y="${entry.baseline - 5.5}" width="9" height="4" rx="1" class="c-external" style="fill: none" stroke-width="0.8"/>`;
@@ -1102,9 +1155,10 @@ function renderLegend() {
 function renderSvg() {
   const junctions = geometry.junctions.map(([x, y]) => `        <circle cx="${x}" cy="${y}" r="2.6" data-lifecycle-junction="" style="fill: var(--arrow)" aria-hidden="true"/>`).join('\n');
   const frames = geometry.frames.map((rect) => `        <rect x="${rect.x}" y="${rect.y}" width="${rect.width}" height="${rect.height}" rx="14" data-lifecycle-frame="" fill="none" stroke="var(--arrow)" stroke-opacity="0.55" stroke-width="1" stroke-dasharray="1.5 3.5" stroke-linecap="round" aria-hidden="true"/>`).join('\n');
-  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" data-reader-fit="intrinsic-height" data-lifecycle-layout="main-path-v3" ${svgRootAttrs(lifecycle.meta)} data-motion-choreography="walk">
+  const fitCards = lifecycle.cards?.length ? ' data-reader-fit-cards=""' : '';
+  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" data-reader-fit="intrinsic-height"${fitCards} data-lifecycle-layout="main-path-v3" ${svgRootAttrs(lifecycle.meta)} data-motion-choreography="walk">
 ${svgAccessibleText(lifecycle.meta, 'lifecycle')}
-${renderDefinitions()}
+${renderDefinitions(changeMarkerDefinitions(changeReview))}
 
         <!-- Background Grid -->
         <rect width="100%" height="100%" fill="url(#grid)" />
@@ -1127,13 +1181,17 @@ ${renderLegend()}
       </svg>`;
 }
 
-writeDiagram({
-  outPath,
-  template,
-  diagramType: 'lifecycle',
-  meta: lifecycle.meta,
-  svg: renderSvg(),
-  cards: lifecycle.cards,
-  sourceEvidence,
+if (process.argv.includes('--layout-json')) {
+  console.log(JSON.stringify(layoutReportFromSvg(renderSvg(), 'lifecycle'), null, 2));
+} else {
+  writeDiagram({
+    outPath,
+    template,
+    diagramType: 'lifecycle',
+    meta: lifecycle.meta,
+    svg: renderSvg(),
+    cards: lifecycle.cards,
+    sourceEvidence,
     diagram: lifecycle,
-});
+  });
+}

@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "kind": "archify-code-analysis-whole-repo-first-contact-baseline",
+  "revision": "2877c1576610fe171c562f37cc53c5d6bb77e91a",
+  "node": "v22.23.3",
+  "analyzer": "@archify/code-analysis@0.1.0-dev.1",
+  "adapter": "typescript@5.9.3",
+  "commands": [
+    {
+      "command": "node archify/bin/archify.mjs code-analysis check . --out /tmp/archify-self-baseline --json",
+      "exit_code": 2,
+      "diagnostic": "extract/adapter-ambiguous",
+      "detected": ["ts", "py", "go", "rust"],
+      "supported_fixes": ["pass --language ts", "pass --language py", "pass --language go", "pass --language rust", "exclude the other language in the config"]
+    },
+    {
+      "command": "node archify/bin/archify.mjs code-analysis check . --language ts --out /tmp/archify-self-baseline --json",
+      "exit_code": 1,
+      "duration_seconds": 13.7
+    }
+  ],
+  "check": {
+    "verdict": "attention",
+    "status": "failed",
+    "gate": {"failOn": "warning", "newOnly": false, "failing_count": 234},
+    "counts": {"findings": 504, "error": 0, "warning": 234, "info": 270, "accepted": 0, "offDiagram": 504},
+    "rules": ["coupling/import-cycle", "coupling/cycle", "coupling/hub", "coupling/internal-leak", "complexity/function"],
+    "rule_counts": [
+      {"code": "complexity/function", "count": 501, "severity": "warning"},
+      {"code": "coupling/internal-leak", "count": 2, "severity": "info"},
+      {"code": "coupling/cycle", "count": 1, "severity": "info"}
+    ],
+    "priorities": ["COMP-2a6dc21b585e", "COMP-a130c939bd0a", "COMP-b7239cec9f19"],
+    "priorities_shape": "array of ids; message and location are not attached",
+    "coverage": {
+      "files_analyzed": 264,
+      "excluded_by_role": 367,
+      "excluded_roles": ["generated", "test"],
+      "parse_errors": [],
+      "other_languages": {"py": 28, "java": 8, "go": 1, "rust": 27}
+    }
+  },
+  "artifacts": {
+    "check_stdout_bytes": 99813,
+    "overview_bytes": 189095,
+    "findings_bytes": 849686,
+    "review_bytes": 28816,
+    "module_graph_bytes": 27596,
+    "raw_facts_bytes": 44759344
+  },
+  "leads": [
+    {
+      "id": "COMP-2a6dc21b585e",
+      "task_id": "TASK-23c0552fd721",
+      "symbol": "compileDataflow.<locals>.build",
+      "file": "archify/renderers/dataflow/dataflow-compiler.mjs",
+      "lines": [63, 1579],
+      "length": 1517,
+      "complexity": 227,
+      "nesting": 6,
+      "evidence_status": "valid",
+      "source_verified": true,
+      "judgment": "maintenance signal, not a defect",
+      "recommendation": "extract one cohesive block with tests; do not rewrite the whole function"
+    },
+    {
+      "id": "COMP-a130c939bd0a",
+      "task_id": "TASK-556e697ea137",
+      "symbol": "semanticErrors",
+      "file": "archify/modules/code-analysis/extract/shared/semantics.mjs",
+      "lines": [5, 211],
+      "length": 207,
+      "complexity": 223,
+      "nesting": 6,
+      "evidence_status": "valid",
+      "source_verified": true,
+      "judgment": "high complexity is partly incidental",
+      "recommendation": "consolidate repeated rust-source-direct-vN version ranges behind shared predicates with tests"
+    },
+    {
+      "id": "COMP-b7239cec9f19",
+      "task_id": "TASK-c860406c81fe",
+      "symbol": "createReadableLayout",
+      "file": "archify/renderers/workflow/workflow-compiler.mjs",
+      "lines": [236, 664],
+      "length": 429,
+      "complexity": 166,
+      "nesting": 5,
+      "evidence_status": "valid",
+      "source_verified": true,
+      "judgment": "largely inherent to layout constraint solving",
+      "recommendation": "maintain as is unless a concrete change exposes a safe extraction"
+    }
+  ],
+  "first_contact_blockers": [
+    "check without a language exits 2 with extract/adapter-ambiguous for ts|py|go|rust",
+    "priorities are bare ids; messages and locations require joining gate.failing or running task",
+    "501 of 504 findings are complexity/function, a maintenance signal rather than a defect list",
+    "27 Rust, 28 Python, 8 Java and 1 Go file are not analyzed in the ts run and must be reported as a coverage limit",
+    "top-level code-analysis usage lists ts|py|java while check help lists go|rust; README says Rust is unsupported"
+  ],
+  "task_evidence": {
+    "status": "valid",
+    "git_head": "2877c1576610fe171c562f37cc53c5d6bb77e91a",
+    "snapshot_id": "ecc0623e61f6bd5a080263ca29cea7ac22dd8df1d41f6eb8686f0a9c0614186c",
+    "config_digest": "fd3e5ab83e4d18741e14010e2de72625c065ca5bb7c9182dec40e39991fa9417"
+  }
+}

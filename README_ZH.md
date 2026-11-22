@@ -245,6 +245,8 @@ npx -y skills@latest add https://archify.si --skill archify --agent cursor --glo
 npx -y skills@latest add https://archify.si --skill archify --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes
 ```
 
+可选 PR 同伴 Skill（仅从仓库源码安装；默认安装仍只有 `archify`）：安装 `archify` 后，运行 `npx -y skills@latest add tt-a1i/archify --skill archify-pr --agent cursor --global --copy --yes` 可增加 PR 变更导览。它对文档、锁文件、格式化等小改动保持静默，只对实质性 diff 询问是否加图；在 Agent 全局规则文件写入 `[archify pr: on-demand]` 可完全关闭轻提示。
+
 <details>
 <summary>更多安装方式与更新检查说明</summary>
 
@@ -280,6 +282,12 @@ DeepSeek Harness（社区集成、显式启用）：运行 `dsh plugin --profile
 分析这个仓库，然后使用 archify 生成一张高层运行时架构图。
 只保留 8–12 个核心组件，突出一条主要路径，并标出外部依赖与信任边界。
 辅助信息放进说明卡片，不要继续增加连线。
+```
+
+Archify 自带**架构诊断**，可以把仓库的依赖关系画成环形星图和可旋转的 3D 模型，还能在架构图上标出每个组件的问题数。循环依赖、图中遗漏的依赖等发现都能点开查看源码。交付基于仓库源码的架构图后，Archify 会询问一次是否要试用，得到同意后才会启动。无需额外安装。详见 [Code Analysis 使用指南](archify/modules/code-analysis/docs/USAGE.md)。
+
+```text
+用 archify 的 Code Analysis 分析这个仓库：看模块耦合、循环依赖和复杂度热点。
 ```
 
 ### 3. 在对话中细调

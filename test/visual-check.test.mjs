@@ -503,6 +503,63 @@ test('browser relaunch hint is absent after a response or on non-Windows hosts',
   }
 });
 
+test('browser-check denies downloads before attaching to the page', async () => {
+  const child = fakeChromeChild();
+  const sent = [];
+  child.stdio[3].on('data', (chunk) => {
+    for (const raw of String(chunk).split('\0')) {
+      if (!raw) continue;
+      const message = JSON.parse(raw);
+      sent.push(message);
+      const result = message.method === 'Target.getTargets'
+        ? { targetInfos: [{ type: 'page', targetId: 'fake-target' }] }
+        : message.method === 'Target.attachToTarget'
+          ? { sessionId: 'fake-session' }
+          : {};
+      child.stdio[4].write(`${JSON.stringify({ id: message.id, result })}\0`);
+    }
+  });
+  const browser = new ChromeVisualBrowser('/fake/chrome', {
+    spawnImpl: () => child,
+  });
+  try {
+    assert.equal(await browser.sessionPromise, 'fake-session');
+    const deny = sent.find((message) => message.method === 'Browser.setDownloadBehavior');
+    assert.ok(deny, 'attach() must deny downloads before any page can trigger one');
+    assert.deepEqual(deny.params, { behavior: 'deny' });
+    assert.equal(deny.sessionId, undefined, 'the download deny is browser-level, not per session');
+    assert.ok(
+      sent.indexOf(deny) < sent.findIndex((message) => message.method === 'Target.attachToTarget'),
+      'downloads must be denied before the page session is attached',
+    );
+  } finally {
+    await browser.close();
+  }
+});
+
+test('browser-check stops before attaching when Chrome rejects the download policy', async () => {
+  const child = fakeChromeChild();
+  const sent = [];
+  child.stdio[3].on('data', (chunk) => {
+    for (const raw of String(chunk).split('\0')) {
+      if (!raw) continue;
+      const { id, method } = JSON.parse(raw);
+      sent.push(method);
+      const response = method === 'Target.getTargets'
+        ? { id, result: { targetInfos: [{ type: 'page', targetId: 'fake-target' }] } }
+        : { id, error: { code: -32601, message: 'Method not found' } };
+      child.stdio[4].write(`${JSON.stringify(response)}\0`);
+    }
+  });
+  const browser = new ChromeVisualBrowser('/fake/chrome', { spawnImpl: () => child });
+  try {
+    await assert.rejects(browser.sessionPromise, /Browser\.setDownloadBehavior: Method not found/);
+    assert.deepEqual(sent, ['Target.getTargets', 'Browser.setDownloadBehavior']);
+  } finally {
+    await browser.close();
+  }
+});
+
 test('Windows pipe startup failure provides a non-elevated remedy without claiming its cause', async () => {
   const child = fakeChromeChild();
   const browser = new ChromeVisualBrowser('/fake/msedge.exe', {

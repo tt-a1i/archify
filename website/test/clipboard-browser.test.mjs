@@ -188,16 +188,27 @@ test('real Chrome: website copy controls report real outcomes and preserve selec
       manifest.receipts.push({ lang, page, lateOutcome, stale });
       }
       for (const captureSelector of controls) for (const theme of ['light', 'dark']) {
-        await evaluate(`(async () => {
+        const captureStatus = await evaluate(`(async () => {
           document.documentElement.dataset.theme = ${JSON.stringify(theme)};
           Object.defineProperty(navigator, 'clipboard', { configurable: true, value: undefined });
           document.execCommand = () => false;
-          const button = document.querySelector(${JSON.stringify(captureSelector)}); button.click();
-          await new Promise(resolve => setTimeout(resolve, 30));
+          const button = document.querySelector(${JSON.stringify(captureSelector)});
           const status = document.getElementById(button.getAttribute('aria-describedby'));
+          status.textContent = '';
+          button.click();
+          for (let i = 0; !status.textContent && i < 30; i++) await new Promise(resolve => setTimeout(resolve, 10));
           status.scrollIntoView({ block: 'center', behavior: 'instant' });
-          await new Promise(resolve => setTimeout(resolve, 300));
+          // Capture the settled theme, without waiting a fixed duration when no
+          // transition is running. The interaction assertions above still run
+          // against the page's normal animation behavior.
+          await new Promise(resolve => requestAnimationFrame(resolve));
+          for (const animation of document.getAnimations()) {
+            if (animation instanceof CSSTransition && Number.isFinite(animation.effect.getComputedTiming().endTime)) animation.finish();
+          }
+          await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+          return status.textContent;
         })()`);
+        assert.equal(captureStatus, lang === 'zh' ? '复制失败，请手动选择文本。' : 'Copy failed. Select the text manually.');
         const file = `${lang}-${page}-${controls.indexOf(captureSelector)}-320-${theme}-failure.png`;
         const image = await browser.cdp.send('Page.captureScreenshot', { format: 'png' }, session);
         fs.writeFileSync(path.join(output, file), Buffer.from(image.data, 'base64'));

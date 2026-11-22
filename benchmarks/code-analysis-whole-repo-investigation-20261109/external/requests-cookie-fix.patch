@@ -1,0 +1,13 @@
+diff --git a/src/requests/cookies.py b/src/requests/cookies.py
+index f69d0cd..fc1fec6 100644
+--- a/src/requests/cookies.py
++++ b/src/requests/cookies.py
+@@ -408,7 +408,7 @@ class RequestsCookieJar(cookielib.CookieJar, MutableMapping):
+                         # we will eventually return this as long as no cookie conflict
+                         toReturn = cookie.value
+ 
+-        if toReturn:
++        if toReturn is not None:
+             return toReturn
+         raise KeyError(f"name={name!r}, domain={domain!r}, path={path!r}")
+ 

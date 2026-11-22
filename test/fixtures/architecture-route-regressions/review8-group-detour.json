@@ -1,0 +1,143 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "layout": {
+    "mode": "auto"
+  },
+  "meta": {
+    "title": "Group probe 67",
+    "output": "output.html",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "components": [
+    {
+      "id": "n0",
+      "type": "external",
+      "label": "Service 0",
+      "size": [
+        140,
+        84
+      ]
+    },
+    {
+      "id": "n1",
+      "type": "backend",
+      "label": "Service 1",
+      "size": [
+        100,
+        50
+      ]
+    },
+    {
+      "id": "n2",
+      "type": "external",
+      "label": "Service 2",
+      "size": [
+        140,
+        50
+      ]
+    },
+    {
+      "id": "n3",
+      "type": "backend",
+      "label": "Service 3",
+      "size": [
+        140,
+        50
+      ]
+    },
+    {
+      "id": "n4",
+      "type": "database",
+      "label": "Service 4",
+      "size": [
+        175,
+        84
+      ]
+    },
+    {
+      "id": "n5",
+      "type": "database",
+      "label": "Service 5",
+      "size": [
+        140,
+        84
+      ]
+    },
+    {
+      "id": "n6",
+      "type": "external",
+      "label": "Service 6",
+      "size": [
+        140,
+        84
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e0",
+      "from": "n0",
+      "to": "n1"
+    },
+    {
+      "id": "e1",
+      "from": "n1",
+      "to": "n2",
+      "label": "Write cache"
+    },
+    {
+      "id": "e2",
+      "from": "n2",
+      "to": "n3"
+    },
+    {
+      "id": "e3",
+      "from": "n0",
+      "to": "n4"
+    },
+    {
+      "id": "e4",
+      "from": "n1",
+      "to": "n4"
+    },
+    {
+      "id": "e5",
+      "from": "n0",
+      "to": "n5",
+      "label": "Write cache"
+    },
+    {
+      "id": "e6",
+      "from": "n1",
+      "to": "n5"
+    },
+    {
+      "id": "e7",
+      "from": "n0",
+      "to": "n6",
+      "label": "Read token"
+    },
+    {
+      "id": "e8",
+      "from": "n1",
+      "to": "n6",
+      "label": "Request"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Runtime",
+      "wraps": [
+        "n4",
+        "n5",
+        "n6"
+      ],
+      "pad": 42
+    }
+  ]
+}

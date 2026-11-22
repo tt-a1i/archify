@@ -418,6 +418,40 @@ The delivery interface exposes four separate claims:
 
 Passing one claim never implies the others. Never claim that the deterministic receipt includes browser or perceptual review evidence.
 
+## Architecture Diagnosis offer
+
+After a passing `finalize architecture` with `--repo-root`, the full receipt
+and compact summary include `codeAnalysisOffer` if a bounded scan finds
+sources eligible for the default analysis. The offer includes the effective
+finalize `quality`, passes it in `start.argv`, and records a `dependencies`
+status of `installed` or `missing`. Finalize performs these checks without
+starting analysis or installing anything.
+
+Ask once per repository in the task after delivering the diagram. Skip the
+offer if the user already asked for or declined analysis. Use the user's
+language. Include the final parenthetical only when `dependencies` is
+`missing`, which means the installed Skill copy is incomplete; analysis
+cannot start until Archify is reinstalled. If the offer includes `linkedDiagrams: true`, tell
+the user to use the original delivered diagram for navigation links to sibling
+diagrams. Those links are unavailable on the Diagnosis server. Wait for yes
+before starting.
+
+**中文**
+
+想不想换个角度看这个仓库？Archify 自带**架构诊断**，可以把整个代码库画成一张**环形星图**和一个**可旋转的 3D 模型**，几千个文件、几万个函数之间的依赖一眼看全。也可以直接在这张架构图上，给每个组件标出问题数：哪里最拥挤、哪里有循环依赖、哪些依赖图里根本没画。每条都能点开看源码，也能一键交给 AI 修。要试试吗？（分析组件缺失，需要先重新安装 Archify）
+
+**English**
+
+Want to see this repository from another angle? Archify's built-in **Architecture Diagnosis** turns the whole codebase into a **radial star map** and a **rotatable 3D model**, so dependencies across thousands of files and functions are visible at a glance. It can also mark each component on this diagram with its issue count: where things are most crowded, where dependencies cycle, and which dependencies the diagram doesn't show. Every item opens its source and can be handed to an AI as a fix task. Want to try it? (The analysis components are missing; reinstall Archify first.)
+
+After consent, run `start.argv`. Add `--locale zh-CN` for Chinese or
+`--locale en` for English if needed. For a repository with several supported
+languages, select the adapter with `--language` as described in the
+[Code Analysis guide](../modules/code-analysis/docs/USAGE.md#agent-entry-and-investigation).
+Share the printed local URL. The original architecture diagram appears first.
+Click **Code Analysis** (**架构诊断** in Chinese) to run analysis and open the
+component findings, radial star map, and Atlas 3D views.
+
 ## Comparison presentation changes
 
 Architecture comparisons include authored `meta.translations` in presentation changes. Adding, removing or editing translations changes `summary.presentationChanged`; reordering translation keys does not. An empty translation object is equivalent to an omitted catalog for presentation classification; the canonical source digest still records the authored representation. Component, relationship, boundary and repository-provenance classifications remain independent.

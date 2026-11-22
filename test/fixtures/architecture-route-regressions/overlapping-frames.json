@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "layout": {
+    "mode": "auto"
+  },
+  "meta": {
+    "title": "Overlapping architecture scopes",
+    "output": "frame.html",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    {
+      "id": "a",
+      "type": "backend",
+      "label": "Card A",
+      "size": [
+        126,
+        64
+      ]
+    },
+    {
+      "id": "b",
+      "type": "backend",
+      "label": "Card B",
+      "size": [
+        126,
+        64
+      ]
+    },
+    {
+      "id": "c",
+      "type": "backend",
+      "label": "Card C",
+      "size": [
+        126,
+        64
+      ]
+    },
+    {
+      "id": "d",
+      "type": "backend",
+      "label": "Card D",
+      "size": [
+        126,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "from": "a",
+      "to": "b"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Runtime",
+      "wraps": [
+        "a",
+        "b"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Support",
+      "wraps": [
+        "a",
+        "c"
+      ]
+    }
+  ]
+}

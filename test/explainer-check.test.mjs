@@ -24,7 +24,7 @@ test('zero native diagrams is a valid explainer family and CLI check dispatch',(
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'explainer-check-test-'));try {const file=path.join(dir,'page.html');fs.writeFileSync(file,html);const run=spawnSync(process.execPath,['archify/scripts/check-render-output.mjs',file],{encoding:'utf8'});assert.equal(run.status,0,run.stdout+run.stderr);assert.equal(JSON.parse(run.stdout).family,'explainer');}finally{fs.rmSync(dir,{recursive:true,force:true});}
 });
 test('each frozen native diagram receives the existing native geometry checks',()=>{
- const native=fs.readFileSync(new URL('../archify/examples/erd-orders-rendered.html',import.meta.url),'utf8');
+ const native=fs.readFileSync(new URL('../examples/erd-orders-rendered.html',import.meta.url),'utf8');
  const child={html:native,sha256:hash(native),bytes:Buffer.byteLength(native)};
  const receipt=checkExplainerHtml(fixture({children:{diagram:child}}));assert.equal(receipt.ok,true,JSON.stringify(receipt.diagnostics));assert.equal(receipt.composition.nativeDiagrams.length,1);assert.ok(receipt.composition.nativeDiagrams[0].receipt.checks.some(c=>c.name==='single_svg'));
  const multiple=checkExplainerHtml(fixture({children:{first:child,second:child}}));assert.equal(multiple.ok,true,JSON.stringify(multiple.diagnostics));assert.equal(multiple.composition.nativeDiagrams.length,2);assert.ok(multiple.composition.nativeDiagrams.every(c=>c.receipt.ok&&c.receipt.artifact.sha256===child.sha256));
@@ -56,7 +56,7 @@ test('scanner line locations include skipped raw payload lines without recountin
 
 for (const valid of [true, false]) {
  test(`large explainer receipt flushes through a pipe (${valid ? 'success' : 'failure'})`,()=>{
-  const native=fs.readFileSync(new URL('../archify/examples/erd-orders-rendered.html',import.meta.url),'utf8');
+  const native=fs.readFileSync(new URL('../examples/erd-orders-rendered.html',import.meta.url),'utf8');
   const child={html:native,sha256:hash(native),bytes:Buffer.byteLength(native)};
   const children=Object.fromEntries(Array.from({length:20},(_,i)=>[`diagram-${i}`,child]));
   let html=fixture({children});
