@@ -8,8 +8,8 @@
   "provenance": "unknown",
   "artifact": {
     "path": "examples/drilldown-overview.html",
-    "sha256": "04e32e2f5f0ad678e4db926c18b8de1b43ce2f861beb40da9c46632f983afaf1",
-    "bytes": 919663
+    "sha256": "c994ec8120ac27ac5454dcf7e0842257a26e8f628a83faf5b4727cc013be81f3",
+    "bytes": 919853
   },
   "state": {
     "detail": "read",
@@ -146,8 +146,8 @@
         "diagramType": "architecture",
         "documentScrollUnclipped": true,
         "ok": true,
-        "readerWidth": 1679,
-        "diagramWidth": 1649,
+        "readerWidth": 1680,
+        "diagramWidth": 1650,
         "pageComposition": {
           "bodyPaddingPx": 64,
           "headerPx": 86,
@@ -407,8 +407,8 @@
         "diagramType": "architecture",
         "documentScrollUnclipped": true,
         "ok": true,
-        "readerWidth": 1679,
-        "diagramWidth": 1649,
+        "readerWidth": 1680,
+        "diagramWidth": 1650,
         "pageComposition": {
           "bodyPaddingPx": 64,
           "headerPx": 86,
@@ -620,8 +620,8 @@
         "diagramType": "architecture",
         "documentScrollUnclipped": true,
         "ok": true,
-        "readerWidth": 1679,
-        "diagramWidth": 1649,
+        "readerWidth": 1680,
+        "diagramWidth": 1650,
         "pageComposition": {
           "bodyPaddingPx": 64,
           "headerPx": 86,
@@ -947,13 +947,13 @@
         "file": "drilldown-overview.visual-check.1440x900.dark.png"
       },
       {
-        "sha256": "40c59153260db2d031ec2534193d54eb1bae4e231fbf4582c18253e9213a26b4",
-        "bytes": 106772,
+        "sha256": "1ade4941b298d74a5636d4ceb5fc0fde27ab9103a8a8096fe512e613b896c50f",
+        "bytes": 106377,
         "file": "drilldown-overview.visual-check.2048x1320.light.png"
       },
       {
-        "sha256": "040d8bdfb3f50cbe0bac86b51f1ea98469d8f4d9a6607b6cf4dd4c0b61732ffe",
-        "bytes": 113037,
+        "sha256": "63873ce37330ae7d3da6337ebf22be7b0803fb6f484803536cfb4649316f592f",
+        "bytes": 112693,
         "file": "drilldown-overview.visual-check.2048x1320.dark.png"
       }
     ]
