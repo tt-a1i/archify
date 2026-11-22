@@ -1012,6 +1012,9 @@ export function createRouter(components, connections = [], {
       let firstClear = null;
       for (const sides of candidateSidePairs(conn)) {
         const geometry = connectionGeometry(conn, sides);
+        // This pair cannot pass the port-spacing check. Keep the original
+        // fallback, but save the shared grid budget for viable ports.
+        if (repairAutomaticPorts && firstFallback && geometry.crowded) continue;
         const routed = routedForGeometry(conn, resolvedRoutes, geometry);
         if (!firstFallback) firstFallback = { routed, sides };
         if (routeIsClear(conn, routed, geometry, resolvedRoutes)) {

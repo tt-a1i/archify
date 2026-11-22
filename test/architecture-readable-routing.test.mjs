@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createArchitectureRouter, createRouter } from '../archify/renderers/architecture/routing.mjs';
-import { properSegmentIntersection, routeBudgetMetrics } from '../archify/renderers/shared/geometry.mjs';
+import { properSegmentIntersection, routeBudgetMetrics, segmentIntersectsRect } from '../archify/renderers/shared/geometry.mjs';
 
 function fixture() {
   const boxes = new Map(Array.from({ length: 6 }, (_, index) => {
@@ -210,4 +210,35 @@ test('a crossing route can reuse its upper corridor to reach a free target side'
   assert.equal(pinned.connectionSides(authored).toSide, 'bottom');
   const fixedCanvas = createArchitectureRouter(boxes, connections, { fixedCanvas: true });
   assert.equal(routingMetrics().gridSearchCount, fixedCanvas.routingMetrics().gridSearchCount);
+});
+
+test('automatic routing leaves grid searches for a return path around unrelated cards', () => {
+  const boxes = new Map([
+    ['desktop', 64, 48, 153], ['runtime', 416.1, 334, 185],
+    ['orchestrator', 48, 512, 172], ['worker', 284, 512, 160],
+    ['sqlite', 508, 512, 179], ['bridge', 126.9, 334, 160],
+    ['gateway', 281, 176, 166], ['phone', 281, 48, 166],
+  ].map(([id, x, y, width]) => [id, { id, x, y, width, height: 60, cx: x + width / 2, cy: y + 30 }]));
+  const connections = [
+    ['terminal-input', 'desktop', 'runtime', 'WS · 输入任务', 'emphasis'],
+    ['terminal-output', 'runtime', 'desktop', 'WS · 终端回显'],
+    ['state-response', 'runtime', 'desktop', 'HTTP · 队伍与派单'],
+    ['orchestrator-output', 'orchestrator', 'runtime', 'PTY · 协调终端输出'],
+    ['send', 'orchestrator', 'runtime', 'HTTP · team send', 'emphasis'],
+    ['dispatch', 'runtime', 'worker', 'PTY · 投递派单', 'emphasis'],
+    ['report', 'worker', 'runtime', 'HTTP · 回报', 'emphasis'],
+    ['ledger', 'runtime', 'sqlite', 'SQLite · 读写记录'],
+    ['phone-response', 'gateway', 'phone', 'WSS · 加密回传'],
+    ['relay-response', 'bridge', 'gateway', '转发回传密文'],
+    ['bridge-request', 'bridge', 'runtime', '回环 · API 与 WS'],
+  ].map(([id, from, to, label, variant]) => ({ id, from, to, label, variant }));
+  const { pathFor, routingMetrics } = createArchitectureRouter(boxes, connections, { automaticPlacement: true });
+  const response = connections.find(({ id }) => id === 'state-response');
+  const { points } = pathFor(response);
+  for (const [id, box] of boxes) {
+    if (id === response.from || id === response.to) continue;
+    assert.ok(points.slice(1).every((end, index) => !segmentIntersectsRect({ start: points[index], end }, box, 2)),
+      `state response passes through ${id}`);
+  }
+  assert.equal(routingMetrics().gridBudgetExhaustedCount, 0);
 });
