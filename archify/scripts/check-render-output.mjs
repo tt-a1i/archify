@@ -3,6 +3,8 @@
 import fs from 'node:fs';
 import { isExplainerHtml, checkExplainerHtml } from '../explainer/check.mjs';
 import { analyzeSvgPath } from '../renderers/shared/svg-path-analysis.mjs';
+import { drawnPathRectClearance, prepareCrossingPath, visibleCrossings } from '../renderers/shared/route-crossings.mjs';
+import { arrowheadTriangle, maskCoversArrowhead } from '../renderers/shared/arrowhead.mjs';
 import { textUnits } from '../renderers/shared/utils.mjs';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
@@ -403,7 +405,8 @@ if (svgBlocks.length === 1) {
     readerFit: svgAttrs['data-reader-fit'] || null,
     diagramType: svgAttrs['data-diagram-type'] || null,
   });
-  const arrows = collectArrows(beforeLegend, workflowV2);
+  const architecture = svgAttrs['data-diagram-type'] === 'architecture' || svgAttrs['data-reader-primary-text'] === '14';
+  const arrows = collectArrows(beforeLegend, workflowV2, architecture);
   const diagonal = arrows.flatMap((arrow) => diagonalStraightSegments(arrow).map((segment) => ({ arrow, ...segment })));
   addCheck(
     'orthogonal_arrows',
@@ -415,6 +418,7 @@ if (svgBlocks.length === 1) {
     workflowV2,
     maxCrossingPairChecks,
     maxCrossingSegmentPairChecks,
+    architecture,
   );
   const measuredRelationshipCrossings = crossingAnalysis.crossings;
   const resolvedCrossovers = measuredRelationshipCrossings.filter((hit) => (
@@ -440,8 +444,7 @@ if (svgBlocks.length === 1) {
   const nodeRects = svgAttrs.transform ? [] : collectUntransformedNodeRects(beforeLegend);
   const routeMetrics = subpathBudgetMetrics(routedRelationships);
   // Architecture marks only one of its two Reader fits with its type.
-  const crowdedSides = svgAttrs['data-diagram-type'] === 'architecture' || svgAttrs['data-reader-primary-text'] === '14'
-    ? crowdedNodeSides(arrows, nodeRects) : [];
+  const crowdedSides = architecture ? crowdedNodeSides(arrows, nodeRects) : [];
   const routeRhythmIssues = subpathRhythmIssues(routedRelationships);
   const ambiguousCorridors = subpathCorridors({
     routedRelations: routedRelationships,
@@ -456,6 +459,8 @@ if (svgBlocks.length === 1) {
   });
   const cardinalityPorts = svgAttrs['data-erd-ui'] ? coincidentCardinalityPorts(arrows) : [];
   const relationshipLabels = collectRelationshipLabelMasks(beforeLegend, arrows);
+  const labelArrowheadMasks = architecture ? collectLabelArrowheadMasks(relationshipLabels, arrows) : [];
+  const labelOwnership = architecture ? collectLabelOwnership(relationshipLabels, arrows) : [];
   const leadingSpace = collectArchitectureLeadingSpace({
     svgAttrs, fragment: beforeLegend, nodeRects, frames: compositionFrames,
     arrows, labels: relationshipLabels,
@@ -560,6 +565,8 @@ if (svgBlocks.length === 1) {
     ...(sequenceNoteBorders.length ? { sequenceNoteBorders } : {}),
     desktopReadability: desktopReadability.evidence,
     issues: [
+      ...labelArrowheadMasks,
+      ...labelOwnership,
       ...containerBorderRuns.map((hit) => ({
         severity: qualityGatesEnforced ? 'error' : 'warning',
         code: 'composition/container-border-run',
@@ -740,7 +747,7 @@ console.log(JSON.stringify({ ok, file: htmlPath, artifact, checks, composition,
 // Let pending stdout writes drain: large receipts are asynchronous when piped.
 process.exitCode = ok ? 0 : 1;
 
-function collectArrows(fragment, useActualPoints = false) {
+function collectArrows(fragment, useActualPoints = false, architecture = false) {
   const arrows = [];
   let index = 0;
   let pathIndex = 0;
@@ -785,10 +792,9 @@ function collectArrows(fragment, useActualPoints = false) {
     let routeSubpaths = line ? continuousRoutePoints(segments)
       : parsed.subpaths.flatMap(part => continuousRoutePoints(part.straightSegments));
     // Legacy single-path metadata remains supported. It cannot bridge actual moveto boundaries.
-    if (!useActualPoints && (line || parsed.subpaths.length === 1)) {
-      const authoredPoints = parseRoutePoints(attrs['data-composition-points']);
-      if (authoredPoints) routeSubpaths = [authoredPoints];
-    }
+    const authoredPoints = !useActualPoints && (line || parsed.subpaths.length === 1)
+      ? parseRoutePoints(attrs['data-composition-points']) : null;
+    if (authoredPoints) routeSubpaths = [authoredPoints];
     arrows.push({
       kind: name,
       index: index += 1,
@@ -807,10 +813,13 @@ function collectArrows(fragment, useActualPoints = false) {
       automaticWorkflowRoute: attrs['data-composition-routing'] === 'workflow-v2-auto',
       junction: attrs['data-composition-junction'] || null,
       width: routeStrokeWidth,
+      markerEnd: attrs['marker-end'],
       ...(attrs['data-er-ends'] ? { erMarkers: [attrs['marker-start'], attrs['marker-end']] } : {}),
       variant: raw.match(/\ba-(default|emphasis|security|dashed)\b/)?.[1] || 'default',
       role: attrs['data-edge-role'],
       segments,
+      ...(architecture ? { visiblePaths: line ? [prepareCrossingPath(segments)]
+        : parsed.subpaths.map(part => prepareCrossingPath(part.commands)) } : {}),
       borderSegments,
       routePoints: routeSubpaths.length === 1 ? routeSubpaths[0] : [],
       routeSubpaths,
@@ -824,6 +833,58 @@ function collectArrows(fragment, useActualPoints = false) {
   }
 
   return arrows;
+}
+
+function collectLabelOwnership(labels, arrows) {
+  const gap = (rect, route, limit) => route.visiblePaths.reduce((nearest, path) =>
+    Math.min(nearest, drawnPathRectClearance(path, rect, nearest)), limit);
+  return labels.flatMap(({ rect, label, relation }) => {
+    const own = gap(rect, relation, Infinity);
+    if (!Number.isFinite(own)) return [];
+    let nearest = own;
+    let competing = null;
+    for (const other of arrows) {
+      if (other === relation || (other.key !== undefined && other.key === relation.key)) continue;
+      const distance = gap(rect, other, nearest);
+      if (distance + 0.0001 < nearest) {
+        nearest = distance;
+        competing = other;
+      }
+    }
+    return competing ? [{
+      severity: 'info',
+      code: 'composition/label-route-ownership',
+      label,
+      labelRelationship: relationshipRecord(relation),
+      otherRelationship: relationshipRecord(competing),
+      ownClearance: Math.round(own * 10) / 10,
+      otherClearance: Math.round(nearest * 10) / 10,
+      labelRect: roundedRect(rect),
+      detail: `Label "${label}" is closer to ${relationshipName(competing)} than to its own route.`,
+    }] : [];
+  });
+}
+
+function collectLabelArrowheadMasks(labels, arrows) {
+  const markers = arrows.flatMap(arrow => {
+    if (!/^url\(#arrowhead(?:-[\w-]+)?\)$/.test(arrow.markerEnd)) return [];
+    const end = arrow.visiblePaths.at(-1)?.segments.at(-1);
+    if (!end) return [];
+    const marker = arrowheadTriangle(end.end, end.control || end.start,
+      arrow.width || (arrow.variant === 'emphasis' ? 1.8 : 1.5));
+    return [{ arrow, marker }];
+  });
+  return labels.flatMap(({ rect, label, relation }) => markers.flatMap(({ arrow, marker }) => (
+    maskCoversArrowhead(rect, marker) ? [{
+      severity: 'info',
+      code: 'composition/label-arrowhead-mask',
+      label,
+      labelRelationship: relationshipRecord(relation),
+      otherRelationship: relationshipRecord(arrow),
+      labelRect: roundedRect(rect),
+      detail: `Label "${label}" covers an arrowhead of ${relationshipName(arrow)}.`,
+    }] : []
+  )));
 }
 
 function continuousRoutePoints(segments) {
@@ -1029,6 +1090,7 @@ function collectRelationshipCrossings(
   includeSharedEndpoints = false,
   pairLimit = DEFAULT_MAX_CROSSING_PAIR_CHECKS,
   segmentPairLimit = DEFAULT_MAX_CROSSING_SEGMENT_PAIR_CHECKS,
+  architecture = false,
 ) {
   const relationships = arrows.filter((arrow) => arrow.from && arrow.to).map(arrow => ({
     ...arrow,
@@ -1043,10 +1105,11 @@ function collectRelationshipCrossings(
     const left = relationships[leftIndex];
     for (let rightIndex = leftIndex + 1; rightIndex < relationships.length; rightIndex += 1) {
       const right = relationships[rightIndex];
-      // A shared semantic endpoint does not make an interior X a junction
-      // when both paths opt into automatic workflow or independent-port checks.
+      // Architecture counts interior crossings even when arrows share a
+      // card. Other legacy layouts can opt in through their own contracts.
       if ([left.from, left.to].some((id) => id === right.from || id === right.to)
           && !includeSharedEndpoints
+          && !architecture
           && !(left.independentPorts && right.independentPorts)
           && !(left.automaticWorkflowRoute && right.automaticWorkflowRoute)) continue;
       if (attemptedPairs >= pairLimit) {
@@ -1054,6 +1117,27 @@ function collectRelationshipCrossings(
       }
       attemptedPairs += 1;
       let point = null;
+      if (architecture) {
+        let exhausted = false;
+        const consume = () => {
+          if (attemptedSegmentPairs >= segmentPairLimit) {
+            exhausted = true;
+            return false;
+          }
+          attemptedSegmentPairs += 1;
+          return true;
+        };
+        for (const a of left.visiblePaths) {
+          for (const b of right.visiblePaths) {
+            point = visibleCrossings(a, b, 1, consume)[0]?.point;
+            if (point || exhausted) break;
+          }
+          if (point || exhausted) break;
+        }
+        if (exhausted) return { crossings, attemptedPairs, attemptedSegmentPairs, exhausted: true, exhaustedBudget: 'segment-pairs' };
+        if (point) crossings.push({ left, right, point });
+        continue;
+      }
       for (const leftSegment of left.segments) {
         for (const rightSegment of right.segments) {
           if (attemptedSegmentPairs >= segmentPairLimit) {

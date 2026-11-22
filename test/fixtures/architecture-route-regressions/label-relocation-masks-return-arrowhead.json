@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "layout": {
+    "mode": "auto"
+  },
+  "meta": {
+    "title": "Review architecture",
+    "output": "layout.html",
+    "quality_profile": "standard"
+  },
+  "components": [
+    {
+      "id": "n0",
+      "label": "Coordinator",
+      "type": "backend",
+      "size": [
+        150,
+        66
+      ]
+    },
+    {
+      "id": "n1",
+      "label": "Request handler",
+      "type": "backend",
+      "size": [
+        150,
+        66
+      ]
+    },
+    {
+      "id": "n2",
+      "label": "Registry",
+      "type": "backend",
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "n3",
+      "label": "Processor",
+      "type": "backend",
+      "size": [
+        180,
+        66
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e0",
+      "to": "n1",
+      "label": "Update request",
+      "width": 5,
+      "from": "n0"
+    },
+    {
+      "id": "e1",
+      "to": "n2",
+      "label": "Consume records",
+      "width": 5,
+      "from": "n0"
+    },
+    {
+      "id": "e2",
+      "to": "n2",
+      "label": "Ack",
+      "width": 5,
+      "from": "n3"
+    },
+    {
+      "id": "e3",
+      "to": "n3",
+      "label": "Push updates",
+      "width": 7,
+      "from": "n2"
+    },
+    {
+      "id": "e4",
+      "to": "n0",
+      "label": "Fetch",
+      "width": 5,
+      "from": "n1"
+    }
+  ],
+  "boundaries": []
+}

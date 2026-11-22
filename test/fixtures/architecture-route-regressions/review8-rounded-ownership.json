@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "layout": {
+    "mode": "auto"
+  },
+  "meta": {
+    "title": "Authored label near a rounded corner",
+    "output": "output.html",
+    "quality_profile": "showcase",
+    "viewBox": [
+      710,
+      360
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "components": [
+    {
+      "id": "a",
+      "type": "backend",
+      "label": "A",
+      "pos": [
+        35,
+        141
+      ],
+      "size": [
+        100,
+        48
+      ]
+    },
+    {
+      "id": "b",
+      "type": "backend",
+      "label": "B",
+      "pos": [
+        485,
+        241
+      ],
+      "size": [
+        100,
+        48
+      ]
+    },
+    {
+      "id": "c",
+      "type": "backend",
+      "label": "C",
+      "pos": [
+        155,
+        101.01202
+      ],
+      "size": [
+        90,
+        48
+      ]
+    },
+    {
+      "id": "d",
+      "type": "backend",
+      "label": "D",
+      "pos": [
+        560,
+        101.01202
+      ],
+      "size": [
+        105,
+        48
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "owned",
+      "from": "a",
+      "to": "b",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          310,
+          165
+        ],
+        [
+          310,
+          265
+        ]
+      ],
+      "label": "Request",
+      "labelAt": [
+        338.7,
+        150.4
+      ]
+    },
+    {
+      "id": "competing",
+      "from": "c",
+      "to": "d",
+      "fromSide": "right",
+      "toSide": "left",
+      "route": "straight"
+    }
+  ]
+}
