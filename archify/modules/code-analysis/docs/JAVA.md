@@ -6,13 +6,13 @@ From the `archify/` package directory:
 node bin/archify.mjs code-analysis check /path/to/java-repo --language java --out out/java
 ```
 
-The diagram workflow accepts the same `--language java`. A run analyzes one
-language. When the scan also finds JS/TS or Python sources, Java is left out
-automatically unless the root holds `pom.xml`, `build.gradle(.kts)` or
-`settings.gradle(.kts)`; such a Java project, like any root matching both
-JS/TS and Python, requires an explicit choice. A root without one (for example
-`backend/pom.xml` beside `frontend/package.json`) is analyzed as JS/TS or
-Python. The run reports omitted other-language files. `build/` directories and
+The diagram workflow accepts the same `--language java`. When the scan finds
+Java alongside another supported language, Java is eligible for
+[automatic selection](USAGE.md#first-look-at-an-unfamiliar-repository) if the
+root holds `pom.xml`, `build.gradle(.kts)` or `settings.gradle(.kts)`. If the
+build marker is only in a subdirectory, such as `backend/pom.xml` beside
+`frontend/package.json`, use `--language java` to analyze the Java files.
+The run reports omitted other-language files. `build/` directories and
 Java sources under
 `target/` are excluded by default; JS/TS and Python files under `target/` are
 still analyzed as before. `src/test/` files are extracted as tests and excluded
