@@ -13,7 +13,7 @@ import { translateMessage as i18nText } from '../shared/i18n.mjs';
 import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeFrameAttrs, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeNodeAttrs, changeReviewFor, nodeChangeBadgePos, renderChangeBadge, renderChangeEdgePrefix, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
 import { gridLayout, resolveComponentPos, validateGridPlacement } from './grid.mjs';
 import { automaticComponentPositions } from './automatic-placement.mjs';
-import { placeCrossedLeaf } from './crossed-leaf-placement.mjs';
+import { placeCrossedLeaf, placeCrossedSinks, facingFramePlacements } from './crossed-leaf-placement.mjs';
 import { createArchitectureRouter, connectionLabelBoxAt } from './routing.mjs';
 import { placeAutomaticLabels } from '../shared/automatic-labels.mjs';
 import { cleanRouteDetourProblems } from '../shared/route-quality.mjs';
@@ -27,6 +27,7 @@ import {
   cleanCrossingProblems,
   cleanAmbiguousCorridorProblems,
   collectArrowheadCollisions,
+  routeBudgetMetrics,
   collectLabelRouteClearance,
   segmentRectClearanceWithin,
   cleanBorderRunProblems,
@@ -145,8 +146,8 @@ for (const [index, c] of asArray(arch.components).entries()) {
 }
 
 // ---- Boundaries computed from the `wraps` id list ---------------------------
-function boundaryRect(boundary) {
-  const members = asArray(boundary.wraps).map((id) => components.get(id)).filter(Boolean);
+function boundaryRect(boundary, boxes) {
+  const members = asArray(boundary.wraps).map((id) => boxes.get(id)).filter(Boolean);
   if (!members.length) return null;
   let minX = Infinity;
   let minY = Infinity;
@@ -397,24 +398,25 @@ function layoutBoundaryTitles(rawBoundaries, minimumFontSize, scene) {
 // reads components, connections and the member-derived boundary frames (so an
 // automatic route never borrows a frame border as its corridor), never the
 // title-expanded frames or the viewBox.
-const rawBoundaries = containNestedBoundaryFrames(asArray(arch.boundaries).map(boundaryRect).filter(Boolean));
-const routingFrames = rawBoundaries.map(boundary => ({
+const boundsFor = boxes => containNestedBoundaryFrames(asArray(arch.boundaries)
+  .map(boundary => boundaryRect(boundary, boxes)).filter(Boolean));
+const forRouting = boundaries => boundaries.map(boundary => ({
   ...boundary,
   radius: boundary.kind === 'security-group' ? 8 : 12,
 }));
+let rawBoundaries = boundsFor(components);
+const routingFrames = forRouting(rawBoundaries);
 const connections = asArray(arch.connections);
-const makeRouter = boxes => {
+const makeRouter = (boxes, boundaries = rawBoundaries) => {
   let acceptedProblems;
   return createArchitectureRouter(boxes, connections, {
     automaticPlacement: Boolean(automaticPositions),
     fixedCanvas: Boolean(arch.meta?.viewBox),
-    frames: routingFrames,
+    frames: forRouting(boundaries),
     acceptSimplification: (before, after) => {
-      acceptedProblems ??= labelProblems(resolveConnectionComposition(boxes, before));
-      const candidateProblems = labelProblems(resolveConnectionComposition(boxes, after));
-      for (const [pair, severity] of candidateProblems) {
-        if (severity > (acceptedProblems.get(pair) ?? 0) + 0.0001) return false;
-      }
+      acceptedProblems ??= labelProblems(resolveConnectionComposition(boxes, before, boundaries));
+      const candidateProblems = labelProblems(resolveConnectionComposition(boxes, after, boundaries));
+      if (!preservesLabels(acceptedProblems, candidateProblems)) return false;
       acceptedProblems = candidateProblems;
       return true;
     },
@@ -423,10 +425,39 @@ const makeRouter = boxes => {
 const routable = new Map([...components].filter(([, box]) => isFinitePoint(box.x, box.y, box.width, box.height)));
 let router = makeRouter(routable);
 if (automaticPositions && !arch.meta?.viewBox) {
-  const placement = placeCrossedLeaf(routable, connections, routingFrames, router, makeRouter);
+  const leaf = placeCrossedLeaf(routable, connections, routingFrames, router, makeRouter);
+  const sinks = placeCrossedSinks(routable, connections, routingFrames, router, makeRouter,
+    (boxes, before, after) => preservesLabels(
+      labelProblems(resolveConnectionComposition(routable, before)),
+      labelProblems(resolveConnectionComposition(boxes, after)),
+    ));
+  const placement = leaf || sinks;
   if (placement) {
-    components.set(placement.box.id, placement.box);
+    for (const box of leaf ? [leaf.box] : sinks.boxes) components.set(box.id, box);
     router = placement.router;
+  } else if (routingFrames.length === 2) {
+    const right = Math.max(...routingFrames.map(frame => frame.x + frame.width),
+      ...[...routable.values()].map(box => box.x + box.width));
+    for (const moved of facingFramePlacements(routable, connections, routingFrames, right)) {
+      const bounds = boundsFor(moved);
+      if (bounds.some(frame => [...moved.values()].some(box => !frame.wraps.includes(box.id) && rectsOverlap(frame, box)))) continue;
+      const candidate = makeRouter(moved, bounds);
+      const previous = resolveConnectionComposition(routable, router.pathFor);
+      const next = resolveConnectionComposition(moved, candidate.pathFor, bounds);
+      const before = routeBudgetMetrics({ routedRelations: previous.routes });
+      const after = routeBudgetMetrics({ routedRelations: next.routes });
+      if (candidate.crossingPairs().length < router.crossingPairs().length
+          && after.routesOverSuggestedBends <= before.routesOverSuggestedBends
+          && after.routesOverSuggestedStretch <= before.routesOverSuggestedStretch
+          && next.viewBox.every((extent, axis) => extent <= previous.viewBox[axis])
+          && candidate.planIsClear(previous.viewBox, { checkProvisionalLabels: false })
+          && preservesLabels(labelProblems(previous), labelProblems(next))) {
+        for (const [id, box] of moved) components.set(id, box);
+        rawBoundaries = bounds;
+        router = candidate;
+        break;
+      }
+    }
   }
 }
 const routedEndpointIds = new Set(routable.keys());
@@ -439,7 +470,7 @@ function hasAutomaticRouteGeometry(connection) {
     && connection?.channelX === undefined
     && connection?.channelY === undefined;
 }
-function resolveBoundaryTitles(scene, connectionGeometry) {
+function resolveBoundaryTitles(scene, connectionGeometry, rawBoundaries) {
   const { boxes } = scene;
   if (!enforcesBoundaryTitleComposition || rawBoundaries.length === 0) {
     return {
@@ -477,7 +508,7 @@ function resolveBoundaryTitles(scene, connectionGeometry) {
 
 // Run the same title, canvas and label placement for a route proposal and
 // for the SVG. The router's provisional label reservations only prune probes.
-function resolveConnectionComposition(boxes, routeFor) {
+function resolveConnectionComposition(boxes, routeFor, measuredBoundaries = boundsFor(boxes)) {
   const routes = connections.flatMap((relation, relationIndex) => {
     if (!boxes.has(relation.from) || !boxes.has(relation.to)) return [];
     const routed = routeFor(relation);
@@ -493,7 +524,7 @@ function resolveConnectionComposition(boxes, routeFor) {
   // Include route extents too. Fitting cards and labels alone can clip an
   // explicit via route even when every browser overflow check passes.
   const geometry = [...labels, ...routes.flatMap(({ points }) => points.map(([x, y]) => ({ x, y, width: 0, height: 0 })))];
-  const titles = resolveBoundaryTitles({ boxes, connectionLabels: labels, titleRouteSegments }, geometry);
+  const titles = resolveBoundaryTitles({ boxes, connectionLabels: labels, titleRouteSegments }, geometry, measuredBoundaries);
   const boundaries = titles.boundaries;
   const viewBox = arch.meta?.viewBox || autoViewBoxFor(boxes, boundaries, geometry);
   const placed = arch.meta?.quality_profile === 'showcase' ? placeAutomaticLabels({
@@ -545,9 +576,13 @@ function labelProblems({ routes, labels, titles, viewBox, boxes }) {
   return problems;
 }
 
+function preservesLabels(before, after) {
+  return [...after].every(([pair, severity]) => severity <= (before.get(pair) ?? 0) + 0.0001);
+}
+
 const {
   titles: resolvedBoundaryTitles, labels: connectionLabels, viewBox,
-} = resolveConnectionComposition(components, pathFor);
+} = resolveConnectionComposition(components, pathFor, rawBoundaries);
 const boundaries = resolvedBoundaryTitles.boundaries;
 const labelBoxes = new Map(connectionLabels.map(rect => [rect.relation, rect]));
 const legendY = () => viewBox[1] - 16;

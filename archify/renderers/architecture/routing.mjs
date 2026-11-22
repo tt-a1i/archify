@@ -1900,15 +1900,16 @@ export function createRouter(components, connections = [], {
       .map(other => [conn, other.conn]));
   }
 
-  function planIsClear([right, bottom]) {
+  function planIsClear([right, bottom], { checkProvisionalLabels = true } = {}) {
     const entries = routedEntries();
+    const labels = checkProvisionalLabels ? reservedLabels : [];
     const fits = ([x, y]) => x >= 0 && y >= 0 && x <= right + 0.0001 && y <= bottom + 0.0001;
     return entries.every(entry => {
       const { conn, points } = entry;
       const geometry = { ...selectedSides.get(conn), from: components.get(conn.from), to: components.get(conn.to) };
       const others = entries.filter(other => other !== entry);
-      if (!points.every(fits) || !routeIsClear(conn, entry, geometry, others)) return false;
-      if (!conn.label) return true;
+      if (!points.every(fits) || !routeIsClear(conn, entry, geometry, others, labels)) return false;
+      if (!checkProvisionalLabels || !conn.label) return true;
       const rect = reservedLabels.find(label => label.conn === conn)?.rect;
       return rect && fits([rect.x, rect.y]) && fits([rect.x + rect.width, rect.y + rect.height])
         && labelFollowsRoute(rect, points, others)
