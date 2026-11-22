@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
-import ts from 'typescript';
+import ts from '../vendor/typescript.cjs';
 import { extract } from '../extract/ts/index.mjs';
 
 const config = JSON.parse(fs.readFileSync(new URL('../config/defaults.json', import.meta.url)));

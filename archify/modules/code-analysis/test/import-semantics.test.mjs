@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { test } from 'node:test';
-import ts from 'typescript';
+import ts from '../vendor/typescript.cjs';
 import { extract as extractTs } from '../extract/ts/index.mjs';
 import { buildModuleGraph } from '../graphs/module.mjs';
 import { evaluate } from '../evaluate/index.mjs';

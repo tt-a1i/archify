@@ -1,5 +1,5 @@
 // Source-contained orientation, never a caller graph or runtime trace.
-import ts from 'typescript';
+import ts from '../vendor/typescript.cjs';
 import { rangeText, validSourceRange } from '../core/index.mjs';
 import path from 'node:path';
 import { measureFunctions } from '../extract/ts/functions.mjs';

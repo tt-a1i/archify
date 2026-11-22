@@ -8,7 +8,6 @@ import { globToRegExp } from '../extract/shared/glob.mjs';
 import { extract } from '../extract/py/index.mjs';
 import { run as moduleCycles } from '../evaluate/rules/coupling/cycle.mjs';
 import { run as fileCycles } from '../evaluate/rules/coupling/import-cycle.mjs';
-import { withInstallLock } from '../lib/install-lock.mjs';
 import { snapshotFiles } from '../extract/shared/files.mjs';
 
 const config = JSON.parse(fs.readFileSync(new URL('../config/defaults.json', import.meta.url)));
@@ -108,26 +107,6 @@ test('Python free loaders honor global declarations and uncertain conditional im
   ]);
 });
 
-test('separate installers serialize and recheck shared dependency state', async t => {
-  const root = fixture(t);
-  const module = new URL('../lib/install-lock.mjs', import.meta.url).href;
-  const script = `import fs from 'node:fs'; import { setTimeout } from 'node:timers/promises'; import { withInstallLock } from ${JSON.stringify(module)};
-    const root = process.argv[1]; await withInstallLock(root, async () => {
-      if (fs.existsSync(root + '/ready')) return;
-      fs.appendFileSync(root + '/installs', 'install\\n'); await setTimeout(150);
-      fs.writeFileSync(root + '/ready', 'ready');
-    });`;
-  const run = () => new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, ['--input-type=module', '-e', script, root]);
-    let error = ''; child.stderr.on('data', data => { error += data; });
-    child.on('error', reject); child.on('exit', code => code === 0 ? resolve() : reject(new Error(error)));
-  });
-  await Promise.all([run(), run(), run()]);
-  assert.equal(fs.readFileSync(path.join(root, 'installs'), 'utf8'), 'install\n');
-  await assert.rejects(withInstallLock(root, () => { throw new Error('installer failed'); }), /installer failed/);
-  assert.equal(fs.existsSync(path.join(root, '.code-analysis-install.lock')), false);
-});
-
 test('extraction rejects a directory replaced after enumeration, before reading outside bytes', t => {
   const root = fixture(t, { 'src/index.py': 'inside = True\n' });
   const outside = fixture(t, { 'index.py': 'secret = True\n' });
@@ -199,49 +178,6 @@ test('package.json and pyproject.toml set module boundaries even though adapters
   assert.deepEqual(buildModuleGraph({ ...pyFacts, packageMarkers: undefined }, { modules: { depth: 3 } }).modules.map(m => m.label).sort(), ['svc/core', 'svc/handlers']);
 });
 
-test('an install lock left by an exited process is reclaimed; a live owner is waited for', async t => {
-  const root = fixture(t);
-  const lock = path.join(fs.realpathSync(root), '.code-analysis-install.lock');
-  const child = spawn(process.execPath, ['-e', '0']);
-  await new Promise(resolve => child.on('exit', resolve));
-  fs.mkdirSync(lock);
-  fs.writeFileSync(path.join(lock, 'owner.json'), JSON.stringify({ pid: child.pid, host: `${process.platform}:${os.hostname()}` }));
-  assert.equal(await withInstallLock(root, () => 'ran', 2000), 'ran');
-  assert.equal(fs.existsSync(lock), false);
-
-  fs.mkdirSync(lock);
-  fs.writeFileSync(path.join(lock, 'owner.json'), JSON.stringify({ pid: process.pid, host: `${process.platform}:${os.hostname()}` }));
-  await assert.rejects(withInstallLock(root, () => 'stolen', 300), /Timed out waiting/);
-  assert.equal(fs.existsSync(lock), true, 'a live owner keeps its lock');
-  fs.rmSync(lock, { recursive: true });
-});
-
-test('processes that find the same stale lock reclaim it once and never run the operation together', async t => {
-  const root = fixture(t);
-  const lock = path.join(fs.realpathSync(root), '.code-analysis-install.lock');
-  const dead = spawn(process.execPath, ['-e', '0']);
-  await new Promise(resolve => dead.on('exit', resolve));
-  fs.mkdirSync(lock);
-  fs.writeFileSync(path.join(lock, 'owner.json'), JSON.stringify({ pid: dead.pid, host: `${process.platform}:${os.hostname()}` }));
-  const module = new URL('../lib/install-lock.mjs', import.meta.url).href;
-  const script = `import fs from 'node:fs'; import { setTimeout } from 'node:timers/promises'; import { withInstallLock } from ${JSON.stringify(module)};
-    const root = process.argv[1]; await withInstallLock(root, async () => {
-      if (fs.existsSync(root + '/inside')) fs.appendFileSync(root + '/overlap', 'x');
-      fs.writeFileSync(root + '/inside', ''); fs.appendFileSync(root + '/runs', 'run\\n');
-      await setTimeout(80); fs.rmSync(root + '/inside');
-    }, 10000);`;
-  const run = () => new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, ['--input-type=module', '-e', script, root]);
-    let error = ''; child.stderr.on('data', data => { error += data; });
-    child.on('error', reject); child.on('exit', code => code === 0 ? resolve() : reject(new Error(error)));
-  });
-  await Promise.all(Array.from({ length: 6 }, run));
-  assert.equal(fs.readFileSync(path.join(root, 'runs'), 'utf8'), 'run\n'.repeat(6));
-  assert.equal(fs.existsSync(path.join(root, 'overlap')), false, 'no two holders ran at once');
-  assert.equal(fs.existsSync(lock), false);
-  assert.equal(fs.existsSync(`${lock}.reclaim`), false);
-});
-
 test('package markers come from the source snapshot, not from a later walk of the tree', t => {
   const root = fixture(t, { 'svc/pyproject.toml': '[project]\n', 'svc/a/x.py': 'import os\n', 'build/pyproject.toml': '', 'other/sub/notes.txt': '' });
   assert.deepEqual(extract(root, config).packageMarkers, ['svc/pyproject.toml'], 'excluded build/ stays out');
@@ -260,7 +196,7 @@ test('package markers come from the source snapshot, not from a later walk of th
 
 test('TypeScript package markers come from the frozen inventory', async t => {
   const { extract: extractTs } = await import('../extract/ts/index.mjs');
-  const ts = (await import('typescript')).default;
+  const ts = (await import('../vendor/typescript.cjs')).default;
   const root = fixture(t, { 'app/package.json': '{}', 'app/src/a.mjs': 'export {};\n', 'other/sub/notes.txt': '' });
   const descriptor = Object.getOwnPropertyDescriptor(ts.sys, 'useCaseSensitiveFileNames');
   let ran = false;
