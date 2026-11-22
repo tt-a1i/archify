@@ -10,6 +10,7 @@ import { generateViewer } from '../scripts/generate-viewer.mjs';
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const marker = '/* ARCHIFY:READER_LAYOUT */';
 const viewerCssMarker = '/* ARCHIFY:VIEWER_CSS */';
+const analysisEntryMarker = '/* ARCHIFY:ANALYSIS_ENTRY_CSS */';
 const exportMarker = '/* ARCHIFY:EXPORT */';
 const cleanupMarker = '/* ARCHIFY:EXPORT_CLEANUP */';
 const chromeMarker = '/* ARCHIFY:CHROME_LAYOUT */';
@@ -23,7 +24,7 @@ const intentMarker = '/* ARCHIFY:INTENT_TRACE */';
 const lensMarker = '/* ARCHIFY:SEMANTIC_LENS */';
 const routeMarker = '/* ARCHIFY:ROUTE_PROBE */';
 const focusMarker = '/* ARCHIFY:FOCUS */';
-const fragments = { viewerCss: viewerCssMarker, export: exportMarker, reader: marker, cleanup: cleanupMarker, chrome: chromeMarker, camera: cameraMarker, radar: radarMarker, motion: motionMarker, finder: finderMarker, outline: outlineMarker, tree: treeMarker, intent: intentMarker, lens: lensMarker, route: routeMarker, focus: focusMarker };
+const fragments = { viewerCss: viewerCssMarker, analysisEntry: analysisEntryMarker, export: exportMarker, reader: marker, cleanup: cleanupMarker, chrome: chromeMarker, camera: cameraMarker, radar: radarMarker, motion: motionMarker, finder: finderMarker, outline: outlineMarker, tree: treeMarker, intent: intentMarker, lens: lensMarker, route: routeMarker, focus: focusMarker };
 
 function fixture(t) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-viewer-build-'));
@@ -31,6 +32,9 @@ function fixture(t) {
   fs.mkdirSync(path.join(root, 'scripts'));
   fs.mkdirSync(path.join(root, 'archify/assets'), { recursive: true });
   fs.mkdirSync(path.join(root, 'archify/renderers/shared'), { recursive: true });
+  const analysisClient = 'archify/modules/code-analysis/overlay/client';
+  fs.mkdirSync(path.join(root, analysisClient), { recursive: true });
+  fs.copyFileSync(path.join(repoRoot, analysisClient, 'entry.css'), path.join(root, analysisClient, 'entry.css'));
   fs.copyFileSync(path.join(repoRoot, 'archify/renderers/shared/path-semantics.mjs'), path.join(root, 'archify/renderers/shared/path-semantics.mjs'));
   fs.cpSync(path.join(repoRoot, 'viewer'), path.join(root, 'viewer'), { recursive: true });
   fs.copyFileSync(path.join(repoRoot, 'scripts/generate-viewer.mjs'), path.join(root, 'scripts/generate-viewer.mjs'));
@@ -40,6 +44,7 @@ function fixture(t) {
     root, output,
     shell: path.join(root, 'viewer/template.source.html'),
     viewerCss: path.join(root, 'viewer/viewer.css'),
+    analysisEntry: path.join(root, analysisClient, 'entry.css'),
     export: path.join(root, 'viewer/export.js'),
     reader: path.join(root, 'viewer/reader-layout.js'),
     cleanup: path.join(root, 'viewer/export-cleanup.js'),
@@ -132,7 +137,7 @@ test('importing the generator with an unavailable entry path does not run or thr
 
 test('editing any authoritative source requires explicit regeneration', (t) => {
   const f = fixture(t);
-  for (const input of [f.shell, f.viewerCss, f.export, f.reader, f.cleanup, f.chrome, f.camera, f.radar, f.motion, f.finder, f.outline, f.tree, f.intent, f.lens, f.route, f.focus]) {
+  for (const input of [f.shell, ...Object.keys(fragments).map(fragment => f[fragment])]) {
     const previous = fs.readFileSync(f.output);
     fs.appendFileSync(input, '\n/* source change */\n');
     const stale = f.run('--check');
@@ -167,8 +172,8 @@ test('assembly failure matrix preserves a valid artifact', { concurrency: false 
   const f = fixture(t);
   // Marker rejection depends on source structure, not production bundle size.
   // The CLI tests above and below retain the complete authoritative sources.
-  const shellSlots = Object.values(fragments).filter(slot => slot !== cleanupMarker && slot !== viewerCssMarker);
-  fs.writeFileSync(f.shell, `<style>\n${viewerCssMarker}\n</style><script>\n${shellSlots.join('\n')}\n</script>\n`);
+  const shellSlots = Object.values(fragments).filter(slot => ![cleanupMarker, viewerCssMarker, analysisEntryMarker].includes(slot));
+  fs.writeFileSync(f.shell, `<style>\n${viewerCssMarker}\n</style><style>\n${analysisEntryMarker}\n</style><script>\n${shellSlots.join('\n')}\n</script>\n`);
   for (const fragment of Object.keys(fragments)) {
     fs.writeFileSync(f[fragment], `/* ${fragment} source */\n${fragment === 'export' ? `${cleanupMarker}\n` : ''}`);
   }
@@ -206,8 +211,9 @@ test('assembly preserves literal replacement tokens, Unicode and source line end
   const f = fixture(t);
   const reader = '// $& $\' $` $$ 中文 \u{1f5fa}\r\n(function () {})();\r\n';
   const css = '/* === TOKENS === */\r\n:root { --x: 1; }\r\n';
-  fs.writeFileSync(f.shell, `<style>${viewerCssMarker}</style><script>\r\n${focusMarker}${routeMarker}${lensMarker}${intentMarker}${finderMarker}${outlineMarker}${treeMarker}${motionMarker}${radarMarker}${cameraMarker}${chromeMarker}${exportMarker}${marker}</script>\n`);
+  fs.writeFileSync(f.shell, `<style>${viewerCssMarker}</style><style>${analysisEntryMarker}</style><script>\r\n${focusMarker}${routeMarker}${lensMarker}${intentMarker}${finderMarker}${outlineMarker}${treeMarker}${motionMarker}${radarMarker}${cameraMarker}${chromeMarker}${exportMarker}${marker}</script>\n`);
   fs.writeFileSync(f.viewerCss, css);
+  fs.writeFileSync(f.analysisEntry, css);
   fs.writeFileSync(f.export, reader + cleanupMarker);
   fs.writeFileSync(f.cleanup, reader);
   fs.writeFileSync(f.chrome, reader);
@@ -233,7 +239,7 @@ test('assembly preserves literal replacement tokens, Unicode and source line end
   const indentedCss = css.split('\n').map((line) => line.length === 0 ? line : '    ' + line).join('\n');
   assert.equal(
     fs.readFileSync(f.output, 'utf8'),
-    `<style>${indentedCss}</style><script>\r\n${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}</script>\n`,
+    `<style>${indentedCss}</style><style>${indentedCss}</style><script>\r\n${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}</script>\n`,
   );
   assert.equal(f.run('--check').status, 0);
 });

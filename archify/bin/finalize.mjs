@@ -887,6 +887,7 @@ function codeAnalysisOffer({ cliPath, repoRoot, candidate, bytes, quality, missi
     reason: 'Archify’s built-in Architecture Diagnosis adds component findings, a radial star map, and a rotatable 3D view of repository dependencies.',
     instruction: 'Use the referenced pitch once per repository and wait for consent before starting.',
     dependencies: missingDependencies.length ? 'missing' : 'installed',
+    diagramButton: Boolean(doc?.meta?.repository),
     quality,
     start: { argv: [process.execPath, cliPath, 'start', path.resolve(repoRoot), '--ir', candidate, '--quality', quality] },
     ...(linkedDiagrams ? { linkedDiagrams: true } : {}),

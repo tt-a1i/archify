@@ -3345,6 +3345,85 @@ html[data-reader-rail="bottom"] .node-outline-item::after {
 .toolbar { gap: 0.5rem; }
 .toolbar #btn-export { margin-left: 0; }
 .toolbar #btn-export::before { inset: 0.25rem 0; border-radius: 0.6875rem; }
+
+#code-analysis-dialog {
+  box-sizing: border-box;
+  width: min(32rem, calc(100% - 2rem));
+  max-width: none;
+  max-height: calc(100% - 2rem);
+  margin: auto;
+  overflow: auto;
+  padding: clamp(1rem, 4vw, 1.5rem);
+  border: 1px solid var(--panel-border);
+  border-radius: 1rem;
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.24);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+#code-analysis-dialog::backdrop { background: rgba(9, 16, 30, 0.55); }
+.analysis-info-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+.analysis-info-star {
+  flex: 0 0 auto;
+  width: 2.5rem;
+  height: 2.5rem;
+  background: var(--frontend-stroke);
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40' fill='none' stroke='black'%3E%3Ccircle cx='20' cy='20' r='15' opacity='.3'/%3E%3Cpath d='M20 5v30M7 12l26 16M7 28l26-16'/%3E%3Cpath d='M20 5h.01m13 7h.01m0 16h.01M20 35h.01M7 28h.01m0-16h.01M20 20h.01' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.analysis-info-header h2 {
+  margin: 0 0 0.125rem;
+  font-size: 1.125rem;
+  line-height: 1.3;
+}
+.analysis-info-header p, .analysis-info-start p { margin: 0; }
+.analysis-info-header p, #code-analysis-copy-status { color: var(--text-muted); }
+.analysis-info-header form { margin-inline-start: auto; }
+.analysis-info-features {
+  margin: 1rem 0;
+  padding-inline-start: 1.25rem;
+}
+.analysis-info-features li + li { margin-top: 0.5rem; }
+.analysis-info-features li::marker { color: var(--frontend-stroke); }
+.analysis-info-start {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid var(--panel-border);
+  border-radius: 0.625rem;
+  background: color-mix(in srgb, var(--frontend-stroke) 6%, var(--panel));
+}
+.analysis-info-start p { flex: 1 1 13rem; }
+.analysis-info-start q { font-weight: 600; }
+.analysis-info-start q:lang(zh) { quotes: "「" "」"; }
+#code-analysis-dialog button {
+  min-height: 2.75rem;
+  border: 1px solid var(--panel-border);
+  border-radius: 0.5rem;
+  background: var(--toolbar-menu-bg);
+  color: var(--text);
+  padding: 0.375rem 0.65rem;
+  font: inherit;
+  cursor: pointer;
+}
+#code-analysis-dialog button:hover { background: var(--toolbar-hover); }
+#code-analysis-dialog button:focus-visible { outline: 2px solid var(--frontend-stroke); }
+#code-analysis-dialog .analysis-info-close {
+  min-width: 2.75rem;
+  border-color: transparent;
+  background: transparent;
+  font-size: 1.25rem;
+}
+#code-analysis-dialog .analysis-info-close:hover { background: var(--toolbar-hover); }
+#code-analysis-copy-status:not(:empty) { margin-top: 0.5rem; }
+
 /* Tools share one quiet capsule; the capsule is drawn inside the 44px row
    so the controls keep their hit area without a tall visible box. */
 .toolbar-group {
@@ -3975,6 +4054,7 @@ html[data-ambient-motion="running"][data-motion="live"]:not([data-motion-owner])
     margin-left: auto;
     margin-bottom: 1rem;
   }
+  .toolbar:has(> #code-analysis-info) { flex-wrap: wrap; }
   .header { margin-bottom: 1.25rem; padding-right: 0; }
   html[data-preset="signal-flow"] .header,
   html[data-preset="blueprint"] .header,
