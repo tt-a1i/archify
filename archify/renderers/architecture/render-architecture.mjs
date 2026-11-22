@@ -1321,8 +1321,11 @@ function validateArchitecture({
       // The artifact checker independently reports intersections in the rendered SVG.
       const touchesWaypoint = ({ segments, authoredWaypoints }, index, [x, y]) => {
         const matches = ([a, b]) => Math.abs(a - x) <= 1e-7 && Math.abs(b - y) <= 1e-7;
+        if (!authoredWaypoints.some(matches)) return false;
         const { start, end, control } = segments[index];
-        return !control && (matches(start) || matches(end)) && authoredWaypoints.some(matches);
+        // Rounding an explicit collinear vertex emits a straight quadratic
+        // with the authored point as its control.
+        return control ? matches(control) : matches(start) || matches(end);
       };
       return visibleCrossings(left, right).find(({ leftSegment, rightSegment, point }) => (
         !touchesWaypoint(left, leftSegment, point) && !touchesWaypoint(right, rightSegment, point)
