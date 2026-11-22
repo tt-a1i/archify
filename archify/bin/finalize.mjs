@@ -862,19 +862,19 @@ function repairSourceRanges(candidatePath, diagnostics, specification, expected)
   }
 }
 
-// A repository-backed diagram is the moment a user can learn that the same
-// checkout supports Code Analysis. The offer is advisory: nothing runs here.
-export function codeAnalysisOffer({ cliPath, type, repoRoot, candidate, artifact }) {
-  const repository = path.resolve(repoRoot);
-  const outDir = path.join(path.dirname(artifact), 'code-analysis');
-  const prepare = [process.execPath, cliPath, 'code-analysis', 'prepare', repository, '--out', outDir];
+async function getMissingAnalysisDependencies() {
+  const { missingAnalysisDependencies } = await import('../modules/code-analysis/bin/serve.mjs');
+  return missingAnalysisDependencies();
+}
+
+function codeAnalysisOffer({ cliPath, repoRoot, candidate, missingDependencies }) {
   return {
     action: 'offer-code-analysis',
-    reason: 'This diagram is backed by a local repository. Code Analysis can also map that checkout\'s module coupling, cycles, layer violations, large files and complexity hotspots in an interactive workbench.',
-    instruction: 'Offer it in one line of the final response. Do not run it unless the user asks.',
-    prepare: { argv: prepare },
-    ...(type === 'architecture' ? { alignWithDiagram: { argv: [...prepare, '--ir', candidate] } } : {}),
-    reference: 'modules/code-analysis/docs/USAGE.md#agent-entry-and-investigation',
+    reason: 'Archify’s built-in Architecture Diagnosis adds component findings, a radial star map, and a rotatable 3D view of repository dependencies.',
+    instruction: 'Use the referenced pitch once per repository and wait for consent before starting.',
+    dependencies: missingDependencies.length ? 'missing' : 'installed',
+    start: { argv: [process.execPath, cliPath, 'start', path.resolve(repoRoot), '--ir', candidate] },
+    reference: 'references/delivery-contract.md#architecture-diagnosis-offer',
   };
 }
 
@@ -898,6 +898,7 @@ export async function runFinalize({
   runCommand = defaultRunner,
   runBrowserCheck,
   startUpdateCheck = startDeliveryUpdateCheck,
+  checkMissingAnalysisDependencies = getMissingAnalysisDependencies,
   resolveChrome = findChrome,
   createBrowser = (chromePath, options) => new ChromeVisualBrowser(chromePath, options),
 } = {}) {
@@ -1259,7 +1260,10 @@ export async function runFinalize({
         ? { status: 'verified', revision: source.revision, count: source.references }
         : { status: 'not-declared', count: 0,
           guidance: 'For a repository diagram, pin meta.repository and cite the source ranges on its primary elements, then rerun finalize.' };
-      receipt.codeAnalysisOffer = codeAnalysisOffer({ cliPath, type, repoRoot, candidate: resolvedInput, artifact: resolvedOutput });
+      if (type === 'architecture') {
+        const missingDependencies = await checkMissingAnalysisDependencies();
+        receipt.codeAnalysisOffer = codeAnalysisOffer({ cliPath, repoRoot, candidate: resolvedInput, missingDependencies });
+      }
     }
     receipt.artifact = receipt.ok
       ? { path: resolvedOutput, ...receipt.stages.deliver.receipt.artifact }

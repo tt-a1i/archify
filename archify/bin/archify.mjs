@@ -6122,8 +6122,9 @@ async function commandFinalize(rawArgs) {
     }
     const offer = result.summary.codeAnalysisOffer;
     if (offer) {
-      const shellWord = (word) => /^[\w@%+=:,./-]+$/.test(word) ? word : `'${word.replaceAll("'", "'\\''")}'`;
-      console.log(`code analysis available (not run): ${offer.prepare.argv.map(shellWord).join(' ')}`);
+      const { nodeCommand } = await import('../modules/code-analysis/lib/task-command.mjs');
+      const installNotice = offer.dependencies === 'missing' ? ' (first use installs the analysis components automatically)' : '';
+      console.log(`Architecture Diagnosis available (not run)${installNotice}: ${nodeCommand(offer.start.argv.slice(1))}`);
     }
     if (result.summary.update?.noticeRequired) console.log(result.summary.update.noticeText);
   }

@@ -161,6 +161,7 @@ test('finalize reuses delivery validation, runs one build, and keeps full stage 
     outDir,
     repoRoot: directory,
     runCommand,
+    checkMissingAnalysisDependencies: () => [],
   });
 
   assert.equal(finalized.exitCode, 0);
@@ -173,10 +174,9 @@ test('finalize reuses delivery validation, runs one build, and keeps full stage 
   assert.equal(finalized.summary.visualReview, 'not-requested');
   assert.equal(finalized.summary.repositoryReferences.status, 'not-declared');
   assert.equal(finalized.summary.repositoryReferences.count, 0);
-  const prepare = [process.execPath, '/fake/archify.mjs', 'code-analysis', 'prepare', directory, '--out', path.join(directory, 'code-analysis')];
   assert.equal(finalized.summary.codeAnalysisOffer.action, 'offer-code-analysis');
-  assert.deepEqual(finalized.summary.codeAnalysisOffer.prepare.argv, prepare);
-  assert.deepEqual(finalized.summary.codeAnalysisOffer.alignWithDiagram.argv, [...prepare, '--ir', input]);
+  assert.equal(finalized.summary.codeAnalysisOffer.dependencies, 'installed');
+  assert.deepEqual(finalized.summary.codeAnalysisOffer.start.argv, [process.execPath, '/fake/archify.mjs', 'start', directory, '--ir', input]);
   assert.equal('stages' in finalized.summary, false);
   assert.equal(JSON.stringify(finalized.summary).includes('large-stage-array'), false);
   assert.equal(finalized.receipt.stages['browser-check'].receipt.containment.viewports.length, VISUAL_CHECK_VIEWPORTS.length);
@@ -196,13 +196,18 @@ test('finalize reuses delivery validation, runs one build, and keeps full stage 
   assert.equal('stages' in persistedSummary, false);
 });
 
-test('finalize offers Code Analysis only for a passing repository-backed diagram and never runs it', async t => {
+test('finalize offers Architecture Diagnosis only for a repository-backed Architecture and never starts it', async t => {
   const directory = workspace(t);
   const input = path.join(directory, 'diagram.json');
   const output = path.join(directory, 'diagram.html');
   const outDir = path.join(directory, 'evidence');
   const source = '{"meta":{"quality_profile":"showcase"}}';
   fs.writeFileSync(input, source);
+  let dependencyChecks = 0;
+  const checkMissingAnalysisDependencies = () => {
+    dependencyChecks += 1;
+    return ['typescript'];
+  };
   const finalizeWith = async ({ type, repoRoot }) => {
     const stages = [];
     const runCommand = ({ stage }) => {
@@ -214,7 +219,9 @@ test('finalize offers Code Analysis only for a passing repository-backed diagram
       fs.writeFileSync(path.join(outDir, 'diagram.browser-check.json'), 'browser evidence');
       return result(passingBrowserCheck({ output, artifact: delivery.artifact, deliveryReceiptId: delivery.receiptId, outDir }));
     };
-    const finalized = await runFinalize({ cliPath: '/fake/archify.mjs', type, input, output, outDir, repoRoot, runCommand });
+    const finalized = await runFinalize({
+      cliPath: '/fake/archify.mjs', type, input, output, outDir, repoRoot, runCommand, checkMissingAnalysisDependencies,
+    });
     assert.equal(finalized.exitCode, 0);
     assert.deepEqual(stages, ['deliver', 'check', 'browser-check']);
     return finalized.summary;
@@ -224,8 +231,16 @@ test('finalize offers Code Analysis only for a passing repository-backed diagram
   assert.equal('codeAnalysisOffer' in withoutRepository, false);
 
   const workflow = await finalizeWith({ type: 'workflow', repoRoot: directory });
-  assert.deepEqual(workflow.codeAnalysisOffer.prepare.argv.slice(1, 5), ['/fake/archify.mjs', 'code-analysis', 'prepare', directory]);
-  assert.equal('alignWithDiagram' in workflow.codeAnalysisOffer, false);
+  assert.equal(workflow.repositoryReferences.status, 'not-declared');
+  assert.equal('codeAnalysisOffer' in workflow, false);
+  assert.equal(dependencyChecks, 0);
+
+  const architecture = await finalizeWith({ type: 'architecture', repoRoot: directory });
+  assert.equal(dependencyChecks, 1);
+  assert.equal(architecture.codeAnalysisOffer.dependencies, 'missing');
+  assert.deepEqual(architecture.codeAnalysisOffer.start.argv, [process.execPath, '/fake/archify.mjs', 'start', directory, '--ir', input]);
+  assert.equal('prepare' in architecture.codeAnalysisOffer, false);
+  assert.equal('alignWithDiagram' in architecture.codeAnalysisOffer, false);
 });
 
 test('finalize stops at the failed gate and persists actionable failure evidence', async t => {
@@ -236,7 +251,7 @@ test('finalize stops at the failed gate and persists actionable failure evidence
   const calls = [];
   const finalized = await runFinalize({
     cliPath: '/fake/archify.mjs',
-    type: 'workflow',
+    type: 'architecture',
     input,
     output,
     repoRoot: directory,

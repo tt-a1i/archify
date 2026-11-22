@@ -252,7 +252,7 @@ Show 8–12 core components, one primary path, external dependencies, and trust 
 Put supporting detail in cards instead of adding more edges.
 ```
 
-リポジトリのコードに基づく図を作成した後、Archify は Code Analysis を一行で案内し、依頼があった場合にだけ実行します。ソースコードに基づく対話型ワークベンチでは、モジュール間の結合、循環依存、レイヤー違反、大きなファイル、複雑度の高い箇所を確認できます。既存のアーキテクチャ図をコードと照合することもできます。[Code Analysis の使い方](archify/modules/code-analysis/docs/USAGE.md)を参照してください。
+Archify の組み込み機能 **アーキテクチャ診断**では、リポジトリ内の依存関係を放射状の星図と回転できる 3D モデルで確認できます。アーキテクチャ図の各コンポーネントに指摘件数を表示し、循環依存や図にない依存関係の根拠となるソースコードを開けます。リポジトリに基づくアーキテクチャ図を作成した後、Archify は診断を一度だけ提案し、同意を得てから起動します。初回は分析用コンポーネントが自動でインストールされます。[Code Analysis の使い方](archify/modules/code-analysis/docs/USAGE.md)を参照してください。
 
 ```text
 Use archify Code Analysis on this repository: show module coupling, dependency cycles and hotspots.
