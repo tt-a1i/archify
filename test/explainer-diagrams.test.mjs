@@ -148,6 +148,20 @@ test('explainer diagrams: structural changes decorate only explicit preview targ
     { changes: [{ target: 'nonexistent', change: 'removed' }] })])), error => error.archifyDiagnostics[0].code === 'explainer/diagram-change-target');
 });
 
+test('explainer diagrams: structural changes reach edges identified only by their semantic key', async () => {
+  const compiled = compileExplainerDiagram('architecture', rows.architecture, { id: 'topology' });
+  const spec = { ...compiled, connections: compiled.connections.map(({ id, ...connection }) => connection) };
+  const baseline = await prepareExplainerDiagrams(documentOf([blockOf('architecture', spec)]));
+  const edge = baseline.diagrams.architecture.semantic.edges.find(entry => entry.from === 'api' && entry.to === 'redis');
+  assert.ok(edge.key !== undefined && !/data-edge-id=/.test(baseline.diagrams.architecture.svg), 'fixture edges carry a key but no authored id');
+  const { diagrams } = await prepareExplainerDiagrams(documentOf([blockOf('architecture', spec,
+    { changes: [{ target: edge.id, change: 'removed' }] })]));
+  const marked = [...diagrams.architecture.svg.matchAll(/<[a-zA-Z][^>]*data-explainer-change="removed"[^>]*>/g)].map(match => match[0]);
+  assert.ok(marked.length >= 1, 'the keyed edge receives the preview mark');
+  assert.ok(marked.every(tag => tag.includes(`data-edge-key="${edge.key}"`) && tag.includes('data-edge-from="api"')), 'only the targeted edge is marked');
+  assert.equal(hash(diagrams.architecture.html), diagrams.architecture.sha256);
+});
+
 test('explainer diagrams: structural changes name their targets as the preview shows them', async () => {
   const spec = compileExplainerDiagram('sequence', rows.sequence, { id: 'request' });
   const document = { schema_version: 1, diagram_type: 'explainer', meta: { id: 'changed-request', title: 'Changed request', locale: 'en' },

@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "kind": "pr-pack",
+  "title": "Checkout ledger rollout",
+  "summary": "Checkout now appends every accepted order to a ledger service and table; the synchronous audit hop and its audit_log table are retired.",
+  "repository": "acme/checkout",
+  "baseRef": "main",
+  "headRef": "feat/ledger",
+  "stats": { "filesChanged": 14, "additions": 412, "deletions": 96, "tablesAdded": 1, "tablesRemoved": 1 },
+  "views": [
+    {
+      "id": "schema",
+      "title": "Orders schema",
+      "caption": "ledger_entries joins orders through order_id; audit_log stays as a ghost where it used to hang off orders.",
+      "type": "erd",
+      "input": "checkout-ledger.erd.json"
+    },
+    {
+      "id": "topology",
+      "title": "Service topology",
+      "caption": "The ledger service enters beside the checkout API; the audit service and its synchronous call are removed in place.",
+      "type": "architecture",
+      "input": "checkout-ledger.architecture.json"
+    },
+    {
+      "id": "flow",
+      "title": "Checkout request sequence",
+      "caption": "POST /checkout gains ledger_ref in the response; the audit call disappears from the critical path.",
+      "type": "sequence",
+      "input": "checkout-ledger.sequence.json",
+      "collapsed": true
+    }
+  ],
+  "changes": [
+    { "subject": "ledger_entries", "kind": "table", "change": "added", "detail": "append-only, one row per accepted order", "view": "schema" },
+    { "subject": "orders.ledger_ref", "kind": "column", "change": "added", "detail": "nullable until the ledger write lands", "view": "schema" },
+    { "subject": "audit_log", "kind": "table", "change": "removed", "detail": "replaced by ledger_entries", "view": "schema" },
+    { "subject": "Ledger service", "kind": "service", "change": "added", "view": "topology" },
+    { "subject": "Audit service", "kind": "service", "change": "removed", "view": "topology" },
+    { "subject": "POST /checkout", "kind": "endpoint", "change": "modified", "detail": "response adds ledger_ref", "view": "flow" }
+  ]
+}

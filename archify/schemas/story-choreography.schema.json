@@ -1,0 +1,584 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/tt-a1i/archify/schemas/story-choreography.schema.json",
+  "title": "Archify Story Component Choreography",
+  "description": "Declares a general-purpose animated walkthrough over one or more native Archify diagrams, supporting explicit timeline tracks or declarative per-step choreography.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "views", "steps"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "kind": { "const": "story-choreography" },
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "title": { "type": "string", "minLength": 1, "maxLength": 160 },
+    "caption": { "type": "string", "maxLength": 600 },
+    "question": { "type": "string", "maxLength": 600 },
+    "locale": { "$ref": "common.schema.json#/$defs/locale" },
+    "preset": { "$ref": "common.schema.json#/$defs/visualPreset" },
+    "theme": { "enum": ["both", "light", "dark"] },
+    "chrome": { "enum": ["story", "minimal"] },
+    "badge": { "type": "string", "minLength": 1, "maxLength": 24 },
+    "statusBadges": { "enum": ["auto", "expanded", "compact", "none"] },
+    "callouts": { "$ref": "#/$defs/calloutMap" },
+    "duration": { "type": "number", "minimum": 3, "maximum": 180 },
+    "loop": { "type": "boolean" },
+    "allowStructuralTrace": { "type": "boolean" },
+    "stills": {
+      "type": "array",
+      "maxItems": 16,
+      "items": { "type": "number", "minimum": 0 }
+    },
+    "views": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "type"],
+        "anyOf": [
+          { "required": ["input"], "properties": { "input": { "type": "string" } } },
+          { "required": ["diagram"], "properties": { "diagram": { "type": "object" } } }
+        ],
+        "properties": {
+          "id": { "$ref": "common.schema.json#/$defs/id" },
+          "title": { "type": "string", "minLength": 1, "maxLength": 160 },
+          "type": { "$ref": "#/$defs/viewType" },
+          "input": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+\\.(?:json|html)$"
+          },
+          "diagram": { "type": "object" },
+          "preset": { "$ref": "common.schema.json#/$defs/visualPreset" },
+          "callouts": { "$ref": "#/$defs/calloutMap" }
+        }
+      }
+    },
+    "stages": { "$ref": "#/$defs/stageList" },
+    "pair": { "$ref": "#/$defs/pair" },
+    "transitions": { "$ref": "#/$defs/transitionList" },
+    "relabel": { "$ref": "#/$defs/relabelList" },
+    "enter": { "$ref": "#/$defs/enterList" },
+    "connect": { "$ref": "#/$defs/connectList" },
+    "fade": { "$ref": "#/$defs/fadeList" },
+    "focus": { "$ref": "#/$defs/focusList" },
+    "traces": { "$ref": "#/$defs/traceList" },
+    "metrics": { "$ref": "#/$defs/metricList" },
+    "detail": { "$ref": "#/$defs/detailOp" },
+    "details": {
+      "type": "array",
+      "maxItems": 8,
+      "items": { "$ref": "#/$defs/detailOp" }
+    },
+    "steps": { "$ref": "#/$defs/stepList" }
+  },
+  "$defs": {
+    "sourceRevision": {
+      "type": "string",
+      "pattern": "^(head|base|[0-9a-fA-F]{40})$"
+    },
+    "detailLines": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 20,
+      "items": { "type": "integer", "minimum": 1 }
+    },
+    "viewType": {
+      "enum": ["architecture", "workflow", "sequence", "dataflow", "lifecycle", "erd", "tree", "class", "timeline", "waterfall"]
+    },
+    "tone": {
+      "enum": ["accent", "neutral", "added", "modified", "removed"]
+    },
+    "callout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text"],
+      "properties": {
+        "text": { "type": "string", "minLength": 1, "maxLength": 32 },
+        "tone": { "$ref": "#/$defs/tone" }
+      }
+    },
+    "calloutMap": {
+      "type": "object",
+      "maxProperties": 64,
+      "additionalProperties": { "$ref": "#/$defs/callout" }
+    },
+    "stage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["view"],
+      "properties": {
+        "view": { "$ref": "common.schema.json#/$defs/id" },
+        "start": { "type": "number", "minimum": 0 },
+        "end": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    },
+    "stageList": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 12,
+      "items": { "$ref": "#/$defs/stage" }
+    },
+    "sharedNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/id" },
+        "targetId": { "$ref": "common.schema.json#/$defs/id" },
+        "label": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "subtitle": { "type": "string", "minLength": 1, "maxLength": 120 }
+      }
+    },
+    "sharedNodes": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 24,
+      "items": { "$ref": "#/$defs/sharedNode" }
+    },
+    "pair": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["before", "after", "at", "shared"],
+      "properties": {
+        "before": { "$ref": "common.schema.json#/$defs/id" },
+        "after": { "$ref": "common.schema.json#/$defs/id" },
+        "at": { "type": "number", "minimum": 0 },
+        "until": { "type": "number", "exclusiveMinimum": 0 },
+        "duration": { "type": "number", "minimum": 0.3, "maximum": 5 },
+        "shared": { "$ref": "#/$defs/sharedNodes" }
+      }
+    },
+    "transition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "to", "at", "shared"],
+      "properties": {
+        "from": { "$ref": "common.schema.json#/$defs/id" },
+        "to": { "$ref": "common.schema.json#/$defs/id" },
+        "at": { "type": "number", "minimum": 0 },
+        "until": { "type": "number", "exclusiveMinimum": 0 },
+        "duration": { "type": "number", "minimum": 0.3, "maximum": 5 },
+        "shared": { "$ref": "#/$defs/sharedNodes" }
+      }
+    },
+    "transitionList": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 11,
+      "items": { "$ref": "#/$defs/transition" }
+    },
+    "relabelOp": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["view", "node", "at"],
+      "anyOf": [
+        { "required": ["label"], "properties": { "label": { "type": "string" } } },
+        { "required": ["subtitle"], "properties": { "subtitle": { "type": "string" } } }
+      ],
+      "properties": {
+        "view": { "$ref": "common.schema.json#/$defs/id" },
+        "node": { "$ref": "common.schema.json#/$defs/id" },
+        "label": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "subtitle": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "at": { "type": "number", "minimum": 0 }
+      }
+    },
+    "relabelList": {
+      "type": "array",
+      "maxItems": 24,
+      "items": { "$ref": "#/$defs/relabelOp" }
+    },
+    "enterOp": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["view", "nodes", "at"],
+      "properties": {
+        "view": { "$ref": "common.schema.json#/$defs/id" },
+        "nodes": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "common.schema.json#/$defs/id" }
+        },
+        "at": { "type": "number", "minimum": 0 },
+        "stagger": { "type": "number", "minimum": 0, "maximum": 5 }
+      }
+    },
+    "enterList": {
+      "type": "array",
+      "maxItems": 32,
+      "items": { "$ref": "#/$defs/enterOp" }
+    },
+    "connectOp": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["view", "edges", "at"],
+      "properties": {
+        "view": { "$ref": "common.schema.json#/$defs/id" },
+        "edges": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "at": { "type": "number", "minimum": 0 },
+        "stagger": { "type": "number", "minimum": 0, "maximum": 5 }
+      }
+    },
+    "connectList": {
+      "type": "array",
+      "maxItems": 32,
+      "items": { "$ref": "#/$defs/connectOp" }
+    },
+    "fadeOp": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["view", "at", "to"],
+      "properties": {
+        "view": { "$ref": "common.schema.json#/$defs/id" },
+        "nodes": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/$defs/id" }
+        },
+        "edges": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "at": { "type": "number", "minimum": 0 },
+        "to": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "fadeList": {
+      "type": "array",
+      "maxItems": 32,
+      "items": { "$ref": "#/$defs/fadeOp" }
+    },
+    "focusOp": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["view", "nodes", "at"],
+      "properties": {
+        "view": { "$ref": "common.schema.json#/$defs/id" },
+        "nodes": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "common.schema.json#/$defs/id" }
+        },
+        "at": { "type": "number", "minimum": 0 },
+        "area": { "enum": ["center", "left"] }
+      }
+    },
+    "focusList": {
+      "type": "array",
+      "maxItems": 16,
+      "items": { "$ref": "#/$defs/focusOp" }
+    },
+    "traceOp": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["view", "edges", "times"],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/id" },
+        "view": { "$ref": "common.schema.json#/$defs/id" },
+        "edges": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "times": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "number", "minimum": 0 }
+        },
+        "end": { "type": "number", "exclusiveMinimum": 0 },
+        "travel": { "type": "number", "minimum": 0.3, "maximum": 5 }
+      }
+    },
+    "traceList": {
+      "type": "array",
+      "maxItems": 24,
+      "items": { "$ref": "#/$defs/traceOp" }
+    },
+    "metricSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "tool": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "symbol": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "path": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "line": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "metricValue": {
+      "anyOf": [
+        { "type": "number" },
+        { "type": "string", "minLength": 1, "maxLength": 40 }
+      ]
+    },
+    "metricOp": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["view", "node", "label", "before", "after", "at"],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/id" },
+        "view": { "$ref": "common.schema.json#/$defs/id" },
+        "node": { "$ref": "common.schema.json#/$defs/id" },
+        "label": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "before": { "$ref": "#/$defs/metricValue" },
+        "after": { "$ref": "#/$defs/metricValue" },
+        "at": { "type": "number", "minimum": 0 },
+        "slot": { "enum": ["left", "center", "right"] },
+        "tone": { "enum": ["accent", "neutral"] },
+        "source": { "$ref": "#/$defs/metricSource" }
+      }
+    },
+    "metricList": {
+      "type": "array",
+      "maxItems": 16,
+      "items": { "$ref": "#/$defs/metricOp" }
+    },
+    "detailSelection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["at", "lines"],
+      "properties": {
+        "at": { "type": "number", "minimum": 0 },
+        "lines": {
+          "type": "array",
+          "items": { "type": "integer", "minimum": 1 }
+        }
+      }
+    },
+    "detailOp": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["view", "nodes", "start", "end", "title", "path", "lines"],
+      "properties": {
+        "view": { "$ref": "common.schema.json#/$defs/id" },
+        "nodes": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "common.schema.json#/$defs/id" }
+        },
+        "start": { "type": "number", "minimum": 0 },
+        "end": { "type": "number", "exclusiveMinimum": 0 },
+        "title": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "note": { "type": "string", "maxLength": 200 },
+        "path": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "revision": { "$ref": "#/$defs/sourceRevision" },
+        "lines": { "$ref": "#/$defs/detailLines" },
+        "highlight": {
+          "type": "array",
+          "items": { "type": "integer", "minimum": 1 }
+        },
+        "selections": {
+          "type": "array",
+          "maxItems": 8,
+          "items": { "$ref": "#/$defs/detailSelection" }
+        }
+      }
+    },
+    "stepTransition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "shared"],
+      "properties": {
+        "from": { "$ref": "common.schema.json#/$defs/id" },
+        "duration": { "type": "number", "minimum": 0.3, "maximum": 5 },
+        "shared": { "$ref": "#/$defs/sharedNodes" }
+      }
+    },
+    "stepEnter": {
+      "anyOf": [
+        {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "common.schema.json#/$defs/id" }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["nodes"],
+          "properties": {
+            "nodes": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "$ref": "common.schema.json#/$defs/id" }
+            },
+            "stagger": { "type": "number", "minimum": 0, "maximum": 5 }
+          }
+        }
+      ]
+    },
+    "stepConnect": {
+      "anyOf": [
+        {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["edges"],
+          "properties": {
+            "edges": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 }
+            },
+            "stagger": { "type": "number", "minimum": 0, "maximum": 5 }
+          }
+        }
+      ]
+    },
+    "stepFade": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["to"],
+      "properties": {
+        "nodes": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/$defs/id" }
+        },
+        "edges": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "to": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "stepRelabel": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["node"],
+        "anyOf": [
+          { "required": ["label"], "properties": { "label": { "type": "string" } } },
+          { "required": ["subtitle"], "properties": { "subtitle": { "type": "string" } } }
+        ],
+        "properties": {
+          "node": { "$ref": "common.schema.json#/$defs/id" },
+          "label": { "type": "string", "minLength": 1, "maxLength": 120 },
+          "subtitle": { "type": "string", "minLength": 1, "maxLength": 120 }
+        }
+      }
+    },
+    "stepFocus": {
+      "anyOf": [
+        {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "common.schema.json#/$defs/id" }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["nodes"],
+          "properties": {
+            "nodes": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "$ref": "common.schema.json#/$defs/id" }
+            },
+            "area": { "enum": ["center", "left"] }
+          }
+        }
+      ]
+    },
+    "stepTrace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["edges"],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/id" },
+        "edges": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "action": { "enum": ["trace", "parallel"] },
+        "travel": { "type": "number", "minimum": 0.3, "maximum": 5 }
+      }
+    },
+    "stepMetrics": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["node", "label", "before", "after"],
+        "properties": {
+          "id": { "$ref": "common.schema.json#/$defs/id" },
+          "node": { "$ref": "common.schema.json#/$defs/id" },
+          "label": { "type": "string", "minLength": 1, "maxLength": 60 },
+          "before": { "$ref": "#/$defs/metricValue" },
+          "after": { "$ref": "#/$defs/metricValue" },
+          "slot": { "enum": ["left", "center", "right"] },
+          "tone": { "enum": ["accent", "neutral"] },
+          "source": { "$ref": "#/$defs/metricSource" }
+        }
+      }
+    },
+    "stepDetail": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["nodes", "title", "path", "lines"],
+      "properties": {
+        "nodes": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "common.schema.json#/$defs/id" }
+        },
+        "title": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "note": { "type": "string", "maxLength": 200 },
+        "path": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "revision": { "$ref": "#/$defs/sourceRevision" },
+        "lines": { "$ref": "#/$defs/detailLines" },
+        "highlight": {
+          "type": "array",
+          "items": { "type": "integer", "minimum": 1 }
+        },
+        "selections": {
+          "type": "array",
+          "maxItems": 8,
+          "items": { "$ref": "#/$defs/detailSelection" }
+        }
+      }
+    },
+    "stepItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "body"],
+      "properties": {
+        "at": { "type": "number", "minimum": 0 },
+        "duration": { "type": "number", "minimum": 2.5, "maximum": 60 },
+        "view": { "$ref": "common.schema.json#/$defs/id" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "body": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "tone": { "$ref": "#/$defs/tone" },
+        "badge": { "type": "string", "minLength": 1, "maxLength": 24 },
+        "transition": { "$ref": "#/$defs/stepTransition" },
+        "enter": { "$ref": "#/$defs/stepEnter" },
+        "connect": { "$ref": "#/$defs/stepConnect" },
+        "fade": { "$ref": "#/$defs/stepFade" },
+        "relabel": { "$ref": "#/$defs/stepRelabel" },
+        "focus": { "$ref": "#/$defs/stepFocus" },
+        "trace": { "$ref": "#/$defs/stepTrace" },
+        "metrics": { "$ref": "#/$defs/stepMetrics" },
+        "detail": { "$ref": "#/$defs/stepDetail" }
+      }
+    },
+    "stepList": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 16,
+      "items": { "$ref": "#/$defs/stepItem" }
+    }
+  }
+}
