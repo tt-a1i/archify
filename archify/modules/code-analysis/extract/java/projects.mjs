@@ -2,7 +2,7 @@
 // artifact resolution or upstream code is executed.
 import path from 'node:path';
 import { createHash } from 'node:crypto';
-import { DOMParser } from '@xmldom/xmldom';
+import { DOMParser } from '../../vendor/deps.cjs';
 import { fail } from '../shared/diagnostics.mjs';
 import { JAVA_BUILD_MARKERS } from '../shared/files.mjs';
 

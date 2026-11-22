@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
-import ts from 'typescript';
+import ts from '../vendor/typescript.cjs';
 import { extractFacts, buildGraph } from '../lib/analysis.mjs';
 import { evaluate } from '../evaluate/index.mjs';
 import { comparability } from '../lib/review.mjs';
