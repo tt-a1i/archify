@@ -478,8 +478,13 @@
   "legend.change.removed": "− 削除",
   "legend.change.unchanged": "変更なし",
   "viewer.feedback.label": "フィードバックと応援",
-  "viewer.feedback.prompt": "質問やアイデアはありますか？",
-  "viewer.feedback.email": "メールで送る",
+  "viewer.feedback.trigger": "フィードバック",
   "viewer.feedback.issue": "Issue を作成",
-  "viewer.feedback.star": "GitHub でスターを付ける"
+  "viewer.feedback.issueHint": "不具合報告や改善提案",
+  "viewer.feedback.email": "メールで送る",
+  "viewer.feedback.copyEmail": "メールアドレスをコピー",
+  "viewer.feedback.star": "Star",
+  "viewer.feedback.starLabel": "GitHub で Archify にスターを付ける",
+  "viewer.feedback.starTitle": "Archify は役に立ちましたか？",
+  "viewer.feedback.starBody": "GitHub でスターをいただけると開発の励みになります。"
 }

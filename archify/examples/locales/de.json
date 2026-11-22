@@ -478,8 +478,13 @@
   "legend.change.removed": "− Entfernt",
   "legend.change.unchanged": "Unverändert",
   "viewer.feedback.label": "Feedback und Unterstützung",
-  "viewer.feedback.prompt": "Fragen oder Ideen?",
-  "viewer.feedback.email": "E-Mail senden",
+  "viewer.feedback.trigger": "Feedback",
   "viewer.feedback.issue": "Issue eröffnen",
-  "viewer.feedback.star": "Auf GitHub einen Stern geben"
+  "viewer.feedback.issueHint": "Fehler melden oder Idee vorschlagen",
+  "viewer.feedback.email": "E-Mail senden",
+  "viewer.feedback.copyEmail": "E-Mail-Adresse kopieren",
+  "viewer.feedback.star": "Star",
+  "viewer.feedback.starLabel": "Archify auf GitHub einen Stern geben",
+  "viewer.feedback.starTitle": "Hat dir Archify geholfen?",
+  "viewer.feedback.starBody": "Ein Stern auf GitHub hilft uns, es weiterzuentwickeln."
 }
