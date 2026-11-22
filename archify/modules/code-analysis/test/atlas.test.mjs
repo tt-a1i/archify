@@ -94,6 +94,22 @@ test('atlas: module labels are the shortest path tails that stay unique', () => 
   );
 });
 
+test('atlas: separate root-file modules keep their names', () => {
+  const facts = {
+    files: [{ path: 'atlas.js', loc: 12 }, { path: 'overlay.js', loc: 16 }],
+    functions: [],
+    imports: [],
+  };
+  const graph = {
+    modules: [
+      { id: 'atlas', label: 'atlas.js', path: '', fanIn: 0, fanOut: 0 },
+      { id: 'overlay', label: 'overlay.js', path: '', fanIn: 0, fanOut: 0 },
+    ],
+    fileModules: { 'atlas.js': 'atlas', 'overlay.js': 'overlay' },
+  };
+  assert.deepEqual(buildAtlas({ facts, graph }).modules.map(module => module.label), ['atlas.js', 'overlay.js']);
+});
+
 test('atlas: the overlay embeds the atlas before the Classic script only when raw facts are given', (t) => {
   const { facts, graph, findings } = analyze(t);
   const html = '<html><body><div class="toolbar"></div><svg><g data-node-id="app"></g></svg></body></html>';

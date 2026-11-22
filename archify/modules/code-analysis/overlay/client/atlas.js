@@ -712,7 +712,7 @@
     if (f) {
       var what = findingWhat(f);
       return '<div class="selected"><h4>' + esc(findingTitle(f)) + '</h4><p><span style="color:' + (TONE[f.severity] || TONE.info) + '">' + esc(tr(f.severity)) + '</span>' + (f.accepted ? tr(" · accepted in baseline") : '') + ' · ' + esc(what) + '</p>' +
-        '<button type="button" class="atlas-evidence" data-id="' + esc(f.id) + '">' + esc(tr(standalone ? 'Open source evidence' : 'Open evidence in Classic view')) + '</button></div>';
+        '<button type="button" class="atlas-evidence" data-id="' + esc(f.id) + '">' + esc(tr(standalone ? 'Open finding details' : 'Open finding details in Classic view')) + '</button></div>';
     }
     if (state.file !== -1) {
       var picked = F[state.file];
@@ -902,7 +902,15 @@
       side.querySelectorAll('[data-module]').forEach(function (el) { el.addEventListener('click', function () { var i = Number(el.getAttribute('data-module')); select(state.focusModule === i ? -1 : i, -1); }); });
     }
     var ev = side.querySelector('.atlas-evidence');
-    if (ev) ev.addEventListener('click', function () { if (window.__archifyShowFinding) window.__archifyShowFinding(ev.getAttribute('data-id')); });
+    if (ev) ev.addEventListener('click', function () {
+      if (!window.__archifyShowFinding) return;
+      var selection = window.__archifyAtlas.saveSelection();
+      window.__archifyShowFinding(ev.dataset.id, 'atlas', function () {
+        if (!standalone) showView('atlas');
+        window.__archifyAtlas.restoreSelection(selection);
+        side.querySelector('.atlas-evidence')?.focus({ preventScroll: true });
+      });
+    });
   }
 
   function renderFindingImports(file) {
@@ -1010,7 +1018,7 @@
     var fix = (info.supportedFixes || [])[0];
     if (fix) h += head(tr('First step')) + '<p class="atlas-fix">' + esc(fix) + '</p>';
     if (owner !== -1) h += head(tr('Module')) + '<button type="button" class="atlas-rel" data-module="' + owner + '" data-keep="1"><i style="background:' + hue(owner, theme()) + '"></i><span>' + esc(M[owner].label) + '</span><em>' + esc(tr('{n} open', { n: modOpen[owner] })) + ' ›</em></button>';
-    h += '<div class="atlas-acts"><button type="button" class="primary atlas-evidence" data-id="' + esc(f.id) + '">' + esc(tr(standalone ? 'Open source evidence' : 'Open evidence in Classic view')) + '</button></div>';
+    h += '<div class="atlas-acts"><button type="button" class="primary atlas-evidence" data-id="' + esc(f.id) + '">' + esc(tr(standalone ? 'Open finding details' : 'Open finding details in Classic view')) + '</button></div>';
     return h;
   }
   function filePanel(fi) {

@@ -308,7 +308,7 @@ html[data-bauify-focus="on"] #bauify-layer g.count.focus rect { opacity: 1; }
 #bauify-overview .counts .nw { white-space: nowrap; }
 /* Source page: code needs width more than the diagram does while it is being read. */
 @media (min-width: 1181px) {
-  html[data-bauify-source="on"] #bauify-reader:not(.collapsed) { width: min(760px, 54vw); }
+  html[data-bauify-source="on"]:not([data-analysis-mode="standalone"]) #bauify-reader:not(.collapsed) { width: min(760px, 54vw); }
   /* A docked reader takes width from the page. The fly-out rides on the canvas
      edge instead, so shrinking the canvas would push it off the left side. */
   html[data-bauify="on"][data-bauify-source="on"]:not([data-bauify-reader-collapsed]):not([data-bauify-flymode]) .diagram-container,

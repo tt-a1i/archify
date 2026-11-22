@@ -405,7 +405,12 @@ test('Code Analysis refuses changed IR and preserves captured source in the curr
   assert.equal(await run("document.querySelector('#bauify-panel .fly-ev').dataset.file"), 'b.mjs');
   await run("document.querySelector('#bauify-panel .fly-ev').click()");
   assert.equal(await run("document.getElementById('bauify-code').hidden"), false);
+  assert.match(await run("document.querySelector('#bauify-code .source-back').textContent"), /Dependency/);
   await run("document.querySelector('#bauify-code .source-back').click()");
+  assert.equal(await run("document.activeElement.matches('#bauify-panel button.fly-ev')"), true);
+  await run("document.querySelector('#bauify-panel .fly-ev').click()");
+  await run("document.activeElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))");
+  assert.equal(await run("document.activeElement.matches('#bauify-panel button.fly-ev') && document.getElementById('bauify-code').hidden"), true);
   await run("document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))");
   assert.deepEqual(await run("[document.documentElement.hasAttribute('data-bauify-fly'), document.documentElement.hasAttribute('data-bauify-pick')]"), [false, false], 'Esc closes the fly-out and clears the pick');
   await run("document.querySelector('#bauify-stage .stage-code').click()");
@@ -694,11 +699,22 @@ test('Code Analysis Atlas draws the analyzed tree, focuses a module and hands a 
   assert.ok(await run("!!document.querySelector('#bauify-detail pre')"), 'the reading column shows the source excerpt');
   assert.deepEqual(await run("[document.getElementById('bauify-atlas').hidden, document.documentElement.getAttribute('data-bauify-views'), getComputedStyle(document.getElementById('bauify-reader')).display !== 'none']"), [true, null, true], 'evidence shows beside the diagram');
 
+  await run("document.querySelector('#bauify-detail .inline-evidence .ref').click()");
+  assert.match(await run("document.querySelector('#bauify-code .source-back').textContent"), /Finding/);
+  await run("document.querySelector('#bauify-code .source-back').click()");
+  assert.equal(await run("document.activeElement.matches('#bauify-detail .inline-evidence .ref')"), true);
+  assert.match(await run("document.querySelector('#bauify-detail .back').textContent"), /Atlas/);
+  await run("document.querySelector('#bauify-detail .back').click()");
+  assert.equal(await run("document.documentElement.getAttribute('data-bauify-atlas-finding')"), atlas.findings[complex].id);
+  assert.equal(await run("!document.getElementById('bauify-atlas').hidden && document.activeElement.matches('.atlas-evidence')"), true);
+  await until("document.querySelector('#bauify-atlas canvas').width > 0", 'Atlas did not reopen after evidence');
+
   // The Atlas 3D tab shows the same run in the same place, every item accounted for.
   await run("document.querySelector('.views-option[data-view=atlas3d]').click()");
-  assert.deepEqual(await run("[document.getElementById('bauify-atlas').hidden, document.getElementById('bauify-atlas3d').hidden, document.documentElement.getAttribute('data-bauify-views'), typeof window.THREE]"),
-    [true, false, 'atlas3d', 'object'], 'Atlas 3D replaces the Atlas below the diagram and runs three.js on first open');
+  assert.deepEqual(await run("[document.getElementById('bauify-atlas').hidden, document.getElementById('bauify-atlas3d').hidden, document.documentElement.getAttribute('data-bauify-views')]"),
+    [true, false, 'atlas3d'], 'Atlas 3D replaces the Atlas below the diagram');
   if (await run("!!document.querySelector('#bauify-atlas3d canvas')")) {
+    assert.equal(await run("typeof window.THREE"), 'object', 'the WebGL view loads three.js on first open');
     await until(`document.documentElement.getAttribute('data-bauify-atlas3d-drawn') === '${atlas.functions.length}'`, 'Atlas 3D did not draw');
     assert.deepEqual(await run("[window.__archifyAtlas3d.view.consistent, window.__archifyAtlas3d.view.counts.files]"), [true, atlas.files.length], 'every file, function and finding of the run is in the model');
   } else assert.match(await run("document.querySelector('#bauify-atlas3d .a3d-fallback').textContent"), /WebGL/, 'without WebGL the view says so');
