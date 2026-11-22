@@ -14,6 +14,7 @@ import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeFrameAttrs, changeLeg
 import { gridLayout, resolveComponentPos, validateGridPlacement } from './grid.mjs';
 import { automaticComponentPositions, boundaryInsets } from './automatic-placement.mjs';
 import { frameLanePlacements } from './frame-lane-placement.mjs';
+import { facingLabelSpacingCandidate, labelBesideStraightShaft } from './label-spacing-placement.mjs';
 import { placeCrossedLeaf, placeCrossedSinks, facingFramePlacements } from './crossed-leaf-placement.mjs';
 import { centeredFanOutCandidates, crossingPlacementCandidates, foldedChain, frameAttachmentCandidates, frameEnclosureCandidates, groupMoveCanPreserveRoutes, groupMovePreservesRoutes, measuredCrossingPairs, nearAlignmentCandidates, routeSpanMeasures, sharedNeighborCandidates, strongestLayerOrder, terminalBranchCandidates } from './automatic-placement-candidates.mjs';
 import {
@@ -1445,7 +1446,55 @@ function improveFrameLanes(initial) {
 
 const placedComposition = automaticComposition ? finishAutomaticLabels(automaticComposition)
   : repairFixedCanvasLabels(fixedCanvasComposition(resolveConnectionComposition(components, pathFor, rawBoundaries)));
-const composition = improveFrameLanes(alignNearlyFacingCards(simplifyFinishedComposition(placedComposition)));
+function reserveFacingLabelSpace(initial) {
+  if (!whollyInferred || !remainingPlacementRoutes || !initial.labels.length
+      || connections.some(conn => !canRoute(conn) || !hasAutomaticRouteGeometry(conn)
+        || ['fromSide', 'toSide', 'labelAt', 'labelDx', 'labelDy', 'labelSegment'].some(key => conn[key] !== undefined))) return initial;
+  let current = initial;
+  for (const horizontal of [true, false]) {
+    if (!remainingPlacementRoutes) break;
+    const spacing = facingLabelSpacingCandidate(current, horizontal);
+    if (!spacing) continue;
+    const { moved, relations } = spacing;
+    const bounds = boundsFor(moved);
+    if (frameEnclosures(moved, bounds).length) continue;
+    const candidate = routePlacement(moved, bounds, initial.routingOptions);
+    const composed = resolveConnectionComposition(moved, candidate.pathFor, bounds);
+    const routes = new Map(composed.routes.map(route => [route.relation, route]));
+    const next = simplifyFinishedComposition(finishAutomaticLabels(composed, true, {
+      requiresSlot: label => !relations.has(label.relation)
+        || labelBesideStraightShaft(routes.get(label.relation), label),
+    }), candidate);
+    const labels = new Map(next.labels.map(label => [label.relation, label]));
+    const oldLabels = new Map(current.labels.map(label => [label.relation, label]));
+    if (next.routes.some((route, index) => {
+      const before = current.routes[index];
+      const { relation } = route;
+      return route.points.length > before.points.length
+        || ((relations.has(relation) || labelBesideStraightShaft(before, oldLabels.get(relation)))
+          && !labelBesideStraightShaft(route, labels.get(relation)));
+    })) continue;
+    const crossings = measuredCrossingPairs(current.routes);
+    if (measuredCrossingPairs(next.routes).some(([a, b]) => !crossings.some(([x, y]) => a === x && b === y))) continue;
+    const before = routeBudgetMetrics({ routedRelations: current.routes });
+    const after = routeBudgetMetrics({ routedRelations: next.routes });
+    if (after.routesOverSuggestedStretch > before.routesOverSuggestedStretch
+        || !candidate.planIsClear(next.viewBox, { checkProvisionalLabels: false })
+        || !preservesLabels(drawnLabelProblems(current), drawnLabelProblems(next))) continue;
+    try {
+      withIsolatedDiagnosticRecording(() => validateArchitecture(next, candidate));
+    } catch (error) {
+      if (!error.archifyDiagnostics?.length) throw error;
+      continue;
+    }
+    router = candidate;
+    for (const [id, box] of moved) components.set(id, box);
+    current = next;
+  }
+  return current;
+}
+
+const composition = reserveFacingLabelSpace(improveFrameLanes(alignNearlyFacingCards(simplifyFinishedComposition(placedComposition))));
 const {
   titles: { boundaries }, labels: connectionLabels, viewBox,
 } = composition;
