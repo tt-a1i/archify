@@ -83,6 +83,46 @@ test('check: a clean run says nothing about coverage and the gate is unchanged',
   assert.doesNotMatch(text.stdout, /Not analyzed/);
 });
 
+test('check: unavailable TypeScript packages produce evidence without passing a quality gate', (t) => {
+  const root = fixture(t, {
+    'src/index.ts': 'export const value = 1;',
+    'website/package.json': '{"devDependencies":{"base-config":"1.0.0"}}',
+    'website/tsconfig.json': '{"extends":"base-config/strict"}',
+    'website/index.ts': 'export const unavailable = 1;',
+  });
+  const out = path.join(root, 'out');
+  const args = ['--language', 'ts', '--out', out, '--json'];
+  const gate = check(root, args);
+  assert.equal(gate.status, 2, gate.stdout + gate.stderr);
+  const receipt = JSON.parse(gate.stdout);
+  assert.equal(receipt.status, 'incomplete');
+  assert.equal(receipt.gate.blocked, 'typescript-project-coverage-incomplete');
+  assert.equal(receipt.coverage.unavailableTypeScriptFiles, 1);
+  assert.equal(receipt.coverage.analyzedFiles, 1);
+  assert.match(formatText(receipt), /website\/tsconfig.json requires base-config\/strict/);
+  const previous = JSON.parse(fs.readFileSync(path.join(out, 'findings.json'), 'utf8'));
+  assert.equal(previous.analysis.coverage.unavailableTypeScriptFiles, 1);
+  const inspection = check(root, [...args, '--fail-on', 'never']);
+  assert.equal(inspection.status, 0, inspection.stdout + inspection.stderr);
+  assert.equal(JSON.parse(inspection.stdout).status, 'incomplete');
+  const baseline = path.join(root, 'baseline.json');
+  const replace = check(root, [...args, '--update-baseline', '--baseline', baseline]);
+  assert.equal(replace.status, 2);
+  assert.equal(JSON.parse(replace.stdout).diagnostics[0].code, 'baseline/project-coverage-incomplete');
+  assert.equal(fs.existsSync(baseline), false);
+
+  const packageDir = path.join(root, 'website/node_modules/base-config');
+  fs.mkdirSync(packageDir, { recursive: true });
+  fs.writeFileSync(path.join(packageDir, 'package.json'), '{"name":"base-config","version":"1.0.0"}');
+  fs.writeFileSync(path.join(packageDir, 'strict.json'), '{"compilerOptions":{"strict":true}}');
+  const compare = check(root, ['--language', 'ts', '--new-only', '--compare', path.join(out, 'findings.json'), '--json']);
+  assert.equal(compare.status, 2, compare.stdout + compare.stderr);
+  assert.equal(JSON.parse(compare.stdout).gate.blocked, 'typescript-project-coverage-incomplete');
+  const restored = check(root, ['--language', 'ts', '--json']);
+  assert.equal(restored.status, 0, restored.stdout + restored.stderr);
+  assert.equal(JSON.parse(restored.stdout).files, 2);
+});
+
 test('check: threshold errors stay errors and partial coverage does not change the finding gate', (t) => {
   const root = fixture(t, {
     'src/ok.py': 'def answer():\n    return 42\n',

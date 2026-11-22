@@ -55,6 +55,8 @@ export function analysisContext({ graph, config = {}, facts = null, active = RUL
   const goBuild = graph?.repository?.language === 'go' ? facts?.languageScope?.build : null;
   const tsProjects = graph?.repository?.language === 'ts' ? facts?.languageScope?.projects : null;
   const tsSdks = graph?.repository?.language === 'ts' ? facts?.languageScope?.sdks : null;
+  const unavailableTypeScriptFiles = tsProjects && facts.languageScope.unavailableProjects?.length
+    ? facts.languageScope.excludedByProject.length : 0;
   const cppBuild = ['c', 'cpp'].includes(graph?.repository?.language) ? facts?.languageScope?.build : null;
   return {
     analyzer: { name: PACKAGE.name, version: PACKAGE.version },
@@ -84,6 +86,7 @@ export function analysisContext({ graph, config = {}, facts = null, active = RUL
       files: facts ? facts.files.filter((f) => !excludedRoles.has(f.role)).length : null,
       excludedRoles: [...excludedRoles].sort(compareText),
       parseErrors: facts?.parse_errors ? facts.parse_errors.map((e) => e.path).sort(compareText) : [],
+      ...(unavailableTypeScriptFiles ? { unavailableTypeScriptFiles } : {}),
     },
   };
 }

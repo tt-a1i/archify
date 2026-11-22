@@ -141,7 +141,8 @@
           "properties": {
             "files": { "type": ["integer", "null"], "minimum": 0 },
             "excludedRoles": { "type": "array", "items": { "type": "string" } },
-            "parseErrors": { "type": "array", "items": { "type": "string" } }
+            "parseErrors": { "type": "array", "items": { "type": "string" } },
+            "unavailableTypeScriptFiles": { "type": "integer", "minimum": 1 }
           }
         }
       }

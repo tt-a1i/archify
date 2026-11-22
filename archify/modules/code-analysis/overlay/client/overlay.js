@@ -763,6 +763,12 @@
     if (files.translationUnits !== undefined) lines.push(plural(files.translationUnits, 'translation unit') + tr(' in the compilation database') + (files.notCompiled ? ' · ' + plural(files.notCompiled, 'source file') + tr(' without a command') : ''));
     var pe = files.parseErrors || [];
     if (pe.length) lines.push(plural(pe.length, 'file') + tr(" could not be parsed: ") + pe.slice(0, 3).join(', ') + (pe.length > 3 ? ' …' : ''));
+    if (files.unavailableTypeScriptFiles) {
+      lines.push(tr('TypeScript files omitted because a base configuration is unavailable: {count}', { count: files.unavailableTypeScriptFiles }));
+      files.unavailableTypeScriptProjects.forEach(function (project) {
+        lines.push(tr('{config} requires {packages}', { config: project.config, packages: project.missingExtends.join(', ') }));
+      });
+    }
     var u = c.unresolved || {}, unresolved = (u.unknown || 0) + (u.opaque || 0);
     // Java counts each unresolved type reference as well as imports.
     if (unresolved) lines.push(plural(unresolved, c.language === 'java' ? 'dependency record' : 'import') + tr(" could not be resolved"));
@@ -779,7 +785,7 @@
     }
     var missing = [['complexity/', tr("complexity")], ['redundancy/', tr("duplication")], ['architecture/', tr("architecture boundaries (none configured)")]].filter(function (d) { return !run.some(function (r) { return r.indexOf(d[0]) === 0; }); }).map(function (d) { return d[1]; });
     if (missing.length) lines.push(tr("Not checked: ") + missing.join(', '));
-    var incomplete = (c.otherLanguages || []).length || files.notCompiled || pe.length || unresolved || off.length || (c.ambiguousModules || []).length || (dup && !dup.complete);
+    var incomplete = (c.otherLanguages || []).length || files.notCompiled || files.unavailableTypeScriptFiles || pe.length || unresolved || off.length || (c.ambiguousModules || []).length || (dup && !dup.complete);
     return ("<details class=\"coverage\">" + "<summary>" + tr("Analysis scope")) + ' · ' + esc(LANGS[c.language] || c.language || tr("Unknown")) + (incomplete ? tr(" · incomplete") : '') + '</summary><div class="ev cov">' + lines.map(function (l) { return '<div>' + esc(l) + '</div>'; }).join('') + '</div></details>';
   }
   // Duplicate detection reports its own file coverage: files it skipped (vendored,

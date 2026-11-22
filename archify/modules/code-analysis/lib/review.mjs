@@ -92,7 +92,7 @@ export function reviewFindings(diagnostics, { baseline = null, previous = null, 
       entries: accepted.size,
       accepted: ids((d) => findings[d.id].status === 'accepted'),
       changed: ids((d) => findings[d.id].status === 'accepted-changed'),
-      stale: [...accepted.values()].filter((e) => !current.has(e.id)).map((e) => ({ id: e.id, code: e.code, reason: e.reason })).sort((a, b) => compareText(a.id, b.id)),
+      stale: analysis?.coverage?.unavailableTypeScriptFiles ? [] : [...accepted.values()].filter((e) => !current.has(e.id)).map((e) => ({ id: e.id, code: e.code, reason: e.reason })).sort((a, b) => compareText(a.id, b.id)),
     } : null,
     comparison: before ? comparisonOf({ previous, before, current, findings, ids, analysis, files, measurement, matchedBefore: pairs.matchedBefore }) : null,
     findings,
@@ -147,6 +147,7 @@ function comparisonOf({ previous, before, current, findings, ids, analysis, file
   const ran = analysis ? new Set(Object.keys(analysis.ruleVersions)) : null;
   const known = files ? new Set(files) : null;
   const parseErrors = new Set(analysis?.coverage?.parseErrors || []);
+  const missingFileCause = analysis?.coverage?.unavailableTypeScriptFiles ? 'typescript-project-coverage-incomplete' : 'files-missing';
   const added = [...current.values()].filter((d) => findings[d.id].since === 'new');
   const notDetected = [...before.values()].filter((d) => !matchedBefore.has(d.id)).map((d) => {
     const involved = d.evidenceDigest?.files || [];
@@ -159,7 +160,7 @@ function comparisonOf({ previous, before, current, findings, ids, analysis, file
     const likelyCause = d.external ? externalAbsenceCause(d, analysis, reasons) || (candidates.length ? 'possibly-renamed' : null)
       : ran && !ran.has(d.code) ? 'rule-not-run'
       : involved.some((f) => parseErrors.has(f)) ? 'parse-error'
-        : known && involved.some((f) => !known.has(f)) ? 'files-missing'
+        : known && involved.some((f) => !known.has(f)) ? missingFileCause
           : candidates.length ? 'possibly-renamed' : null;
     return { id: d.id, code: d.code, severity: d.severity, message: d.message, ...(d.external ? { sourceId: d.external.sourceId } : {}), ...(likelyCause ? { likelyCause } : {}), ...(likelyCause === 'possibly-renamed' ? { candidates } : {}) };
   }).sort((a, b) => compareText(a.id, b.id));
@@ -232,6 +233,9 @@ export function comparability(before, after) {
   }
   const roles = (c) => (c?.excludedRoles || []).join(',');
   if (roles(before.coverage) !== roles(after.coverage)) add('scope-changed', 'Excluded file roles changed.');
+  if (before.coverage?.unavailableTypeScriptFiles || after.coverage?.unavailableTypeScriptFiles) {
+    add('typescript-project-coverage-incomplete', 'A scan omitted files from TypeScript projects with unavailable configurations. Missing findings do not establish a fix.');
+  }
   const newParseErrors = (after.coverage?.parseErrors || []).filter((f) => !(before.coverage?.parseErrors || []).includes(f));
   if (newParseErrors.length) add('parse-errors', `${newParseErrors.length} file${newParseErrors.length === 1 ? '' : 's'} failed to parse this time: ${newParseErrors.slice(0, 5).join(', ')}${newParseErrors.length > 5 ? ', …' : ''}.`);
   reasons.push(...externalComparisonReasons(before.external, after.external));

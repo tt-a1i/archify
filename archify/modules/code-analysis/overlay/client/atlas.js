@@ -863,6 +863,7 @@
     };
     h += '<div class="k">' + tr('Modules by coupling · fan-in / fan-out') + '</div><div class="module-list">' + order.map(moduleRow).join('') + '</div>';
     var cov = atlas.coverage, total = Math.max(cov.records, 1);
+    if (cov.unavailableTypeScriptFiles) h += '<div class="note">' + esc(tr('TypeScript files omitted because a base configuration is unavailable: {count}', { count: cov.unavailableTypeScriptFiles })) + '</div>';
     var breakdown = fmt(cov.resolved) + tr(' resolved · ') + fmt(cov.external) + tr(' external · ') + fmt(cov.unknown) + tr(' unresolved') + (cov.outside ? ' · ' + fmt(cov.outside) + tr(' outside the analyzed scope') : '') + (cov.parseErrors ? ' · ' + plural(cov.parseErrors, 'file') + tr(' failed to parse') : '') + (cov.notCompiled ? ' · ' + plural(cov.notCompiled, 'source file') + tr(' without a command') : '');
     h += '<div class="k">' + tr('Dependency records · ') + fmt(cov.records) + '</div><div class="bar" tabindex="0" role="img" aria-label="' + esc(breakdown) + '" data-analysis-tip="' + esc(breakdown + tr('. Unresolved records draw no curve, so a missing curve does not prove there is no dependency.')) + '">' +
       [[cov.resolved, '#34D399'], [cov.external, '#64748B'], [cov.unknown, '#FBBF24'], [cov.outside, '#94A3B8']].map(function (part) { return '<span style="width:' + (100 * (part[0] || 0) / total) + '%;background:' + part[1] + '"></span>'; }).join('') + '</div>' +

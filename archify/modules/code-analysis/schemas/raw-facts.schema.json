@@ -1213,6 +1213,18 @@
                 "properties": { "file": { "type": "string" }, "config": { "type": "string" } }
               }
             },
+            "unavailableProjects": {
+              "type": "array", "minItems": 1,
+              "description": "Nested packages omitted because a declared package providing a TypeScript base configuration was unavailable.",
+              "items": {
+                "type": "object", "additionalProperties": false,
+                "required": ["config", "missingExtends"],
+                "properties": {
+                  "config": { "type": "string", "minLength": 1 },
+                  "missingExtends": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
+                }
+              }
+            },
             "limitations": { "type": "array", "items": { "type": "string" } }
           }
         },

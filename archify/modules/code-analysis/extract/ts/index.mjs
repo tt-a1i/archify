@@ -21,7 +21,7 @@ export const id = 'ts';
 // Revision of this adapter's own extraction logic, recorded as
 // repository.adapterRevision. Bump it when the same sources can yield different
 // raw facts (see docs/TECH-GUIDE.md, "Extractor revisions").
-export const REVISION = 30;
+export const REVISION = 31;
 
 const SOURCE_EXT = /\.(?:[mc]?[jt]s|[jt]sx)$/;
 // Placeholder specifier for import()/require() calls whose argument is not a string literal.
@@ -45,7 +45,8 @@ export function extract(root, config, { onCapture, capturedOnly = false } = {}) 
   const mixedSdks = sdkGroups.length > 1;
   const segments = sdkGroups.map(({ sdk, files }) => {
     const engine = createExtractor(sdk.ts);
-    return { sdk, engine, prepared: engine.prepare(absRoot, files, snapshot, { capturedOnly, mixedSdks }) };
+    const allowUnavailable = sdk.source === 'bundled' && !mixedSdks && !config.typescript?.requireProjectSdk;
+    return { sdk, engine, prepared: engine.prepare(absRoot, files, snapshot, { capturedOnly, mixedSdks, allowUnavailable }) };
   });
   if (!capturedOnly && config.typescript?.requireProjectSdk) {
     const missing = segments.find(segment => segment.prepared.projects.length && segment.sdk.status === 'fallback');
@@ -88,7 +89,8 @@ export function extract(root, config, { onCapture, capturedOnly = false } = {}) 
     repository: { ...base.repository, adapter: results.length === 1 ? base.repository.adapter : 'typescript@multi' },
     languageScope: { language: 'ts', sdk: results.length === 1 ? base.languageScope.sdk : { version: 'multi', source: 'multi', status: 'matched' },
       sdks: results.map(({ sdk }) => sdkRecord(sdk)), projects,
-      excludedByProject: [],
+      excludedByProject: base.languageScope.excludedByProject,
+      ...(base.languageScope.unavailableProjects ? { unavailableProjects: base.languageScope.unavailableProjects } : {}),
       limitations: [...new Set([...results.flatMap(({ sdk }) => sdk.limitations), ...(projects.length > 1
         ? ['Call targets follow captured members of the caller Program. Cross-SDK targets and forwarding paths that disagree with recorded owner imports remain unresolved.'] : [])])] },
     files: results.flatMap(({ facts }) => facts.files).sort((a, b) => a.path < b.path ? -1 : a.path > b.path ? 1 : 0),
@@ -123,9 +125,9 @@ const COMPILER_OPTIONS = {
   allowImportingTsExtensions: true,
 };
 
-function prepare(root, files, snapshot, { capturedOnly, mixedSdks }) {
+function prepare(root, files, snapshot, { capturedOnly, mixedSdks, allowUnavailable }) {
   const inputs = snapshotHost(root, snapshot, { capturedOnly });
-  return { inputs, ...configuredProjects(root, files, inputs, snapshot, mixedSdks) };
+  return { inputs, ...configuredProjects(root, files, inputs, snapshot, mixedSdks, allowUnavailable) };
 }
 
 // Both project membership and lexical extraction read the same captured source
@@ -254,7 +256,9 @@ function run(root, config, { snapshot, sdk, prepared, fileSet, capturedOnly }) {
       projects: projects.map(({ config, optionsDigest, selectionDigest, files, members }) => ({
         config, optionsDigest, ...(selectionDigest ? { selectionDigest } : {}), files, members,
       })),
-      excludedByProject: [], limitations: [...sdk.limitations, ...(projects.length > 1
+      excludedByProject: prepared.excludedByProject,
+      ...(prepared.unavailableProjects.length ? { unavailableProjects: prepared.unavailableProjects } : {}),
+      limitations: [...sdk.limitations, ...(projects.length > 1
         ? ['Call targets follow captured members of the caller Program. Cross-SDK targets and forwarding paths that disagree with recorded owner imports remain unresolved.'] : [])] },
     files: fileRecords,
     packageMarkers,
@@ -273,8 +277,9 @@ function lineOf(source, node) {
 }
 
 /** Assign selected sources to configured projects or inferred-project defaults. */
-function configuredProjects(root, files, inputs, snapshot, mixedSdks) {
+function configuredProjects(root, files, inputs, snapshot, mixedSdks, allowUnavailable) {
   const parsed = new Map();
+  const unavailable = new Map();
   const groups = new Map();
   const owners = [];
   const groupFiles = new Set(files);
@@ -287,10 +292,13 @@ function configuredProjects(root, files, inputs, snapshot, mixedSdks) {
   const loadConfig = relative => {
     if (parsed.has(relative)) return parsed.get(relative);
     const file = path.join(root, relative);
-    const loaded = ts.readConfigFile(file, inputs.readFile);
+    // TypeScript normalizes diagnostic paths to slashes and requires the
+    // config-file identity passed to its parser to have the same form.
+    const compilerPath = toPosix(file);
+    const loaded = ts.readConfigFile(compilerPath, inputs.readFile);
     inputs.assertUnchanged();
     if (loaded.error) fail('extract/tsconfig-invalid', 'Cannot read a TypeScript project configuration.', { subject: { file } });
-    const result = ts.parseJsonConfigFileContent(loaded.config, inputs, path.dirname(file), undefined, file);
+    const result = ts.parseJsonConfigFileContent(loaded.config, inputs, path.posix.dirname(compilerPath), undefined, compilerPath);
     inputs.assertUnchanged();
     const roots = result.fileNames.map(name => toPosix(path.relative(root, name)))
       .filter(name => snapshot.contents.has(name));
@@ -303,9 +311,19 @@ function configuredProjects(root, files, inputs, snapshot, mixedSdks) {
       return null;
     }
     const errors = result.errors.filter(error => ![18002, 18003].includes(error.code));
-    if (errors.length) fail('extract/tsconfig-invalid', 'Invalid TypeScript project configuration.', {
-      subject: { file }, evidence: { errors: errors.map(error => ts.flattenDiagnosticMessageText(error.messageText, '\n')) },
-    });
+    if (errors.length) {
+      const scope = path.posix.dirname(relative);
+      const inside = name => name.startsWith(`${scope}/`);
+      const missingExtends = allowUnavailable && scope !== '.' && files.some(inside) && roots.every(inside)
+        ? missingPackageConfigs(loaded.config, errors, inputs, path.dirname(file)) : [];
+      if (!missingExtends.length) fail('extract/tsconfig-invalid', 'Invalid TypeScript project configuration.', {
+        subject: { file }, evidence: { errors: errors.map(error => ts.flattenDiagnosticMessageText(error.messageText, '\n')) },
+        supportedFixes: ['restore the TypeScript configuration and its dependencies, then retry analysis'],
+      });
+      unavailable.set(scope, { config: relative, missingExtends });
+      parsed.set(relative, null);
+      return null;
+    }
     const options = result.options;
     const { files: rootSpec, include, exclude, references } = result.raw;
     const selection = JSON.stringify({ files: rootSpec, include, exclude, references });
@@ -338,7 +356,18 @@ function configuredProjects(root, files, inputs, snapshot, mixedSdks) {
     }
     owners.push([relative, candidates]);
   }
+  // An unavailable base can change file selection. Omit the nested package's
+  // entire selected subtree, even if another Program can read some of it.
+  const omitted = new Map();
+  for (const [scope, { config }] of [...unavailable].sort(([a], [b]) => a.length - b.length || compareText(a, b))) {
+    for (const file of files) if (file.startsWith(`${scope}/`) && !omitted.has(file)) omitted.set(file, config);
+  }
+  if (omitted.size && omitted.size === files.length) fail('extract/tsconfig-invalid', 'No selected sources have an available TypeScript project configuration.', {
+    evidence: { projects: [...unavailable.values()] },
+    supportedFixes: ['restore the TypeScript configuration dependencies before analyzing this scope'],
+  });
   for (const [relative, candidates] of owners) {
+    if (omitted.has(relative)) continue;
     // A nearer config can omit a source that another configured Program
     // imports. Prefer its own project when applicable, then an importing one.
     const owner = candidates.find(project => project?.members.has(relative))
@@ -363,9 +392,31 @@ function configuredProjects(root, files, inputs, snapshot, mixedSdks) {
     }
     // SDK groups never exchange ASTs or callable bodies. The actual Program
     // may also discover external/other-SDK files, outside this facts projection.
-    project.members = files.filter(file => members.has(file)).sort(compareText);
+    project.members = files.filter(file => !omitted.has(file) && members.has(file)).sort(compareText);
   }
-  return { projects: [...groups.values()] };
+  return { projects: [...groups.values()],
+    excludedByProject: [...omitted].sort(([a], [b]) => compareText(a, b)).map(([file, config]) => ({ file, config })),
+    unavailableProjects: [...unavailable.values()].sort((a, b) => compareText(a.config, b.config)),
+  };
+}
+
+function missingPackageConfigs(config, errors, inputs, directory) {
+  const configExtends = Array.isArray(config.extends) ? config.extends : [config.extends];
+  const choices = new Map(configExtends.filter(value => typeof value === 'string'
+    && /^(?:@[a-z0-9_.-]+\/)?[a-z0-9_-][a-z0-9_.-]*(?:\/[a-z0-9_.-]+)*$/i.test(value)
+    && !value.split('/').some(part => part === '.' || part === '..'))
+    .map(value => [`File '${value}' not found.`, value]));
+  const missing = errors.map(error => error.code === 6053 && choices.get(error.messageText));
+  if (missing.some(value => !value)) return [];
+  const manifest = inputs.readFile(path.join(directory, 'package.json'));
+  if (!manifest) return [];
+  let pkg;
+  try { pkg = JSON.parse(manifest); } catch { return []; }
+  const declared = ['dependencies', 'devDependencies', 'optionalDependencies', 'peerDependencies'].map(field => pkg?.[field]);
+  return missing.every(value => {
+    const name = value.split('/').slice(0, value.startsWith('@') ? 2 : 1).join('/');
+    return declared.some(group => group && Object.hasOwn(group, name));
+  }) ? [...new Set(missing)].sort(compareText) : [];
 }
 
 function collectImports(source, checker, options, onCall) {

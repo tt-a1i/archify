@@ -67,6 +67,23 @@ Language extraction has its own prerequisites:
 | `rust` | Cargo/rustc 1.71+, a root `Cargo.toml` and the locked helper dependencies; see [Rust scope and tooling](RUST.md). |
 | `c`, `cpp` | An existing `compile_commands.json`, Python clang bindings and libclang; see [C/C++ scope and tooling](C_CPP.md). |
 
+A clean checkout can contain a nested JS/TS package whose configuration extends
+an unavailable declared dependency. With the bundled SDK, analysis can omit that
+package's selected files and report its config and missing extends entries while
+showing results for the available scope. Omitted files do not supply imports or
+call targets. Root configuration errors, invalid configuration, and scans with
+no remaining source still fail. Installing missing dependencies belongs to the
+user's checkout setup, and analysis does not install or execute them.
+
+`prepare` and the workbench display incomplete coverage. `check` writes the
+available evidence and returns exit 2 when a finding gate would run with
+incomplete project coverage. `--fail-on never` returns the incomplete report for
+inspection. Incomplete project coverage makes comparisons inconclusive and
+prevents replacing the baseline. PR-attributed and architecture drift comparisons
+require project coverage for both pinned sides. Git capture uses only its own
+resolution inputs, so a dependency installed in the working tree may resolve a
+live check but remain unavailable to a pinned comparison.
+
 The Go and Rust adapters compile Archify's source helper, not the target
 project. Rust's first use may fetch the helper's locked dependencies; cached
 dependencies are required for `rust.offline`. These tools remain necessary

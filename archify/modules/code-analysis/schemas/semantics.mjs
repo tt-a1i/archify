@@ -104,6 +104,14 @@ function rawFactsErrors(data, report) {
     if (new Set(excluded).size !== excluded.length || excluded.some(file => files.has(file))) {
       add('/languageScope/excludedByProject', 'must list unique source files outside the recorded project facts');
     }
+    const unavailable = data.languageScope?.unavailableProjects;
+    if (unavailable) {
+      const configPaths = report.unique(unavailable, 'config', '/languageScope/unavailableProjects');
+      if (!excluded.length || data.languageScope.excludedByProject.some(entry => !configPaths.has(entry.config)
+        || !entry.config.includes('/') || !entry.file.startsWith(entry.config.slice(0, entry.config.lastIndexOf('/') + 1)))) {
+        add('/languageScope/excludedByProject', 'must associate omitted files with their unavailable nested TypeScript project');
+      }
+    }
     if (data.repository.adapterRevision >= 24) {
       const sdks = data.languageScope?.sdks || [];
       if (!sdks.length || (sdks.length === 1 && data.repository.adapter !== `typescript@${sdks[0].version}`)
