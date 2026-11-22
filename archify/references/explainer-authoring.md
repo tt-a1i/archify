@@ -226,7 +226,7 @@ Inline diagrams inherit the page locale unless they set their own. The Explainer
 | Directive | Header arguments | Rows |
 | --- | --- | --- |
 | `@answer` | `scope="..."`, optional `span=1..12` (exact desktop columns, like panel spans) | none |
-| `@meta` | `locale` (bundled diagram Viewer catalogs include `en`, `zh-CN`, `zh-TW`, `es`, `ko`, `ar`, `ru`), `quality_profile`, `style` (`clean`, `editorial`, `product`, `swiss`; readers can switch), `repo_url`, `repo_revision` | none |
+| `@meta` | `locale` (bundled diagram Viewer catalogs include `en`, `zh-CN`, `zh-TW`, `es`, `ko`, `ar`, `ru`, `pt-BR`), `quality_profile`, `style` (`clean`, `editorial`, `product`, `swiss`; readers can switch), `repo_url`, `repo_revision` | none |
 | `@source <id>` | `title`, `url`, or `path` with `lines=start:end` | none |
 | `@steps` | `id` | `id | title | detail? | diagram-id? | node? | from~to? | edge-ids?` (node and route are exclusive) |
 | `@callout` | `id`, `level=note|warning|open-question`, `title` | one cell per row; rows join into paragraphs |

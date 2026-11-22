@@ -435,7 +435,7 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 }
 ```
 
-`meta.locale=en|zh-CN|zh-TW|es|ko|ar` はページタイトル、Legend、状態／エラー、アクセシビリティ、HTML/SVG の `lang` をローカライズします（記述された内容自体は変更しません）。該当しない場合は省略し、要求された言語の文言はそのまま維持し、英語へフォールバックした場合はその旨を明示してください。静止出力では `animation` は省略され、`classic` が既定になります。
+`meta.locale=en|zh-CN|zh-TW|es|ko|ar|ru|pt-BR` はページタイトル、Legend、状態／エラー、アクセシビリティ、HTML/SVG の `lang` をローカライズします（記述された内容自体は変更しません）。該当しない場合は省略し、要求された言語の文言はそのまま維持し、英語へフォールバックした場合はその旨を明示してください。静止出力では `animation` は省略され、`classic` が既定になります。
 
 </details>
 

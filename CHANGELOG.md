@@ -6,6 +6,9 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 > Development identity: `v3.3.1-dev.1`. Not a stable release.
 
+### Added
+- **Bundled Brazilian Portuguese Viewer catalog.** Set `meta.locale: "pt-BR"` to localize all 542 Viewer messages without `meta.translations`. Authored diagram content stays unchanged.
+
 ## [3.3.0] — 2026-11-23
 
 ### Release highlights

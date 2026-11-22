@@ -28,7 +28,7 @@ const templatePath = path.join(skillRoot, 'assets/template.html');
 const { tmp, run, deliverKoreanFixture, deliverJapaneseFixture, cliJson } = createLocaleFixture();
 
 test('zh-CN localizes renderer-owned output across all five modes without translating authored content', () => {
-  assert.deepEqual(SUPPORTED_LOCALES, ['en', 'zh-CN', 'zh-TW', 'es', 'ko', 'ar', 'ru']);
+  assert.deepEqual(SUPPORTED_LOCALES, ['en', 'zh-CN', 'zh-TW', 'es', 'ko', 'ar', 'ru', 'pt-BR']);
   for (const type of Object.keys(EXAMPLES)) {
     const document = example(type);
     const authoredTitle = document.meta.title;
