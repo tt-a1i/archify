@@ -11,7 +11,7 @@ const fixtures = new URL('fixtures/architecture-frame-recovery/', import.meta.ur
 const cases = JSON.parse(readFileSync(new URL('cases.json', fixtures), 'utf8'));
 const cli = fileURLToPath(new URL('../archify/bin/archify.mjs', import.meta.url));
 
-for (const [name, { file, passes, diagnostic, round5Svg, round7Svg, round8Svg, routeLengthLimits }] of Object.entries(cases)) {
+for (const [name, { file, passes, diagnostic, round5Svg, round7Svg, round8Svg, cleanArtifact, routeLengthLimits }] of Object.entries(cases)) {
   test(`frame recovery preserves the validated layout for ${name}`, t => {
     const scratch = mkdtempSync(join(tmpdir(), 'archify-fixed-canvas-'));
     t.after(() => rmSync(scratch, { recursive: true, force: true }));
@@ -31,10 +31,12 @@ for (const [name, { file, passes, diagnostic, round5Svg, round7Svg, round8Svg, r
         .reduce((longest, match) => match.length > longest.length ? match : longest);
       assert.equal(createHash('sha256').update(svg).digest('hex'), expectedSvg);
     }
-    if (routeLengthLimits) {
+    if (cleanArtifact || routeLengthLimits) {
       const checked = spawnSync(process.execPath, [cli, 'check', output, '--json'], { encoding: 'utf8', env });
       assert.equal(checked.status, 0, checked.stdout + checked.stderr);
       assert.deepEqual(JSON.parse(checked.stdout).composition.issues, []);
+    }
+    if (routeLengthLimits) {
       const validated = spawnSync(process.execPath,
         [cli, 'validate', 'architecture', fileURLToPath(new URL(file, fixtures)), '--layout-json'], { encoding: 'utf8', env });
       assert.equal(validated.status, 0, validated.stdout + validated.stderr);

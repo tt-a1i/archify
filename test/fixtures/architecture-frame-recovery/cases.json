@@ -176,5 +176,11 @@
     "file": "pinned-canvas-label-clearance.json",
     "passes": true,
     "round8Svg": "45035a6a66103d6fb2427ea2371e2fcb8325d5dc6f58fc695cdbe71076a8f506"
+  },
+  "review9/fixed-096": {
+    "file": "review9-fixed-096.json",
+    "passes": true,
+    "round8Svg": "545ab0658abe95fd9e74a196ca85df2a5ac7eccfd0c53dea2f74a2099f9d02f0",
+    "cleanArtifact": true
   }
 }

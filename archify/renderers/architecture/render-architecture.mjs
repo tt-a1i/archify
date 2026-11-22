@@ -557,7 +557,7 @@ function routeArrowheads(routes) {
   }));
 }
 
-function resolveConnectionComposition(boxes, routeFor, measuredBoundaries = boundsFor(boxes), protectFixedLabels = false) {
+function resolveConnectionComposition(boxes, routeFor, measuredBoundaries = boundsFor(boxes)) {
   const routes = connections.flatMap((relation, relationIndex) => {
     if (!boxes.has(relation.from) || !boxes.has(relation.to)) return [];
     const routed = routeFor(relation);
@@ -579,7 +579,7 @@ function resolveConnectionComposition(boxes, routeFor, measuredBoundaries = boun
   const protectedEndpoints = new Map(whollyInferred ? routes
     .filter(({ relation }) => relation.label && hasAutomaticRouteGeometry(relation))
     .map(route => [route.relationIndex, endpointLabelZones(route)]) : []);
-  const arrowheads = auto && (!arch.meta?.viewBox || protectFixedLabels) ? routeArrowheads(routes) : [];
+  const arrowheads = auto && !arch.meta?.viewBox ? routeArrowheads(routes) : [];
   const showcase = arch.meta?.quality_profile === 'showcase';
   const hitEndpoint = !showcase && labels.some(label => protectedEndpoints.get(label.relationIndex)
     ?.some(zone => rectsOverlap(label, zone)) || arrowheads.some(({ marker }) => maskCoversArrowhead(label, marker)));
@@ -589,7 +589,7 @@ function resolveConnectionComposition(boxes, routeFor, measuredBoundaries = boun
     routes,
     protectedEndpoints,
     arrowheads,
-    ownershipMargin: protectFixedLabels || (auto && !whollyInferred && !arch.meta?.viewBox) ? automaticLabelOwnershipMargin : 0,
+    ownershipMargin: auto && !whollyInferred && !arch.meta?.viewBox ? automaticLabelOwnershipMargin : 0,
     onlyProtectedEndpoints: !showcase,
     components: [...boxes.values()],
     titles: boundaries.map(boundary => boundary.title),
@@ -869,7 +869,7 @@ function chooseAutomaticPlacement() {
 }
 
 function finishAutomaticLabels(scene) {
-  if (!auto || !scene.labels.length || !arch.components.some(box => !box.pos)) return scene;
+  if (!auto || !scene.labels.length) return scene;
   const clearanceBorders = whollyInferred ? forRouting(scene.titles.boundaries).flatMap(frameBorderSegments) : [];
   const arrowheads = scene.arrowheads.length ? scene.arrowheads : routeArrowheads(scene.routes);
   const strokes = scene.routes.map(({ points, relation, relationIndex }) => {
@@ -919,14 +919,17 @@ function fixedCanvasComposition(initial) {
   let passing;
   let fewestErrors;
   let labelRescues = 2;
-  function assess(scene, candidate, keepLabelClearance) {
+  const hasInferredCards = arch.components.some(component => !component.pos);
+  const deferredLabelRescues = [];
+  function assess(scene, candidate, retryEnclosed = false) {
     let errors = errorsFor(scene, candidate);
-    // Leave a failing scene with an enclosure to frame recovery. Fixing its
-    // label alone can pass the standard profile while hiding a repairable frame.
     const rescueLabels = errors && labelRescues && scene.labels.length
-      && !frameEnclosures(scene.boxes, scene.titles.boundaries).length
       && !errorsFor({ ...scene, labels: [] }, candidate);
-    if (!errors || rescueLabels) {
+    if (rescueLabels && !retryEnclosed && hasInferredCards && frameEnclosures(scene.boxes, scene.titles.boundaries).length) {
+      // Prefer repairing an enclosure when placement can move. In profiles
+      // that allow it, a structurally valid candidate can still use label recovery.
+      deferredLabelRescues.push({ scene, candidate });
+    } else if (!errors || rescueLabels) {
       const { routesOverSuggestedBends: bends, routesOverSuggestedStretch: stretch } =
         routeBudgetMetrics({ routedRelations: scene.routes });
       const leadingScore = [measuredCrossingPairs(scene.routes).length, bends, stretch];
@@ -940,9 +943,8 @@ function fixedCanvasComposition(initial) {
           const { length } = routeSpanMeasures(scene.routes, scene.boxes, scene.viewBox);
           const score = [...leadingScore, labels.size, [...labels.values()].reduce((sum, value) => sum + value, 0),
             length, scene.viewBox[0] * scene.viewBox[1]];
-          if ((!keepLabelClearance || preservesLabels(keepLabelClearance, labels))
-              && (!passing || compare(score, passing.score) < 0)) {
-            passing = { scene, candidate, score, leadingScore, labels };
+          if (!passing || compare(score, passing.score) < 0) {
+            passing = { scene, candidate, score, leadingScore };
           }
         }
       }
@@ -953,15 +955,7 @@ function fixedCanvasComposition(initial) {
   }
 
   const first = assess(initial, router);
-  const hasInferredCards = arch.components.some(component => !component.pos);
-  if (!hasInferredCards) {
-    // Keep the existing marker repair for automatic labels between pinned cards.
-    if (passing && [...passing.labels.keys()].some(key => key.startsWith('marker/'))) {
-      assess(resolveConnectionComposition(initial.boxes, router.pathFor, boundsFor(initial.boxes), true),
-        router, passing.labels);
-    }
-    return passing?.scene ?? first.scene;
-  }
+  if (!hasInferredCards) return passing?.scene ?? first.scene;
   const positionKey = boxes => JSON.stringify([...boxes.values()].map(({ x, y }) => [x, y]));
   const seen = new Set([positionKey(components)]);
   function consider(boxes) {
@@ -997,6 +991,10 @@ function fixedCanvasComposition(initial) {
       if (attempt && attempt.errors < repair.errors) repair = attempt;
     }
     if (start === repair) break;
+  }
+  for (const { scene, candidate } of deferredLabelRescues) {
+    if (passing || !labelRescues) break;
+    assess(scene, candidate, true);
   }
 
   const best = passing ?? fewestErrors;

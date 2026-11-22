@@ -518,3 +518,44 @@ test('an inferred return label keeps its elbows and competing shafts visible', (
     assert.ok(drawnPathRectClearance(path, label) >= ownDistance + 4);
   }
 });
+
+for (const [name, text, points] of [
+  ['review9-fixed-074', 'Fetch data 5', [
+    [[136, 88], [209, 88]],
+    [[309, 86], [356.5, 86], [356.5, 59], [404, 59]],
+    [[420, 103], [420, 162], [96, 162], [96, 199]],
+    [[110, 199], [110, 163], [266, 163], [266, 187]],
+    [[280, 187], [280, 163], [516, 163], [516, 201], [492, 201]],
+    [[432, 237], [432, 261], [180, 261], [180, 234], [156, 234]],
+    [[259, 112], [259, 155.5], [82, 155.5], [82, 199]],
+    [[388, 165], [388, 115], [136, 115]],
+    [[156, 220], [217, 220], [217, 126], [348.5, 126], [348.5, 87], [404, 87]],
+  ]],
+  ['review9-fixed-125', 'Retrieve configuration 6', [
+    [[157, 85], [202, 85]],
+    [[286, 56], [286, 48], [387, 48]],
+    [[387, 69], [363, 69], [363, 156], [161, 156], [161, 188], [137, 188]],
+    [[137, 215], [178.5, 215], [178.5, 198], [220, 198]],
+    [[320, 188], [397, 188]],
+    [[270, 162], [270, 146], [286, 146], [286, 128]],
+  ]],
+]) {
+  test(`automatic labels clear strokes and markers without moving pinned geometry in ${name}`, () => {
+    const input = load(name);
+    const { status, receipt } = validate(fileURLToPath(fixtureUrl(name)),
+      input.meta.quality_profile ?? 'standard', '--layout-json');
+    assert.equal(status, 0, JSON.stringify(receipt.diagnostics));
+    assert.deepEqual(receipt.components.map(({ x, y }) => [x, y]), input.components.map(({ pos }) => pos));
+    assert.deepEqual(receipt.connections.map(route => route.points), points);
+    const ownerIndex = receipt.connections.findIndex(({ label }) => label === text);
+    const label = connectionLabelBoxAt(input.connections[ownerIndex], receipt.connections[ownerIndex].labelAt);
+    const paths = points.map(route => prepareCrossingPath(roundedPathSegments(route, 8)));
+    const own = drawnPathRectClearance(paths[ownerIndex], label);
+    for (const [index, route] of points.entries()) {
+      const { width, variant } = input.connections[index];
+      const stroke = width || (variant === 'emphasis' ? 1.8 : 1.5);
+      assert.equal(maskCoversArrowhead(label, arrowheadTriangle(route.at(-1), route.at(-2), stroke)), false);
+      if (index !== ownerIndex) assert.ok(drawnPathRectClearance(paths[index], label) >= own + 4);
+    }
+  });
+}
