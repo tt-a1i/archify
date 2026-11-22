@@ -111,8 +111,9 @@ async function verifyPackagedExplainer() {
 }
 
 function verifyPackagedStory(){
-  const input=path.join(skillRoot,'examples/workflow-agent-tool-call-rendered.html'),brief=path.join(scratch,'story-brief.json'),output=path.join(scratch,'story-enhanced.html');
+  const input=path.join(scratch,'story-native.html'),brief=path.join(scratch,'story-brief.json'),output=path.join(scratch,'story-enhanced.html');
   const options={cwd:scratch,env:{...process.env,NODE_PATH:'',ARCHIFY_UPDATE_CHECK_DISABLED:'1'}};
+  run(['render','workflow',path.join(skillRoot,'examples/agent-tool-call.workflow.json'),input],options);
   const draft=JSON.parse(run(['story','draft',input,brief,'--json'],options));
   if(!draft.ok)throw Error('packaged story draft failed');
   const facts=JSON.parse(fs.readFileSync(draft.sourceMap,'utf8')),edge=facts.edges[0];
