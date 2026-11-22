@@ -193,7 +193,9 @@ Run `check` without a diagram (or pass `--ir architecture.json [--map overlay-ma
 node bin/archify.mjs code-analysis check /path/to/repo --language ts --out out/first-look --json
 ```
 
-Archify selects an adapter automatically when it is the only eligible choice or accounts for at least 95% of files matched by eligible adapters. The [Java detection rules](JAVA.md) still apply, and the C++ adapter also covers C when both match. If several eligible adapters remain and none reaches 95%, `extract/adapter-ambiguous` reports their file counts and the corresponding `--language` flags. An explicit `--language` takes precedence. Each run reports the other languages and their file counts in `coverage.otherLanguages`.
+Archify selects an adapter automatically when it is the only eligible choice. In a mixed tree, the leading adapter must account for at least 95% of files matched by eligible adapters. Go or Rust also needs a regular `go.mod` or `Cargo.toml`, respectively, at the analysis root. A C or C++ lead still requires a choice because source counts cannot tell which files have unique compilation commands. The [Java detection rules](JAVA.md) still apply, and the C++ adapter also covers C when both match.
+
+When Archify needs a choice, `extract/adapter-ambiguous` reports the source counts and corresponding `--language` flags. An explicit `--language` takes precedence. Each run reports the other languages and their file counts in `coverage.otherLanguages`.
 
 Start from the JSON receipt, not the full finding list:
 

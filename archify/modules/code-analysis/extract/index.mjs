@@ -43,8 +43,13 @@ export function selectAdapter(root, config, requested) {
       .sort((a, b) => b.files - a.files || (a.adapter < b.adapter ? -1 : 1));
     const total = counts.reduce((sum, count) => sum + count.files, 0);
     const leading = counts[0];
-    // Auto-select only when all other eligible adapters together cover at most 5%.
-    if (total > 0 && leading.files * 100 >= total * 95) return detected.find((a) => a.id === leading.adapter);
+    // A suffix count cannot establish C/C++ build membership.
+    if (total > 0 && leading.files * 100 >= total * 95 && leading.adapter !== 'c' && leading.adapter !== 'cpp') {
+      const adapter = detected.find((a) => a.id === leading.adapter);
+      const manifest = adapter.REQUIRED_ROOT_MANIFEST;
+      // Match the captured inventory's exact filename and regular-file check.
+      if (!manifest || fs.readdirSync(root, { withFileTypes: true }).some(entry => entry.name === manifest && entry.isFile())) return adapter;
+    }
     const summary = counts.map((c) => `${c.adapter}: ${c.files} file${c.files === 1 ? '' : 's'}`).join(', ');
     fail('extract/adapter-ambiguous', `More than one language adapter matches (${summary}); choose one explicitly.`, {
       subject: { root },

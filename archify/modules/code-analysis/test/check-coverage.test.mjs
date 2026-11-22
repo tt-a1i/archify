@@ -9,6 +9,8 @@ import { spawnSync } from 'node:child_process';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { formatText } from '../bin/check.mjs';
+import { selectAdapter } from '../extract/index.mjs';
+import { loadConfig } from '../lib/analysis.mjs';
 
 const CHECK = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'bin', 'check.mjs');
 const ARCHIFY = fileURLToPath(new URL('../../../bin/archify.mjs', import.meta.url));
@@ -61,6 +63,41 @@ test('prepare: a dominant adapter is selected and the workbench discloses other 
   assert.equal(JSON.parse(mixed.stdout).diagnostics[0].code, 'extract/adapter-ambiguous');
 });
 
+for (const [language, extension, source, manifest, manifestText, missingCode] of [
+  ['go', 'go', 'package backend', 'go.mod', 'module example.test/backend\n', 'extract/go-module-missing'],
+  ['rust', 'rs', 'pub fn run() {}', 'Cargo.toml', '[package]\nname = "backend"\nversion = "0.1.0"\n', 'extract/rust-manifest-missing'],
+]) {
+  test(`check: ${language} dominance requires a manifest at the analysis root`, (t) => {
+    const root = fixture(t, {
+      ...Object.fromEntries(Array.from({ length: 19 }, (_, i) => [`backend/src/file${i}.${extension}`, source])),
+      [`backend/${manifest}`]: manifestText,
+      'frontend/index.ts': 'export const value = 1;',
+    });
+
+    const automatic = check(root, ['--json']);
+    assert.equal(automatic.status, 2, automatic.stdout + automatic.stderr);
+    const [diagnostic] = JSON.parse(automatic.stdout).diagnostics;
+    assert.equal(diagnostic.code, 'extract/adapter-ambiguous');
+    assert.ok(diagnostic.supportedFixes.includes('pass --language ts (1 file)'));
+
+    const explicit = check(root, ['--language', language, '--json']);
+    assert.equal(explicit.status, 2, explicit.stdout + explicit.stderr);
+    assert.equal(JSON.parse(explicit.stdout).diagnostics[0].code, missingCode);
+
+    const alternate = check(root, ['--language', 'ts', '--json']);
+    assert.equal(alternate.status, 0, alternate.stdout + alternate.stderr);
+    assert.deepEqual(JSON.parse(alternate.stdout).coverage.otherLanguages, [{ adapter: language, files: 19 }]);
+
+    const config = loadConfig();
+    const wrongCase = path.join(root, manifest.toUpperCase());
+    fs.writeFileSync(wrongCase, manifestText);
+    assert.throws(() => selectAdapter(root, config), error => error.diagnostics?.[0].code === 'extract/adapter-ambiguous');
+    fs.unlinkSync(wrongCase);
+    fs.renameSync(path.join(root, 'backend', manifest), path.join(root, manifest));
+    assert.equal(selectAdapter(root, config).id, language);
+  });
+}
+
 test('prepare: an unresolved TypeScript config names the dependency and a working exclusion', (t) => {
   const root = fixture(t, {
     'src/main.ts': 'export const main = 1;',
@@ -85,6 +122,25 @@ test('prepare: an unresolved TypeScript config names the dependency and a workin
   assert.equal(repaired.status, 0, repaired.stdout + repaired.stderr);
   const facts = JSON.parse(fs.readFileSync(path.join(out, 'analysis', 'raw-facts.json'), 'utf8'));
   assert.deepEqual(facts.files.map(file => file.path), ['src/main.ts']);
+});
+
+test('check: terminal diagnostics escape controls in a TypeScript config error', (t) => {
+  const missingConfig = 'missing-framework/strict\tconfig';
+  const root = fixture(t, {
+    'main.ts': 'export const value = 1;',
+    'tsconfig.json': JSON.stringify({ extends: missingConfig }),
+  });
+  const text = check(root, []);
+  assert.equal(text.status, 2, text.stdout + text.stderr);
+  assert.match(text.stderr, /\[extract\/tsconfig-invalid\] .*tsconfig\.json/);
+  assert.ok(text.stderr.includes('missing-framework/strict\\u0009config'));
+  assert.doesNotMatch(text.stderr, /\t/);
+
+  const json = check(root, ['--json']);
+  assert.equal(json.status, 2, json.stdout + json.stderr);
+  const [diagnostic] = JSON.parse(json.stdout).diagnostics;
+  assert.ok(diagnostic.message.includes(missingConfig));
+  assert.ok(diagnostic.evidence.errors.some(error => error.includes(missingConfig)));
 });
 
 test('check: the summary shows a parse failure and a language that was not analyzed', (t) => {

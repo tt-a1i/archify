@@ -340,7 +340,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     }).catch((error) => {
       const diagnostics = error instanceof DiagnosticError ? error.diagnostics : [{ code: 'internal/unclassified', severity: 'error', message: error.message, subject: {}, evidence: {}, supportedFixes: [] }];
       if (json) console.log(JSON.stringify(receipt('error', { command: 'check', diagnostics }), null, 2));
-      else console.error(diagnostics.map((d) => `[${d.code}] ${d.message}`).join('\n'));
+      else console.error(diagnostics.map((d) => `[${d.code}] ${formatTerminalText(d.message)}`).join('\n'));
       process.exitCode = 2;
     });
   }

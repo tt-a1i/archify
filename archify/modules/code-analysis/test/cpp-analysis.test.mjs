@@ -358,3 +358,25 @@ test('C/C++ only participates in automatic language selection with a configured 
     return true;
   });
 });
+
+for (const [adapter, compiled] of [['c', 'compiled.c'], ['cpp', 'compiled.cpp']]) {
+  test(`${adapter} mixed-language dominance cannot be inferred from a partial compilation database`, t => {
+    const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'archify partial C ')));
+    t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+    const config = mergeConfig(loadConfig(), { cpp: { compileCommands: 'compile_commands.json' } });
+    for (let i = 0; i < 18; i += 1) fs.writeFileSync(path.join(root, `uncompiled${i}.c`), 'int uncompiled(void) { return 0; }');
+    fs.writeFileSync(path.join(root, compiled), 'int compiled(void) { return 1; }');
+    fs.writeFileSync(path.join(root, 'app.ts'), 'export const app = 1;');
+    fs.writeFileSync(path.join(root, 'compile_commands.json'), JSON.stringify([
+      { directory: root, file: compiled, arguments: ['clang', '-c', compiled] },
+    ]));
+
+    assert.throws(() => selectAdapter(root, config), error => {
+      const diagnostic = error.diagnostics?.[0];
+      assert.equal(diagnostic?.code, 'extract/adapter-ambiguous');
+      assert.ok(diagnostic.supportedFixes.some(fix => fix.startsWith(`pass --language ${adapter} `)));
+      assert.ok(diagnostic.supportedFixes.includes('pass --language ts (1 file)'));
+      return true;
+    });
+  });
+}

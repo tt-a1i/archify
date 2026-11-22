@@ -10,6 +10,7 @@ import { describeRepository } from '../shared/git.mjs';
 import { fail } from '../shared/diagnostics.mjs';
 
 export const id = 'rust';
+export const REQUIRED_ROOT_MANIFEST = 'Cargo.toml';
 export const REVISION = 15;
 export const CALL_MODEL = 'rust-source-direct-v15';
 export const detect = (root, config) => listFiles(root, config).some(file => file.endsWith('.rs'));
@@ -71,7 +72,7 @@ export function extract(root, config, { onCapture } = {}) {
     || (rust.cfg !== undefined && (!Array.isArray(rust.cfg) || !rust.cfg.every(x => typeof x === 'string')))
     || (rust.target !== undefined && typeof rust.target !== 'string')) fail('extract/rust-config-invalid', 'Rust profile accepts features keyed by package, defaultFeatures/tests/offline booleans, target and cfg strings.');
   const tree = snapshotTree(root, file => file.endsWith('.rs') || metaFile(file));
-  if (!tree.contents.has('Cargo.toml')) fail('extract/rust-manifest-missing', 'Rust source analysis requires a captured root Cargo.toml.', { supportedFixes: ['analyze the Cargo workspace/package root'] });
+  if (!tree.contents.has(REQUIRED_ROOT_MANIFEST)) fail('extract/rust-manifest-missing', 'Rust source analysis requires a captured root Cargo.toml.', { supportedFixes: ['analyze the Cargo workspace/package root'] });
   const cargo = process.env.ARCHIFY_CARGO || 'cargo', rustc = process.env.ARCHIFY_RUSTC || 'rustc';
   const env = { ...process.env, RUSTC: rustc, RUSTC_WRAPPER: '', RUSTC_WORKSPACE_WRAPPER: '', CARGO_BUILD_RUSTC_WRAPPER: '', CARGO_BUILD_RUSTC_WORKSPACE_WRAPPER: '', RUSTFLAGS: '', CARGO_ENCODED_RUSTFLAGS: '' };
   delete env.CARGO_BUILD_TARGET;
