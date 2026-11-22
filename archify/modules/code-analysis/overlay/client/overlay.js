@@ -148,7 +148,7 @@
   overview.id = 'bauify-overview'; overview.hidden = true; overview.setAttribute('aria-label', tr("Code analysis overview"));
   reader.appendChild(overview);
   var findingById = {}; (data.findings || []).forEach(function (f) { findingById[f.id] = f; });
-  var overviewMode = 'summary', listScroll = 0, findingReturn = null;
+  var overviewMode = 'summary', listScroll = 0, findingReturn = null, reading = { kind: 'overview' };
   var filters = { source: 'all', category: 'all', severity: 'all', status: 'open', search: '', unverified: false, page: 0 };
   var filterKey = 'archify-findings:' + (data.repository.root || '') + ':' + location.pathname;
   try { var restored = JSON.parse(sessionStorage.getItem(filterKey)); if (restored) Object.keys(filters).forEach(function (key) { if (typeof restored[key] === typeof filters[key]) filters[key] = restored[key]; }); } catch (error) { /* Storage is optional for offline reports. */ }
@@ -295,6 +295,7 @@
     return camera.centerAt(x, y, { scale: camera.state ? camera.state().scale : 1, instant: true });
   }
   function showOverview() {
+    reading = { kind: 'overview' };
     overviewMode = 'summary'; clearPick();
     readerPage(tr("Overview"));
     root.removeAttribute('data-bauify-source');
@@ -356,6 +357,7 @@
     return findings.length ? findings.map(findingWhat).join('；') : tr(indicator.value);
   }
   function show(id) {
+    reading = { kind: 'component', id: id };
     readerPage(tr("Component"));
     root.removeAttribute('data-bauify-source');
     var c = byId[id]; if (!c) return;
@@ -694,6 +696,7 @@
       (review.status === 'accepted' ? ("<span class=\"finding-row-state\">" + tr("Accepted")) + (f.severity === 'error' ? tr(" · still present") : '') + '</span>' : review.status === 'accepted-changed' ? ("<span class=\"finding-row-state attention\">" + tr("Accepted evidence changed · review again") + "</span>") : external && external.binding !== 'verified' ? ("<span class=\"finding-row-state attention\">" + tr("Report binding: ")) + esc(bindingLabel(external.binding).toLowerCase()) + '</span>' : '') + '</button>';
   }
   function showFindings(source) {
+    reading = { kind: 'findings' };
     if (typeof source === 'string') { filters.source = source; filters.category = 'all'; filters.severity = 'all'; filters.status = 'open'; filters.unverified = false; filters.search = ''; filters.page = 0; listScroll = 0; }
     overviewMode = 'findings'; clearPick(); readerPage(tr("Findings")); root.removeAttribute('data-bauify-source');
     panel.hidden = detail.hidden = codePane.hidden = true; overview.hidden = false; setFocus([]);
@@ -740,6 +743,7 @@
     pagination.querySelectorAll('button').forEach(function (button) { button.addEventListener('click', function () { filters.page += Number(button.getAttribute('data-page')); renderFindingRows(); overview.scrollTop = 0; }); });
   }
   function showSources() {
+    reading = { kind: 'sources' };
     var parent = overviewMode; overviewMode = 'sources'; readerPage(tr("Sources")); root.removeAttribute('data-bauify-source');
     panel.hidden = detail.hidden = codePane.hidden = true; overview.hidden = false; setFocus([]);
     overview.innerHTML = '<button type="button" class="back sources-back">← ' + (parent === 'findings' ? tr("Findings") : tr("Overview")) + ("</button>" + "<h3>" + tr("Sources & coverage") + "</h3>" + "<p class=\"ev\">" + tr("Report import, source binding and scan scope are separate facts.") + "</p>") + externalSources().map(function (source) {
@@ -872,7 +876,7 @@
     var title = '<details class="verify-change"><summary>' + esc(tr('Verify a previous task')) + '</summary>';
     if (!data.verification) return title + '<p class="ev">' + esc(tr('Download the task JSON before editing, then re-analyze using the same output directory.')) + '</p></details>';
     return title + '<p class="ev">' + esc(tr('Run project checks separately. This receipt compares captured analyses and records your reported check results.')) + '</p>'
-      + '<form><label>' + esc(tr('Task JSON from the previous run')) + '<input type="file" accept=".json,application/json" class="verify-task" required></label>'
+      + '<form><label>' + esc(tr('Task JSON from a retained run')) + '<input type="file" accept=".json,application/json" class="verify-task" required></label>'
       + '<label>' + esc(tr('Project check results JSON (optional)')) + '<input type="file" accept=".json,application/json" class="verify-checks"></label>'
       + '<div class="task-actions"><button type="submit">' + esc(tr('Preview verification')) + '</button></div></form>'
       + '<p class="verify-status ev" role="status"></p><div class="verify-preview" aria-live="polite"></div><div class="task-actions">'
@@ -961,11 +965,7 @@
     var startCopy = overview.querySelector('.start-copy');
     if (startCopy) startCopy.addEventListener('click', function () { copyText(data.ui.resume.command, overview.querySelector('.start-status'), overview.querySelector('.start-command'), tr('Copied start command.')); });
     var again = overview.querySelector('.bauify-reanalyze');
-    if (again) again.addEventListener('click', function () {
-      again.disabled = true; again.classList.add('busy'); again.setAttribute('aria-busy', 'true');
-      var note = overview.querySelector('.brief-status'); note.classList.remove('reanalyze-error'); note.textContent = tr('Reading the repository — imports, modules, rules.');
-      window.__archifyReanalyze().catch(function (error) { again.disabled = false; again.classList.remove('busy'); again.removeAttribute('aria-busy'); note.classList.add('reanalyze-error'); note.textContent = tr('Re-analysis failed: ') + error.message + tr(' The result shown is from the last successful run.'); });
-    });
+    if (again) wireRefresh(again, overview.querySelector('.brief-status'));
     overview.querySelectorAll('[data-finding]').forEach(function (el) { el.addEventListener('click', function () { showFinding(el.getAttribute('data-finding')); }); });
     wireTasks(overview);
   }
@@ -1174,9 +1174,10 @@
   function showFinding(id, parent) {
     var f = findingById[id]; if (!f) return;
     parent = findingReturn ? findingReturn.parent : parent || (!overview.hidden && overviewMode === 'findings' ? 'findings' : 'summary');
+    reading = { kind: 'finding', id: id, parent: parent };
     if (standalone && !findingReturn) {
       var opener = document.activeElement;
-      findingReturn = { parent: parent, atlas: window.__archifyAtlas && window.__archifyAtlas.saveSelection(), opener: overview.contains(opener) && opener.getAttribute('data-finding') };
+      findingReturn = { parent: parent, atlas: window.__archifyAtlas && window.__archifyAtlas.saveSelection(true), opener: overview.contains(opener) && opener.getAttribute('data-finding') };
     }
     clearPick(); readerPage(tr("Finding")); detail.classList.remove('reviewing');
     root.removeAttribute('data-bauify-source');
@@ -1619,6 +1620,7 @@
   function flyClose(back) { return '<button class="close" aria-label="' + esc(tr("Close")) + '">×</button><button type="button" class="back">← ' + esc(back) + '</button>'; }
   // A dependency between two components: whether the diagram draws it, and the imports behind it.
   function showEdge(from, to) {
+    reading = { kind: 'edge', from: from, to: to };
     var e = codeEdgeByKey[from + '>' + to], undrawn = !!e && e.declared === false;
     readerPage(tr('Dependency')); root.removeAttribute('data-bauify-source');
     overview.hidden = true; detail.hidden = true; codePane.hidden = true; setFocus([]);
@@ -1648,6 +1650,7 @@
   }
   // A module no component on the diagram owns.
   function showOff(id) {
+    reading = { kind: 'off', id: id };
     var m = moduleInfo[id]; if (!m) return;
     readerPage(tr('Not on the diagram')); root.removeAttribute('data-bauify-source');
     overview.hidden = true; detail.hidden = true; codePane.hidden = true; clearPick(); setFocus([]);
@@ -1695,6 +1698,89 @@
       setFly(false);
     } else { setFly(false); if (stage) { setBeacon(false); setCodeDeps(false); } clearEdges(); setFocus([]); if (layer) layer.remove(); layer = null; panel.hidden = true; detail.hidden = true; codePane.hidden = true; overview.hidden = true; if (svg) svg.querySelectorAll('.bauify-mapped').forEach(function (g) { g.classList.remove('bauify-mapped'); }); }
   }
+  var refresh, refreshStatus, refreshing = false;
+  if (typeof window.__archifyReanalyze === 'function') {
+    var refreshWrap = document.createElement('span');
+    refreshWrap.className = 'analysis-refresh';
+    refreshWrap.innerHTML = iconButton('refresh', tr('Re-analyze'), ' analysis-refresh-button', ' id="analysis-refresh"')
+      + '<span class="analysis-refresh-status" role="status"></span>';
+    btn.after(refreshWrap);
+    refresh = refreshWrap.firstElementChild;
+    refreshStatus = refreshWrap.lastElementChild;
+    wireRefresh(refresh, refreshStatus);
+  }
+  function visibleReaderPage() {
+    return !codePane.hidden ? codePane : !detail.hidden ? detail : !panel.hidden ? panel : overview;
+  }
+  var readingControls = ['.back', '.locate', '.reader-toggle', '.browse-findings', '.bauify-reanalyze'];
+  function captureReading(active) {
+    var pane = visibleReaderPage();
+    return {
+      reading: reading, open: !flyMode || flyOpen, collapsed: readerCollapsed, sourceOpen: pane === codePane,
+      view: root.getAttribute('data-bauify-views'), scroll: pane.scrollTop,
+      sourceFile: pane === codePane ? codePane.querySelector('.grip h3')?.textContent : null,
+      atlas: window.__archifyAtlas?.saveSelection(true, active), findingReturn: findingReturn,
+      focus: readingControls.find(function (selector) { return active?.matches(selector); }),
+      focusRefresh: active === refresh
+    };
+  }
+  function wireRefresh(button, note) {
+    // A pointer click in the toolbar moves focus before click fires.
+    var beforePointer;
+    button.addEventListener('pointerdown', function () { beforePointer = captureReading(document.activeElement); });
+    button.addEventListener('pointercancel', function () { beforePointer = null; });
+    button.addEventListener('click', function (event) {
+      if (refreshing) return;
+      var saved = event.detail && beforePointer || captureReading(button);
+      beforePointer = null;
+      refreshing = true;
+      button.disabled = true; button.classList.add('busy'); button.setAttribute('aria-busy', 'true');
+      note.classList.remove('reanalyze-error');
+      note.textContent = tr('Reading the repository — imports, modules, rules.');
+      window.__archifyReanalyze(saved).catch(function (error) {
+        refreshing = false;
+        button.disabled = false; button.classList.remove('busy'); button.removeAttribute('aria-busy');
+        note.classList.add('reanalyze-error');
+        note.textContent = tr('Re-analysis failed: ') + error.message + tr(' The result shown is from the last successful run.');
+        if (beforePointer == null && (document.activeElement === document.body || document.activeElement === button)) button.focus({ preventScroll: true });
+      });
+    });
+  }
+  window.__archifyRestoreReading = function (saved) {
+    if (!saved || !saved.reading) return;
+    var page = saved.reading, missing = false;
+    if (saved.open && page.kind === 'component' && Object.hasOwn(byId, page.id)) show(page.id);
+    else if (saved.open && page.kind === 'finding' && Object.hasOwn(findingById, page.id)) {
+      findingReturn = saved.findingReturn;
+      showFinding(page.id, page.parent);
+    } else if (saved.open && page.kind === 'findings') showFindings();
+    else if (saved.open && page.kind === 'sources') showSources();
+    else if (saved.open && page.kind === 'edge' && Object.hasOwn(byId, page.from) && Object.hasOwn(byId, page.to)) showEdge(page.from, page.to);
+    else if (saved.open && page.kind === 'off' && Object.hasOwn(moduleInfo, page.id)) showOff(page.id);
+    else if (saved.open) {
+      missing = page.kind !== 'overview';
+      showOverview();
+    }
+    if (saved.sourceOpen && page.kind === 'finding' && !missing) {
+      // Open evidence from the fresh finding, using its new line and snapshot.
+      var ref = Array.from(detail.querySelectorAll('.inline-evidence .ref[data-file]')).find(function (link) {
+        return !saved.sourceFile || link.getAttribute('data-file') === saved.sourceFile;
+      });
+      ref?.click();
+    }
+    if (saved.collapsed) setReaderCollapsed(true);
+    if (saved.view === 'atlas' || saved.view === 'atlas3d') window.__archifyAtlas?.showView(saved.view);
+    var pane = visibleReaderPage();
+    if (!missing && (!saved.sourceOpen || pane === codePane)) pane.scrollTop = saved.scroll;
+    var target = saved.focusRefresh ? refresh : saved.focus && (pane.querySelector(saved.focus) || reader.querySelector(saved.focus));
+    if (target?.getClientRects().length && !target.closest('[inert]')) target.focus({ preventScroll: true });
+    else if (saved.open && !saved.collapsed && !saved.view && pane.getClientRects().length) {
+      var heading = pane.querySelector('h3') || pane.querySelector('.back');
+      if (heading) { if (heading.tagName === 'H3') heading.tabIndex = -1; heading.focus({ preventScroll: true }); }
+    } else if (!saved.atlas?.focus) refresh?.focus({ preventScroll: true });
+    if (saved.atlas && window.__archifyAtlas) missing = window.__archifyAtlas.restoreSelection(saved.atlas) || missing;
+    if (missing && refreshStatus) refreshStatus.textContent = tr('This selection is no longer available in the latest analysis.');
+  };
   btn.addEventListener('click', function () { setOn(root.getAttribute('data-bauify') !== 'on'); });
   // The Atlas view hands a finding back here to show its source evidence.
   window.__archifyShowSource = function (file, line, snapshot, sourcePair, returnFocus) {

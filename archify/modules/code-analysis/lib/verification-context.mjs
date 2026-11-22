@@ -1,6 +1,10 @@
 import { createHash } from 'node:crypto';
 import { stableJson } from './analysis.mjs';
 
+export function analysisDigest(doc) {
+  return createHash('sha256').update(stableJson(doc)).digest('hex');
+}
+
 const sha = /^[a-f0-9]{64}$/;
 
 // Keep source text, commands, and finding messages out of the portable comparison input.
@@ -13,7 +17,7 @@ export function verificationContext(previous, current, review) {
 
   const snapshot = (doc) => ({
     snapshotId: doc.repository.snapshotId,
-    analysisSha256: createHash('sha256').update(stableJson(doc)).digest('hex'),
+    analysisSha256: analysisDigest(doc),
   });
   const reports = (doc) => new Map((doc.analysis?.external || []).map((source) => [source.id, source.reportSha256]));
   const beforeReports = reports(previous), afterReports = reports(current);

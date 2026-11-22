@@ -679,3 +679,15 @@ html[data-bauify="on"][data-bauify-code="on"][data-bauify-pick] #bauify-edges .b
 html[data-bauify="on"][data-bauify-pick] path.bauify-coded.bauify-lit { opacity: 1; }
 html[data-bauify="on"] g[data-node-id] { transition: opacity .3s; }
 .pr-source-pin { display: block; overflow-wrap: anywhere; }
+
+.toolbar .analysis-refresh { position: relative; display: none; }
+html[data-bauify="on"] .toolbar .analysis-refresh { display: inline-flex; }
+.toolbar .analysis-refresh-button[aria-busy="true"] { cursor: progress; }
+.analysis-refresh-status:not(:empty) {
+  position: absolute; z-index: 12; inset: calc(100% + 8px) 0 auto auto;
+  width: max-content; max-width: min(340px, 70vw); padding: 8px 12px;
+  background: var(--panel, #fff); color: var(--text, #0f172a);
+  border: 1px solid var(--panel-border, #cbd5e1); border-radius: 8px;
+  font-size: 12px; line-height: 1.35;
+}
+.analysis-refresh-status:empty { position: absolute; }
