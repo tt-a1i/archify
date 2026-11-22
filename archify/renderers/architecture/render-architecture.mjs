@@ -14,7 +14,7 @@ import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeFrameAttrs, changeLeg
 import { gridLayout, resolveComponentPos, validateGridPlacement } from './grid.mjs';
 import { automaticComponentPositions, boundaryInsets } from './automatic-placement.mjs';
 import { placeCrossedLeaf, placeCrossedSinks, facingFramePlacements } from './crossed-leaf-placement.mjs';
-import { crossingPlacementCandidates, foldedChain, frameAttachmentCandidates, frameEnclosureCandidates, groupMoveCanPreserveRoutes, groupMovePreservesRoutes, measuredCrossingPairs, nearAlignmentCandidates, routeSpanMeasures, sharedNeighborCandidates, strongestLayerOrder, terminalBranchCandidates } from './automatic-placement-candidates.mjs';
+import { centeredFanOutCandidates, crossingPlacementCandidates, foldedChain, frameAttachmentCandidates, frameEnclosureCandidates, groupMoveCanPreserveRoutes, groupMovePreservesRoutes, measuredCrossingPairs, nearAlignmentCandidates, routeSpanMeasures, sharedNeighborCandidates, strongestLayerOrder, terminalBranchCandidates } from './automatic-placement-candidates.mjs';
 import {
   closeReciprocalLanes, createArchitectureRouter, connectionLabelBoxAt, parallelFrameRunLength,
   MIN_PARALLEL_DEPARTURE, parallelRunMeasures, READABLE_FRAME_GAP, READABLE_PORT_GAP,
@@ -769,7 +769,10 @@ function chooseAutomaticPlacement() {
     if (!remainingPlacementRoutes) return;
     const bounds = boundsFor(moved);
     const candidate = routePlacement(moved, bounds, routingOptions);
-    const scene = resolveConnectionComposition(moved, candidate.pathFor, bounds);
+    const composed = resolveConnectionComposition(moved, candidate.pathFor, bounds);
+    // Recentered branches share the same corridors in a different order.
+    // Compare their finished masks instead of the provisional reservations.
+    const scene = kind === 'fan-out' ? finishAutomaticLabels(composed) : composed;
     const nextCrossings = measuredCrossingPairs(scene.routes);
     const next = measure(scene);
     if (next.bends > baseline.bends || next.stretch > baseline.stretch) return;
@@ -783,7 +786,7 @@ function chooseAutomaticPlacement() {
       if (nextCrossings.length > best.crossings.length || next.bends > best.bends || next.stretch > best.stretch
           || next.longest > best.longest + 0.0001 || next.area > best.area || next.length >= best.length - 0.0001
           || !groupMovePreservesRoutes(best.spans, next.spans)) return;
-    } else if (kind === 'span') {
+    } else if (kind === 'span' || kind === 'fan-out') {
       // Both normalizations matter: shrinking a mostly empty canvas must
       // still leave the longest route shorter relative to the whole view.
       if (nextCrossings.length > best.crossings.length || next.bends > best.bends || next.stretch > best.stretch
@@ -809,7 +812,8 @@ function chooseAutomaticPlacement() {
           || scene.viewBox[1] >= best.scene.viewBox[1] * 0.75 || next.area > best.area * 1.25) return;
     } else if (order >= 0 || nextCrossings.length >= crossings.length || next.length > baseline.length + 0.0001
         || scene.viewBox.some((size, axis) => size > initial.viewBox[axis])) return;
-    if (!candidate.planIsClear(scene.viewBox, { checkProvisionalLabels: false })
+    if ((kind === 'fan-out' && frameEnclosures(moved, scene.titles.boundaries).length)
+        || !candidate.planIsClear(scene.viewBox, { checkProvisionalLabels: false })
         || !preservesLabels(labels, labelProblems(scene))) return;
     try {
       withIsolatedDiagnosticRecording(() => validateArchitecture(scene, candidate));
@@ -852,6 +856,10 @@ function chooseAutomaticPlacement() {
     }
   }
   if (canShorten) {
+    for (const moved of centeredFanOutCandidates(best.scene)) {
+      if (!remainingPlacementRoutes) break;
+      consider(moved, 0, 'fan-out');
+    }
     // Reserve an alternative when the accepted scene has competing lanes.
     const corridor = corridorMeasures(best.scene);
     const reserve = best.crossings.length ? 0 : (corridor.length || corridor.border ? 2 : 1);
@@ -953,9 +961,9 @@ function finishAutomaticLabels(scene, repairFixedCanvas = false, { canMove, side
     searchBand: true,
     preferShaftAttachment: sideOnly,
     keepFallbackNearRoute: true,
-    // A proposed straight route can start with a label off the shaft but
-    // inside a card. Search for a clear side position before rejecting it.
-    onlyProtectedEndpoints: !sideOnly,
+    // A wholly inferred scene can exhaust its provisional label slots.
+    // Check its final masks against cards and corridors as well as ports.
+    onlyProtectedEndpoints: !sideOnly && !whollyInferred,
     // A label can interrupt its own straight shaft where space is tight.
     // Keep its bends, and every part of every competing route, visible.
     coversRouteStroke: label => strokes.some(({ path, corners, halfWidth, relationIndex }) =>

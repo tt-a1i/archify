@@ -15,6 +15,35 @@ function move(box, x, y) {
   return { ...box, x, y, cx: x + box.width / 2, cy: y + box.height / 2 };
 }
 
+export function* centeredFanOutCandidates({ boxes, routes }) {
+  const neighbors = new Map([...boxes.keys()].map(id => [id, new Set()]));
+  for (const { relation: { from, to } } of routes) {
+    neighbors.get(from).add(to);
+    neighbors.get(to).add(from);
+  }
+  for (const [id, peers] of neighbors) {
+    if (peers.size < 4 || [...peers].some(peer => neighbors.get(peer).size !== 1)) continue;
+    const hub = boxes.get(id);
+    if (hub.pos) continue;
+    const leaves = [...peers].map(peer => boxes.get(peer));
+    for (const [along, alongSize, rankCenter, acrossCenter] of [
+      ['x', 'width', 'cx', 'cy'], ['y', 'height', 'cy', 'cx'],
+    ]) {
+      // A one-sided rank of leaves can pull its hub to the end of the
+      // rank when the layout aligns the hub with the selected main path.
+      if (!leaves.every(leaf => leaf[along] >= hub[along] + hub[alongSize])
+          && !leaves.every(leaf => leaf[along] + leaf[alongSize] <= hub[along])) continue;
+      if (leaves.some(leaf => Math.abs(leaf[rankCenter] - leaves[0][rankCenter]) > 0.0001)) continue;
+      const ordered = leaves.map(leaf => leaf[acrossCenter]).sort((a, b) => a - b);
+      const shift = ordered[Math.floor((ordered.length - 1) / 2)] - hub[acrossCenter];
+      if (Math.abs(shift) < 60) continue;
+      const moved = along === 'x' ? move(hub, hub.x, hub.y + shift) : move(hub, hub.x + shift, hub.y);
+      if ([...boxes.values()].some(box => box !== hub && rectsOverlap(box, moved, 28))) continue;
+      yield new Map(boxes).set(id, moved);
+    }
+  }
+}
+
 export function* nearAlignmentCandidates({ boxes, routes, titles }) {
   // Open a lane between the legal port ranges with a small perpendicular
   // nudge. Avoid repacking cards or changing a frame's membership.

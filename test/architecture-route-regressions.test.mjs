@@ -602,6 +602,52 @@ test('group proposals that cannot preserve a nearby route spend no additional ro
   assert.ok(receipt.routedPlacementCandidates <= 4, JSON.stringify(receipt.routedPlacementCandidates));
 });
 
+test('a fully automatic standard diagram finds label slots between vertical cards', t => {
+  const groups = [
+    ['Job dispatcher', 'Resource loader', 'Execution handler', 'Response adapter', 'Result session'],
+    ['Submitter', 'Job manager', 'Engine', 'Configuration', 'Result'],
+  ];
+  const links = [
+    [[0, 2, 'starts agent'], [0, 1, 'prepares resources'], [1, 2, 'supplies loader'],
+      [2, 4, 'creates session'], [2, 3, 'if schema supplied'], [3, 4, 'registers tool']],
+    [[0, 1, 'queues work'], [1, 2, 'starts engine'], [2, 3, 'loads configuration'],
+      [3, 4, 'supplies loader'], [2, 4, 'creates result']],
+  ];
+  const components = groups.flatMap((labels, group) =>
+    labels.map((label, index) => ({ id: `group-${group}-${index}`, type: 'backend', label })));
+  const boundaries = groups.map((labels, group) => ({
+    kind: 'region', label: ['Processing runtime', 'Background process'][group],
+    wraps: labels.map((_, index) => `group-${group}-${index}`),
+  }));
+  const connections = links.flatMap((edges, group) => edges.map(([from, to, label]) =>
+    ({ from: `group-${group}-${from}`, to: `group-${group}-${to}`, label })));
+  const receipt = inferredLayout(t, components, connections, boundaries, 'standard');
+  const route = receipt.connections.find(({ label }) => label === 'queues work');
+  const mask = connectionLabelBoxAt(route, route.labelAt);
+  assert.equal(route.points.length, 2);
+  assert.equal(route.points[0][0], route.points[1][0]);
+  assert.ok(mask.y > route.points[0][1] && mask.y + mask.height < route.points[1][1]);
+  assert.ok(segmentRectClearance({ start: route.points[0], end: route.points[1] }, mask) <= mask.height);
+});
+
+test('automatic placement centers a dispatcher beside a long rank of leaves', t => {
+  const components = ['Dispatcher', 'Status panel', 'Event monitor', 'Timer schedule',
+    'Safety checks', 'Job runner', 'Display state', 'Menu actions'].map((label, index) =>
+    ({ id: `node-${index}`, type: 'backend', label }));
+  const connections = [
+    [0, 1, 'opens panel'], [0, 7, 'registers menu'], [0, 2, 'starts monitor'],
+    [2, 0, 'event received'], [0, 3, 'updates timer'], [0, 4, 'checks limits'],
+    [0, 5, 'starts job'], [0, 6, 'updates display'],
+  ].map(([from, to, label]) => ({ from: `node-${from}`, to: `node-${to}`, label }));
+  const boundaries = [{ kind: 'region', label: 'Desktop runtime', wraps: components.map(({ id }) => id) }];
+  const receipt = inferredLayout(t, components, connections, boundaries, 'standard');
+  const [hub, ...leaves] = receipt.components;
+  const rows = leaves.map(box => box.y + box.height / 2).sort((a, b) => a - b);
+  const center = hub.y + hub.height / 2;
+  assert.ok(center >= rows[2] && center <= rows[4], JSON.stringify({ center, rows }));
+  assert.ok(receipt.connections.some(({ points }) => points.length === 2));
+});
+
 test('an inferred return label keeps its elbows and competing shafts visible', () => {
   const { status, receipt } = validate(fileURLToPath(fixtureUrl('rounded-return-label')), 'showcase', '--layout-json');
   assert.equal(status, 0, JSON.stringify(receipt.diagnostics));
