@@ -8,8 +8,8 @@
   "provenance": "unknown",
   "artifact": {
     "path": "docs/cases/astron-agent-runtime.architecture.html",
-    "sha256": "59439c6a1f2fe4e00d4d6cb82d9628442063bebe9ac7cea900fcdb3d916ec368",
-    "bytes": 925220
+    "sha256": "f40b6d455342e46d519cf2b2fde5733f131ddc05b599b7121e41b2dd8edf195a",
+    "bytes": 934583
   },
   "state": {
     "detail": "read",
@@ -904,8 +904,8 @@
         "file": "astron-agent-runtime.architecture.visual-check.html"
       },
       {
-        "sha256": "8104798dfd764e589635ca2ec691fa3c429465eb30b52465dcfc82ad66da9be9",
-        "bytes": 128753,
+        "sha256": "32eaf7a1325785af0d4f0466c10466e766ba7a201cfe6a609c39398fe01707e5",
+        "bytes": 128839,
         "file": "astron-agent-runtime.architecture.visual-check.1440x900.light.png"
       },
       {

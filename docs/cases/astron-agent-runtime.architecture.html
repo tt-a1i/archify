@@ -3517,87 +3517,210 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     .toolbar #btn-export::before { inset: 0.25rem 0; border-radius: 0.6875rem; }
 
     #code-analysis-dialog {
+      --analysis-accent: var(--frontend-stroke);
       box-sizing: border-box;
-      width: min(32rem, calc(100% - 2rem));
+      width: min(35rem, calc(100% - 2rem));
       max-width: none;
       max-height: calc(100% - 2rem);
       margin: auto;
       overflow: auto;
-      padding: clamp(1rem, 4vw, 1.5rem);
-      border: 1px solid var(--panel-border);
-      border-radius: 1rem;
+      padding: clamp(1.125rem, 4vw, 1.625rem);
+      border: 1px solid color-mix(in srgb, var(--panel-border) 80%, var(--analysis-accent));
+      border-radius: 1.125rem;
       background: var(--panel);
+      background-image:
+        radial-gradient(120% 70% at 0% 0%, color-mix(in srgb, var(--analysis-accent) 11%, transparent), transparent 62%),
+        linear-gradient(var(--toolbar-menu-bg), var(--toolbar-menu-bg));
       color: var(--text);
-      box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.24);
+      box-shadow: 0 1.5rem 4rem -1rem rgba(2, 6, 23, 0.45), 0 0 0 1px color-mix(in srgb, var(--text) 4%, transparent) inset;
       font-size: 0.875rem;
-      line-height: 1.5;
+      line-height: 1.55;
       overflow-wrap: anywhere;
     }
-    #code-analysis-dialog::backdrop { background: rgba(9, 16, 30, 0.55); }
+    #code-analysis-dialog[open] { animation: analysis-info-in 180ms cubic-bezier(.2, .8, .2, 1); }
+    #code-analysis-dialog::backdrop { background: rgba(2, 6, 23, 0.5); backdrop-filter: blur(3px); }
+    @keyframes analysis-info-in { from { opacity: 0; transform: translateY(6px) scale(.985); } }
+    @media (prefers-reduced-motion: reduce) { #code-analysis-dialog[open] { animation: none; } }
     .analysis-info-header {
       display: flex;
-      align-items: flex-start;
-      gap: 0.75rem;
-    }
-    .analysis-info-star {
-      flex: 0 0 auto;
-      width: 2.5rem;
-      height: 2.5rem;
-      background: var(--frontend-stroke);
-      mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40' fill='none' stroke='black'%3E%3Ccircle cx='20' cy='20' r='15' opacity='.3'/%3E%3Cpath d='M20 5v30M7 12l26 16M7 28l26-16'/%3E%3Cpath d='M20 5h.01m13 7h.01m0 16h.01M20 35h.01M7 28h.01m0-16h.01M20 20h.01' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat;
-    }
-    .analysis-info-header h2 {
-      margin: 0 0 0.125rem;
-      font-size: 1.125rem;
-      line-height: 1.3;
-    }
-    .analysis-info-header p, .analysis-info-start p { margin: 0; }
-    .analysis-info-header p, #code-analysis-copy-status { color: var(--text-muted); }
-    .analysis-info-header form { margin-inline-start: auto; }
-    .analysis-info-features {
-      margin: 1rem 0;
-      padding-inline-start: 1.25rem;
-    }
-    .analysis-info-features li + li { margin-top: 0.5rem; }
-    .analysis-info-features li::marker { color: var(--frontend-stroke); }
-    .analysis-info-start {
-      display: flex;
-      flex-wrap: wrap;
       align-items: center;
-      gap: 0.5rem 0.75rem;
-      padding: 0.75rem;
-      border: 1px solid var(--panel-border);
-      border-radius: 0.625rem;
-      background: color-mix(in srgb, var(--frontend-stroke) 6%, var(--panel));
+      gap: 0.875rem;
     }
-    .analysis-info-prompt { flex: 1 1 13rem; min-width: 0; }
-    .analysis-info-start #code-analysis-repository {
-      margin-top: 0.375rem;
+    .analysis-info-mark {
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+      width: 3rem;
+      height: 3rem;
+      border-radius: 0.875rem;
+      color: var(--analysis-accent);
+      background:
+        linear-gradient(135deg, color-mix(in srgb, var(--analysis-accent) 18%, transparent), color-mix(in srgb, var(--backend-stroke) 12%, transparent));
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--analysis-accent) 28%, transparent) inset;
+    }
+    .analysis-info-mark::before {
+      content: "";
+      width: 2.25rem;
+      height: 2.25rem;
+      background: currentColor;
+      -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='24' cy='24' r='17' stroke-width='1.25' opacity='.4'/%3E%3Ccircle cx='24' cy='24' r='9.5' stroke-width='1.25' opacity='.6'/%3E%3Cpath d='M24 24V7M24 24l14.7 8.5M24 24 9.3 32.5M24 24l8.2-6.6M24 24l-8.2-6.6M24 24v9.5' stroke-width='1.5'/%3E%3Cg fill='black' stroke='none'%3E%3Ccircle cx='24' cy='7' r='2.6'/%3E%3Ccircle cx='38.7' cy='32.5' r='2.6'/%3E%3Ccircle cx='9.3' cy='32.5' r='2.6'/%3E%3Ccircle cx='32.2' cy='17.4' r='1.8'/%3E%3Ccircle cx='15.8' cy='17.4' r='1.8'/%3E%3Ccircle cx='24' cy='33.5' r='1.8'/%3E%3Ccircle cx='24' cy='24' r='3.4'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat;
+      mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='24' cy='24' r='17' stroke-width='1.25' opacity='.4'/%3E%3Ccircle cx='24' cy='24' r='9.5' stroke-width='1.25' opacity='.6'/%3E%3Cpath d='M24 24V7M24 24l14.7 8.5M24 24 9.3 32.5M24 24l8.2-6.6M24 24l-8.2-6.6M24 24v9.5' stroke-width='1.5'/%3E%3Cg fill='black' stroke='none'%3E%3Ccircle cx='24' cy='7' r='2.6'/%3E%3Ccircle cx='38.7' cy='32.5' r='2.6'/%3E%3Ccircle cx='9.3' cy='32.5' r='2.6'/%3E%3Ccircle cx='32.2' cy='17.4' r='1.8'/%3E%3Ccircle cx='15.8' cy='17.4' r='1.8'/%3E%3Ccircle cx='24' cy='33.5' r='1.8'/%3E%3Ccircle cx='24' cy='24' r='3.4'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat;
+    }
+    .analysis-info-heading { min-width: 0; }
+    .analysis-info-header h2 {
+      margin: 0 0 0.3rem;
+      font-size: 1.1875rem;
+      font-weight: 650;
+      letter-spacing: -0.01em;
+      line-height: 1.25;
+    }
+    .analysis-info-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      margin: 0;
+      padding: 0.125rem 0.5rem;
+      border-radius: 0.625rem;
+      color: var(--text-muted);
+      background: color-mix(in srgb, var(--text) 6%, transparent);
+      font-size: 0.75rem;
+      line-height: 1.4;
+    }
+    .analysis-info-badge::before {
+      content: "";
+      width: 0.375rem;
+      height: 0.375rem;
+      border-radius: 50%;
+      background: var(--backend-stroke);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--backend-stroke) 22%, transparent);
+    }
+    .analysis-info-header form { margin-inline-start: auto; align-self: flex-start; }
+    .analysis-info-features {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.625rem;
+      margin: 1.25rem 0;
+      padding: 0;
+      list-style: none;
+    }
+    .analysis-info-features li {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      padding: 0.8125rem 0.875rem 0.875rem;
+      border: 1px solid color-mix(in srgb, var(--panel-border) 85%, transparent);
+      border-radius: 0.75rem;
+      background: color-mix(in srgb, var(--text) 3%, transparent);
+      color: var(--text);
+      font-size: 0.8125rem;
+      line-height: 1.5;
+    }
+    .analysis-info-copy { display: flex; flex-direction: column; gap: 0.125rem; min-width: 0; }
+    .analysis-info-copy strong { font-size: 0.875rem; font-weight: 650; color: var(--text); }
+    .analysis-info-copy > span { color: var(--text-muted); }
+    .analysis-info-features li[data-feature="star"] { --feature: var(--frontend-stroke); --feature-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='8.5' opacity='.45'/%3E%3Cpath d='M12 12V3.5M12 12l7.4 4.2M12 12l-7.4 4.2'/%3E%3Ccircle cx='12' cy='12' r='2' fill='black'/%3E%3C/svg%3E"); }
+    .analysis-info-features li[data-feature="model"] { --feature: var(--database-stroke); --feature-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3 20 7.5v9L12 21l-8-4.5v-9z'/%3E%3Cpath d='M4 7.5 12 12l8-4.5M12 12v9'/%3E%3C/svg%3E"); }
+    .analysis-info-features li[data-feature="counts"] { --feature: var(--messagebus-stroke); --feature-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='6' width='12' height='12' rx='2.5'/%3E%3Ccircle cx='17.5' cy='6.5' r='3.5' fill='black'/%3E%3C/svg%3E"); }
+    .analysis-info-features li[data-feature="fix"] { --feature: var(--backend-stroke); --feature-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m8 8-4 4 4 4M16 8l4 4-4 4'/%3E%3Cpath d='M13.5 5 10.5 19' opacity='.6'/%3E%3C/svg%3E"); }
+    .analysis-info-icon {
+      display: grid;
+      place-items: center;
+      width: 1.875rem;
+      height: 1.875rem;
+      border-radius: 0.5625rem;
+      background: color-mix(in srgb, var(--feature) 16%, transparent);
+    }
+    .analysis-info-icon::before {
+      content: "";
+      width: 1.125rem;
+      height: 1.125rem;
+      background: var(--feature);
+      -webkit-mask: var(--feature-icon) center / contain no-repeat;
+      mask: var(--feature-icon) center / contain no-repeat;
+    }
+    .analysis-info-start {
+      padding-top: 1.125rem;
+      border-top: 1px solid color-mix(in srgb, var(--panel-border) 85%, transparent);
+    }
+    .analysis-info-start p { margin: 0; }
+    .analysis-info-ask {
+      margin-bottom: 0.5rem !important;
       color: var(--text-muted);
       font-size: 0.8125rem;
     }
-    .analysis-info-start q { font-weight: 600; }
+    .analysis-info-bubble {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 0.75rem 0.75rem 1rem;
+      border: 1px solid color-mix(in srgb, var(--analysis-accent) 32%, var(--panel-border));
+      border-radius: 0.875rem 0.875rem 0.875rem 0.25rem;
+      background: color-mix(in srgb, var(--analysis-accent) 8%, transparent);
+    }
+    .analysis-info-prompt { flex: 1 1 14rem; min-width: 0; }
+    .analysis-info-start q {
+      font-size: 0.9375rem;
+      font-weight: 650;
+      color: var(--text);
+    }
     .analysis-info-start q:lang(zh) { quotes: "「" "」"; }
+    .analysis-info-start #code-analysis-repository {
+      margin-top: 0.3rem;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.75rem;
+      line-height: 1.45;
+      word-break: break-all;
+    }
     #code-analysis-dialog button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
       min-height: 2.75rem;
       border: 1px solid var(--panel-border);
-      border-radius: 0.5rem;
+      border-radius: 0.625rem;
       background: var(--toolbar-menu-bg);
       color: var(--text);
-      padding: 0.375rem 0.65rem;
+      padding: 0.375rem 0.875rem;
       font: inherit;
+      font-weight: 600;
       cursor: pointer;
     }
-    #code-analysis-dialog button:hover { background: var(--toolbar-hover); }
-    #code-analysis-dialog button:focus-visible { outline: 2px solid var(--frontend-stroke); }
+    #code-analysis-dialog .analysis-info-glyph {
+      width: 1.125rem;
+      height: 1.125rem;
+      flex: 0 0 auto;
+      background: currentColor;
+      -webkit-mask: var(--glyph) center / contain no-repeat;
+      mask: var(--glyph) center / contain no-repeat;
+    }
+    #code-analysis-dialog .analysis-info-close .analysis-info-glyph { --glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 5l10 10M15 5 5 15'/%3E%3C/svg%3E"); }
+    #code-analysis-copy .analysis-info-glyph { --glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='7' y='7' width='9' height='9' rx='2'/%3E%3Cpath d='M13 4.5H6A1.5 1.5 0 0 0 4.5 6v7'/%3E%3C/svg%3E"); }
+    #code-analysis-dialog button:focus-visible { outline: 2px solid var(--analysis-accent); outline-offset: 2px; }
+    #code-analysis-dialog #code-analysis-copy {
+      border-color: transparent;
+      background: var(--text);
+      color: var(--toolbar-menu-bg);
+    }
+    #code-analysis-dialog #code-analysis-copy:hover { background: color-mix(in srgb, var(--text) 86%, var(--toolbar-menu-bg)); }
     #code-analysis-dialog .analysis-info-close {
       min-width: 2.75rem;
+      padding: 0;
       border-color: transparent;
       background: transparent;
-      font-size: 1.25rem;
+      color: var(--text-muted);
     }
-    #code-analysis-dialog .analysis-info-close:hover { background: var(--toolbar-hover); }
+    #code-analysis-dialog .analysis-info-close:hover { background: color-mix(in srgb, var(--text) 8%, transparent); color: var(--text); }
+    #code-analysis-copy-status { color: var(--backend-stroke); font-size: 0.8125rem; font-weight: 600; }
     #code-analysis-copy-status:not(:empty) { margin-top: 0.5rem; }
+    @media (max-width: 30rem) {
+      .analysis-info-features { grid-template-columns: 1fr; }
+      .analysis-info-features li { flex-direction: row; align-items: flex-start; gap: 0.75rem; }
+      .analysis-info-icon { flex: 0 0 auto; }
+      .analysis-info-bubble #code-analysis-copy { flex: 1 1 100%; }
+    }
 
     /* Tools share one quiet capsule; the capsule is drawn inside the 44px row
        so the controls keep their hit area without a tall visible box. */
@@ -5760,7 +5883,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
 
     <script id="archify-source-evidence-data" type="application/json">{"schemaVersion":1,"verified":true,"repository":{"url":"https://github.com/iflytek/astron-agent","revision":"a77c92a9dcd15dc55f5c2b19f778e643cb2e41f1","shortRevision":"a77c92a","label":"iflytek/astron-agent","href":"https://github.com/iflytek/astron-agent/tree/a77c92a9dcd15dc55f5c2b19f778e643cb2e41f1"},"referenceCount":19,"nodes":{"console_ui":[{"path":"console/frontend/src/main.tsx","label":"SPA 入口","href":"https://github.com/iflytek/astron-agent/blob/a77c92a9dcd15dc55f5c2b19f778e643cb2e41f1/console/frontend/src/main.tsx"},{"path":"docs/PROJECT_MODULES.md","label":"模块职责","href":"https://github.com/iflytek/astron-agent/blob/a77c92a9dcd15dc55f5c2b19f778e643cb2e41f1/docs/PROJECT_MODULES.md"}],"console_api":[{"path":"console/backend/hub/pom.xml","label":"Hub 模块","href":"https://github.com/iflytek/astron-agent/blob/a77c92a9dcd15dc55f5c2b19f778e643cb2e41f1/console/backend/hub/pom.xml"},{"path":"docs/PROJECT_MODULES.md","label":"管理 API 职责","href":"https://github.com/iflytek/astron-agent/blob/a77c92a9dcd15dc55f5c2b19f778e643cb2e41f1/docs/PROJECT_MODULES.md"}],"agent_service":[{"path":"core/agent/main.py","label":"服务入口","href":"https://github.com/iflytek/astron-agent/blob/a77c92a9dcd15dc55f5c2b19f778e643cb2e41f1/core/agent/main.py"},{"path":"docs/PROJECT_MODULES.md","label":"Agent 职责","href":"https://github.com/iflytek/astron-agent/blob/a77c92a9dcd15dc55f5c2b19f778e643cb2e41f1/docs/PROJECT_MODULES.md"}],"plugin_services":[{"path":"core/plugin/aitools/main.py","label":"AI Tools 入口","href":"https://github.com/iflytek/astron-agent/blob/a77c92a9dcd15dc55f5c2b19f778e643cb2e41f1/core/plugin/aitools/main.py"},{"path":"core/plugin/link/main.py","label":"Link 入口","href":"https://github.com/iflytek/astron-agent/blob/a77c92a9dcd15dc55f5c2b19f778e643cb2e41f1/core/plugin/link/main.py"},{"path":"core/plugin/rpa/main.py","label":"RPA 入口","href":"https://github.com/iflytek/astron-agent/blob/a77c92a9dcd15dc55f5c2b19f778e643cb2e41f1/core/plugin/rpa/main.py"}],"tenant_service":[{"path":"core/tenant/main.go","line":9,"label":"Go 入口","href":"https://github.com/iflytek/astron-agent/blob/a77c92a9dcd15dc55f5c2b19f778e643cb2e41f1/core/tenant/main.go#L9"},{"path":"docs/PROJECT_MODULES.md","label":"租户职责","href":"https://github.com/iflytek/astron-agent/blob/a77c92a9dcd15dc55f5c2b19f778e643cb2e41f1/docs/PROJECT_MODULES.md"}],"workflow_service":[{"path":"core/workflow/main.py","line":100,"label":"FastAPI 入口","href":"https://github.com/iflytek/astron-agent/blob/a77c92a9dcd15dc55f5c2b19f778e643cb2e41f1/core/workflow/main.py#L100"},{"path":"docs/PROJECT_MODULES.md","label":"工作流职责","href":"https://github.com/iflytek/astron-agent/blob/a77c92a9dcd15dc55f5c2b19f778e643cb2e41f1/docs/PROJECT_MODULES.md"}],"knowledge_service":[{"path":"core/knowledge/main.py","line":44,"label":"FastAPI 入口","href":"https://github.com/iflytek/astron-agent/blob/a77c92a9dcd15dc55f5c2b19f778e643cb2e41f1/core/knowledge/main.py#L44"},{"path":"docs/PROJECT_MODULES.md","label":"知识服务职责","href":"https://github.com/iflytek/astron-agent/blob/a77c92a9dcd15dc55f5c2b19f778e643cb2e41f1/docs/PROJECT_MODULES.md"}],"state_storage":[{"path":"docker/astronAgent/docker-compose.yaml","label":"部署服务","href":"https://github.com/iflytek/astron-agent/blob/a77c92a9dcd15dc55f5c2b19f778e643cb2e41f1/docker/astronAgent/docker-compose.yaml"},{"path":"docs/PROJECT_MODULES.md","label":"数据基础设施","href":"https://github.com/iflytek/astron-agent/blob/a77c92a9dcd15dc55f5c2b19f778e643cb2e41f1/docs/PROJECT_MODULES.md"}],"event_bus":[{"path":"core/workflow/extensions/middleware/asynchronous/celery_app.py","line":29,"label":"Kafka broker","href":"https://github.com/iflytek/astron-agent/blob/a77c92a9dcd15dc55f5c2b19f778e643cb2e41f1/core/workflow/extensions/middleware/asynchronous/celery_app.py#L29"},{"path":"docs/PROJECT_MODULES.md","label":"事件主题","href":"https://github.com/iflytek/astron-agent/blob/a77c92a9dcd15dc55f5c2b19f778e643cb2e41f1/docs/PROJECT_MODULES.md"}]}}</script>
-    <script id="archify-i18n-data" type="application/json">{"locale":"zh-CN","messages":{"viewer.kind.frontend":"前端","viewer.kind.backend":"后端","viewer.kind.database":"数据库","viewer.kind.cloud":"云服务","viewer.kind.security":"安全","viewer.kind.messagebus":"消息总线","viewer.kind.external":"外部系统","viewer.kind.neutral":"中性","viewer.kind.node":"节点","viewer.kind.start":"开始","viewer.kind.active":"活动","viewer.kind.waiting":"等待","viewer.kind.decision":"决策","viewer.kind.success":"成功","viewer.kind.failure":"失败","viewer.toolbar.actions":"图表操作","viewer.diagnosis.button":"架构诊断","viewer.diagnosis.title":"架构诊断","viewer.diagnosis.local":"Archify 自带，在本机运行","viewer.diagnosis.starMap":"用环形星图查看文件和函数之间的依赖关系。","viewer.diagnosis.model":"旋转 3D 模型，查看各模块是怎么连在一起的。","viewer.diagnosis.counts":"在这张图上查看各组件的问题数，找出依赖最密集的区域、循环依赖，以及图中没画出的依赖。","viewer.diagnosis.findings":"每条发现都能点开查看对应的源码，也能交给 AI 作为修复任务。","viewer.diagnosis.ask":"对你的 AI 助手说：","viewer.diagnosis.prompt":"启动架构诊断","viewer.diagnosis.repository":"仓库：{url} @ {revision}","viewer.diagnosis.copy":"复制提示词","viewer.theme.toggle.title":"切换主题（T）","viewer.theme.toggle":"切换颜色主题","viewer.theme.dark":"深色","viewer.theme.light":"浅色","viewer.preset.choose.title":"选择视觉风格（S 循环切换）","viewer.preset.choose":"选择视觉风格","viewer.preset.style":"风格","viewer.preset.menu":"视觉风格","viewer.preset.identity":"视觉表达","viewer.preset.cycles":"循环切换","viewer.preset.classic":"经典","viewer.preset.classic.short":"经典","viewer.preset.classic.hint":"稳定的技术默认风格","viewer.preset.flow":"信号流","viewer.preset.flow.short":"流动","viewer.preset.flow.hint":"突出动态流向","viewer.preset.blueprint":"蓝图","viewer.preset.blueprint.hint":"工程评审","viewer.preset.editorial":"编辑风格","viewer.preset.editorial.hint":"适合发布与上线说明","viewer.preset.badge.signalFlow":"信号流","viewer.preset.badge.blueprint":"蓝图 / 修订 01","viewer.preset.badge.editorial":"编辑风格 / 现场笔记","viewer.preset.badge.editorialPlate":"ARCHIFY / 图版 04","viewer.preset.current":"当前视觉风格：{style}。选择视觉风格","viewer.motion.live":"动态","viewer.motion.still":"静态","viewer.motion.pause":"暂停动效","viewer.motion.resume":"恢复动效","viewer.motion.reduced":"已根据减少动态效果偏好暂停动效","viewer.motion.hidden":"页面不可见时已暂停动效","viewer.motion.yielding":"暂停动效；当前让位于{owner}","viewer.motion.yielding.title":"动态预览已启用 · 正在让位于{owner}","viewer.owner.route":"路径探测","viewer.owner.lens":"语义透镜","viewer.owner.relationship":"关系预览","viewer.owner.intent":"意图追踪","viewer.owner.focus":"语义聚焦","viewer.owner.legend":"图例预览","viewer.owner.reader":"读者交互","viewer.present.enter":"进入演示模式","viewer.present.enter.title":"演示模式（F）","viewer.present.exit":"退出演示模式","viewer.present.exit.title":"退出演示模式（F 或 Escape）","viewer.present.present":"演示","viewer.present.exit.label":"退出","viewer.export.button":"导出","viewer.export.button.title":"导出图表（E）","viewer.export.diagram":"导出图表","viewer.export.menu":"导出","viewer.export.subtitle":"便携、整洁的输出","viewer.export.share":"分享","viewer.export.shareCard":"分享卡片","viewer.export.routeShareCard":"路径分享卡片","viewer.export.reachShareCard":"可达范围分享卡片","viewer.export.copyDiagram":"复制图表","viewer.export.clipboardPng":"复制 PNG 到剪贴板","viewer.export.raster":"位图","viewer.export.image":"图像","viewer.export.lossless":"无损图像","viewer.export.compact":"紧凑图像","viewer.export.modern":"现代图像格式","viewer.export.vectorMotion":"矢量与动效","viewer.export.vectorMotion.heading":"矢量与动效","viewer.export.editable":"可编辑矢量图","viewer.export.svg.auto":"SVG · 自动","viewer.export.svg.auto.hint":"匹配宿主主题","viewer.export.svg.light":"SVG · 浅色","viewer.export.svg.light.hint":"始终浅色","viewer.export.svg.dark":"SVG · 深色","viewer.export.svg.dark.hint":"始终深色","viewer.export.motion6s":"6 秒动效","viewer.export.unsupported":"当前浏览器不支持","viewer.export.clipboardUnsupported":"当前浏览器不支持写入图片剪贴板","viewer.export.clipboardUnsupported.short":"此浏览器不支持写入图片剪贴板。","viewer.export.motionUnavailable":"当前浏览器无法录制动效","viewer.export.webmUnavailable":"当前浏览器不支持 WebM","viewer.export.failed":"导出失败：{message}","viewer.export.unknownVariant":"未知的分享卡片类型：{variant}","viewer.export.routeRequired":"请先追踪路径，再导出路径分享卡片","viewer.export.reachRequired":"请先追踪编写可达范围，再导出可达范围分享卡片","viewer.export.unknown":"未知错误","viewer.export.routeFailed":"路径分享卡片导出失败：{message}","viewer.export.reachFailed":"可达范围分享卡片导出失败：{message}","viewer.export.copyFailed":"复制失败：{message}","viewer.export.copiedPng":"已将 PNG 复制到剪贴板","viewer.export.downloadedRoute":"已下载路径分享卡片","viewer.export.downloadedReach":"已下载可达范围分享卡片","viewer.export.downloadedWebm":"已下载 WebM","viewer.export.recording":"正在录制 6 秒动效…","viewer.export.card.routeSummary.one":"路径：{source} → {target} · {count} 步","viewer.export.card.routeSummary.other":"路径：{source} → {target} · {count} 步","viewer.export.card.reachSummary":"从{origin}开始的编写{direction} · {nodes} · {links} · 最深 {hops}","viewer.export.card.node.one":"{count} 个节点","viewer.export.card.node.other":"{count} 个节点","viewer.export.card.link.one":"{count} 条连接","viewer.export.card.link.other":"{count} 条连接","viewer.export.card.hop.one":"{count} 跳","viewer.export.card.hop.other":"{count} 跳","viewer.export.card.routeBadge":"ARCHIFY · 路径 · {hops}","viewer.export.card.reachBadge":"ARCHIFY · {direction}可达范围","viewer.export.direction.upstream":"上游","viewer.export.direction.downstream":"下游","viewer.export.error.canvasUnavailable":"无法为{label}使用画布","viewer.export.error.contextUnavailable":"无法为{label}创建二维画布上下文","viewer.export.error.toBlobUnavailable":"{label}无法使用 canvas.toBlob","viewer.export.error.toBlobNull":"{label}的 canvas.toBlob 未返回数据","viewer.export.error.variantsCombined":"无法同时组合多种分享卡片类型","viewer.export.error.viewerState":"分享卡片导出无法移除临时 Viewer 状态","viewer.export.error.routeState":"路径卡片导出无法安全保留已解析路径","viewer.export.error.reachState":"可达范围卡片导出无法安全保留编写的可达范围","viewer.export.error.webmRequirements":"WebM 动效导出需要追踪动画及浏览器 MediaRecorder 支持","viewer.export.error.mediaRecorder":"MediaRecorder 录制失败","viewer.export.error.emptyWebm":"MediaRecorder 生成了空的 WebM","viewer.export.error.webmBackground":"无法为 WebM 导出加载 SVG 背景","viewer.guide.title":"探索此系统","viewer.focus.selectedNodes":"已选择 {count} 个节点","viewer.guide.eyebrow":"图表指南","viewer.guide.close":"关闭图表指南","viewer.guide.inspecting":"正在检查已编译语义","viewer.guide.actions":"图表探索操作","viewer.guide.find":"查找任意节点","viewer.guide.find.hint":"搜索标签、职责、类型和稳定 ID。","viewer.guide.route":"追踪路径","viewer.guide.route.aria":"追踪有向路径","viewer.guide.route.hint":"查看两个语义节点如何按编写方向连接。","viewer.guide.map":"查看完整系统","viewer.guide.map.hint":"打开带实时视口和稳定节点的语义雷达。","viewer.guide.lens":"比较语义类型","viewer.guide.lens.hint":"统计角色、显示流量并比较直接编写的连接。","viewer.guide.present":"进入演示模式","viewer.guide.present.hint":"让实时图表占满视口，同时不改变导出。","viewer.guide.shortcuts":"其他键盘快捷键","viewer.guide.shortcut.export":"导出","viewer.guide.shortcut.theme":"主题","viewer.guide.shortcut.style":"风格","viewer.guide.shortcut.reset":"重置","viewer.guide.shortcut.zoomIn":"放大","viewer.guide.shortcut.zoomOut":"缩小","viewer.guide.shortcut.close":"关闭","viewer.guide.credit":"觉得好用？在 GitHub 给 Archify 点个 Star","viewer.guide.star":"Star","viewer.guide.facts":"{nodes} · {relationships}","viewer.guide.fact.node.one":"{count} 个语义节点","viewer.guide.fact.node.other":"{count} 个语义节点","viewer.guide.fact.relationship.one":"{count} 条关系","viewer.guide.fact.relationship.other":"{count} 条关系","viewer.guide.open":"打开图表指南","viewer.finder.title":"查找节点","viewer.finder.close":"关闭节点查找器","viewer.finder.placeholder":"搜索标签或 ID","viewer.finder.search":"搜索图表节点","viewer.finder.results":"图表节点","viewer.finder.empty":"没有匹配的节点","viewer.finder.result.focus":"聚焦{label}","viewer.finder.result.routeStart":"选择{label}作为路径起点","viewer.finder.result.routeTarget":"选择{label}作为路径终点，{links}","viewer.finder.status.empty":"没有匹配的节点","viewer.finder.status.count.one":"{count} 个匹配节点","viewer.finder.status.count.other":"{count} 个匹配节点","viewer.finder.noun.nodes":"个节点","viewer.finder.link.one":"{count} 条连接","viewer.finder.link.other":"{count} 条连接","viewer.finder.result.focus.one":"聚焦{label}，{count} 条相关连接","viewer.finder.result.focus.other":"聚焦{label}，{count} 条相关连接","viewer.finder.status.filtered":"{visible}/{available} {noun}","viewer.finder.status.all":"{available} {noun}","viewer.passport.eyebrow":"语义护照","viewer.passport.metadata":"节点元数据","viewer.passport.evidence":"已验证的源代码证据","viewer.passport.verified":"已验证来源","viewer.passport.verificationScope":"已按固定修订版本验证本地 Git 证据，未检查远程访问权限。","viewer.passport.payload":"载荷","viewer.passport.payload.role.request":"请求","viewer.passport.payload.role.response":"响应","viewer.passport.payload.role.flow":"数据流","viewer.passport.payload.diff":"新增 {added} · 删除 {removed} · 修改 {modified} · 未变 {unchanged}","viewer.passport.payload.unchanged":"{count} 个未变字段","viewer.passport.payload.sample":"示例载荷（只读）","viewer.passport.payload.after":"变更后的载荷（只读）","viewer.passport.payload.before":"变更前的载荷（只读）","viewer.passport.payload.field.added":"新增 {path}：{after}","viewer.passport.payload.field.removed":"删除 {path}：{before}","viewer.passport.payload.field.modified":"修改 {path}：{before} → {after}","viewer.passport.payload.field.unchanged":"{path}：{after}","viewer.passport.reach":"编写可达范围","viewer.passport.reach.trace":"追踪编写的可达性","viewer.passport.upstream":"上游","viewer.passport.downstream":"下游","viewer.passport.upstream.trace":"追踪上游编写可达性","viewer.passport.downstream.trace":"追踪下游编写可达性","viewer.passport.close":"关闭语义护照","viewer.passport.move":"移动语义护照。可拖动、使用方向键移动，或按 Home 恢复自动位置。","viewer.passport.copy":"复制链接","viewer.passport.copy.focus":"复制聚焦节点的链接","viewer.passport.relations":"关系","viewer.passport.relations.show":"显示关联关系","viewer.passport.relations.hide":"隐藏关联关系","viewer.passport.relations.list":"关联关系","viewer.passport.copyRelation":"复制关系","viewer.passport.copyNode":"复制节点","viewer.passport.copyPinned":"复制固定关系的链接","viewer.passport.copySource":"复制来源节点的链接","viewer.passport.copy.focused.success":"已复制聚焦节点链接","viewer.passport.copy.pinned.success":"已复制固定关系链接","viewer.passport.copy.focused.failed":"无法复制聚焦节点链接","viewer.passport.copy.pinned.failed":"无法复制固定关系链接","viewer.passport.relationship.none":"没有关联关系","viewer.passport.relationship.count.one":"{count} 条关系","viewer.passport.relationship.count.other":"{count} 条关系","viewer.passport.relationship.show.one":"显示 {count} 条关联关系","viewer.passport.relationship.show.other":"显示 {count} 条关联关系","viewer.passport.relationship.summary":"{out} 条出向 · {in} 条入向{loops}","viewer.passport.relationship.loops":" · {count} 条自环","viewer.passport.relationship.explorer":"直接关系浏览器","viewer.passport.relationship.help":"使用方向键浏览关系。按 Enter 或空格键固定详情；按 Escape 清除。","viewer.passport.relationship.loopsBack":"回环","viewer.passport.relationship.connectsTo":"连接到","viewer.passport.relationship.connectsFrom":"连接自","viewer.passport.relationship.pinned":"已固定关系 · {from} → {to} · {label}","viewer.passport.relationship.inspect":"检查第 {index}/{total} 条关系：{from} 到 {to}，{label}。按 Enter 查看详情。","viewer.passport.relationship.group.out":"出向","viewer.passport.relationship.group.in":"入向","viewer.passport.relationship.group.loop":"自环","viewer.passport.relationship.row":"{group}：{relationship}，{neighbor}","viewer.passport.relationship.direction.out":"出 →","viewer.passport.relationship.direction.in":"← 入","viewer.passport.relationship.direction.loop":"自环","viewer.passport.sourceCount.one":"{count} 个已验证来源引用","viewer.passport.sourceCount.other":"{count} 个已验证来源引用","viewer.passport.repository.open":"打开已验证的仓库修订版本 {revision}","viewer.passport.source.open":"打开修订版本 {revision} 中已验证的来源 {path}","viewer.passport.source.openLink":"打开 ↗","viewer.passport.reach.upstream.one":"追踪 {count} 个上游编写节点","viewer.passport.reach.upstream.other":"追踪 {count} 个上游编写节点","viewer.passport.reach.downstream.one":"追踪 {count} 个下游编写节点","viewer.passport.reach.downstream.other":"追踪 {count} 个下游编写节点","viewer.passport.reach.noUpstream":"没有上游编写节点","viewer.passport.reach.noDownstream":"没有下游编写节点","viewer.passport.reach.status":"{direction} · {nodes} 个节点 · {links} 条连接 · 最深 {hops} 跳","viewer.route.eyebrow":"路径","viewer.route.start":"点击路径的起点","viewer.route.start.find":"查找起点","viewer.route.start.find.aria":"查找路径起点","viewer.route.copy":"复制链接","viewer.route.copy.aria":"复制已追踪路径的链接","viewer.route.clear":"清除","viewer.route.clear.aria":"清除路径探测","viewer.route.traced":"路径","viewer.route.pickTwo":"在图上点两个节点","viewer.route.pickOne":"在图上点一个节点","viewer.route.controls":"路径旅程控制","viewer.route.previous":"上一个路径位置","viewer.route.play":"播放路径旅程","viewer.route.pause":"暂停路径旅程","viewer.route.replay":"重播路径旅程","viewer.route.next":"下一个路径位置","viewer.route.journey":"旅程","viewer.route.pause.label":"暂停","viewer.route.replay.label":"重播","viewer.route.overview":"总览","viewer.route.overview.aria":"显示完整路径总览","viewer.route.instructions":"先点起点，再点终点，沿箭头方向找路。","viewer.route.destination":"从{label}出发，走到哪里？","viewer.route.destination.find":"查找目标","viewer.route.destination.find.aria":"查找可达的路径目标","viewer.route.differentDestination":"选择其他目标","viewer.route.distinct":"请选两个不同的节点。","viewer.route.unreachable":"走不到{label}","viewer.route.unreachable.detail":"沿箭头方向，从{source}走不到{target}。请选一个高亮节点。","viewer.route.start.instructions":"接着选终点，能走到的节点会亮起。","viewer.route.copy.success":"已复制路径链接","viewer.route.copy.failed":"无法复制路径链接","viewer.route.position":"路径位置 {index}/{total}：{label}","viewer.route.step":"第 {index}/{total} 步 · {phase} · {label}","viewer.route.motionRequired":"自动旅程需要动态模式","viewer.route.trigger.clear":"清除已追踪路径","viewer.route.overview.status":"{nodes} · {hops} · 最短路径","viewer.route.overview.node.one":"{count} 个节点","viewer.route.overview.node.other":"{count} 个节点","viewer.route.overview.hop.one":"{count} 步","viewer.route.overview.hop.other":"{count} 步","viewer.route.phase.playing":"播放中","viewer.route.phase.complete":"已完成","viewer.route.phase.inspecting":"检查中","viewer.route.destination.count.one":"有 {count} 个能走到的节点已高亮，点一下。","viewer.route.destination.count.other":"有 {count} 个能走到的节点已高亮，点一个。","viewer.route.noOutgoing":"这个节点没有向外的箭头。清除后换一个起点。","viewer.route.result.title":"{source} 到 {target}","viewer.route.finder.source.title":"选择路径起点","viewer.route.finder.source.placeholder":"搜索路径来源","viewer.route.finder.source.empty":"没有匹配的路径来源","viewer.route.finder.source.results":"可作为路径起点的节点","viewer.route.finder.source.noun":"个路径来源","viewer.route.finder.source.badge":"起点","viewer.route.finder.target.title":"从{label}出发的目标","viewer.route.finder.target.placeholder":"搜索可达目标","viewer.route.finder.target.empty":"没有匹配的可达目标","viewer.route.finder.target.results":"可达路径目标","viewer.route.finder.target.noun":"个可达目标","viewer.route.hop.one":"{count} 跳","viewer.route.hop.other":"{count} 跳","viewer.lens.eyebrow":"语义透镜","viewer.lens.title":"比较系统角色","viewer.lens.close":"关闭语义透镜","viewer.lens.instruction":"最多选择两种语义类型。选择一种可显示其真实流量；选择两种只比较直接编写的关系。","viewer.lens.kinds":"语义类型","viewer.lens.choose":"选择一种类型以检查其节点和相连关系。","viewer.lens.copy":"复制语义透镜链接","viewer.lens.clear":"清除语义透镜","viewer.lens.open":"打开语义透镜","viewer.lens.openActive":"打开当前语义透镜","viewer.lens.legend":"语义图例","viewer.lens.legend.inspect.one":"检查{label}，{count} 个节点","viewer.lens.legend.inspect.other":"检查{label}，{count} 个节点","viewer.lens.kind.count.one":"{label}，{count} 个节点","viewer.lens.kind.count.other":"{label}，{count} 个节点","viewer.lens.compare.one":"{first} → {second}：{forward} · {second} → {first}：{reverse} · 共 {count} 条直接关系","viewer.lens.compare.other":"{first} → {second}：{forward} · {second} → {first}：{reverse} · 共 {count} 条直接关系","viewer.lens.single":"{nodes} · {relationships} · 已连接节点保持可见","viewer.lens.node.one":"{count} 个{label}节点","viewer.lens.node.other":"{count} 个{label}节点","viewer.lens.relationship.one":"{count} 条相连关系","viewer.lens.relationship.other":"{count} 条相连关系","viewer.radar.title":"语义雷达","viewer.radar.building":"正在构建总览","viewer.radar.openFull":"打开完整语义雷达","viewer.radar.open":"打开雷达","viewer.radar.close":"关闭语义雷达","viewer.radar.surface":"图表总览。点击节点进行聚焦，或使用方向键平移。","viewer.radar.click":"点击节点","viewer.radar.drag":"拖动平移","viewer.radar.space":"语义雷达需要更多地图可见空间。","viewer.radar.nodes":"语义图表雷达节点","viewer.radar.focus":"从语义雷达聚焦{label}","viewer.radar.status":"{count} 个节点 · {viewport}","viewer.radar.fullMap":"{count} 个节点 · 完整地图","viewer.radar.compacted":"已收紧雷达，避免遮挡语义护照或地图控件。","viewer.radar.cancelWaiting":"取消等待更多地图空间的语义雷达","viewer.radar.needsSpace":"语义雷达需要更多可见地图空间","viewer.radar.viewport.full":"完整地图","viewer.radar.viewport.width":"宽度 {percent}%","viewer.radar.viewport.scale":"视口 {percent}%","viewer.nav.controls":"图表视图控制","viewer.nav.route":"追踪有向路径","viewer.nav.route.title":"追踪路径（R）","viewer.nav.route.short":"路径","viewer.nav.radar":"打开语义雷达","viewer.nav.radar.title":"语义雷达（M）","viewer.nav.radar.short":"地图","viewer.nav.lens":"打开语义透镜","viewer.nav.lens.title":"语义透镜（L）","viewer.nav.lens.short":"透镜","viewer.nav.find":"查找节点","viewer.nav.find.title":"查找节点（/）","viewer.outline.title":"节点索引","viewer.rail.show":"要点与索引","viewer.rail.controls":"侧栏","viewer.rail.collapse":"收起侧栏","viewer.rail.bottom":"移到图下方","viewer.rail.right":"移到图右侧","viewer.nav.guide":"打开图表指南","viewer.nav.guide.title":"图表指南（?）","viewer.nav.zoomOut":"缩小","viewer.nav.zoomOut.title":"缩小（-）","viewer.nav.reset":"重置图表视图","viewer.nav.reset.title":"重置视图（0）","viewer.nav.read":"阅读","viewer.nav.zoomIn":"放大","viewer.nav.zoomIn.title":"放大（+）","viewer.nav.camera":"{hint}。重置图表视图","viewer.nav.camera.title":"{semantic}{hint} · 重置视图（0）","viewer.nav.camera.semantic":"语义相机已启用 · ","viewer.nav.level.map":"概览","viewer.nav.level.read":"阅读","viewer.nav.level.full":"完整","viewer.nav.level.auto":"自动","viewer.nav.detail.map":"放大以显示关系标签和节点上下文","viewer.nav.detail.read":"再次放大以显示标签和注释","viewer.nav.detail.full":"完整图表详情","viewer.intent.summary":"{label}。{out} 条出向，{in} 条入向{loops}。共 {total} 条连接。按 Enter 查看详情。","viewer.intent.loops":"，{count} 条自环","viewer.common.copied":"已复制","viewer.common.copyFailed":"复制失败","viewer.common.copyLink":"复制链接","viewer.common.clear":"清除","viewer.common.close":"关闭","viewer.passport.explain":"解释","viewer.passport.explain.show":"显示此节点的解释","viewer.passport.explanation":"解释","viewer.passport.explanation.back":"{label} 的解释。激活以返回语义护照","viewer.passport.explanation.backLink":"返回语义护照","viewer.passport.drilldowns":"子图","viewer.passport.drilldowns.list":"打开子图","viewer.passport.drilldowns.hint":"Ctrl+单击或双击打开列表第一项","viewer.passport.drilldowns.open":"打开{label}","viewer.passport.back":"返回上一级","viewer.passport.back.aria":"返回父级图","viewer.nav.back":"返回","viewer.nav.back.title":"返回父级图"}}</script>
+    <script id="archify-i18n-data" type="application/json">{"locale":"zh-CN","messages":{"viewer.kind.frontend":"前端","viewer.kind.backend":"后端","viewer.kind.database":"数据库","viewer.kind.cloud":"云服务","viewer.kind.security":"安全","viewer.kind.messagebus":"消息总线","viewer.kind.external":"外部系统","viewer.kind.neutral":"中性","viewer.kind.node":"节点","viewer.kind.start":"开始","viewer.kind.active":"活动","viewer.kind.waiting":"等待","viewer.kind.decision":"决策","viewer.kind.success":"成功","viewer.kind.failure":"失败","viewer.toolbar.actions":"图表操作","viewer.diagnosis.button":"架构诊断","viewer.diagnosis.title":"架构诊断","viewer.diagnosis.local":"Archify 自带，在本机运行","viewer.diagnosis.starMapTitle":"环形星图","viewer.diagnosis.starMap":"用环形星图查看文件和函数之间的依赖关系。","viewer.diagnosis.modelTitle":"可旋转 3D 模型","viewer.diagnosis.model":"旋转 3D 模型，查看各模块是怎么连在一起的。","viewer.diagnosis.countsTitle":"组件问题数","viewer.diagnosis.counts":"在这张图上查看各组件的问题数，找出依赖最密集的区域、循环依赖，以及图中没画出的依赖。","viewer.diagnosis.findingsTitle":"源码与 AI 修复","viewer.diagnosis.findings":"每条发现都能点开查看对应的源码，也能交给 AI 作为修复任务。","viewer.diagnosis.ask":"对你的 AI 助手说：","viewer.diagnosis.prompt":"启动架构诊断","viewer.diagnosis.repository":"仓库：{url} @ {revision}","viewer.diagnosis.copy":"复制提示词","viewer.theme.toggle.title":"切换主题（T）","viewer.theme.toggle":"切换颜色主题","viewer.theme.dark":"深色","viewer.theme.light":"浅色","viewer.preset.choose.title":"选择视觉风格（S 循环切换）","viewer.preset.choose":"选择视觉风格","viewer.preset.style":"风格","viewer.preset.menu":"视觉风格","viewer.preset.identity":"视觉表达","viewer.preset.cycles":"循环切换","viewer.preset.classic":"经典","viewer.preset.classic.short":"经典","viewer.preset.classic.hint":"稳定的技术默认风格","viewer.preset.flow":"信号流","viewer.preset.flow.short":"流动","viewer.preset.flow.hint":"突出动态流向","viewer.preset.blueprint":"蓝图","viewer.preset.blueprint.hint":"工程评审","viewer.preset.editorial":"编辑风格","viewer.preset.editorial.hint":"适合发布与上线说明","viewer.preset.badge.signalFlow":"信号流","viewer.preset.badge.blueprint":"蓝图 / 修订 01","viewer.preset.badge.editorial":"编辑风格 / 现场笔记","viewer.preset.badge.editorialPlate":"ARCHIFY / 图版 04","viewer.preset.current":"当前视觉风格：{style}。选择视觉风格","viewer.motion.live":"动态","viewer.motion.still":"静态","viewer.motion.pause":"暂停动效","viewer.motion.resume":"恢复动效","viewer.motion.reduced":"已根据减少动态效果偏好暂停动效","viewer.motion.hidden":"页面不可见时已暂停动效","viewer.motion.yielding":"暂停动效；当前让位于{owner}","viewer.motion.yielding.title":"动态预览已启用 · 正在让位于{owner}","viewer.owner.route":"路径探测","viewer.owner.lens":"语义透镜","viewer.owner.relationship":"关系预览","viewer.owner.intent":"意图追踪","viewer.owner.focus":"语义聚焦","viewer.owner.legend":"图例预览","viewer.owner.reader":"读者交互","viewer.present.enter":"进入演示模式","viewer.present.enter.title":"演示模式（F）","viewer.present.exit":"退出演示模式","viewer.present.exit.title":"退出演示模式（F 或 Escape）","viewer.present.present":"演示","viewer.present.exit.label":"退出","viewer.export.button":"导出","viewer.export.button.title":"导出图表（E）","viewer.export.diagram":"导出图表","viewer.export.menu":"导出","viewer.export.subtitle":"便携、整洁的输出","viewer.export.share":"分享","viewer.export.shareCard":"分享卡片","viewer.export.routeShareCard":"路径分享卡片","viewer.export.reachShareCard":"可达范围分享卡片","viewer.export.copyDiagram":"复制图表","viewer.export.clipboardPng":"复制 PNG 到剪贴板","viewer.export.raster":"位图","viewer.export.image":"图像","viewer.export.lossless":"无损图像","viewer.export.compact":"紧凑图像","viewer.export.modern":"现代图像格式","viewer.export.vectorMotion":"矢量与动效","viewer.export.vectorMotion.heading":"矢量与动效","viewer.export.editable":"可编辑矢量图","viewer.export.svg.auto":"SVG · 自动","viewer.export.svg.auto.hint":"匹配宿主主题","viewer.export.svg.light":"SVG · 浅色","viewer.export.svg.light.hint":"始终浅色","viewer.export.svg.dark":"SVG · 深色","viewer.export.svg.dark.hint":"始终深色","viewer.export.motion6s":"6 秒动效","viewer.export.unsupported":"当前浏览器不支持","viewer.export.clipboardUnsupported":"当前浏览器不支持写入图片剪贴板","viewer.export.clipboardUnsupported.short":"此浏览器不支持写入图片剪贴板。","viewer.export.motionUnavailable":"当前浏览器无法录制动效","viewer.export.webmUnavailable":"当前浏览器不支持 WebM","viewer.export.failed":"导出失败：{message}","viewer.export.unknownVariant":"未知的分享卡片类型：{variant}","viewer.export.routeRequired":"请先追踪路径，再导出路径分享卡片","viewer.export.reachRequired":"请先追踪编写可达范围，再导出可达范围分享卡片","viewer.export.unknown":"未知错误","viewer.export.routeFailed":"路径分享卡片导出失败：{message}","viewer.export.reachFailed":"可达范围分享卡片导出失败：{message}","viewer.export.copyFailed":"复制失败：{message}","viewer.export.copiedPng":"已将 PNG 复制到剪贴板","viewer.export.downloadedRoute":"已下载路径分享卡片","viewer.export.downloadedReach":"已下载可达范围分享卡片","viewer.export.downloadedWebm":"已下载 WebM","viewer.export.recording":"正在录制 6 秒动效…","viewer.export.card.routeSummary.one":"路径：{source} → {target} · {count} 步","viewer.export.card.routeSummary.other":"路径：{source} → {target} · {count} 步","viewer.export.card.reachSummary":"从{origin}开始的编写{direction} · {nodes} · {links} · 最深 {hops}","viewer.export.card.node.one":"{count} 个节点","viewer.export.card.node.other":"{count} 个节点","viewer.export.card.link.one":"{count} 条连接","viewer.export.card.link.other":"{count} 条连接","viewer.export.card.hop.one":"{count} 跳","viewer.export.card.hop.other":"{count} 跳","viewer.export.card.routeBadge":"ARCHIFY · 路径 · {hops}","viewer.export.card.reachBadge":"ARCHIFY · {direction}可达范围","viewer.export.direction.upstream":"上游","viewer.export.direction.downstream":"下游","viewer.export.error.canvasUnavailable":"无法为{label}使用画布","viewer.export.error.contextUnavailable":"无法为{label}创建二维画布上下文","viewer.export.error.toBlobUnavailable":"{label}无法使用 canvas.toBlob","viewer.export.error.toBlobNull":"{label}的 canvas.toBlob 未返回数据","viewer.export.error.variantsCombined":"无法同时组合多种分享卡片类型","viewer.export.error.viewerState":"分享卡片导出无法移除临时 Viewer 状态","viewer.export.error.routeState":"路径卡片导出无法安全保留已解析路径","viewer.export.error.reachState":"可达范围卡片导出无法安全保留编写的可达范围","viewer.export.error.webmRequirements":"WebM 动效导出需要追踪动画及浏览器 MediaRecorder 支持","viewer.export.error.mediaRecorder":"MediaRecorder 录制失败","viewer.export.error.emptyWebm":"MediaRecorder 生成了空的 WebM","viewer.export.error.webmBackground":"无法为 WebM 导出加载 SVG 背景","viewer.guide.title":"探索此系统","viewer.focus.selectedNodes":"已选择 {count} 个节点","viewer.guide.eyebrow":"图表指南","viewer.guide.close":"关闭图表指南","viewer.guide.inspecting":"正在检查已编译语义","viewer.guide.actions":"图表探索操作","viewer.guide.find":"查找任意节点","viewer.guide.find.hint":"搜索标签、职责、类型和稳定 ID。","viewer.guide.route":"追踪路径","viewer.guide.route.aria":"追踪有向路径","viewer.guide.route.hint":"查看两个语义节点如何按编写方向连接。","viewer.guide.map":"查看完整系统","viewer.guide.map.hint":"打开带实时视口和稳定节点的语义雷达。","viewer.guide.lens":"比较语义类型","viewer.guide.lens.hint":"统计角色、显示流量并比较直接编写的连接。","viewer.guide.present":"进入演示模式","viewer.guide.present.hint":"让实时图表占满视口，同时不改变导出。","viewer.guide.shortcuts":"其他键盘快捷键","viewer.guide.shortcut.export":"导出","viewer.guide.shortcut.theme":"主题","viewer.guide.shortcut.style":"风格","viewer.guide.shortcut.reset":"重置","viewer.guide.shortcut.zoomIn":"放大","viewer.guide.shortcut.zoomOut":"缩小","viewer.guide.shortcut.close":"关闭","viewer.guide.credit":"觉得好用？在 GitHub 给 Archify 点个 Star","viewer.guide.star":"Star","viewer.guide.facts":"{nodes} · {relationships}","viewer.guide.fact.node.one":"{count} 个语义节点","viewer.guide.fact.node.other":"{count} 个语义节点","viewer.guide.fact.relationship.one":"{count} 条关系","viewer.guide.fact.relationship.other":"{count} 条关系","viewer.guide.open":"打开图表指南","viewer.finder.title":"查找节点","viewer.finder.close":"关闭节点查找器","viewer.finder.placeholder":"搜索标签或 ID","viewer.finder.search":"搜索图表节点","viewer.finder.results":"图表节点","viewer.finder.empty":"没有匹配的节点","viewer.finder.result.focus":"聚焦{label}","viewer.finder.result.routeStart":"选择{label}作为路径起点","viewer.finder.result.routeTarget":"选择{label}作为路径终点，{links}","viewer.finder.status.empty":"没有匹配的节点","viewer.finder.status.count.one":"{count} 个匹配节点","viewer.finder.status.count.other":"{count} 个匹配节点","viewer.finder.noun.nodes":"个节点","viewer.finder.link.one":"{count} 条连接","viewer.finder.link.other":"{count} 条连接","viewer.finder.result.focus.one":"聚焦{label}，{count} 条相关连接","viewer.finder.result.focus.other":"聚焦{label}，{count} 条相关连接","viewer.finder.status.filtered":"{visible}/{available} {noun}","viewer.finder.status.all":"{available} {noun}","viewer.passport.eyebrow":"语义护照","viewer.passport.metadata":"节点元数据","viewer.passport.evidence":"已验证的源代码证据","viewer.passport.verified":"已验证来源","viewer.passport.verificationScope":"已按固定修订版本验证本地 Git 证据，未检查远程访问权限。","viewer.passport.payload":"载荷","viewer.passport.payload.role.request":"请求","viewer.passport.payload.role.response":"响应","viewer.passport.payload.role.flow":"数据流","viewer.passport.payload.diff":"新增 {added} · 删除 {removed} · 修改 {modified} · 未变 {unchanged}","viewer.passport.payload.unchanged":"{count} 个未变字段","viewer.passport.payload.sample":"示例载荷（只读）","viewer.passport.payload.after":"变更后的载荷（只读）","viewer.passport.payload.before":"变更前的载荷（只读）","viewer.passport.payload.field.added":"新增 {path}：{after}","viewer.passport.payload.field.removed":"删除 {path}：{before}","viewer.passport.payload.field.modified":"修改 {path}：{before} → {after}","viewer.passport.payload.field.unchanged":"{path}：{after}","viewer.passport.reach":"编写可达范围","viewer.passport.reach.trace":"追踪编写的可达性","viewer.passport.upstream":"上游","viewer.passport.downstream":"下游","viewer.passport.upstream.trace":"追踪上游编写可达性","viewer.passport.downstream.trace":"追踪下游编写可达性","viewer.passport.close":"关闭语义护照","viewer.passport.move":"移动语义护照。可拖动、使用方向键移动，或按 Home 恢复自动位置。","viewer.passport.copy":"复制链接","viewer.passport.copy.focus":"复制聚焦节点的链接","viewer.passport.relations":"关系","viewer.passport.relations.show":"显示关联关系","viewer.passport.relations.hide":"隐藏关联关系","viewer.passport.relations.list":"关联关系","viewer.passport.copyRelation":"复制关系","viewer.passport.copyNode":"复制节点","viewer.passport.copyPinned":"复制固定关系的链接","viewer.passport.copySource":"复制来源节点的链接","viewer.passport.copy.focused.success":"已复制聚焦节点链接","viewer.passport.copy.pinned.success":"已复制固定关系链接","viewer.passport.copy.focused.failed":"无法复制聚焦节点链接","viewer.passport.copy.pinned.failed":"无法复制固定关系链接","viewer.passport.relationship.none":"没有关联关系","viewer.passport.relationship.count.one":"{count} 条关系","viewer.passport.relationship.count.other":"{count} 条关系","viewer.passport.relationship.show.one":"显示 {count} 条关联关系","viewer.passport.relationship.show.other":"显示 {count} 条关联关系","viewer.passport.relationship.summary":"{out} 条出向 · {in} 条入向{loops}","viewer.passport.relationship.loops":" · {count} 条自环","viewer.passport.relationship.explorer":"直接关系浏览器","viewer.passport.relationship.help":"使用方向键浏览关系。按 Enter 或空格键固定详情；按 Escape 清除。","viewer.passport.relationship.loopsBack":"回环","viewer.passport.relationship.connectsTo":"连接到","viewer.passport.relationship.connectsFrom":"连接自","viewer.passport.relationship.pinned":"已固定关系 · {from} → {to} · {label}","viewer.passport.relationship.inspect":"检查第 {index}/{total} 条关系：{from} 到 {to}，{label}。按 Enter 查看详情。","viewer.passport.relationship.group.out":"出向","viewer.passport.relationship.group.in":"入向","viewer.passport.relationship.group.loop":"自环","viewer.passport.relationship.row":"{group}：{relationship}，{neighbor}","viewer.passport.relationship.direction.out":"出 →","viewer.passport.relationship.direction.in":"← 入","viewer.passport.relationship.direction.loop":"自环","viewer.passport.sourceCount.one":"{count} 个已验证来源引用","viewer.passport.sourceCount.other":"{count} 个已验证来源引用","viewer.passport.repository.open":"打开已验证的仓库修订版本 {revision}","viewer.passport.source.open":"打开修订版本 {revision} 中已验证的来源 {path}","viewer.passport.source.openLink":"打开 ↗","viewer.passport.reach.upstream.one":"追踪 {count} 个上游编写节点","viewer.passport.reach.upstream.other":"追踪 {count} 个上游编写节点","viewer.passport.reach.downstream.one":"追踪 {count} 个下游编写节点","viewer.passport.reach.downstream.other":"追踪 {count} 个下游编写节点","viewer.passport.reach.noUpstream":"没有上游编写节点","viewer.passport.reach.noDownstream":"没有下游编写节点","viewer.passport.reach.status":"{direction} · {nodes} 个节点 · {links} 条连接 · 最深 {hops} 跳","viewer.route.eyebrow":"路径","viewer.route.start":"点击路径的起点","viewer.route.start.find":"查找起点","viewer.route.start.find.aria":"查找路径起点","viewer.route.copy":"复制链接","viewer.route.copy.aria":"复制已追踪路径的链接","viewer.route.clear":"清除","viewer.route.clear.aria":"清除路径探测","viewer.route.traced":"路径","viewer.route.pickTwo":"在图上点两个节点","viewer.route.pickOne":"在图上点一个节点","viewer.route.controls":"路径旅程控制","viewer.route.previous":"上一个路径位置","viewer.route.play":"播放路径旅程","viewer.route.pause":"暂停路径旅程","viewer.route.replay":"重播路径旅程","viewer.route.next":"下一个路径位置","viewer.route.journey":"旅程","viewer.route.pause.label":"暂停","viewer.route.replay.label":"重播","viewer.route.overview":"总览","viewer.route.overview.aria":"显示完整路径总览","viewer.route.instructions":"先点起点，再点终点，沿箭头方向找路。","viewer.route.destination":"从{label}出发，走到哪里？","viewer.route.destination.find":"查找目标","viewer.route.destination.find.aria":"查找可达的路径目标","viewer.route.differentDestination":"选择其他目标","viewer.route.distinct":"请选两个不同的节点。","viewer.route.unreachable":"走不到{label}","viewer.route.unreachable.detail":"沿箭头方向，从{source}走不到{target}。请选一个高亮节点。","viewer.route.start.instructions":"接着选终点，能走到的节点会亮起。","viewer.route.copy.success":"已复制路径链接","viewer.route.copy.failed":"无法复制路径链接","viewer.route.position":"路径位置 {index}/{total}：{label}","viewer.route.step":"第 {index}/{total} 步 · {phase} · {label}","viewer.route.motionRequired":"自动旅程需要动态模式","viewer.route.trigger.clear":"清除已追踪路径","viewer.route.overview.status":"{nodes} · {hops} · 最短路径","viewer.route.overview.node.one":"{count} 个节点","viewer.route.overview.node.other":"{count} 个节点","viewer.route.overview.hop.one":"{count} 步","viewer.route.overview.hop.other":"{count} 步","viewer.route.phase.playing":"播放中","viewer.route.phase.complete":"已完成","viewer.route.phase.inspecting":"检查中","viewer.route.destination.count.one":"有 {count} 个能走到的节点已高亮，点一下。","viewer.route.destination.count.other":"有 {count} 个能走到的节点已高亮，点一个。","viewer.route.noOutgoing":"这个节点没有向外的箭头。清除后换一个起点。","viewer.route.result.title":"{source} 到 {target}","viewer.route.finder.source.title":"选择路径起点","viewer.route.finder.source.placeholder":"搜索路径来源","viewer.route.finder.source.empty":"没有匹配的路径来源","viewer.route.finder.source.results":"可作为路径起点的节点","viewer.route.finder.source.noun":"个路径来源","viewer.route.finder.source.badge":"起点","viewer.route.finder.target.title":"从{label}出发的目标","viewer.route.finder.target.placeholder":"搜索可达目标","viewer.route.finder.target.empty":"没有匹配的可达目标","viewer.route.finder.target.results":"可达路径目标","viewer.route.finder.target.noun":"个可达目标","viewer.route.hop.one":"{count} 跳","viewer.route.hop.other":"{count} 跳","viewer.lens.eyebrow":"语义透镜","viewer.lens.title":"比较系统角色","viewer.lens.close":"关闭语义透镜","viewer.lens.instruction":"最多选择两种语义类型。选择一种可显示其真实流量；选择两种只比较直接编写的关系。","viewer.lens.kinds":"语义类型","viewer.lens.choose":"选择一种类型以检查其节点和相连关系。","viewer.lens.copy":"复制语义透镜链接","viewer.lens.clear":"清除语义透镜","viewer.lens.open":"打开语义透镜","viewer.lens.openActive":"打开当前语义透镜","viewer.lens.legend":"语义图例","viewer.lens.legend.inspect.one":"检查{label}，{count} 个节点","viewer.lens.legend.inspect.other":"检查{label}，{count} 个节点","viewer.lens.kind.count.one":"{label}，{count} 个节点","viewer.lens.kind.count.other":"{label}，{count} 个节点","viewer.lens.compare.one":"{first} → {second}：{forward} · {second} → {first}：{reverse} · 共 {count} 条直接关系","viewer.lens.compare.other":"{first} → {second}：{forward} · {second} → {first}：{reverse} · 共 {count} 条直接关系","viewer.lens.single":"{nodes} · {relationships} · 已连接节点保持可见","viewer.lens.node.one":"{count} 个{label}节点","viewer.lens.node.other":"{count} 个{label}节点","viewer.lens.relationship.one":"{count} 条相连关系","viewer.lens.relationship.other":"{count} 条相连关系","viewer.radar.title":"语义雷达","viewer.radar.building":"正在构建总览","viewer.radar.openFull":"打开完整语义雷达","viewer.radar.open":"打开雷达","viewer.radar.close":"关闭语义雷达","viewer.radar.surface":"图表总览。点击节点进行聚焦，或使用方向键平移。","viewer.radar.click":"点击节点","viewer.radar.drag":"拖动平移","viewer.radar.space":"语义雷达需要更多地图可见空间。","viewer.radar.nodes":"语义图表雷达节点","viewer.radar.focus":"从语义雷达聚焦{label}","viewer.radar.status":"{count} 个节点 · {viewport}","viewer.radar.fullMap":"{count} 个节点 · 完整地图","viewer.radar.compacted":"已收紧雷达，避免遮挡语义护照或地图控件。","viewer.radar.cancelWaiting":"取消等待更多地图空间的语义雷达","viewer.radar.needsSpace":"语义雷达需要更多可见地图空间","viewer.radar.viewport.full":"完整地图","viewer.radar.viewport.width":"宽度 {percent}%","viewer.radar.viewport.scale":"视口 {percent}%","viewer.nav.controls":"图表视图控制","viewer.nav.route":"追踪有向路径","viewer.nav.route.title":"追踪路径（R）","viewer.nav.route.short":"路径","viewer.nav.radar":"打开语义雷达","viewer.nav.radar.title":"语义雷达（M）","viewer.nav.radar.short":"地图","viewer.nav.lens":"打开语义透镜","viewer.nav.lens.title":"语义透镜（L）","viewer.nav.lens.short":"透镜","viewer.nav.find":"查找节点","viewer.nav.find.title":"查找节点（/）","viewer.outline.title":"节点索引","viewer.rail.show":"要点与索引","viewer.rail.controls":"侧栏","viewer.rail.collapse":"收起侧栏","viewer.rail.bottom":"移到图下方","viewer.rail.right":"移到图右侧","viewer.nav.guide":"打开图表指南","viewer.nav.guide.title":"图表指南（?）","viewer.nav.zoomOut":"缩小","viewer.nav.zoomOut.title":"缩小（-）","viewer.nav.reset":"重置图表视图","viewer.nav.reset.title":"重置视图（0）","viewer.nav.read":"阅读","viewer.nav.zoomIn":"放大","viewer.nav.zoomIn.title":"放大（+）","viewer.nav.camera":"{hint}。重置图表视图","viewer.nav.camera.title":"{semantic}{hint} · 重置视图（0）","viewer.nav.camera.semantic":"语义相机已启用 · ","viewer.nav.level.map":"概览","viewer.nav.level.read":"阅读","viewer.nav.level.full":"完整","viewer.nav.level.auto":"自动","viewer.nav.detail.map":"放大以显示关系标签和节点上下文","viewer.nav.detail.read":"再次放大以显示标签和注释","viewer.nav.detail.full":"完整图表详情","viewer.intent.summary":"{label}。{out} 条出向，{in} 条入向{loops}。共 {total} 条连接。按 Enter 查看详情。","viewer.intent.loops":"，{count} 条自环","viewer.common.copied":"已复制","viewer.common.copyFailed":"复制失败","viewer.common.copyLink":"复制链接","viewer.common.clear":"清除","viewer.common.close":"关闭","viewer.passport.explain":"解释","viewer.passport.explain.show":"显示此节点的解释","viewer.passport.explanation":"解释","viewer.passport.explanation.back":"{label} 的解释。激活以返回语义护照","viewer.passport.explanation.backLink":"返回语义护照","viewer.passport.drilldowns":"子图","viewer.passport.drilldowns.list":"打开子图","viewer.passport.drilldowns.hint":"Ctrl+单击或双击打开列表第一项","viewer.passport.drilldowns.open":"打开{label}","viewer.passport.back":"返回上一级","viewer.passport.back.aria":"返回父级图","viewer.nav.back":"返回","viewer.nav.back.title":"返回父级图"}}</script>
     <!-- Main Diagram -->
     <div class="diagram-container" data-detail-level="read"
          data-preset-badge-editorial-plate="ARCHIFY / 图版 04">
@@ -6324,29 +6447,35 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
   <dialog id="code-analysis-dialog" class="no-print" aria-labelledby="code-analysis-title">
     <header class="analysis-info-header">
-      <span class="analysis-info-star" aria-hidden="true"></span>
-      <div>
+      <span class="analysis-info-mark" aria-hidden="true"></span>
+      <div class="analysis-info-heading">
         <h2 id="code-analysis-title">架构诊断</h2>
-        <p>Archify 自带，在本机运行</p>
+        <p class="analysis-info-badge">Archify 自带，在本机运行</p>
       </div>
       <form method="dialog">
-        <button class="analysis-info-close" type="submit" aria-label="关闭" autofocus>&times;</button>
+        <button class="analysis-info-close" type="submit" aria-label="关闭" autofocus><span class="analysis-info-glyph" aria-hidden="true"></span></button>
       </form>
     </header>
     <ul class="analysis-info-features">
-      <li>用环形星图查看文件和函数之间的依赖关系。</li>
-      <li>旋转 3D 模型，查看各模块是怎么连在一起的。</li>
-      <li>在这张图上查看各组件的问题数，找出依赖最密集的区域、循环依赖，以及图中没画出的依赖。</li>
-      <li>每条发现都能点开查看对应的源码，也能交给 AI 作为修复任务。</li>
+      <li data-feature="star"><span class="analysis-info-icon" aria-hidden="true"></span><span class="analysis-info-copy"><strong>环形星图</strong> <span>用环形星图查看文件和函数之间的依赖关系。</span></span></li>
+      <li data-feature="model"><span class="analysis-info-icon" aria-hidden="true"></span><span class="analysis-info-copy"><strong>可旋转 3D 模型</strong> <span>旋转 3D 模型，查看各模块是怎么连在一起的。</span></span></li>
+      <li data-feature="counts"><span class="analysis-info-icon" aria-hidden="true"></span><span class="analysis-info-copy"><strong>组件问题数</strong> <span>在这张图上查看各组件的问题数，找出依赖最密集的区域、循环依赖，以及图中没画出的依赖。</span></span></li>
+      <li data-feature="fix"><span class="analysis-info-icon" aria-hidden="true"></span><span class="analysis-info-copy"><strong>源码与 AI 修复</strong> <span>每条发现都能点开查看对应的源码，也能交给 AI 作为修复任务。</span></span></li>
     </ul>
-    <div class="analysis-info-start">
-      <div class="analysis-info-prompt">
-        <p>对你的 AI 助手说： <q id="code-analysis-prompt">启动架构诊断</q></p>
-        <p id="code-analysis-repository">仓库：https://github.com/iflytek/astron-agent @ a77c92a</p>
+    <section class="analysis-info-start">
+      <p class="analysis-info-ask">对你的 AI 助手说：</p>
+      <div class="analysis-info-bubble">
+        <div class="analysis-info-prompt">
+          <p><q id="code-analysis-prompt">启动架构诊断</q></p>
+          <p id="code-analysis-repository">仓库：https://github.com/iflytek/astron-agent @ a77c92a</p>
+        </div>
+        <button id="code-analysis-copy" type="button">
+          <span class="analysis-info-glyph" aria-hidden="true"></span>
+          <span>复制提示词</span>
+        </button>
       </div>
-      <button id="code-analysis-copy" type="button">复制提示词</button>
-    </div>
-    <div id="code-analysis-copy-status" role="status"></div>
+      <div id="code-analysis-copy-status" role="status"></div>
+    </section>
   </dialog>
 
   <script>
