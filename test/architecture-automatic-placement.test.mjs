@@ -108,3 +108,23 @@ test('automatic architecture placement can turn a chain to fit an authored canva
   assert.ok(client.y + client.height < service.y);
   assert.ok(service.x + service.width <= 320 && service.y + service.height <= 320);
 });
+
+test('automatic architecture placement fits a detached pair across its own row below a vertical pipeline', () => {
+  const pipeline = ['client', 'gateway', 'router', 'queue', 'worker', 'store'];
+  const outputs = ['logs', 'events', 'metrics', 'backup'];
+  const components = [...pipeline, ...outputs, 'console', 'help'].map(id => ({ id, size: [170, 60] }));
+  const connections = [
+    ...pipeline.slice(1).map((to, index) => ({ from: pipeline[index], to })),
+    ...outputs.map(to => ({ from: 'worker', to })),
+    { from: 'console', to: 'help', label: 'Open documentation' },
+  ];
+
+  const positions = automaticComponentPositions({ components, connections });
+  const placed = boxes(components, positions);
+  const [consoleNode, help] = placed.slice(-2);
+  const pipelineBoxes = placed.slice(0, -2);
+  assert.ok(consoleNode.y > Math.max(...pipelineBoxes.map(({ y, height }) => y + height)));
+  assert.equal(consoleNode.y, help.y);
+  assert.ok(consoleNode.x + consoleNode.width < help.x);
+  assert.ok(help.x + help.width <= Math.max(...pipelineBoxes.map(({ x, width }) => x + width)));
+});

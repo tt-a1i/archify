@@ -247,7 +247,7 @@ function layOutSiblings(items, edges, vertical, allowParallel, allowedWidth) {
       }
     }
     if (islandVertical) [layout.width, layout.height] = [layout.height, layout.width];
-    return layout;
+    return { ...layout, edges };
   });
   layouts.sort((a, b) => b.items.length - a.items.length);
   const rowLimit = Math.max(Math.min(1000, allowedWidth), layouts[0].width);
@@ -255,11 +255,25 @@ function layOutSiblings(items, edges, vertical, allowParallel, allowedWidth) {
   let y = 0;
   let rowHeight = 0;
   let width = 0;
-  for (const layout of layouts) {
+  for (const [index, initial] of layouts.entries()) {
+    let layout = initial;
     if (x > 0 && x + layout.width > rowLimit) {
       x = 0;
       y += rowHeight + islandGap;
       rowHeight = 0;
+    }
+    // Fit a disconnected pair across its own final row. Its direction is
+    // independent of the main flow, and earlier rows keep their geometry.
+    if (allowParallel && vertical && x === 0 && y > 0 && index === layouts.length - 1
+      && !layout.items[0].parent.members
+      && layout.items.length === 2 && layout.edges.length === 1
+      && layout.items.every((item) => !item.children)) {
+      const [edge] = layout.edges;
+      const gap = edge.label ? Math.max(horizontalGap, connectionLabelBoxAt(edge, [0, 0]).width + 28) : horizontalGap;
+      if (edge.from.width + gap + edge.to.width <= Math.min(rowLimit, width)) {
+        layout = layOutIsland(layout.items, layout.edges, incoming, outgoing, false);
+        for (const item of layout.items) item.y -= layout.top;
+      }
     }
     for (const item of layout.items) {
       item.x += x;

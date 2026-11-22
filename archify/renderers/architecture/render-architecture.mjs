@@ -419,6 +419,7 @@ function layoutBoundaryTitles(rawBoundaries, minimumFontSize) {
 // title-expanded frames or the viewBox.
 const rawBoundaries = containNestedBoundaryFrames(asArray(arch.boundaries).map(boundaryRect).filter(Boolean));
 const { pathFor, connectionSides, connectionEndpointSide } = createArchitectureRouter(components, arch.connections, {
+  automaticPlacement: Boolean(automaticPositions),
   fixedCanvas: Boolean(arch.meta?.viewBox),
   frames: rawBoundaries.map((boundary) => ({
     ...boundary,

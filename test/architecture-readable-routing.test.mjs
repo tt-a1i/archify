@@ -60,6 +60,44 @@ test('readability sweep preserves explicit geometry and endpoint-side contracts'
   assert.deepEqual(routers[1].connectionSides(connections[3]), { fromSide: 'bottom', toSide: 'top' });
 });
 
+test('automatic architecture uncrosses two fan-out elbows using their existing source slots', () => {
+  const boxes = new Map([
+    ['cli', 320, 398], ['lock', 585, 78], ['output', 585, 238], ['receipts', 827, 398],
+    ['browser', 585, 398], ['temp', 585, 558], ['installed', 573, 768],
+  ].map(([id, x, y]) => [id, { id, x, y, width: 150, height: 64, cx: x + 75, cy: y + 32 }]));
+  const connections = [
+    ['cli', 'lock', 'acquire'], ['cli', 'output', 'read + write'], ['cli', 'temp', 'stage file', 'dashed'],
+    ['cli', 'browser', 'spawn + evaluate'], ['cli', 'receipts', 'write receipt'],
+    ['browser', 'receipts', 'evidence', 'security'], ['installed', 'cli', 'runs binary', 'dashed'],
+  ].map(([from, to, label, variant]) => ({ from, to, label, variant }));
+  const pointsFor = (automaticPlacement, edges = connections) => {
+    const router = createArchitectureRouter(boxes, edges, { automaticPlacement });
+    return edges.map(conn => router.pathFor(conn).points);
+  };
+  const before = pointsFor(false);
+  const after = pointsFor(true);
+  assert.equal(crossings(before), 1, 'the two branches cross before the exchange');
+  assert.equal(crossings(after), 0);
+  for (const [index, route] of after.entries()) {
+    if (index === 1 || index === 4) {
+      assert.deepEqual(route.slice(2), before[index].slice(2), 'the route after its first elbow stays in place');
+      assert.deepEqual(route[0], before[index === 1 ? 4 : 1][0], 'the branches use each other’s source slots');
+    } else {
+      assert.deepEqual(route, before[index], 'neighbouring routes stay in place');
+    }
+  }
+  for (const controls of [
+    { fromSide: 'top' },
+    { toSide: 'left' },
+    { fromSide: 'top', toSide: 'left', via: [[454, 286]] },
+    { labelAt: [518, 278] },
+  ]) {
+    const authoredConnections = connections.map((conn, index) => index === 1 ? { ...conn, ...controls } : conn);
+    assert.deepEqual(pointsFor(true, authoredConnections), pointsFor(false, authoredConnections),
+      `authored controls prevent a port exchange: ${JSON.stringify(controls)}`);
+  }
+});
+
 test('a fan-out sibling takes a free parallel channel instead of a detour', () => {
   const box = (id, x, y, width) => [id, { id, x, y, width, height: 64, cx: x + width / 2, cy: y + 32 }];
   const boxes = new Map([box('entry', 350, 80, 160), box('hub', 610, 80, 190), box('store', 950, 80, 180),
