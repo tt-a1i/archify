@@ -95,7 +95,7 @@ See [Skill sources](.agents/README.md) for provenance and update procedure.
 
 Skill instructions, authored examples, build inputs, and generated-site sources are behavioral inputs even when they look like documentation. Policy changes need process review; runtime evidence depends on whether they affect runtime inputs.
 
-Start with `npm test` for the core product smoke or focused checks for the affected behavior. Use `npm run test:full` when shared infrastructure, broad changes, or findings require wider coverage. Final review needs sufficient evidence for the impact above; relevant CI results can supply that coverage without repeating the same run locally. Identify the revision and coverage of reused results, and explain material gaps. Required remote CI and branch protection still apply.
+Use the [local test commands](#local-setup-and-verification) to check the affected behavior. Use `npm test` for the core CLI smoke and `npm run test:full` when shared infrastructure, broad changes, or findings require wider coverage. Final review needs sufficient evidence for the impact above; relevant CI results can supply that coverage without repeating the same run locally. Identify the revision and coverage of reused results, and explain material gaps. Required remote CI and branch protection still apply.
 
 Tests should protect a user outcome or a real failure boundary. Prefer rendered
 content, successful interaction, preserved authored intent, and bounded work to
@@ -105,6 +105,20 @@ test merely because it differs from the old implementation. Delete redundant
 source assertions when a behavior test owns that protection. Keep explicit
 geometry, compatibility, accessibility, failure cleanup, and protection against
 lost or corrupted output as observable contracts.
+
+### Measuring test and CI improvements
+
+Time the command developers actually wait for, before and after the change, on
+the same machine with the same runtime, tools, and browser settings. Report
+which cases ran or skipped. If the difference is close to normal variation,
+repeat the comparison before claiming a speedup. For CI, use elapsed workflow
+time to measure PR wait time and job timings to identify where time was saved.
+
+When removing repeated work, identify the surviving check that would catch the
+original failure. When narrowing a CI trigger, replay representative changed
+paths on both sides of the rule. Verify that an unrelated edit skips the job,
+an affected edit runs it, and shared or unknown inputs retain the coverage
+they need.
 
 ### Real generation comparisons
 
