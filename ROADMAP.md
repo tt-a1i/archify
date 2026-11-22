@@ -1,6 +1,6 @@
 # Archify Roadmap
 
-The current development line is `v3.2.1-dev.1`; it is not a stable release. Published changes are recorded in Changelog 3.1.0. [CHANGELOG.md](CHANGELOG.md) is the single owner for delivered feature history. This file owns architectural direction, retained rationale, and explicitly declined ideas.
+The current stable version is `v3.3.0`. Published changes are recorded in [CHANGELOG.md](CHANGELOG.md), which is the single owner for delivered feature history. This file owns architectural direction, retained rationale, and explicitly declined ideas.
 
 <details>
 <summary>Archived delivered-slice context (frozen; no longer maintained as a second changelog)</summary>

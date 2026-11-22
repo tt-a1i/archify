@@ -5854,7 +5854,7 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
   &lt;meta charset=&quot;UTF-8&quot;&gt;
   &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;
   &lt;meta name=&quot;color-scheme&quot; content=&quot;dark light&quot;&gt;
-  &lt;meta name=&quot;generator&quot; content=&quot;archify 3.2.1-dev.1&quot;&gt;
+  &lt;meta name=&quot;generator&quot; content=&quot;archify 3.3.0&quot;&gt;
   &lt;meta name=&quot;archify-reader-contract&quot; content=&quot;declared-wide-v1&quot;&gt;
   &lt;title&gt;Checkout Platform — Baseline Diagram&lt;/title&gt;
   &lt;script&gt;
@@ -17758,6 +17758,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       // otherwise it starts collapsed and the reader can still open it.
       var RAIL_COMFORT_PRIMARY_PX = 12;
       var railPanel = shell &amp;&amp; shell.querySelector(&#39;.reader-rail&#39;);
+      var feedback = document.querySelector(&#39;.page-feedback&#39;);
       var railReveal = document.getElementById(&#39;rail-reveal&#39;);
       var railCollapse = document.getElementById(&#39;rail-collapse&#39;);
       var railPlacement = document.getElementById(&#39;rail-placement&#39;);
@@ -17945,10 +17946,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       function fitBottomCards() {
         return fitCards &amp;&amp; html.getAttribute(&#39;data-reader-rail&#39;) === &#39;bottom&#39; &amp;&amp; visible(cards);
       }
-      // The diagram can pass containment on its own when bottom notes need
-      // to scroll. First-screen card fitting is best effort.
+      // The diagram can pass containment on its own when bottom notes or the
+      // page colophon sit below the fold. First-screen card fitting is best effort.
       function belowFold() {
-        return html.getAttribute(&#39;data-reader-rail&#39;) === &#39;bottom&#39; ? outerHeight(railPanel) : 0;
+        return (html.getAttribute(&#39;data-reader-rail&#39;) === &#39;bottom&#39; ? outerHeight(railPanel) : 0) +
+          outerHeight(feedback);
       }
       // A docked rail may run past a short diagram down to the viewport floor,
       // so the index uses that space instead of scrolling inside the diagram&#39;s
@@ -22712,7 +22714,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   &lt;meta charset=&quot;UTF-8&quot;&gt;
   &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;
   &lt;meta name=&quot;color-scheme&quot; content=&quot;dark light&quot;&gt;
-  &lt;meta name=&quot;generator&quot; content=&quot;archify 3.2.1-dev.1&quot;&gt;
+  &lt;meta name=&quot;generator&quot; content=&quot;archify 3.3.0&quot;&gt;
   &lt;meta name=&quot;archify-reader-contract&quot; content=&quot;declared-wide-v1&quot;&gt;
   &lt;title&gt;Checkout Platform — Fraud Gate Diagram&lt;/title&gt;
   &lt;script&gt;
@@ -34618,6 +34620,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       // otherwise it starts collapsed and the reader can still open it.
       var RAIL_COMFORT_PRIMARY_PX = 12;
       var railPanel = shell &amp;&amp; shell.querySelector(&#39;.reader-rail&#39;);
+      var feedback = document.querySelector(&#39;.page-feedback&#39;);
       var railReveal = document.getElementById(&#39;rail-reveal&#39;);
       var railCollapse = document.getElementById(&#39;rail-collapse&#39;);
       var railPlacement = document.getElementById(&#39;rail-placement&#39;);
@@ -34805,10 +34808,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       function fitBottomCards() {
         return fitCards &amp;&amp; html.getAttribute(&#39;data-reader-rail&#39;) === &#39;bottom&#39; &amp;&amp; visible(cards);
       }
-      // The diagram can pass containment on its own when bottom notes need
-      // to scroll. First-screen card fitting is best effort.
+      // The diagram can pass containment on its own when bottom notes or the
+      // page colophon sit below the fold. First-screen card fitting is best effort.
       function belowFold() {
-        return html.getAttribute(&#39;data-reader-rail&#39;) === &#39;bottom&#39; ? outerHeight(railPanel) : 0;
+        return (html.getAttribute(&#39;data-reader-rail&#39;) === &#39;bottom&#39; ? outerHeight(railPanel) : 0) +
+          outerHeight(feedback);
       }
       // A docked rail may run past a short diagram down to the viewport floor,
       // so the index uses that space instead of scrolling inside the diagram&#39;s

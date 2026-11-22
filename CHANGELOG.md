@@ -4,9 +4,11 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 ## [Unreleased]
 
-> Development identity: `v3.2.1-dev.1`. Not a stable release.
+## [3.3.0] — 2026-11-23
 
 ### Added
+- **Code Analysis module and standalone Architecture Diagnosis card (#1446, #1449, #1454).** Static repository analysis (`archify code-analysis prepare`, `serve`, `check`, `drift`, `task`) covering TypeScript/JavaScript, Python, Java, Go and Rust ships with vendored parser/schema bundles and zero runtime install dependencies; standalone architecture diagrams also surface an opt-in Architecture Diagnosis card with a copyable diagnosis prompt.
+- **Unified colophon with centered GitHub Star CTA and Feedback menu (#1455).** Diagram Viewer, Explainer, Story Studio and Story Stage share a three-zone footer with the Archify brand mark, a full-area clickable GitHub Star pill, and a Feedback popover linking to GitHub Issues, direct `mailto:` email, and one-click email copy.
 - **Bundled Russian Viewer catalog (#588).** `meta.locale: "ru"` selects a complete 516-message catalog without `meta.translations`. The reusable catalog moved from `archify/examples/locales/ru.json` to `archify/locales/ru.json`. Counted messages use singular `.one` forms and count-neutral `.other` labels.
 - **Pinned architecture drift review (Labs).** Compare two local JS/TS commits against one authored architecture and mapping; inspect newly observed component imports on the existing diagram, open source at the captured revision, and download a bounded review.
 - **JS/TS function source positions.** Current measurements record the implementation's exact UTF-16 range and digest. The Atlas side panel shows that captured position and states that it does not prove a runtime call. Historical measurements without the range remain readable.
@@ -49,6 +51,12 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 - **README motion proof refreshed after Sequence header centering (#1293).** The README animation and its receipt are rebuilt from the current gallery artifacts, so the freshness check passes again. Thanks to [@BlueboxC](https://github.com/BlueboxC), who first identified the stale proof and recaptured it in [#1174](https://github.com/tt-a1i/archify/pull/1174); #1293 follows the same approach.
 - **Explainer-hosted Viewer hides standalone preset badges (#1196, #1195).** The Viewer an explainer opens keeps the page-selected preset and its tools, and hides the standalone title badges and the editorial plate. Standalone presentation is unchanged. Thanks to [@HengYangDS](https://github.com/HengYangDS).
 - **Export filenames use the diagram's own title (#1024).** Viewer downloads are named from the page heading, so locale decorations of the browser tab title (Diagram, Diagrama, 다이어그램, مخطّط) no longer enter the filename. Words such as Architecture or Diagram are no longer stripped: a diagram titled “Payments Architecture” downloads as `payments-architecture`, not `payments`, and a page without a heading falls back to its complete title, so “Checkout Diagram” stays `checkout-diagram`. Thanks to [@BlueboxC](https://github.com/BlueboxC), who proposed and verified this policy with real browser downloads.
+- **Explainer wrapped colophon alignment (#1456).** Keep `.colophon-aside` and `.colophon-facts` right-aligned on desktop when metadata facts wrap onto two lines, without a dangling vertical divider on the second row.
+- **Bottom Node Index uniform grid columns (#1457).** Switch the desktop bottom Node Index from `flex-wrap` to a uniform CSS grid with explicit title/sublabel line heights so wrapped rows, multiple groups, and mixed CJK/Latin labels share identical column edges and vertical baselines.
+
+### Release follow-up
+- The stable update manifest (`docs/skill-updates/archify/stable.json`) remains on `v3.2.0` until the `v3.3.0` GitHub Release is published and its `archify.zip` digest is verified.
+- The separately versioned DSH plugin (`integrations/deepseek-harness/release.json`) is explicitly deferred and will be synchronized in a dedicated follow-up after `v3.3.0` is published on `main`.
 
 ## [3.2.0] — 2026-10-18
 

@@ -1,6 +1,6 @@
 {
   "name": "archify",
-  "version": "3.2.1-dev.1",
+  "version": "3.3.0",
   "private": true,
   "type": "module",
   "description": "JSON-IR diagram renderers (architecture / workflow / sequence / dataflow / lifecycle / erd / class / tree / timeline / waterfall).",

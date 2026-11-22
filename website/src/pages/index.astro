@@ -1,5 +1,6 @@
 ---
 import { version, versioned } from '../data/site';
+import { productChannel } from '../data/product-facts';
 import SupportedDiagrams from '../components/SupportedDiagrams.astro';
 import SiteLayout from '../layouts/SiteLayout.astro';
 import Navigation from '../components/Navigation.astro';
@@ -39,7 +40,7 @@ const { lang = 'en' } = Astro.props;
     <div class="hero-copy">
       <a class="hero-eyebrow fade-up" href="https://github.com/tt-a1i/archify/blob/main/CHANGELOG.md" target="_blank" rel="noopener">
         <span class="eyebrow-tag">v{version}</span>
-        <span data-i18n="hero-badge">Development Agent Skill · see what's new</span>
+        <span data-i18n="hero-badge">{productChannel === 'development' ? "Development Agent Skill · see what's new" : "Stable Agent Skill · see what's new"}</span>
         <span class="eyebrow-arrow" aria-hidden="true">→</span>
       </a>
       <h1 data-i18n="hero-h1"><span class="l">Ask in plain words.</span><span class="l">Get answers <em>you can trust.</em></span></h1>
@@ -415,7 +416,7 @@ const { lang = 'en' } = Astro.props;
         <a class="nav-logo" href="#">
           <Brand />
         </a>
-        <p class="footer-meta" data-i18n="footer-meta">development &nbsp;·&nbsp; v{version} &nbsp;·&nbsp; Apache License 2.0<br>Based on Cocoon-AI/architecture-diagram-generator</p>
+        <p class="footer-meta" data-i18n="footer-meta">{productChannel} &nbsp;·&nbsp; v{version} &nbsp;·&nbsp; Apache License 2.0<br>Based on Cocoon-AI/architecture-diagram-generator</p>
       </div>
       <div class="footer-links">
         <a href="guide.html" data-i18n="nav-guide">Guide</a>
