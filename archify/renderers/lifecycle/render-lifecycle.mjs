@@ -10,7 +10,7 @@ import { translateMessage as i18nText } from '../shared/i18n.mjs';
 import { layoutReportFromSvg } from '../shared/layout-report.mjs';
 import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeNodeAttrs, changeReviewFor, nodeChangeBadgePos, renderChangeBadge, renderChangeEdgePrefix, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
 import { DESKTOP_READER_DIAGRAM_WIDTH, MIN_PROJECTED_NODE_TEXT_PX } from '../shared/desktop-readability.mjs';
-import { asArray, rectsOverlap, segmentRectClearance, roundedPath, routePointsValue, arrowClassMap, edgeLabelAccent } from '../shared/geometry.mjs';
+import { asArray, rectsOverlap, properSegmentIntersection, segmentRectClearance, roundedPath, routePointsValue, arrowClassMap, edgeLabelAccent } from '../shared/geometry.mjs';
 
 // Lifecycle v3 draws one shape: the main path as a left-to-right row, loops
 // back to earlier phases as arcs above it, and every other state (exits,
@@ -482,7 +482,7 @@ function layout({ spineGap, rowGap, drop, firstTrack, ports: portMode }) {
   }
 
   const stateRight = Math.max(...[...states.values()].map((state) => state.x + state.width));
-  const placed = placeLabels({ routes, contentRight: stateRight });
+  const placed = placeLabelsWithOutsideReturn(routes, frames, stateRight);
   const boxes = [...states.values(), ...placed.placedLabels.values()];
   const contentBottom = Math.max(
     ...boxes.map((box) => box.y + box.height),
@@ -490,6 +490,48 @@ function layout({ spineGap, rowGap, drop, firstTrack, ports: portMode }) {
   );
   const contentRight = Math.max(...boxes.map((box) => box.x + box.width));
   return { routes, junctions, frames, contentBottom, contentRight, ...placed };
+}
+
+// A return from the last row to the initial state can avoid crossing the
+// branches by using the outside margin. Keep ordinary returns in their gap.
+function placeLabelsWithOutsideReturn(routes, frames, contentRight) {
+  const place = () => placeLabels({ routes, contentRight });
+  if (rowCount < 2) return place();
+  const initial = states.get(mainPath[0]);
+  const returns = ofKind('between').filter(({ from, to }) => to === initial.id && depthOf(from) === rowCount - 1);
+  if (returns.length !== 1) return place();
+  const [transition] = returns;
+  const original = routes.get(transition);
+  if (!original || original.points.length < 4) return place();
+
+  const segments = (points) => points.slice(1).map((end, index) => ({ start: points[index], end }));
+  const obstacles = [...new Set([...routes.values()].filter((route) => route !== original).map(({ points }) => points))].map(segments);
+  const originalSegments = segments(original.points);
+  const crossed = obstacles.filter((route) => originalSegments.some((a) =>
+    route.some((b) => properSegmentIntersection(a.start, a.end, b.start, b.end))));
+  if (crossed.length < 3) return place();
+
+  const from = states.get(transition.from);
+  const routeBoxes = obstacles.flat().map(({ start, end }) => ({
+    x: Math.min(start[0], end[0]), y: Math.min(start[1], end[1]),
+    width: Math.abs(start[0] - end[0]), height: Math.abs(start[1] - end[1]),
+  }));
+  const lowest = Math.max(from.y + from.height, ...routeBoxes.map((box) => box.y + box.height));
+  const bottom = lowest + 28;
+  const rail = 18;
+  if (hasLabel(transition) && from.cx - rail < labelBox(transition).width + 2 * CORNER) return place();
+  // Enter below the UML initial marker; the left rail is outside its dot.
+  const entry = initial.cy + 18;
+  const points = [[from.cx, from.y + from.height], [from.cx, bottom], [rail, bottom], [rail, entry], [initial.x, entry]];
+  const otherStates = [...states.values()].filter((state) => state !== from && state !== initial);
+  const obstaclesOutside = [...otherStates, ...frames, ...routeBoxes];
+  if (segments(points).some((segment) => obstaclesOutside.some((box) => segmentRectClearance(segment, box) < CLEARANCE))) return place();
+
+  routes.set(transition, { points, segment: 1, labelMode: 'on' });
+  const placed = place();
+  if (!placed.unplacedLabels.length) return placed;
+  routes.set(transition, original);
+  return place();
 }
 
 // A composite exit leaves the frame directly above its target when possible,

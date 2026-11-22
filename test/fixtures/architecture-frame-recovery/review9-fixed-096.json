@@ -1,0 +1,136 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "layout": {
+    "mode": "auto"
+  },
+  "meta": {
+    "title": "Fixed 96",
+    "output": "out.html",
+    "legend": {
+      "mode": "hidden"
+    },
+    "viewBox": [
+      609,
+      283
+    ]
+  },
+  "components": [
+    {
+      "id": "n0",
+      "type": "messagebus",
+      "label": "Service 1",
+      "size": [
+        120,
+        60
+      ],
+      "pos": [
+        40,
+        68
+      ]
+    },
+    {
+      "id": "n1",
+      "type": "backend",
+      "label": "Service 2",
+      "size": [
+        120,
+        60
+      ],
+      "pos": [
+        207,
+        49
+      ]
+    },
+    {
+      "id": "n2",
+      "type": "frontend",
+      "label": "Service 3",
+      "size": [
+        100,
+        52
+      ],
+      "pos": [
+        386,
+        53
+      ]
+    },
+    {
+      "id": "n3",
+      "type": "external",
+      "label": "Service 4",
+      "size": [
+        100,
+        60
+      ],
+      "pos": [
+        40,
+        196
+      ]
+    },
+    {
+      "id": "n4",
+      "type": "messagebus",
+      "label": "Service 5",
+      "size": [
+        120,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e0",
+      "from": "n0",
+      "to": "n1"
+    },
+    {
+      "id": "e1",
+      "from": "n1",
+      "to": "n2"
+    },
+    {
+      "id": "e2",
+      "from": "n2",
+      "to": "n3",
+      "label": "Sync 3"
+    },
+    {
+      "id": "e3",
+      "from": "n3",
+      "to": "n4",
+      "label": "Sync 4"
+    },
+    {
+      "id": "e4",
+      "from": "n3",
+      "to": "n0"
+    },
+    {
+      "id": "e5",
+      "from": "n0",
+      "to": "n4",
+      "label": "Sync 6"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Processing",
+      "wraps": [
+        "n0",
+        "n1"
+      ],
+      "pad": 10
+    },
+    {
+      "kind": "security-group",
+      "label": "Worker region",
+      "wraps": [
+        "n2",
+        "n3"
+      ],
+      "pad": 10
+    }
+  ]
+}

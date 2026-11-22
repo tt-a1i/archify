@@ -1,0 +1,276 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "layout": {
+    "mode": "auto"
+  },
+  "meta": {
+    "title": "Group probe 3",
+    "output": "output.html",
+    "quality_profile": "showcase",
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "components": [
+    {
+      "id": "n0",
+      "type": "backend",
+      "label": "Service 0",
+      "size": [
+        175,
+        68
+      ]
+    },
+    {
+      "id": "n1",
+      "type": "backend",
+      "label": "Service 1",
+      "size": [
+        100,
+        50
+      ]
+    },
+    {
+      "id": "n2",
+      "type": "external",
+      "label": "Service 2",
+      "size": [
+        140,
+        50
+      ]
+    },
+    {
+      "id": "n3",
+      "type": "database",
+      "label": "Service 3",
+      "size": [
+        120,
+        68
+      ]
+    },
+    {
+      "id": "n4",
+      "type": "database",
+      "label": "Service 4",
+      "size": [
+        120,
+        50
+      ]
+    },
+    {
+      "id": "n5",
+      "type": "database",
+      "label": "Service 5",
+      "size": [
+        175,
+        60
+      ]
+    },
+    {
+      "id": "n6",
+      "type": "backend",
+      "label": "Service 6",
+      "size": [
+        140,
+        84
+      ]
+    },
+    {
+      "id": "n7",
+      "type": "external",
+      "label": "Service 7",
+      "size": [
+        120,
+        84
+      ]
+    },
+    {
+      "id": "n8",
+      "type": "backend",
+      "label": "Service 8",
+      "size": [
+        175,
+        60
+      ]
+    },
+    {
+      "id": "n9",
+      "type": "external",
+      "label": "Service 9",
+      "size": [
+        120,
+        68
+      ]
+    },
+    {
+      "id": "n10",
+      "type": "backend",
+      "label": "Service 10",
+      "size": [
+        100,
+        84
+      ]
+    },
+    {
+      "id": "n11",
+      "type": "database",
+      "label": "Service 11",
+      "size": [
+        140,
+        84
+      ]
+    },
+    {
+      "id": "n12",
+      "type": "backend",
+      "label": "Service 12",
+      "size": [
+        175,
+        68
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e0",
+      "from": "n0",
+      "to": "n1"
+    },
+    {
+      "id": "e1",
+      "from": "n1",
+      "to": "n2"
+    },
+    {
+      "id": "e2",
+      "from": "n2",
+      "to": "n3",
+      "label": "Run job"
+    },
+    {
+      "id": "e3",
+      "from": "n3",
+      "to": "n4"
+    },
+    {
+      "id": "e4",
+      "from": "n4",
+      "to": "n5"
+    },
+    {
+      "id": "e5",
+      "from": "n5",
+      "to": "n6"
+    },
+    {
+      "id": "e6",
+      "from": "n6",
+      "to": "n7"
+    },
+    {
+      "id": "e7",
+      "from": "n0",
+      "to": "n8"
+    },
+    {
+      "id": "e8",
+      "from": "n1",
+      "to": "n8",
+      "label": "Sync records"
+    },
+    {
+      "id": "e9",
+      "from": "n8",
+      "to": "n7",
+      "label": "Resolve"
+    },
+    {
+      "id": "e10",
+      "from": "n0",
+      "to": "n9"
+    },
+    {
+      "id": "e11",
+      "from": "n1",
+      "to": "n9",
+      "label": "Read token"
+    },
+    {
+      "id": "e12",
+      "from": "n9",
+      "to": "n7",
+      "label": "Run job"
+    },
+    {
+      "id": "e13",
+      "from": "n0",
+      "to": "n10",
+      "label": "Run job"
+    },
+    {
+      "id": "e14",
+      "from": "n1",
+      "to": "n10"
+    },
+    {
+      "id": "e15",
+      "from": "n10",
+      "to": "n7"
+    },
+    {
+      "id": "e16",
+      "from": "n0",
+      "to": "n11",
+      "label": "Write cache"
+    },
+    {
+      "id": "e17",
+      "from": "n1",
+      "to": "n11",
+      "label": "Run job"
+    },
+    {
+      "id": "e18",
+      "from": "n11",
+      "to": "n7"
+    },
+    {
+      "id": "e19",
+      "from": "n0",
+      "to": "n12",
+      "label": "Resolve"
+    },
+    {
+      "id": "e20",
+      "from": "n1",
+      "to": "n12"
+    },
+    {
+      "id": "e21",
+      "from": "n12",
+      "to": "n7",
+      "label": "Emit event"
+    },
+    {
+      "id": "e22",
+      "from": "n2",
+      "to": "n7",
+      "label": "Request"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Runtime",
+      "wraps": [
+        "n8",
+        "n9",
+        "n10",
+        "n11",
+        "n12"
+      ],
+      "pad": 18
+    }
+  ]
+}

@@ -1805,7 +1805,7 @@ test('architecture: unavoidable automatic crossing renders as a verified crossov
   assert.equal(receipt.composition.metrics.resolvedCrossovers, 1);
 });
 
-test('architecture: showcase preserves a straight-through explicit waypoint as an authored touch', () => {
+test('architecture: showcase detects a crossing at a straight-through explicit waypoint', () => {
   const d = {
     schema_version: 1,
     diagram_type: 'architecture',
@@ -1828,7 +1828,8 @@ test('architecture: showcase preserves a straight-through explicit waypoint as a
   };
 
   const { code, stderr } = render('architecture', d);
-  assert.equal(code, 0, stderr);
+  assert.notEqual(code, 0, stderr);
+  assert.match(stderr, /\[composition\/proper-crossing\].*\[300, 130\]/);
 });
 
 test('architecture: standard keeps the same proper crossing renderable', () => {

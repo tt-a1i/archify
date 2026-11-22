@@ -12017,6 +12017,53 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (!lift) return rect;
         return { x: rect.x, y: rect.y + lift, left: rect.left, right: rect.right, top: rect.top + lift, bottom: rect.bottom + lift, width: rect.width, height: rect.height };
       }
+      function segmentReachesDock(start, end, rect, margin) {
+        var entry = 0;
+        var exit = 1;
+        var limits = [[rect.left, rect.right], [rect.top, rect.bottom]];
+        for (var axis = 0; axis < 2; axis += 1) {
+          var lo = limits[axis][0] - margin;
+          var hi = limits[axis][1] + margin;
+          var change = end[axis] - start[axis];
+          if (!change) {
+            if (start[axis] < lo || start[axis] > hi) return false;
+            continue;
+          }
+          var a = (lo - start[axis]) / change;
+          var b = (hi - start[axis]) / change;
+          entry = Math.max(entry, Math.min(a, b));
+          exit = Math.min(exit, Math.max(a, b));
+          if (entry > exit) return false;
+        }
+        return true;
+      }
+      function coversArchitecture(dock, amount) {
+        if (window.scrollY > 1 || (svg.dataset.diagramType !== 'architecture' && svg.dataset.readerPrimaryText !== '14')) return false;
+        var lifted = { left: dock.left, right: dock.right, top: dock.top - amount, bottom: dock.bottom - amount };
+        if (!intersectionArea(lifted, protectedStageRect())) return false;
+        var content = svg.querySelectorAll('g[data-node-id], g[data-edge-from] > rect, [data-boundary-label]');
+        if (Array.from(content).some(function (element) { return intersectionArea(lifted, element.getBoundingClientRect()) > 0; })) return true;
+        return Array.from(svg.querySelectorAll('path[data-composition-points]')).some(function (edge) {
+          var matrix = edge.getScreenCTM();
+          if (!matrix) return false;
+          var scale = Math.max(Math.hypot(matrix.a, matrix.b), Math.hypot(matrix.c, matrix.d));
+          var stroke = Number(edge.getAttribute('stroke-width')) || 1.5;
+          var pad = Math.max(8, stroke / 2) * scale;
+          var points = edge.dataset.compositionPoints.split(';').map(function (point) {
+            var coords = point.split(',').map(Number);
+            return [matrix.a * coords[0] + matrix.c * coords[1] + matrix.e, matrix.b * coords[0] + matrix.d * coords[1] + matrix.f];
+          });
+          return points.slice(1).some(function (end, index) {
+            var start = points[index];
+            // On short approaches a wide arrowhead can extend past the
+            // last corner. Include that overhang as well as the stroke.
+            var margin = index === points.length - 2 && edge.hasAttribute('marker-end')
+              ? Math.max(pad, 3.5 * stroke * scale, 9 * stroke * scale - Math.hypot(end[0] - start[0], end[1] - start[1]))
+              : pad;
+            return segmentReachesDock(start, end, lifted, margin);
+          });
+        });
+      }
       function updateLift() {
         liftFrame = 0;
         var next = 0;
@@ -12024,6 +12071,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           var rest = restingNavRect();
           var box = container.getBoundingClientRect();
           next = Math.round(Math.max(0, Math.min(rest.bottom - (window.innerHeight - 16), rest.top - box.top - 16)));
+          if (next && coversArchitecture(rest, next)) next = 0;
         }
         if (next === lift) return;
         lift = next;

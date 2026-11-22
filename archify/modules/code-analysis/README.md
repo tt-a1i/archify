@@ -98,7 +98,7 @@ node bin/archify.mjs code-analysis serve /path/to/repo --ir architecture.json --
 The module's Node parser and schema packages (typescript, java-parser, xmldom
 and Ajv with SARIF draft/format support) ship pre-bundled in
 `modules/code-analysis/vendor/`, so no install step is needed; maintainers
-regenerate them by running `npm run build:vendor` from `modules/code-analysis/`
+regenerate them by running `pnpm run build:vendor` from `archify/modules/code-analysis/`
 after changing those pinned versions. Open the URL the command
 prints and keep the process running. Options:
 `--language ts|py|java|go|rust` (choose explicitly for a mixed-language root), `--map overlay-map.json`

@@ -61,7 +61,7 @@ Language extraction has its own prerequisites:
 | --- | --- |
 | `ts` | Node.js; the module's bundled TypeScript parser. |
 | `py` | Node only; transplanted Pyright parser, Python 3.14 syntax by default. Set `python.targetVersion` to 3.8–3.14. |
-| `java` | Node.js and the installed `java-parser` dependency; no JDK or project build. |
+| `java` | Node.js; the module's bundled `java-parser` dependency; no JDK or project build. |
 | `go` | Go 1.18+ and a root `go.mod`; see [Go scope and tooling](GO.md). |
 | `rust` | Cargo/rustc 1.71+, a root `Cargo.toml` and the locked helper dependencies; see [Rust scope and tooling](RUST.md). |
 | `c`, `cpp` | An existing `compile_commands.json`, Python clang bindings and libclang; see [C/C++ scope and tooling](C_CPP.md). |

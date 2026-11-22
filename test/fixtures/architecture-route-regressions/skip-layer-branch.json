@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "layout": {
+    "mode": "auto"
+  },
+  "components": [
+    {
+      "id": "ui",
+      "type": "frontend",
+      "label": "浏览器界面",
+      "sublabel": "词库、编辑与筛选",
+      "size": [
+        150,
+        65
+      ]
+    },
+    {
+      "id": "worker",
+      "type": "backend",
+      "label": "Worker 路由",
+      "sublabel": "词库 API 与权限判断",
+      "size": [
+        160,
+        65
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "D1 数据库",
+      "sublabel": "提示词、用户与会话",
+      "size": [
+        160,
+        65
+      ]
+    },
+    {
+      "id": "auth",
+      "type": "security",
+      "label": "身份与角色",
+      "sublabel": "会话 / API 密钥",
+      "size": [
+        160,
+        65
+      ]
+    },
+    {
+      "id": "mcp",
+      "type": "external",
+      "label": "MCP 客户端",
+      "sublabel": "工具调用入口",
+      "size": [
+        150,
+        65
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "from": "ui",
+      "to": "worker",
+      "label": "词库请求",
+      "variant": "emphasis",
+      "id": "c0"
+    },
+    {
+      "from": "worker",
+      "to": "db",
+      "label": "读取与写入",
+      "variant": "emphasis",
+      "id": "c1"
+    },
+    {
+      "from": "worker",
+      "to": "auth",
+      "label": "身份检查",
+      "id": "c2"
+    },
+    {
+      "from": "mcp",
+      "to": "auth",
+      "label": "密钥认证",
+      "id": "c3"
+    },
+    {
+      "from": "auth",
+      "to": "db",
+      "label": "查询凭据",
+      "id": "c4"
+    }
+  ],
+  "meta": {
+    "title": "Layer crossing recovery",
+    "output": "chart.html",
+    "quality_profile": "showcase"
+  }
+}

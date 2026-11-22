@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { automaticComponentPositions } from '../archify/renderers/architecture/automatic-placement.mjs';
-import { rectsOverlap, segmentIntersectsRect } from '../archify/renderers/shared/geometry.mjs';
+import { createArchitectureRouter } from '../archify/renderers/architecture/routing.mjs';
+import { properSegmentIntersection, rectsOverlap, segmentIntersectsRect } from '../archify/renderers/shared/geometry.mjs';
 
 function boxes(components, positions) {
   return components.map(({ id, size: [width, height] = [120, 60] }) => {
@@ -96,6 +97,38 @@ test('automatic architecture placement gives converging branches unobstructed ap
   }
 });
 
+test('automatic architecture placement gives two reciprocal peers separate hub exits', () => {
+  const components = [
+    { id: 'hub', size: [172, 60] },
+    { id: 'coordinator', size: [166, 60] },
+    { id: 'runner', size: [159, 60] },
+  ];
+  const connections = [
+    { from: 'hub', to: 'coordinator', label: 'Write input' },
+    { from: 'coordinator', to: 'hub', label: 'Send plan' },
+    { from: 'hub', to: 'runner', label: 'Start work', variant: 'emphasis' },
+    { from: 'runner', to: 'hub', label: 'Report completion' },
+    { from: 'hub', to: 'coordinator', label: 'Forward report' },
+  ];
+  const positions = automaticComponentPositions({ components, connections });
+  const [hub, coordinator, runner] = boxes(components, positions);
+  assert.ok(coordinator.x + coordinator.width < hub.x);
+  assert.ok(hub.x + hub.width < runner.x, 'the emphasized path still reads from left to right');
+
+  const measured = new Map([hub, coordinator, runner].map((box, index) => {
+    const { id } = components[index];
+    return [id, { ...box, id, cx: box.x + box.width / 2, cy: box.y + box.height / 2 }];
+  }));
+  const { pathFor } = createArchitectureRouter(measured, connections, { automaticPlacement: true });
+  const straight = connections.filter((edge) => {
+    const { points } = pathFor(edge);
+    return points.length === 2 && points[0][1] === points[1][1];
+  });
+  assert.ok(straight.length >= 4);
+  assert.ok(connections.slice(2, 4).every((edge) => straight.includes(edge)),
+    'dispatch and return can be followed straight across the gap');
+});
+
 test('automatic architecture placement can turn a chain to fit an authored canvas', () => {
   const arch = {
     meta: { viewBox: [320, 320] },
@@ -107,4 +140,75 @@ test('automatic architecture placement can turn a chain to fit an authored canva
   assert.equal(client.x, service.x);
   assert.ok(client.y + client.height < service.y);
   assert.ok(service.x + service.width <= 320 && service.y + service.height <= 320);
+});
+
+test('automatic architecture placement fits a detached pair across its own row below a vertical pipeline', () => {
+  const pipeline = ['client', 'gateway', 'router', 'queue', 'worker', 'store'];
+  const outputs = ['logs', 'events', 'metrics', 'backup'];
+  const components = [...pipeline, ...outputs, 'console', 'help'].map(id => ({ id, size: [170, 60] }));
+  const connections = [
+    ...pipeline.slice(1).map((to, index) => ({ from: pipeline[index], to })),
+    ...outputs.map(to => ({ from: 'worker', to })),
+    { from: 'console', to: 'help', label: 'Open documentation' },
+  ];
+
+  const positions = automaticComponentPositions({ components, connections });
+  const placed = boxes(components, positions);
+  const [consoleNode, help] = placed.slice(-2);
+  const pipelineBoxes = placed.slice(0, -2);
+  assert.ok(consoleNode.y > Math.max(...pipelineBoxes.map(({ y, height }) => y + height)));
+  assert.equal(consoleNode.y, help.y);
+  assert.ok(consoleNode.x + consoleNode.width < help.x);
+  assert.ok(help.x + help.width <= Math.max(...pipelineBoxes.map(({ x, width }) => x + width)));
+});
+
+test('automatic architecture places a single shared dependency between the phases that use it', () => {
+  const path = ['request', 'search', 'review', 'read', 'output'];
+  const components = [...path, 'storage'].map(id => ({ id, size: [150, 60] }));
+  const connections = [
+    ...path.slice(1).map((to, index) => ({ from: path[index], to, variant: 'emphasis' })),
+    { from: 'search', to: 'storage' },
+    { from: 'read', to: 'storage' },
+  ];
+  const positions = automaticComponentPositions({ components, connections });
+  const [, search, , read, output, storage] = boxes(components, positions);
+  assert.equal(search.x, output.x);
+  assert.ok(storage.y > search.y && storage.y < read.y);
+  assert.ok(storage.x + storage.width < search.x || storage.x > search.x + search.width);
+  assert.ok(output.y > read.y);
+
+  const emphasizedBranches = connections.map(edge => edge.to === 'storage' ? { ...edge, variant: 'emphasis' } : edge);
+  const positionsWithEmphasis = automaticComponentPositions({ components, connections: emphasizedBranches });
+  const [, , , emphasizedRead, , emphasizedStorage] = boxes(components, positionsWithEmphasis);
+  assert.ok(emphasizedStorage.y > emphasizedRead.y);
+
+  const ordinaryConnections = connections.map(({ from, to }) => ({ from, to }));
+  const ordinaryPositions = automaticComponentPositions({ components, connections: ordinaryConnections });
+  const [, , , ordinaryRead, , ordinaryStorage] = boxes(components, ordinaryPositions);
+  assert.ok(ordinaryStorage.y > ordinaryRead.y);
+});
+
+test('automatic architecture placement keeps a late input clear of a branch to the final stage', () => {
+  const mainPath = ['sources', 'parse', 'index', 'store', 'query'];
+  const components = [...mainPath, 'notes_worker', 'notes_store', 'revisions'].map((id) => ({ id, size: [160, 60] }));
+  const connections = [
+    ...mainPath.slice(1).map((to, index) => ({ from: mainPath[index], to, label: 'Main stage', variant: 'emphasis' })),
+    { from: 'notes_worker', to: 'notes_store', label: 'Write notes' },
+    { from: 'notes_store', to: 'query', label: 'Read notes' },
+    { from: 'revisions', to: 'index', label: 'Index revisions' },
+  ];
+  const positions = automaticComponentPositions({ components, connections });
+  const measured = new Map(boxes(components, positions).map((box, index) => {
+    const { id } = components[index];
+    return [id, { ...box, id, cx: box.x + box.width / 2, cy: box.y + box.height / 2 }];
+  }));
+  const { pathFor } = createArchitectureRouter(measured, connections, { automaticPlacement: true });
+  const routes = connections.map((connection) => ({ connection, points: pathFor(connection).points }));
+  for (const [index, left] of routes.entries()) {
+    for (const right of routes.slice(index + 1)) {
+      const crosses = left.points.slice(1).some((leftEnd, i) => right.points.slice(1).some((rightEnd, j) =>
+        properSegmentIntersection(left.points[i], leftEnd, right.points[j], rightEnd)));
+      assert.ok(!crosses, `${left.connection.from} → ${left.connection.to} crosses ${right.connection.from} → ${right.connection.to}`);
+    }
+  }
 });
