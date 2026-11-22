@@ -36,7 +36,7 @@ function prepare(root, out, args = []) {
 
 test('prepare: a dominant adapter is selected and the workbench discloses other languages', (t) => {
   const root = fixture(t, {
-    ...Object.fromEntries(Array.from({ length: 38 }, (_, i) => [`src/file${i}.ts`, 'export const value = 1;'])),
+    ...Object.fromEntries(Array.from({ length: 19 }, (_, i) => [`src/file${i}.ts`, 'export const value = 1;'])),
     'helpers/script.py': 'value = 1',
     'helpers/tool.rs': 'fn main() {}',
   });
@@ -54,13 +54,22 @@ test('prepare: a dominant adapter is selected and the workbench discloses other 
   const explicit = check(root, ['--language', 'py', '--json']);
   assert.equal(explicit.status, 0, explicit.stdout + explicit.stderr);
   assert.deepEqual(JSON.parse(explicit.stdout).coverage.otherLanguages, [
-    { adapter: 'ts', files: 38 }, { adapter: 'rust', files: 1 },
+    { adapter: 'ts', files: 19 }, { adapter: 'rust', files: 1 },
   ]);
 
-  fs.unlinkSync(path.join(root, 'src/file37.ts'));
+  fs.unlinkSync(path.join(root, 'src/file18.ts'));
+  assert.equal(selectAdapter(root, loadConfig()).id, 'ts', '18 of 20 files meets the cutoff');
+  fs.unlinkSync(path.join(root, 'src/file17.ts'));
   const mixed = check(root, ['--json']);
-  assert.equal(mixed.status, 2, mixed.stdout + mixed.stderr);
+  assert.equal(mixed.status, 2, '17 of 19 files falls below the cutoff: ' + mixed.stdout + mixed.stderr);
   assert.equal(JSON.parse(mixed.stdout).diagnostics[0].code, 'extract/adapter-ambiguous');
+});
+
+test('adapter selection: an Archify-like mix at about 94% selects TypeScript', (t) => {
+  const files = Object.entries({ ts: 859, py: 27, rs: 27, go: 1 }).flatMap(([extension, count]) =>
+    Array.from({ length: count }, (_, i) => [`src/${extension}/file${i}.${extension}`, '']));
+  const root = fixture(t, Object.fromEntries(files));
+  assert.equal(selectAdapter(root, loadConfig()).id, 'ts');
 });
 
 for (const [language, extension, source, manifest, manifestText, missingCode] of [
