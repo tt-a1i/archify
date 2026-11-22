@@ -158,7 +158,17 @@ test('CI and release use the same browser command and retain WebM decoding', () 
     assert.equal(gate?.run, browserCommand, `${workflow} must invoke the shared gate`);
     assert.equal(gate['working-directory'], undefined);
     assert.equal(gate.env.ARCHIFY_CHROME, '${{ steps.setup-chrome.outputs.chrome-path }}');
-    assert.ok(jobs[webmJob].steps.some(step => step.run === 'npm run test:webm'));
+    if (workflow === 'ci.yml') {
+      const media = jobs[webmJob].steps.find(step => step.env?.CI_WEBM_PROFILE);
+      assert.equal(media?.env.CI_WEBM_PROFILE, '${{ needs.scope.outputs.webmProfile }}');
+      assert.equal(media.run, 'node test/webm-artifact.smoke.mjs "$CI_WEBM_PROFILE"');
+      const language = jobs.website.steps.find(step => step.run === 'node --test test/site-language-integration.mjs');
+      assert.equal(language?.if, "matrix.target == 'pages'");
+      assert.ok(language.env.ARCHIFY_CHROME);
+    } else {
+      assert.ok(jobs[webmJob].steps.some(step => step.run === 'npm run test:webm'));
+      assert.equal(manifest.scripts['test:webm'], 'node test/webm-artifact.smoke.mjs && node --test test/site-language-integration.mjs');
+    }
   }
 });
 
@@ -212,7 +222,7 @@ test('CI browser profiles preserve the exact Atlas and media test inventories ac
   assert.equal(browser(ci['browser-regression']).env.CI_BROWSER_TESTS, '${{ needs.scope.outputs.browserTests }}');
   assert.equal(ci.scope.outputs.browserTests, '${{ steps.classify.outputs.browserTests }}');
   assert.equal(browser(ci['browser-regression']).env.CI_STORY_BROWSER_OWNER,
-    "${{ needs.scope.outputs.webm == 'true' && 'webm' || 'browser' }}");
+    "${{ needs.scope.outputs.webm == 'true' && needs.scope.outputs.webmProfile != 'viewer' && 'webm' || 'browser' }}");
   assert.equal(browser(release).env.CI_STORY_BROWSER_OWNER, 'webm');
   assert.ok(release.steps.findIndex(step => step.run === 'npm run test:webm') < release.steps.indexOf(browser(release)));
 });
@@ -305,23 +315,26 @@ test('CI media gates fail closed and run only for their affected responsibility'
   assert.equal(step.env.CI_BROWSER, '${{ needs.scope.outputs.browser }}');
   assert.equal(step.env.CI_BROWSER_PROFILE, '${{ needs.scope.outputs.browserProfile }}');
   assert.equal(step.env.CI_WEBM, '${{ needs.scope.outputs.webm }}');
+  assert.equal(step.env.CI_WEBM_PROFILE, '${{ needs.scope.outputs.webmProfile }}');
   assert.equal(step.env.BROWSER_RESULT, '${{ needs.browser-regression.result }}');
   assert.equal(step.env.WEBM_RESULT, '${{ needs.webm-decode.result }}');
   const runAggregate = overrides => spawnSync('bash', ['-e', '-u', '-o', 'pipefail', '-c', step.run], {
     encoding: 'utf8', env: {
       ...process.env, SCOPE_RESULT: 'success', CI_SCOPE: 'full', CI_BROWSER: 'true',
-      CI_BROWSER_PROFILE: 'full', CI_WEBM: 'true',
+      CI_BROWSER_PROFILE: 'full', CI_WEBM: 'true', CI_WEBM_PROFILE: 'full',
       BROWSER_RESULT: 'success', WEBM_RESULT: 'success', ...overrides,
     },
   });
-  for (const [scope, profile, browser, webm] of [
-    ['docs', 'full', false, false], ['full', 'full', true, true],
+  for (const [scope, profile, browser, webm, media = 'full'] of [
+    ['docs', 'full', false, false], ['full', 'full', true, true], ['full', 'full', true, false],
+    ['core', 'full', true, true, 'viewer'], ['core', 'full', true, true, 'story'],
+    ['core', 'full', false, true, 'story'],
     ['core', 'full', false, false], ['core', 'full', false, true],
     ['core', 'full', true, false], ['core', 'full', true, true],
     ['core', 'atlas', true, false], ['core', 'changed', true, false], ['core', 'changed', true, true],
   ]) {
     const plan = {
-      CI_SCOPE: scope, CI_BROWSER_PROFILE: profile, CI_BROWSER: String(browser), CI_WEBM: String(webm),
+      CI_SCOPE: scope, CI_BROWSER_PROFILE: profile, CI_BROWSER: String(browser), CI_WEBM: String(webm), CI_WEBM_PROFILE: media,
       BROWSER_RESULT: browser ? 'success' : 'skipped', WEBM_RESULT: webm ? 'success' : 'skipped',
     };
     assert.equal(runAggregate(plan).status, 0, JSON.stringify(plan));
@@ -336,7 +349,9 @@ test('CI media gates fail closed and run only for their affected responsibility'
   for (const plan of [
     { CI_SCOPE: '' }, { CI_SCOPE: 'unknown' }, { CI_SCOPE: 'docs' },
     { CI_BROWSER: '' }, { CI_WEBM: '' }, { CI_BROWSER_PROFILE: '' },
-    { CI_BROWSER: 'false', BROWSER_RESULT: 'skipped' }, { CI_WEBM: 'false', WEBM_RESULT: 'skipped' },
+    { CI_BROWSER: 'false', BROWSER_RESULT: 'skipped' }, { CI_WEBM_PROFILE: '' },
+    { CI_WEBM_PROFILE: 'viewer' }, { CI_SCOPE: 'core', CI_WEBM_PROFILE: 'unknown' },
+    { CI_SCOPE: 'core', CI_WEBM: 'false', WEBM_RESULT: 'skipped', CI_WEBM_PROFILE: 'story' },
     { CI_BROWSER_PROFILE: 'changed' }, { CI_BROWSER_PROFILE: 'atlas' },
     { CI_SCOPE: 'core', CI_BROWSER_PROFILE: 'unknown' },
     { CI_SCOPE: 'core', CI_BROWSER: 'false', BROWSER_RESULT: 'skipped', CI_BROWSER_PROFILE: 'changed' },

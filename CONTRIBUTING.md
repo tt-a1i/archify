@@ -130,10 +130,14 @@ changed tests still run through the core path. Unknown README language names and
 other Markdown paths do not automatically qualify for this fast path.
 
 Unknown paths, an empty comparison, and an unavailable development-push base
-select full coverage. An invalid PR comparison fails classification. Required
-job names remain present, and a failed classification cannot turn into successful
-skips. Main pushes and manual CI runs use complete coverage; releases explicitly
-run `test:full`. New pushes cancel obsolete CI runs for the same PR.
+select full coverage. An invalid PR comparison fails classification. Changes
+confined to independent Explainer, Code Analysis, or DeepSeek Harness
+documentation and test inputs can retain full regression without running the
+Viewer and Story media checks. The package job still compares the regenerated
+ZIP when a change includes the archive. Required job names remain present,
+and failed classification blocks the required checks. Main pushes and manual
+CI runs use complete coverage. Releases explicitly run `test:full`. New pushes
+cancel obsolete CI runs for the same PR.
 
 ## Product and compatibility contracts
 
@@ -248,8 +252,9 @@ ARCHIFY_CHROME="/path/to/chrome" npm run test:browser
 This command requires a usable Chrome/Chromium and fails when none is available.
 Its maintained file list is in `scripts/browser-test-inventory.mjs`; add new browser
 suites there so both workflows keep the same coverage. `npm run test:full`
-retains optional browser skips. Real WebM decoding and site-language integration
-remain in the separate `npm run test:webm` gate used by both workflows.
+retains optional browser skips. `npm run test:webm` runs the Viewer artifacts,
+Story media, and checked-in site-language integration. Website CI also runs the
+site-language integration when its inputs change.
 
 PR CI divides broad browser coverage into four disjoint file shards. Atlas-only
 client changes run the Code Analysis browser inventory, the related Node suites,
@@ -258,8 +263,14 @@ browser inventory. When a change touches only tests already in the browser
 inventory, Chrome runs the changed suites, including their Node-only cases. Up
 to four such suites share one job. Larger selections run in four shards.
 Deleted, renamed, or type-changed root test files trigger full CI.
-When WebM CI is selected, it owns the Story browser file and runs it with FFmpeg.
-The browser shards retain that file when WebM CI is outside the change scope.
+Changes confined to known Viewer interactions run the Viewer artifact checks,
+including live WebM decode. Rebuilt Viewer HTML, golden files and the package
+still go through the generated-output and package checks. Story-only changes
+run Story's media checks with FFmpeg. Shared Viewer CSS, shell, export and motion
+changes keep both media checks. To run one group locally, pass `viewer` or
+`story` to `node test/webm-artifact.smoke.mjs`.
+When selected, Story media runs the Story browser file with FFmpeg. The browser
+shards retain that file when Story media is outside the change scope.
 The required `webm-artifact` check validates the scope and requires each media job
 to pass when selected or be skipped when outside the scope. Tag releases cover
 the full browser inventory across the browser and WebM commands. An unqualified

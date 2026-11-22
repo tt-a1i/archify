@@ -6,11 +6,14 @@ import net from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
+import { findChrome } from '../archify/bin/visual-check.mjs';
 import { storyMediaBrowserTest } from '../scripts/browser-test-inventory.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..', 'archify');
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-webm-artifact-'));
+const [profile = 'full', ...extra] = process.argv.slice(2);
+assert.ok(['full', 'viewer', 'story'].includes(profile) && !extra.length,
+  'Expected one WebM profile: full, viewer or story');
 const externalReachSource = process.env.ARCHIFY_REACH_CARD_SOURCE
   ? path.resolve(process.env.ARCHIFY_REACH_CARD_SOURCE)
   : '';
@@ -49,6 +52,24 @@ const ffprobe = executable([process.env.ARCHIFY_FFPROBE, 'ffprobe']);
 assert.ok(chrome, 'Chrome/Chromium is required for the WebM artifact smoke test (or set ARCHIFY_CHROME)');
 assert.ok(ffmpeg, 'ffmpeg is required for the WebM artifact smoke test (or set ARCHIFY_FFMPEG)');
 assert.ok(ffprobe, 'ffprobe is required for the Story audio gate (or set ARCHIFY_FFPROBE)');
+
+function runStoryTests() {
+  // The browser suite normally allows skips. A requested media check requires Chrome.
+  assert.ok(findChrome({ env: { ...process.env, ARCHIFY_CHROME: chrome } }), 'Story media tests require an executable Chrome');
+  execFileSync(process.execPath, ['--test', path.join(__dirname, storyMediaBrowserTest)], {
+    env: { ...process.env, ARCHIFY_CHROME: chrome, ARCHIFY_FFMPEG: ffmpeg, ARCHIFY_FFPROBE: ffprobe },
+    stdio: 'inherit',
+    timeout: 60_000,
+  });
+}
+
+if (profile === 'story') {
+  assert.ok(!externalReachSource, 'External Reach Card capture requires the viewer or full profile');
+  runStoryTests();
+  process.exit(0);
+}
+
+const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-webm-artifact-'));
 
 const source = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/web-app.architecture.json'), 'utf8'));
 source.meta.animation = 'trace';
@@ -638,13 +659,21 @@ try {
       })`);
       assert.fail(`${label} did not select ${changeKey} within the bounded wait: ${JSON.stringify(observed)}`);
     }
-    async function waitForReviewFinished(label) {
-      for (let attempt = 0; attempt < 400; attempt += 1) {
-        const done = await evaluate(cdp, sessionId, `document.querySelector('#review-play').getAttribute('aria-pressed') === 'false' && document.querySelector('#review-play').textContent === 'Replay'`);
-        if (done) return;
-        await delay(50);
+    async function advanceReviewTime(budget) {
+      let listener;
+      const expired = new Promise((resolve) => {
+        listener = (event) => {
+          const message = JSON.parse(String(event.data));
+          if (message.sessionId === sessionId && message.method === 'Emulation.virtualTimeBudgetExpired') resolve();
+        };
+        cdp.socket.addEventListener('message', listener);
+      });
+      try {
+        await cdp.send('Emulation.setVirtualTimePolicy', { policy: 'advance', budget }, sessionId);
+        await withTimeout(expired, 5000, 'Architecture Delta playback clock');
+      } finally {
+        cdp.socket.removeEventListener('message', listener);
       }
-      assert.fail(`${label} did not finish within the bounded wait`);
     }
     await navigateReady(file, readyCondition, 'architecture-delta navigator');
     const initial = await evaluate(cdp, sessionId, `({
@@ -809,30 +838,7 @@ try {
     })()`);
     assert.deepEqual(tampered, { status: 'Review unavailable · compare identity mismatch', disabled: true, canvases: 3 });
 
-    await navigateReady(file, readyCondition, 'architecture-delta finite navigator');
-    await evaluate(cdp, sessionId, `document.querySelector('#review-play').click()`);
-    await waitForReviewFinished('architecture-delta finite playback');
-    const finished = await evaluate(cdp, sessionId, `({
-      selected: document.querySelector('.change-row[aria-current="step"]')?.dataset.changeKey,
-      label: document.querySelector('#review-play').textContent,
-      pressed: document.querySelector('#review-play').getAttribute('aria-pressed')
-    })`);
-    assert.deepEqual(finished, { selected: 'relationship:publish-order', label: 'Replay', pressed: 'false' });
-    await evaluate(cdp, sessionId, `document.querySelector('#review-play').click()`);
-    const replayStarted = await evaluate(cdp, sessionId, `({
-      selected: document.querySelector('.change-row[aria-current="step"]')?.dataset.changeKey,
-      label: document.querySelector('#review-play').textContent,
-      pressed: document.querySelector('#review-play').getAttribute('aria-pressed')
-    })`);
-    assert.deepEqual(replayStarted, { selected: 'component:fraud', label: 'Pause', pressed: 'true' });
-    await waitForReviewFinished('architecture-delta replay playback');
-    const replayFinished = await evaluate(cdp, sessionId, `({
-      selected: document.querySelector('.change-row[aria-current="step"]')?.dataset.changeKey,
-      label: document.querySelector('#review-play').textContent,
-      pressed: document.querySelector('#review-play').getAttribute('aria-pressed')
-    })`);
-    assert.deepEqual(replayFinished, { selected: 'relationship:publish-order', label: 'Replay', pressed: 'false' });
-
+    await navigateReady(file, readyCondition, 'architecture-delta export navigator');
     const exportProof = await withTimeout(evaluate(cdp, sessionId, String.raw`(async function () {
       var frames = Array.from(document.querySelectorAll('.snapshot-frame'));
       var explorers = frames.map(function (frame) {
@@ -886,6 +892,25 @@ try {
     assert.equal(exportProof.type, 'image/png');
     assert.ok(exportProof.size > 20_000, `Architecture Delta Share Card is unexpectedly small (${exportProof.size} bytes)`);
     assert.equal(exportProof.signature, '89504e470d0a1a0a');
+
+    // The first step ran on the wall clock. Let Chrome execute the same real
+    // callbacks for full playback and replay without waiting for every dwell.
+    // Run this last on this target so the media recorder retains its real clock.
+    await navigateReady(file, readyCondition, 'architecture-delta finite navigator');
+    await cdp.send('Emulation.setVirtualTimePolicy', { policy: 'pause' }, sessionId);
+    const playbackState = `({
+      selected: document.querySelector('.change-row[aria-current="step"]')?.dataset.changeKey,
+      label: document.querySelector('#review-play').textContent,
+      pressed: document.querySelector('#review-play').getAttribute('aria-pressed')
+    })`;
+    const finished = { selected: 'relationship:publish-order', label: 'Replay', pressed: 'false' };
+    await evaluate(cdp, sessionId, `document.querySelector('#review-play').click()`);
+    await advanceReviewTime(20_000);
+    assert.deepEqual(await evaluate(cdp, sessionId, playbackState), finished, 'finite playback stops at the last change');
+    await evaluate(cdp, sessionId, `document.querySelector('#review-play').click()`);
+    assert.deepEqual(await evaluate(cdp, sessionId, playbackState), { selected: 'component:fraud', label: 'Pause', pressed: 'true' });
+    await advanceReviewTime(20_000);
+    assert.deepEqual(await evaluate(cdp, sessionId, playbackState), finished, 'replay also stops at the last change');
     console.log(`ok Architecture Delta navigator + export: exact identity, complete explorers, static SVG, and ${exportProof.size}-byte Share Card`);
   }
 
@@ -1640,7 +1665,6 @@ try {
 
   await verifyResolvedLegendContract(legendOutputs);
   await verifySemanticPassportDismissal(path.resolve(skillRoot, '../docs/gallery/artifacts/production-deployment.architecture.html'));
-  await verifyArchitectureDeltaNavigator(path.resolve(skillRoot, '../examples/checkout-platform-delta.html'));
   await captureRouteShareCard(routeOutputs.architecture, 'architecture-route', 'users', 'api', { journeyInvariance: true });
   await captureRouteShareCard(routeOutputs.workflow, 'workflow-route', 'user', 'approval');
   await captureRouteShareCard(routeOutputs.sequence, 'sequence-route', 'web', 'db');
@@ -1708,12 +1732,8 @@ try {
   assert.ok(hashes.length >= 4, `decoded only ${hashes.length} WebM frames`);
   assert.ok(uniqueFrames.size >= 2, 'decoded WebM frames are static');
   console.log(`ok WebM artifact: ${payload.size} bytes, ${hashes.length} sampled frames, ${uniqueFrames.size} unique`);
-  // Story uses a separate offline encoder and muxer from the live motion export.
-  execFileSync(process.execPath, ['--test', path.join(__dirname, storyMediaBrowserTest)], {
-    env: { ...process.env, ARCHIFY_CHROME: chrome, ARCHIFY_FFMPEG: ffmpeg, ARCHIFY_FFPROBE: ffprobe },
-    stdio: 'inherit',
-    timeout: 60_000,
-  });
+  await verifyArchitectureDeltaNavigator(path.resolve(skillRoot, '../examples/checkout-platform-delta.html'));
+  if (profile === 'full') runStoryTests();
 } finally {
   if (cdp && targetId) await withTimeout(cdp.send('Target.closeTarget', { targetId }), 500, 'target close').catch(() => {});
   if (cdp) cdp.socket.close();

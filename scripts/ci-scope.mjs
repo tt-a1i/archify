@@ -15,6 +15,7 @@ const rootTest = /^test\/[^/]+\.test\.mjs$/;
 const maintainedBrowserTests = new Set(browserTestFiles.map(name => `test/${name}`));
 const browserGateTest = 'test/browser-gate.test.mjs';
 const storyTest = `test/${storyMediaBrowserTest}`;
+const viewerTemplate = 'archify/assets/template.html';
 const atlasBrowserTest = name => name.startsWith('test/code-analysis-') && maintainedBrowserTests.has(name);
 const sharedSvgBaker = 'archify/renderers/shared/svg-bake.mjs';
 const gates = ['generated', 'browser', 'webm', 'package', 'windows', 'manifest', 'website'];
@@ -23,21 +24,61 @@ const storyPresentationFiles = new Set([
   'story.js', 'story.css', 'story-attachment.js', 'story-attachment.css', 'story-audio.js',
   'story-container.js', 'story-export.js', 'story-stage-runtime.js', 'native-motion.js',
 ]);
+// Story's offline renderer uses authored SVG, styles and the motion governor.
+// Native reader interactions are still tested by the ordinary Story browser
+// suite when only the Viewer recording and artifact checks need FFmpeg.
+const viewerInteraction = /^viewer\/(?:focus|intent-trace|node-finder|node-outline|route-probe|semantic-lens)\.js$/;
+const viewerWithoutMedia = new Set(['viewer/README.md', 'viewer/tree-branches.js']);
+const viewerMediaFixtures = new Set([
+  'docs/gallery/artifacts/production-deployment.architecture.html', 'examples/checkout-platform-delta.html',
+  'archify/examples/web-app.architecture.json', 'archify/examples/cache-miss-request.sequence.json',
+  'archify/examples/product-analytics.dataflow.json', 'archify/examples/agent-run.lifecycle.json',
+]);
+// Both committed Story HTML fixtures are compared against the current renderer
+// and their input in test:generated, even when this job only runs Viewer media.
+const storyGoldenFixtures = new Set([
+  'archify/examples/waterfall-checkout-request-rendered.html', 'archify/examples/workflow-agent-tool-call-rendered.html',
+]);
+
+function viewerRebuildCompanion(name) {
+  return viewerInteraction.test(name) || viewerWithoutMedia.has(name) ||
+    name === viewerTemplate || name === 'archify.zip' || name === 'CHANGELOG.md' ||
+    rootTest.test(name) || /^(docs\/|examples\/|archify\/examples\/[^/]+\.html$)/.test(name);
+}
+
+function independentMediaPath(name) {
+  return name === 'archify.zip' || name === 'CHANGELOG.md' ||
+    /^archify\/(?:modules\/code-analysis|explainer)\//.test(name) ||
+    /^test\/(?:code-analysis(?:-[^/]+)?|explainer-[^/]+|skill-metadata)\.test\.mjs$/.test(name) ||
+    name === 'archify/references/explainer-authoring.md' || name.startsWith('docs/cases/explainer/') ||
+    name === 'integrations/deepseek-harness/README.md' ||
+    name === 'integrations/deepseek-harness/test/docs-contract.test.mjs';
+}
+
 export function classifyPaths(paths) {
-  const plan = { scope: 'core', browserProfile: 'full', browserTests: [], owners: [], changedTests: [], ...Object.fromEntries(gates.map(name => [name, false])) };
-  const full = () => ({ ...plan, scope: 'full', ...Object.fromEntries(gates.map(name => [name, true])) });
+  const plan = { scope: 'core', browserProfile: 'full', browserTests: [], webmProfile: 'full', owners: [], changedTests: [], ...Object.fromEntries(gates.map(name => [name, false])) };
+  const full = (webm = true) => ({ ...plan, scope: 'full', ...Object.fromEntries(gates.map(name => [name, true])), webm });
   if (!paths.length) return full();
   const own = owner => { if (!plan.owners.includes(owner)) plan.owners.push(owner); };
+  const media = new Set();
+  const viewerRebuild = paths.some(name => viewerInteraction.test(name) || name === 'viewer/tree-branches.js') &&
+    paths.every(viewerRebuildCompanion);
+  let sharedRenderChanged = false;
   let archiveChanged = false;
   let requireFull = false;
   for (const name of paths) {
     if (/^(docs|examples|archify\/examples)\/.*\.(html|svg)$/.test(name) && !name.startsWith('docs/assets/community/')) own('artifact');
     if (/^examples\/checkout-platform-delta\.(html|receipt\.json)$/.test(name)) own('delta');
     if (name === 'archify.zip') { archiveChanged = true; plan.package = true; continue; }
+    if (viewerMediaFixtures.has(name)) media.add('viewer');
+    if (name === 'archify/examples/agent-tool-call.workflow.json') media.add('full');
+    if (name === 'archify/examples/checkout-request.waterfall.json' ||
+        (storyGoldenFixtures.has(name) && !viewerRebuild)) media.add('story');
     if (rootTest.test(name)) {
       plan.changedTests.push(name);
       if (name === 'test/repository-evidence-replacement.test.mjs' || name === 'test/cli-delivery-lock.test.mjs') plan.windows = true;
-      if (name === storyTest) plan.webm = true;
+      if (name === storyTest) media.add('story');
+      if (name === 'test/site-language-continuity.test.mjs') plan.website = true;
       if (maintainedBrowserTests.has(name) || name.endsWith('-browser.test.mjs')) {
         plan.browser = true;
         if (!plan.changedTests.includes(browserGateTest)) plan.changedTests.push(browserGateTest);
@@ -61,6 +102,7 @@ export function classifyPaths(paths) {
     }
     const renderer = name.match(rendererPath);
     if (renderer) {
+      sharedRenderChanged = true;
       own(renderer[1] || renderer[2]);
       // These mode-local helpers also serve other renderers directly.
       if (name === 'archify/renderers/erd/grid.mjs') own('class');
@@ -72,23 +114,32 @@ export function classifyPaths(paths) {
       continue;
     }
     if (name === 'archify/schemas/story-choreography.schema.json') {
+      media.add('story');
       own('schema'); plan.generated = plan.browser = plan.package = true; continue;
     }
     if (name.startsWith('archify/story/') && storyPresentationFiles.has(name.slice('archify/story/'.length))) {
-      own('viewer'); plan.generated = plan.browser = plan.webm = plan.package = true; continue;
+      media.add('story');
+      own('viewer'); plan.generated = plan.browser = plan.package = true; continue;
     }
     if (name.startsWith('archify/renderers/shared/') && renderShared.test(name.slice('archify/renderers/shared/'.length))) {
+      sharedRenderChanged = true;
       own('renderer'); plan.generated = plan.browser = plan.package = true; continue;
     }
     if (reviewExport.test(name)) {
       own('pr'); plan.browser = plan.package = true;
       if (name === sharedSvgBaker) {
-        own('viewer'); plan.generated = plan.webm = true;
+        media.add('story');
+        own('viewer'); plan.generated = true;
       }
       continue;
     }
     if (/^(viewer\/|archify\/assets\/)/.test(name)) {
-      own('viewer'); plan.generated = plan.browser = plan.webm = plan.package = true; continue;
+      if (viewerInteraction.test(name)) {
+        media.add('viewer');
+      } else if (!viewerWithoutMedia.has(name) && (name !== viewerTemplate || !viewerRebuild)) {
+        media.add('full');
+      }
+      own('viewer'); plan.generated = plan.browser = plan.package = true; continue;
     }
     // The companion PR Skill ships outside archify.zip, so it needs the PR
     // authoring suites and release-identity check without packaging gates.
@@ -105,8 +156,10 @@ export function classifyPaths(paths) {
     // test fixtures and every unknown path require the complete gates.
     requireFull = true;
   }
-  if (requireFull) return full();
+  if (requireFull) return full(!paths.every(independentMediaPath));
   if (archiveChanged && !plan.owners.some(owner => ['renderer', 'viewer', 'authoring', 'schema', 'pr', 'atlas', ...modes.split('|')].includes(owner))) return full();
+  plan.webm = media.size > 0;
+  if (media.size === 1 && !sharedRenderChanged) [plan.webmProfile] = media;
   if (paths.every(name => maintainedBrowserTests.has(name))) {
     // These suites also run their Node-only cases with Chrome available.
     plan.changedTests = [browserGateTest];
@@ -134,7 +187,7 @@ export function comparisonPlan({ event, ref, base }, git = args => execFileSync(
     const paths = [];
     for (let index = 0; index < changes.length - 1; index += 2) {
       const [status, name] = changes.slice(index, index + 2);
-      if (rootTest.test(name) && (status === 'D' || status === 'T')) return classifyPaths([]);
+      if (status === 'T' || (rootTest.test(name) && status === 'D')) return classifyPaths([]);
       paths.push(name);
     }
     return classifyPaths(paths);

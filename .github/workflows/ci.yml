@@ -22,6 +22,7 @@ jobs:
       browserProfile: ${{ steps.classify.outputs.browserProfile }}
       browserTests: ${{ steps.classify.outputs.browserTests }}
       webm: ${{ steps.classify.outputs.webm }}
+      webmProfile: ${{ steps.classify.outputs.webmProfile }}
       package: ${{ steps.classify.outputs.package }}
       windows: ${{ steps.classify.outputs.windows }}
       manifest: ${{ steps.classify.outputs.manifest }}
@@ -301,7 +302,7 @@ jobs:
           ARCHIFY_CHROME_NO_SANDBOX: '1'
           CI_BROWSER_PROFILE: ${{ needs.scope.outputs.browserProfile }}
           CI_BROWSER_TESTS: ${{ needs.scope.outputs.browserTests }}
-          CI_STORY_BROWSER_OWNER: ${{ needs.scope.outputs.webm == 'true' && 'webm' || 'browser' }}
+          CI_STORY_BROWSER_OWNER: ${{ needs.scope.outputs.webm == 'true' && needs.scope.outputs.webmProfile != 'viewer' && 'webm' || 'browser' }}
 
   webm-decode:
     needs: scope
@@ -349,9 +350,10 @@ jobs:
           rm -rf "$profile_dir"
       - name: Install the WebM decoder
         run: sudo apt-get update && sudo apt-get install --no-install-recommends -y ffmpeg
-      - name: Decode a real motion export and reject static frames
-        run: npm run test:webm
+      - name: Verify selected media exports with FFmpeg
+        run: node test/webm-artifact.smoke.mjs "$CI_WEBM_PROFILE"
         env:
+          CI_WEBM_PROFILE: ${{ needs.scope.outputs.webmProfile }}
           ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
           ARCHIFY_CHROME_NO_SANDBOX: '1'
 
@@ -367,14 +369,19 @@ jobs:
           CI_BROWSER: ${{ needs.scope.outputs.browser }}
           CI_BROWSER_PROFILE: ${{ needs.scope.outputs.browserProfile }}
           CI_WEBM: ${{ needs.scope.outputs.webm }}
+          CI_WEBM_PROFILE: ${{ needs.scope.outputs.webmProfile }}
           BROWSER_RESULT: ${{ needs.browser-regression.result }}
           WEBM_RESULT: ${{ needs.webm-decode.result }}
         shell: bash
         run: |
           test "$SCOPE_RESULT" = success
           case "$CI_SCOPE:$CI_BROWSER:$CI_BROWSER_PROFILE:$CI_WEBM" in
-            docs:false:full:false|full:true:full:true|core:false:full:*|core:true:full:*|core:true:atlas:false|core:true:changed:*) ;;
+            docs:false:full:false|full:true:full:*|core:false:full:*|core:true:full:*|core:true:atlas:false|core:true:changed:*) ;;
             *) echo "Invalid media scope $CI_SCOPE/$CI_BROWSER/$CI_BROWSER_PROFILE/$CI_WEBM"; exit 1 ;;
+          esac
+          case "$CI_SCOPE:$CI_WEBM:$CI_WEBM_PROFILE" in
+            *:false:full|*:true:full|core:true:viewer|core:true:story) ;;
+            *) echo "Invalid WebM profile '$CI_WEBM_PROFILE'"; exit 1 ;;
           esac
           require_media_result() {
             case "$2:$3" in
@@ -577,6 +584,11 @@ jobs:
         run: |
           sudo apt-get install --yes --no-install-recommends fonts-noto-cjk
           fc-match 'sans-serif:lang=zh-cn'
+      - name: Verify checked-in site language and navigation
+        if: matrix.target == 'pages'
+        run: node --test test/site-language-integration.mjs
+        env:
+          ARCHIFY_CHROME: ${{ steps.website-chrome.outputs.chrome-path }}
       - name: Verify built website navigation and language continuity
         if: matrix.target == 'pages'
         run: npm run test:browser

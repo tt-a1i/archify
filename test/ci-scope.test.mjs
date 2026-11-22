@@ -77,6 +77,7 @@ test('independent browser test edits run the exact suites once with their owned 
     assert.equal(plan.browser, expectedBrowser.length > 0);
     assert.deepEqual(plan.browserTests, expectedBrowser);
     assert.equal(plan.webm, expectedWebm);
+    assert.equal(plan.webmProfile, expectedWebm ? 'story' : 'full');
     assert.deepEqual(selectAffectedTests(plan.owners, plan.changedTests, available), [browserGate]);
   }
 
@@ -87,6 +88,75 @@ test('independent browser test edits run the exact suites once with their owned 
     assert.equal(plan.browser, true, extra);
     assert.deepEqual(plan.browserTests, [], extra);
     assert.ok(plan.changedTests.includes(i18n), extra);
+  }
+});
+
+test('Viewer interaction changes keep artifact coverage and use Chrome for Story', () => {
+  const source = 'viewer/route-probe.js';
+  const template = 'archify/assets/template.html';
+  const storyGolden = 'archify/examples/workflow-agent-tool-call-rendered.html';
+  const rebuilt = [source, template, storyGolden, 'archify.zip', 'examples/checkout-platform-delta.html'];
+  for (const paths of [[source], rebuilt]) {
+    const plan = classifyPaths(paths);
+    assert.equal(plan.scope, 'core');
+    assert.ok(plan.generated && plan.browser && plan.webm && plan.package);
+    assert.equal(plan.webmProfile, 'viewer');
+  }
+  const treeOnly = classifyPaths(['viewer/tree-branches.js', template, storyGolden, 'archify.zip']);
+  assert.ok(treeOnly.generated && treeOnly.browser && treeOnly.package);
+  assert.equal(treeOnly.webm, false);
+  for (const extra of ['viewer/viewer.css', 'viewer/export.js', 'viewer/motion-governor.js',
+    'archify/renderers/workflow/render-workflow.mjs', 'archify/examples/agent-tool-call.workflow.json',
+    'archify/story/story-export.js', 'test/story-browser.test.mjs', 'test/fixtures/unknown.json',
+    'archify/assets/generated-unknown.js']) {
+    const mixed = classifyPaths([...rebuilt, extra]);
+    assert.ok(mixed.webm, extra);
+    assert.equal(mixed.webmProfile, 'full', extra);
+  }
+  const unattributed = classifyPaths([template, 'archify.zip']);
+  assert.ok(unattributed.webm && unattributed.generated);
+  assert.equal(unattributed.webmProfile, 'full');
+  assert.equal(classifyPaths([storyGolden]).webmProfile, 'story');
+});
+
+test('media fixtures and Story inputs select the check that reads them', () => {
+  for (const [source, profile] of [
+    ['archify/story/story-container.js', 'story'],
+    ['archify/renderers/shared/svg-bake.mjs', 'story'],
+    ['archify/schemas/story-choreography.schema.json', 'story'],
+    ['examples/checkout-platform-delta.html', 'viewer'],
+    ['docs/gallery/artifacts/production-deployment.architecture.html', 'viewer'],
+    ['archify/examples/agent-tool-call.workflow.json', 'full'],
+    ['archify/examples/checkout-request.waterfall.json', 'story'],
+  ]) {
+    const plan = classifyPaths([source]);
+    assert.ok(plan.webm, source);
+    assert.equal(plan.webmProfile, profile, source);
+  }
+  const siteFixture = classifyPaths(['test/site-language-continuity.test.mjs']);
+  assert.equal(siteFixture.website, true);
+  assert.equal(siteFixture.webm, false);
+});
+
+test('independent product areas keep broader regressions while omitting both media checks', () => {
+  const sets = [
+    ['archify/explainer/reader.js', 'docs/cases/explainer/first-rental.html',
+      'test/explainer-renderer.test.mjs', 'archify.zip'],
+    ['archify/modules/code-analysis/extract/ts/index.mjs', 'test/code-analysis-browser.test.mjs', 'archify.zip'],
+    ['integrations/deepseek-harness/README.md', 'integrations/deepseek-harness/test/docs-contract.test.mjs'],
+  ];
+  for (const paths of sets) {
+    const plan = classifyPaths(paths);
+    assert.equal(plan.scope, 'full', paths.join(', '));
+    assert.ok(plan.generated && plan.browser && plan.package && plan.windows);
+    assert.equal(plan.webm, false);
+    assert.equal(plan.webmProfile, 'full');
+    for (const extra of ['archify/assets/template.html', 'archify/story/story-export.js', 'test/fixtures/new.json',
+      'package.json', '.github/workflows/ci.yml', 'unknown.txt']) {
+      const mixed = classifyPaths([...paths, extra]);
+      assert.ok(mixed.webm, extra);
+      assert.equal(mixed.webmProfile, 'full', extra);
+    }
   }
 });
 
@@ -324,12 +394,20 @@ test('new changed tests run, deleted tests do not, and invalid selectors fail', 
 
 test('main/manual are exhaustive; invalid dev base falls back to full but PR base fails', () => {
   const fail = () => { throw new Error('base not found'); };
-  assert.equal(comparisonPlan({ event: 'workflow_dispatch' }).scope, 'full');
-  assert.equal(comparisonPlan({ event: 'push', ref: 'refs/heads/main' }).scope, 'full');
+  for (const event of [{ event: 'workflow_dispatch' }, { event: 'push', ref: 'refs/heads/main' }]) {
+    const plan = comparisonPlan(event);
+    assert.equal(plan.scope, 'full');
+    assert.equal(plan.webm, true);
+    assert.equal(plan.webmProfile, 'full');
+  }
   assert.equal(comparisonPlan({ event: 'push', ref: 'refs/heads/dev', base: '0'.repeat(40) }).scope, 'full');
   assert.equal(comparisonPlan({ event: 'push', ref: 'refs/heads/dev', base: 'a'.repeat(40) }, fail).scope, 'full');
   assert.throws(() => comparisonPlan({ event: 'pull_request', base: 'bad' }));
   assert.throws(() => comparisonPlan({ event: 'pull_request', base: 'a'.repeat(40) }, fail));
+  const typeChange = comparisonPlan({ event: 'pull_request', base: 'a'.repeat(40) },
+    () => 'T\0archify/explainer/reader.js\0');
+  assert.equal(typeChange.scope, 'full');
+  assert.equal(typeChange.webm, true);
 });
 
 test('real Git comparison retains rename source ownership and detects added tests', () => {
