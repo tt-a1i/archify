@@ -80,8 +80,9 @@ function writeBlobs(repo, target, batch) {
   if (offset !== buf.length) fail('drift/blob-invalid', 'Git returned unexpected data after the requested blobs.');
 }
 
-export function captureDriftTree(repo, oid, target) {
-  const tree = decoder.decode(runGit(repo, ['ls-tree', '-rlz', '--full-tree', oid]));
+export function captureDriftTree(repo, oid, target, { scope = '.' } = {}) {
+  const prefix = scope === '.' ? '' : portableParts(scope).join('/') + '/';
+  const tree = decoder.decode(runGit(repo, ['--literal-pathspecs', 'ls-tree', '-rlz', '--full-tree', oid, ...(prefix ? ['--', prefix] : [])]));
   const seen = new Map();
   const omitted = new Map();
   const entries = [];
@@ -89,7 +90,9 @@ export function captureDriftTree(repo, oid, target) {
   for (const record of tree.slice(0, -1).split('\0').filter(Boolean)) {
     const tab = record.indexOf('\t');
     const [mode, type, hash, sizeText] = record.slice(0, tab).trim().split(/ +/);
-    const name = record.slice(tab + 1);
+    const fullName = record.slice(tab + 1);
+    if (!fullName.startsWith(prefix)) fail('drift/unsupported-path', 'A tracked path escaped the selected capture scope.');
+    const name = fullName.slice(prefix.length);
     const parts = portableParts(name);
     if (skippedDirectory(parts)) continue;
     assertUniquePath(seen, parts);

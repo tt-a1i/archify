@@ -119,6 +119,76 @@ node bin/archify.mjs code-analysis verify-change out/project-analysis/analysis -
 Omit `--checks` to record only analysis observations. Use the original task JSON: its ID must match the selected findings. Exit 0 means the receipt was produced (even if project checks failed or the comparison was inconclusive); exit 2 returns a JSON error on stdout with `status: "error"` and `diagnostics` instead of a receipt. `task --verify` remains a separate current-source evidence check.
 
 
+
+## Repository Wiki
+
+Use a fixed local Git commit when you need a repository overview that readers
+can check against the same source revision.
+
+```sh
+node bin/archify.mjs code-analysis wiki /path/to/repo \
+  --commit FULL_LOCAL_COMMIT_SHA --language ts --out /path/to/new-wiki \
+  --scope packages/server --json
+```
+
+Use `--language ts` for JavaScript/TypeScript or `--language py` for Python.
+Scope defaults to the repository root. The command reads committed, local Git
+objects and uses the bundled analysis adapter. Uncommitted files, Git links,
+external project SDKs, and remote Git fetches do not participate. The coverage
+section lists omitted roles, other languages, parse failures, unresolved
+dependencies and skipped Git entries. Use `--locale zh-CN` for Chinese UI text.
+
+Open `index.html` offline to search modules, files and reading guides.
+`atlas.html` is the analysis Atlas for the same capture. The **Download Markdown** action works when the HTML is opened directly from disk.
+`wiki.md` is also provided separately as the portable agent handoff and `wiki.json` records the revision, scope, analysis
+coverage, citation digests and published files. A GitHub origin with a supported
+repository URL produces commit-pinned source links. For other repositories,
+use the shown repository-relative file path, lines and revision locally.
+Source text is excluded by default. `--include-source` adds bounded excerpts
+to the wiki HTML for its cited ranges (up to 16 lines and 1600 characters each).
+The Markdown, JSON and Atlas remain excerpt-free. Share an excerpt-enabled
+wiki only with readers who are allowed to see those tracked source lines.
+
+The output path must be a new directory outside the input repository. Use a
+different path for another revision so older wiki outputs remain available.
+
+### Add a cited reading guide
+
+A host agent or author can supply `--narrative guide.json`. Each section
+contains plain text and at least one captured citation. It is shown separately
+from the analyzer's static observations.
+
+```json
+{
+  "schemaVersion": 1,
+  "revision": "FULL_LOCAL_COMMIT_SHA",
+  "scope": "packages/server",
+  "sections": [
+    {
+      "title": "How requests reach the router",
+      "text": "The handler passes validated requests to the router.",
+      "citations": [
+        {
+          "path": "packages/server/handler.ts",
+          "startLine": 17,
+          "endLine": 21,
+          "sha256": "DIGEST_OF_THE_PINNED_LINE_RANGE"
+        }
+      ]
+    }
+  ]
+}
+```
+
+Copy `path`, `startLine`, `endLine` and `sha256` from `wiki.json` when
+reusing an existing citation. For a new citation, compute SHA-256 over the
+captured lines joined with LF, excluding the trailing line ending. Paths are
+relative to the repository root, including the scope prefix. Ranges are
+one-based and inclusive, and must refer to parse-valid source in the selected
+adapter. Wrong revisions, out-of-scope paths and mismatched digests fail
+before publication. The checks verify the source referred to by the guide.
+Read those lines to verify the author's interpretation.
+
 ## Review architecture drift between two commits
 
 Use `drift` when a code change may invalidate an existing Architecture diagram.

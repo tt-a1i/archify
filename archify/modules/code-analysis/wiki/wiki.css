@@ -1,0 +1,55 @@
+:root {
+  color-scheme: light;
+  --ink: #162c25;
+  --muted: #4b6259;
+  --accent: #22654d;
+  --line: #d1dfd5;
+  --surface: #fff;
+  --backdrop: #f7faf7;
+  font: 16px/1.55 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+* { box-sizing: border-box }
+[hidden] { display: none !important }
+body { margin: 0; background: var(--backdrop); color: var(--ink) }
+header { display: flex; justify-content: space-between; gap: 12px 24px; align-items: center; flex-wrap: wrap; padding: 14px max(20px,calc((100% - 1200px)/2)); background: var(--surface); border-bottom: 1px solid var(--line) }
+a { color: var(--accent); text-underline-offset: 3px; overflow-wrap: anywhere }
+a:hover { color: var(--ink) }
+a:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px }
+.brand { color: var(--ink); font-size: 1.2rem; font-weight: 750; text-decoration: none }
+.brand span { color: var(--muted); font-size: .95rem; font-weight: 500; margin-inline-start: 12px }
+.actions, nav { display: flex; gap: 12px; flex-wrap: wrap }
+.actions a { border: 1px solid var(--line); border-radius: 7px; padding: 6px 12px; text-decoration: none; font-weight: 600 }
+.actions a:last-child { color: white; background: var(--accent); border-color: var(--accent) }
+.layout { display: grid; grid-template-columns: 230px minmax(0, 1fr); align-items: start; gap: 48px; max-width: 1240px; margin: 0 auto; padding: 38px 20px 64px }
+aside { position: sticky; top: 20px }
+main { min-width: 0; overflow-wrap: anywhere }
+nav { padding-bottom: 16px; flex-direction: column; border-bottom: 1px solid var(--line); margin-bottom: 16px }
+nav a { font-size: .95rem }
+label { display: block; font-size: .82rem; font-weight: 650; margin-bottom: 5px }
+input { width: 100%; font: inherit; color: var(--ink); padding: 8px 10px; border-radius: 7px; border: 1px solid #9fb6a8; background: var(--surface) }
+h1, h2, h3, h4, p { margin: 0 }
+h1 { font-size: clamp(1.85rem, 4vw, 3rem); line-height: 1.1; overflow-wrap: anywhere }
+h2 { font-size: 1.4rem; padding-bottom: 10px; border-bottom: 1px solid var(--line) }
+h3 { font-size: 1.2rem; overflow-wrap: anywhere }
+h4 { font-size: .95rem; margin-top: 12px }
+p, ul, ol, dl { margin-block: 8px }
+section { margin-block-end: 28px }
+article { margin-block-start: 12px; padding: 15px 17px; border: 1px solid var(--line); background: var(--surface); border-radius: 9px; overflow-wrap: anywhere }
+article li, #citations li { margin-block: 8px }
+code { overflow-wrap: anywhere }
+.meta, .path, small { color: var(--muted) }
+small { display: block }
+.pin { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 12px; margin-top: 17px; padding: 12px; background: #edf5f0; border-radius: 7px }
+.pin span { font-weight: 630 }
+.coverage { margin: 0 0 23px; border: 1px solid var(--line); padding: 12px; border-radius: 9px }
+summary { cursor: pointer; font-weight: 650 }
+dl { display: grid; grid-template-columns: minmax(105px, 170px) minmax(0, 1fr); gap: 6px }
+dt { font-weight: 630 }
+dd { margin: 0; overflow-wrap: anywhere }
+pre { background: #edf5f0; border-radius: 7px; padding: 12px; white-space: pre-wrap; overflow-wrap: anywhere }
+.guide { white-space: pre-wrap }
+@media (max-width: 730px) {
+  .layout { display: block; padding: 20px 16px }
+  aside { position: static; margin-bottom: 24px }
+  nav { flex-direction: row }
+}

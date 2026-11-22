@@ -121,7 +121,11 @@ export function alignDiagram({ ir, graph, map = null, facts = null, findings = [
 }
 
 export function buildOverlay({ ir, graph, html, map, facts = null, findings = [], findingsDocument = null, sourceRoot = null, run = {} }) {
-  if (!ir) html = standaloneShell({ locale: run.locale, title: run.pullRequest ? run.pullRequest.repository + ' · ' + (run.pullRequest.simulation ? createTranslator(messagesFor(run.locale))('PR analysis · local simulation') : '#' + run.pullRequest.number) : path.basename(sourceRoot || graph.repository.root || 'Repository') });
+  if (!ir) {
+    const title = run.pullRequest ? run.pullRequest.repository + ' · ' + (run.pullRequest.simulation ? createTranslator(messagesFor(run.locale))('PR analysis · local simulation') : '#' + run.pullRequest.number)
+      : run.title || path.basename(sourceRoot || graph.repository.root || 'Repository');
+    html = standaloneShell({ locale: run.locale, title });
+  }
   if (ir && (!html.includes('data-node-id=') || !html.includes('class="toolbar"'))) {
     fail('overlay/not-archify-html', 'The HTML does not look like an Archify architecture artifact.', {
       evidence: { hasNodes: html.includes('data-node-id='), hasToolbar: html.includes('class="toolbar"') },
