@@ -710,29 +710,35 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   <!-- ARCHIFY:DIAGNOSIS_START -->
   <dialog id="code-analysis-dialog" class="no-print" aria-labelledby="code-analysis-title">
     <header class="analysis-info-header">
-      <span class="analysis-info-star" aria-hidden="true"></span>
-      <div>
+      <span class="analysis-info-mark" aria-hidden="true"></span>
+      <div class="analysis-info-heading">
         <h2 id="code-analysis-title">{{i18n:viewer.diagnosis.title}}</h2>
-        <p>{{i18n:viewer.diagnosis.local}}</p>
+        <p class="analysis-info-badge">{{i18n:viewer.diagnosis.local}}</p>
       </div>
       <form method="dialog">
-        <button class="analysis-info-close" type="submit" aria-label="{{i18n:viewer.common.close}}" autofocus>&times;</button>
+        <button class="analysis-info-close" type="submit" aria-label="{{i18n:viewer.common.close}}" autofocus><span class="analysis-info-glyph" aria-hidden="true"></span></button>
       </form>
     </header>
     <ul class="analysis-info-features">
-      <li>{{i18n:viewer.diagnosis.starMap}}</li>
-      <li>{{i18n:viewer.diagnosis.model}}</li>
-      <li>{{i18n:viewer.diagnosis.counts}}</li>
-      <li>{{i18n:viewer.diagnosis.findings}}</li>
+      <li data-feature="star"><span class="analysis-info-icon" aria-hidden="true"></span><span class="analysis-info-copy"><strong>{{i18n:viewer.diagnosis.starMapTitle}}</strong> <span>{{i18n:viewer.diagnosis.starMap}}</span></span></li>
+      <li data-feature="model"><span class="analysis-info-icon" aria-hidden="true"></span><span class="analysis-info-copy"><strong>{{i18n:viewer.diagnosis.modelTitle}}</strong> <span>{{i18n:viewer.diagnosis.model}}</span></span></li>
+      <li data-feature="counts"><span class="analysis-info-icon" aria-hidden="true"></span><span class="analysis-info-copy"><strong>{{i18n:viewer.diagnosis.countsTitle}}</strong> <span>{{i18n:viewer.diagnosis.counts}}</span></span></li>
+      <li data-feature="fix"><span class="analysis-info-icon" aria-hidden="true"></span><span class="analysis-info-copy"><strong>{{i18n:viewer.diagnosis.findingsTitle}}</strong> <span>{{i18n:viewer.diagnosis.findings}}</span></span></li>
     </ul>
-    <div class="analysis-info-start">
-      <div class="analysis-info-prompt">
-        <p>{{i18n:viewer.diagnosis.ask}} <q id="code-analysis-prompt">{{i18n:viewer.diagnosis.prompt}}</q></p>
-        <!-- ARCHIFY:DIAGNOSIS_REPOSITORY -->
+    <section class="analysis-info-start">
+      <p class="analysis-info-ask">{{i18n:viewer.diagnosis.ask}}</p>
+      <div class="analysis-info-bubble">
+        <div class="analysis-info-prompt">
+          <p><q id="code-analysis-prompt">{{i18n:viewer.diagnosis.prompt}}</q></p>
+          <!-- ARCHIFY:DIAGNOSIS_REPOSITORY -->
+        </div>
+        <button id="code-analysis-copy" type="button">
+          <span class="analysis-info-glyph" aria-hidden="true"></span>
+          <span>{{i18n:viewer.diagnosis.copy}}</span>
+        </button>
       </div>
-      <button id="code-analysis-copy" type="button">{{i18n:viewer.diagnosis.copy}}</button>
-    </div>
-    <div id="code-analysis-copy-status" role="status"></div>
+      <div id="code-analysis-copy-status" role="status"></div>
+    </section>
   </dialog>
   <!-- ARCHIFY:DIAGNOSIS_END -->
 
