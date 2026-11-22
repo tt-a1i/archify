@@ -106,11 +106,10 @@ test('Code Analysis marks baseline findings, re-analyzes without a restart, and 
       return { x, y, hit: button.contains(document.elementFromPoint(x, y)) };
     })()`);
     assert.equal(point.hit, true, 'the refresh action must accept a normal mouse click');
-    const reloaded = browser.cdp.waitFor('Page.loadEventFired', session);
+    const initialPage = await run('performance.timeOrigin');
     await send('Input.dispatchMouseEvent', { type: 'mousePressed', x: point.x, y: point.y, button: 'left', clickCount: 1 });
     await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: point.x, y: point.y, button: 'left', clickCount: 1 });
-    await reloaded;
-    await wait("document.documentElement.getAttribute('data-bauify') === 'on' && !history.state");
+    await wait(`performance.timeOrigin !== ${initialPage} && document.documentElement.getAttribute('data-bauify') === 'on' && !history.state`);
   };
 
   await run("document.querySelector('g[data-node-id=app]').dispatchEvent(new MouseEvent('click',{bubbles:true})); document.querySelector('#bauify-panel .back').focus()");
