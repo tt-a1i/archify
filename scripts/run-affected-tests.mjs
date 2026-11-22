@@ -42,7 +42,7 @@ export function selectAffectedTests(owners, changed, available) {
 
 function localPlan(args) {
   if (args.length > 1 || (args.length && !/^--base=.+$/.test(args[0]))) {
-    throw new Error('Use npm run test:changed -- --base=<ref> to include committed changes.');
+    throw new Error('Use pnpm run test:changed --base=<ref> to include committed changes.');
   }
   const git = args => execFileSync('git', args, { cwd: root, encoding: 'utf8' });
   const paths = new Set();
@@ -66,7 +66,7 @@ function localPlan(args) {
   }
   const dirty = git(['status', '--porcelain=v1', '-z', '--untracked-files=all', '--no-renames']);
   for (const entry of dirty.split('\0').filter(Boolean)) add(entry.slice(0, 2), entry.slice(3));
-  if (!paths.size) throw new Error('No changed files. Use npm test for the core smoke or supply --base=<ref> for a committed branch.');
+  if (!paths.size) throw new Error('No changed files. Use pnpm test for the core smoke or supply --base=<ref> for a committed branch.');
   const plan = classifyPaths([...paths]);
   if (plan.scope === 'full') {
     throw new Error('The changed paths require broader verification. Use test:focus for a specific check or test:full for the complete Node suite.');
@@ -96,7 +96,7 @@ if (process.argv[1] && sameEntry(process.argv[1], fileURLToPath(import.meta.url)
   }
   const { CI_TEST_OWNERS, CI_CHANGED_TESTS } = process.env;
   if (!local && (args.length || (!CI_TEST_OWNERS && !CI_CHANGED_TESTS))) {
-    throw new Error('Use npm run test:changed for local changes. The CI runner needs its scope outputs.');
+    throw new Error('Use pnpm run test:changed for local changes. The CI runner needs its scope outputs.');
   }
   const available = fs.readdirSync(path.join(root, 'test'))
     .filter(name => name.endsWith('.test.mjs')).map(name => `test/${name}`)

@@ -32,14 +32,14 @@ test('Cloudflare publishes only the checked artifact at the current main SHA', (
   assert.match(deployment.with.command, /--branch=main --commit-hash=\$\{\{ github.sha \}\}/);
   assert.equal(deployment.with.apiToken, '${{ secrets.CLOUDFLARE_API_TOKEN }}');
   assert.match(deployment.with.wranglerVersion, /^\d+\.\d+\.\d+$/);
-  assert.ok(!steps.some(step => /npm (?:run build|ci)/.test(step.run ?? '')), 'deployment must not rebuild');
+  assert.ok(!steps.some(step => /\b(?:pnpm|npm) (?:run build|install|ci)/.test(step.run ?? '')), 'deployment must not rebuild');
   const build = workflow.jobs.website.steps.find(step => step.env?.ARCHIFY_SITE_TARGET === 'cloudflare');
-  assert.match(build.run, /npm run build && node scripts\/check-cloudflare-output.mjs/);
+  assert.match(build.run, /pnpm run build && node scripts\/check-cloudflare-output.mjs/);
   assert.match(build.run, /node --test test\/deployment-target.test.mjs/);
   const browser = workflow.jobs.website.steps.find(step => step.env?.ARCHIFY_SITE_ROOT?.endsWith('/website/dist-cloudflare'));
   assert.equal(browser.env.ARCHIFY_SITE_BASE, '');
   assert.equal(browser.env.ARCHIFY_SITE_INTEGRATION, '1');
-  assert.equal(browser.run, 'npm run test:browser');
+  assert.equal(browser.run, 'pnpm run test:browser');
   assert.deepEqual(workflow.jobs.website.strategy.matrix.target, ['pages', 'cloudflare']);
   const upload = workflow.jobs.website.steps.find(step => step.with?.name === download.with.name);
   assert.equal(upload.if, "matrix.target == 'cloudflare'");

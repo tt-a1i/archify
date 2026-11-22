@@ -61,12 +61,14 @@ jobs:
           CI_EVENT_NAME: ${{ github.event_name }}
           CI_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
           CI_REF: ${{ github.ref }}
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+        if: steps.classify.outputs.scope == 'docs' && (contains(fromJSON(steps.classify.outputs.owners), 'readme') || contains(fromJSON(steps.classify.outputs.owners), 'changelog'))
       - name: Install documentation check dependencies
         if: steps.classify.outputs.scope == 'docs' && (contains(fromJSON(steps.classify.outputs.owners), 'readme') || contains(fromJSON(steps.classify.outputs.owners), 'changelog'))
-        run: npm ci --ignore-scripts --no-audit --no-fund
+        run: pnpm --filter archify-repository install --frozen-lockfile --ignore-scripts
       - name: Check affected documentation contracts
         if: steps.classify.outputs.scope == 'docs'
-        run: npm run test:affected
+        run: node scripts/run-affected-tests.mjs
         env:
           CI_TEST_OWNERS: ${{ steps.classify.outputs.owners }}
           CI_CHANGED_TESTS: ${{ steps.classify.outputs.changedTests }}
@@ -89,17 +91,16 @@ jobs:
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: |
-            package-lock.json
-            archify/package-lock.json
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+        with:
+          cache: true
       - name: Install regression dependencies
-        run: npm ci && npm --prefix archify ci
+        run: pnpm install --frozen-lockfile
       # Reuse a shard's installed runtime instead of bootstrapping after all
       # shards finish. These checks still run exactly once in complete CI.
       - name: Generated outputs and representative goldens
         if: matrix.shard == 2
-        run: npm run test:generated
+        run: pnpm run test:generated
       - name: Verify community Hermes adapter
         if: matrix.shard == 2
         run: node --test integrations/hermes-agent/test/plugin-contract.test.mjs
@@ -114,7 +115,7 @@ jobs:
       # The root runner enumerates only test/; the module suite lives with the module.
       - name: Verify generated Code Analysis Python parser
         if: matrix.module-shard == 1
-        run: npm run check:python
+        run: pnpm run check:python
         working-directory: archify/modules/code-analysis
       - name: Code Analysis module suite
         if: matrix.module-shard
@@ -152,16 +153,16 @@ jobs:
         if: needs.scope.outputs.compatibility == 'true'
         with:
           node-version: ${{ matrix.node-version }}
-          cache: npm
-          cache-dependency-path: |
-            package-lock.json
-            archify/package-lock.json
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+        if: needs.scope.outputs.compatibility == 'true'
+        with:
+          cache: true
       - name: Install renderer dependencies
         if: needs.scope.outputs.compatibility == 'true'
-        run: npm ci && npm --prefix archify ci
+        run: pnpm install --frozen-lockfile
       - name: Supported Node runtime compatibility
         if: needs.scope.outputs.compatibility == 'true'
-        run: npm run test:compat
+        run: pnpm run test:compat
 
   canonical-test:
     name: test (22)
@@ -194,25 +195,25 @@ jobs:
         if: needs.scope.outputs.scope == 'core'
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: |
-            package-lock.json
-            archify/package-lock.json
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+        if: needs.scope.outputs.scope == 'core'
+        with:
+          cache: true
       - name: Install renderer dependencies
         if: needs.scope.outputs.scope == 'core'
-        run: npm ci && npm --prefix archify ci
+        run: pnpm install --frozen-lockfile
       - name: Core public CLI contracts
         if: needs.scope.outputs.scope == 'core' && needs.scope.outputs.compatibility == 'true'
-        run: npm test
+        run: pnpm test
       - name: Generated outputs and representative goldens
         if: needs.scope.outputs.scope == 'core' && needs.scope.outputs.generated == 'true'
-        run: npm run test:generated
+        run: pnpm run test:generated
       - name: Check site builders with changed render inputs
         if: needs.scope.outputs.scope == 'core' && needs.scope.outputs.generated == 'true' && needs.scope.outputs.website == 'false'
         run: node --test --test-name-pattern='custom site builders' test/site-language-integration.mjs
       - name: Changed tests and owned regression suites
         if: needs.scope.outputs.scope == 'core'
-        run: npm run test:affected
+        run: pnpm run test:affected
         env:
           CI_TEST_OWNERS: ${{ needs.scope.outputs.owners }}
           CI_CHANGED_TESTS: ${{ needs.scope.outputs.changedTests }}
@@ -237,13 +238,13 @@ jobs:
         with:
           chrome-version: stable
           install-dependencies: true
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+        with:
+          cache: true
       - name: Install browser test dependencies
-        run: |
-          npm ci --ignore-scripts --no-audit --no-fund
-          npm --prefix archify ci --ignore-scripts --no-audit --no-fund
-          npm --prefix archify/modules/code-analysis ci --ignore-scripts --no-audit --no-fund
+        run: pnpm install --frozen-lockfile --ignore-scripts
       - name: Run shared browser regression gate
-        run: npm run test:browser -- --shard=${{ matrix.shard }}/${{ strategy.job-total }}
+        run: pnpm run test:browser --shard=${{ matrix.shard }}/${{ strategy.job-total }}
         env:
           ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
           ARCHIFY_CHROME_NO_SANDBOX: '1'
@@ -485,9 +486,13 @@ jobs:
       - name: Validate packaged skill without installing dependencies
         if: needs.scope.outputs.package == 'true'
         run: node scripts/package-smoke.mjs
-      - name: Install delivery-lock test dependencies
-        if: needs.scope.outputs.windows == 'true' && runner.os != 'Linux'
-        run: npm ci --ignore-scripts && npm --prefix archify ci --ignore-scripts
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+        if: needs.scope.outputs.scope == 'full' || (needs.scope.outputs.windows == 'true' && runner.os != 'Linux')
+        with:
+          cache: true
+      - name: Install repository test dependencies
+        if: needs.scope.outputs.scope == 'full' || (needs.scope.outputs.windows == 'true' && runner.os != 'Linux')
+        run: pnpm install --frozen-lockfile --ignore-scripts
       - name: Verify delivery-lock ownership with real subprocesses
         if: needs.scope.outputs.windows == 'true' && runner.os != 'Linux'
         run: >-
@@ -503,9 +508,6 @@ jobs:
 
       # Linux covers the bundled SDK in the complete module suite. Keep both
       # additional SDK versions here, plus the native macOS and Windows runs.
-      - name: Install Code Analysis dependencies for SDK comparison
-        if: needs.scope.outputs.scope == 'full'
-        run: npm ci --prefix archify/modules/code-analysis --ignore-scripts --no-audit --no-fund
       - name: Verify JS/TS project selection, resolution and calls
         if: needs.scope.outputs.scope == 'full' && runner.os != 'Linux'
         run: >-
@@ -552,14 +554,16 @@ jobs:
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: website/package-lock.json
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+        with:
+          cache: true
+          cache_dependency_path: website/pnpm-lock.yaml
       - name: Install website dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
         working-directory: website
       - name: Typecheck and build website
         if: matrix.target == 'pages'
-        run: npm run check && npm run build && npm test
+        run: pnpm run check && pnpm run build && pnpm test
         working-directory: website
       - uses: browser-actions/setup-chrome@48ad923757ca74d66703209fe939badbdf80f2f4 # v2.2.0
         id: website-chrome
@@ -577,7 +581,7 @@ jobs:
           ARCHIFY_CHROME: ${{ steps.website-chrome.outputs.chrome-path }}
       - name: Verify built website navigation and language continuity
         if: matrix.target == 'pages'
-        run: npm run test:browser
+        run: pnpm run test:browser
         working-directory: website
         env:
           ARCHIFY_SITE_ROOT: ${{ github.workspace }}/website/dist
@@ -586,13 +590,13 @@ jobs:
           ARCHIFY_CHROME_NO_SANDBOX: '1'
       - name: Build and validate the Cloudflare static website
         if: matrix.target == 'cloudflare'
-        run: npm run build && node scripts/check-cloudflare-output.mjs && node --test test/deployment-target.test.mjs
+        run: pnpm run build && node scripts/check-cloudflare-output.mjs && node --test test/deployment-target.test.mjs
         working-directory: website
         env:
           ARCHIFY_SITE_TARGET: cloudflare
       - name: Verify Cloudflare navigation and language continuity
         if: matrix.target == 'cloudflare'
-        run: npm run test:browser
+        run: pnpm run test:browser
         working-directory: website
         env:
           ARCHIFY_SITE_ROOT: ${{ github.workspace }}/website/dist-cloudflare
@@ -663,12 +667,13 @@ jobs:
         if: needs.scope.outputs.windows == 'true'
         with:
           node-version: ${{ matrix.node-version }}
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+        if: needs.scope.outputs.windows == 'true'
+        with:
+          cache: true
       - name: Install test dependencies
         if: needs.scope.outputs.windows == 'true'
-        run: npm ci --ignore-scripts && npm --prefix archify ci --ignore-scripts
-      - name: Install Code Analysis task-command test dependencies
-        if: needs.scope.outputs.windows == 'true' && (matrix.profile == '--controlled' || matrix.profile == '--smoke')
-        run: npm ci --prefix archify/modules/code-analysis --ignore-scripts --no-audit --no-fund
+        run: pnpm install --frozen-lockfile --ignore-scripts
       - name: Verify Java source bindings and Maven evidence on Windows
         if: needs.scope.outputs.windows == 'true' && matrix.profile == '--controlled'
         shell: pwsh

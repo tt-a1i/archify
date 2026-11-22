@@ -8,13 +8,13 @@ Use Node.js 22.12 or newer (CI uses Node 22).
 
 ```sh
 cd website
-npm ci
-npm run dev
+pnpm install --frozen-lockfile
+pnpm run dev
 # Open the printed local URL with /archify/ appended.
-npm run check
-npm run build
-npm test
-npm run preview
+pnpm run check
+pnpm run build
+pnpm test
+pnpm run preview
 ```
 
 TypeScript stays on the supported 6.x line because the Astro checker currently requires its programmatic API.
@@ -33,14 +33,14 @@ TypeScript stays on the supported 6.x line because the Astro checker currently r
 
 ## Validation and publishing
 
-`npm test` compares the built DOM, original CSS, text, scripts and accessibility attributes with the migration baseline and verifies byte-identical preservation of every existing non-page public file. Generated recipe JSON is compared semantically.
+`pnpm test` compares the built DOM, original CSS, text, scripts and accessibility attributes with the migration baseline and verifies byte-identical preservation of every existing non-page public file. Generated recipe JSON is compared semantically.
 
 The existing real Chrome integration suite can run against the built site, including its `/archify` deployment prefix:
 
 ```sh
 ARCHIFY_SITE_ROOT="$PWD/dist" ARCHIFY_SITE_INTEGRATION=1 \
 ARCHIFY_CHROME="/path/to/chrome" \
-npm run test:browser
+pnpm run test:browser
 ```
 
 CI builds/tests the website when website inputs change and on every main push. It uploads `website-dist`; the existing protected Pages deployment downloads that exact verified artifact. Build output, caches and staged assets are ignored by Git. Existing GitHub required checks and obsolete-deployment protection remain in place.
@@ -50,11 +50,11 @@ CI builds/tests the website when website inputs change and on every main push. I
 The same source can build a second static site for `https://archify.si/`:
 
 ```sh
-ARCHIFY_SITE_TARGET=cloudflare npm run build
+ARCHIFY_SITE_TARGET=cloudflare pnpm run build
 ARCHIFY_SITE_TARGET=cloudflare node --test test/deployment-target.test.mjs
 node scripts/check-cloudflare-output.mjs
 ARCHIFY_SITE_ROOT="$PWD/dist-cloudflare" ARCHIFY_SITE_BASE='' \
-ARCHIFY_SITE_INTEGRATION=1 ARCHIFY_CHROME="/path/to/chrome" npm run test:browser
+ARCHIFY_SITE_INTEGRATION=1 ARCHIFY_CHROME="/path/to/chrome" pnpm run test:browser
 ```
 
 This writes `dist-cloudflare/`; the default build still writes `dist/` for GitHub Pages. Cloudflare uses root asset paths, formal-domain sharing/canonical URLs, and a top-level `404.html` so unknown URLs do not silently return the homepage. Keep file-format pages: changing to directory-format pages would change the base used by relative proof and asset links. Pages redirects `.html` routes to extensionless routes; verify the actual Pages preview, especially `/gallery`, `/gallery.html`, `/gallery/`, standalone diagrams, query strings and fragments.

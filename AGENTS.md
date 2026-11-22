@@ -8,7 +8,7 @@ Before requesting final review, follow the scoped [PR improvement check](CONTRIB
 
 ## Test selection
 
-In the edit loop, use `npm run test:changed` for working-tree changes or [run the specific suite](CONTRIBUTING.md#local-setup-and-verification) that reproduces the issue. Use [Choose evidence by impact](CONTRIBUTING.md#choose-evidence-by-impact) when the change needs broader coverage.
+In the edit loop, use `pnpm run test:changed` for working-tree changes or [run the specific suite](CONTRIBUTING.md#local-setup-and-verification) that reproduces the issue. Use [Choose evidence by impact](CONTRIBUTING.md#choose-evidence-by-impact) when the change needs broader coverage.
 
 When adding a regression test, use the least expensive suite that can reproduce the failure. When speeding up tests or narrowing CI triggers, [measure the improvement and verify coverage](CONTRIBUTING.md#measuring-test-and-ci-improvements). Before integration, [verify CI and reused evidence against the final revision](CONTRIBUTING.md#final-integration-and-follow-up).
 

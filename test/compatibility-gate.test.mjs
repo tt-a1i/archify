@@ -10,11 +10,11 @@ const ci = parse(fs.readFileSync(new URL('../.github/workflows/ci.yml', import.m
 const release = parse(fs.readFileSync(new URL('../.github/workflows/release.yml', import.meta.url), 'utf8'));
 
 test('default and compatibility share the real public CLI core while full discovers every suite', () => {
-  assert.equal(manifest.scripts.test, 'npm run test:core');
-  assert.equal(manifest.scripts['test:compat'], 'npm run test:core');
+  assert.equal(manifest.scripts.test, 'pnpm run test:core');
+  assert.equal(manifest.scripts['test:compat'], 'pnpm run test:core');
   assert.match(manifest.scripts['test:core'], /core-smoke\.test\.mjs/);
   assert.match(manifest.scripts['test:full'], /test:generated/);
-  assert.match(manifest.scripts['test:full'], /test:code-analysis && node scripts\/run-tests\.mjs$/);
+  assert.match(manifest.scripts['test:full'], /archify\/modules\/code-analysis test && node scripts\/run-tests\.mjs$/);
   assert.ok(!manifest.scripts['test:core'].includes('golden'));
 });
 
@@ -62,7 +62,7 @@ test('all maintained Node check names remain and publication uses exhaustive ver
   assert.ok(full.steps.some(step => step.with?.['node-version'] === 22));
   const rootSuite = full.steps.find(step => step.run === 'node scripts/run-tests.mjs --shard=${{ matrix.shard }}/4');
   assert.equal(rootSuite?.if, '!matrix.module-shard');
-  const generated = full.steps.find(step => step.run === 'npm run test:generated');
+  const generated = full.steps.find(step => step.run === 'pnpm run test:generated');
   assert.equal(generated.if, 'matrix.shard == 2', 'complete generated checks run once inside a regression shard');
   const hermes = full.steps.find(step => step.run === 'node --test integrations/hermes-agent/test/plugin-contract.test.mjs');
   assert.equal(hermes.if, 'matrix.shard == 2');
@@ -70,7 +70,7 @@ test('all maintained Node check names remain and publication uses exhaustive ver
   assert.equal(moduleSuite.if, 'matrix.module-shard');
   assert.equal(moduleSuite.run, 'node --test --test-shard=${{ matrix.module-shard }}/2 test/*.test.mjs');
   assert.equal(moduleSuite['working-directory'], 'archify/modules/code-analysis');
-  const python = full.steps.find(step => step.run === 'npm run check:python');
+  const python = full.steps.find(step => step.run === 'pnpm run check:python');
   assert.equal(python.if, 'matrix.module-shard == 1');
   assert.equal(python['working-directory'], moduleSuite['working-directory']);
   const duplicateTool = full.steps.find(step => step.name === 'Install Code Analysis duplicate detector');
@@ -78,8 +78,8 @@ test('all maintained Node check names remain and publication uses exhaustive ver
   assert.ok(duplicateTool.run.includes(`jscpd@${JSCPD_VERSION}`), 'CI must use the detector version accepted by the adapter');
   assert.equal(moduleSuite.env.ARCHIFY_TEST_JSCPD, '${{ runner.temp }}/archify-jscpd/node_modules/.bin/jscpd',
     'real duplicate and six-language integration tests must execute instead of silently skipping in CI');
-  assert.equal(full.steps.filter(step => step.run === 'npm run test:generated').length, 1);
-  const coreGenerated = canonical.steps.find(step => step.run === 'npm run test:generated');
+  assert.equal(full.steps.filter(step => step.run === 'pnpm run test:generated').length, 1);
+  const coreGenerated = canonical.steps.find(step => step.run === 'pnpm run test:generated');
   assert.equal(coreGenerated.if, "needs.scope.outputs.scope == 'core' && needs.scope.outputs.generated == 'true'");
   for (const step of canonical.steps.filter(step => step.uses || step.name === 'Install renderer dependencies')) {
     assert.equal(step.if, "needs.scope.outputs.scope == 'core'", 'full aggregation must not bootstrap another runtime');
@@ -88,7 +88,7 @@ test('all maintained Node check names remain and publication uses exhaustive ver
     assert.ok(ci.jobs[name].needs.includes('test'));
     assert.ok(ci.jobs[name].needs.includes('canonical-test'));
   }
-  assert.ok(ci.jobs.test.steps.some(step => step.run === 'npm run test:compat'));
-  assert.ok(release.jobs.release.steps.some(step => step.run === 'npm run test:full'));
-  assert.ok(!release.jobs.release.steps.some(step => step.run === 'npm test'));
+  assert.ok(ci.jobs.test.steps.some(step => step.run === 'pnpm run test:compat'));
+  assert.ok(release.jobs.release.steps.some(step => step.run === 'pnpm run test:full'));
+  assert.ok(!release.jobs.release.steps.some(step => step.run === 'pnpm test'));
 });

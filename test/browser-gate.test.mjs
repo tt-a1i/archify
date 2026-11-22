@@ -150,8 +150,8 @@ test('CI and release use the same browser command and retain WebM decoding', () 
   const manifest = JSON.parse(fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf8'));
   assert.equal(manifest.scripts['test:browser'], 'node scripts/run-browser-tests.mjs');
   for (const [workflow, browserJob, webmJob, browserCommand] of [
-    ['ci.yml', 'browser-regression', 'webm-decode', 'npm run test:browser -- --shard=${{ matrix.shard }}/${{ strategy.job-total }}'],
-    ['release.yml', 'release', 'release', 'npm run test:browser'],
+    ['ci.yml', 'browser-regression', 'webm-decode', 'pnpm run test:browser --shard=${{ matrix.shard }}/${{ strategy.job-total }}'],
+    ['release.yml', 'release', 'release', 'pnpm run test:browser'],
   ]) {
     const jobs = parse(fs.readFileSync(path.join(repoRoot, '.github/workflows', workflow), 'utf8')).jobs;
     const gate = jobs[browserJob].steps.find(step => step.name === 'Run shared browser regression gate');
@@ -168,7 +168,7 @@ test('CI and release use the same browser command and retain WebM decoding', () 
       const builders = jobs['canonical-test'].steps.find(step => step.run?.includes("--test-name-pattern='custom site builders'"));
       assert.equal(builders?.if, "needs.scope.outputs.scope == 'core' && needs.scope.outputs.generated == 'true' && needs.scope.outputs.website == 'false'");
     } else {
-      assert.ok(jobs[webmJob].steps.some(step => step.run === 'npm run test:webm'));
+      assert.ok(jobs[webmJob].steps.some(step => step.run === 'pnpm run test:webm'));
       assert.equal(manifest.scripts['test:webm'], 'node test/webm-artifact.smoke.mjs && node --test test/site-language-integration.mjs');
     }
   }
@@ -234,7 +234,7 @@ test('CI browser profiles preserve the exact Atlas and media test inventories ac
   assert.equal(browser(ci['browser-regression']).env.CI_STORY_BROWSER_OWNER,
     "${{ needs.scope.outputs.webm == 'true' && needs.scope.outputs.webmProfile != 'viewer' && 'webm' || 'browser' }}");
   assert.equal(browser(release).env.CI_STORY_BROWSER_OWNER, 'webm');
-  assert.ok(release.steps.findIndex(step => step.run === 'npm run test:webm') < release.steps.indexOf(browser(release)));
+  assert.ok(release.steps.findIndex(step => step.run === 'pnpm run test:webm') < release.steps.indexOf(browser(release)));
 });
 
 test('changed browser profile runs only maintained suites and rejects invalid selections before launch', () => {
@@ -378,7 +378,7 @@ test('website CI uses the maintained browser script including community security
   const source = fs.readFileSync(path.join(repoRoot, '.github/workflows/ci.yml'), 'utf8');
   const gate = source.match(/ {6}- name: Verify built website navigation and language continuity\n([\s\S]*?)(?=\n {6}- |\n {2}[\w-]+:|$)/)?.[1];
   assert.ok(gate, 'website must run its browser regression gate');
-  assert.match(gate, /run: npm run test:browser\n/);
+  assert.match(gate, /run: pnpm run test:browser\n/);
   assert.match(gate, /working-directory: website/);
   assert.match(gate, /ARCHIFY_SITE_INTEGRATION: '1'/);
   assert.match(manifest.scripts['test:browser'], /site-language-continuity\.test\.mjs/);

@@ -20,8 +20,11 @@ jobs:
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: ${{ matrix.node-version }}
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+        with:
+          cache: true
       - name: Install test dependencies
-        run: npm ci --ignore-scripts && npm --prefix archify ci --ignore-scripts
+        run: pnpm install --frozen-lockfile --ignore-scripts
       - name: Provision controlled Windows path fixtures
         shell: pwsh
         run: scripts/windows-path-fixtures.ps1 -NodeVersion '${{ matrix.node-version }}'
@@ -46,14 +49,13 @@ jobs:
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: |
-            package-lock.json
-            archify/package-lock.json
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+        with:
+          cache: true
       - name: Install renderer dependencies
-        run: npm ci && npm --prefix archify ci
+        run: pnpm install --frozen-lockfile
       - name: Complete regression suite on canonical Node before releasing
-        run: npm run test:full
+        run: pnpm run test:full
       - name: Provision a known Chrome runtime
         id: setup-chrome
         uses: browser-actions/setup-chrome@48ad923757ca74d66703209fe939badbdf80f2f4 # v2.2.0
@@ -63,12 +65,12 @@ jobs:
       - name: Install the WebM decoder
         run: sudo apt-get update && sudo apt-get install --no-install-recommends -y ffmpeg
       - name: WebM export must contain distinct decoded frames
-        run: npm run test:webm
+        run: pnpm run test:webm
         env:
           ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
           ARCHIFY_CHROME_NO_SANDBOX: '1'
       - name: Run shared browser regression gate
-        run: npm run test:browser
+        run: pnpm run test:browser
         env:
           ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
           ARCHIFY_CHROME_NO_SANDBOX: '1'

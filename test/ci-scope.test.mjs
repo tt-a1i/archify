@@ -23,7 +23,7 @@ test('owned changes add their real gates without requiring every unrelated lane'
   const newBrowser = classifyPaths(['test/new-browser.test.mjs']);
   assert.equal(newBrowser.browser, true);
   assert.ok(newBrowser.changedTests.includes('test/browser-gate.test.mjs'));
-  const mixed = classifyPaths(['package-lock.json', 'test/new-browser.test.mjs']);
+  const mixed = classifyPaths(['pnpm-lock.yaml', 'test/new-browser.test.mjs']);
   assert.equal(mixed.scope, 'full');
   assert.ok(mixed.changedTests.includes('test/browser-gate.test.mjs'));
   const viewer = classifyPaths(['viewer/toolbar.mjs', 'archify.zip']);
@@ -246,9 +246,9 @@ test('documentation workflow installs parser dependencies and runs the affected 
   assert.match(steps[install].if, /scope == 'docs'/);
   assert.match(steps[install].if, /'readme'/);
   assert.match(steps[install].if, /'changelog'/);
-  assert.match(steps[install].run, /^npm ci\b/);
+  assert.match(steps[install].run, /^pnpm --filter archify-repository install --frozen-lockfile\b/);
   assert.equal(steps[check].if, "steps.classify.outputs.scope == 'docs'");
-  assert.equal(steps[check].run, 'npm run test:affected');
+  assert.equal(steps[check].run, 'node scripts/run-affected-tests.mjs');
   assert.equal(steps[check].env.CI_TEST_OWNERS, '${{ steps.classify.outputs.owners }}');
 });
 
@@ -427,7 +427,7 @@ test('generated site outputs retain proof and handoff consumer checks', () => {
 });
 
 test('unknown and delivery/build/fixture changes conservatively require every gate', () => {
-  for (const paths of [[], ['unknown.txt'], ['scripts/ci-scope.mjs'], ['package-lock.json'], ['.github/workflows/ci.yml'], ['archify/bin/archify.mjs'], ['archify/renderers/shared/atomic-output.mjs'], ['test/fixtures/input.json'], ['test/helpers.mjs']]) {
+  for (const paths of [[], ['unknown.txt'], ['scripts/ci-scope.mjs'], ['pnpm-lock.yaml'], ['.github/workflows/ci.yml'], ['archify/bin/archify.mjs'], ['archify/renderers/shared/atomic-output.mjs'], ['test/fixtures/input.json'], ['test/helpers.mjs']]) {
     const plan = classifyPaths(paths);
     assert.equal(plan.scope, 'full', `${paths}`);
     for (const gate of ['generated', 'browser', 'webm', 'package', 'windows', 'manifest', 'website']) assert.equal(plan[gate], true, `${paths}: ${gate}`);
