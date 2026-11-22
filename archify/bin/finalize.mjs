@@ -586,8 +586,7 @@ function reservedFinalizePaths({ input, output, outDir, deliveryPaths, inputPath
   return [path.resolve(input), ...inputPaths, path.resolve(output), ...Object.values(deliveryPaths(output)), browser.receipt];
 }
 
-// Node moves that remove the measured crossings and detours, most specific
-// first. Only positions and sizes change; every relationship keeps its endpoints.
+// Review the measured crossings and detours without changing relationships.
 function placementHints({ crossings = [], detours = [], crowdedSides = [] }) {
   const name = (relation) => `${relation.from} → ${relation.to}`;
   const other = (relation, shared) => (relation.from === shared ? relation.to : relation.from);
@@ -597,9 +596,16 @@ function placementHints({ crossings = [], detours = [], crowdedSides = [] }) {
   }
   for (const crossing of crossings) {
     const shared = crossing.sharedNode;
-    hints.push(shared
-      ? `${name(crossing.left)} and ${name(crossing.right)} cross next to ${shared}: move node ${other(crossing.left, shared)} or ${other(crossing.right, shared)} so the two reach ${shared} from different sides (for example one level with it, one directly above or below it).`
-      : `${name(crossing.left)} crosses ${name(crossing.right)}: move the node of whichever is a branch, return, or second entrance to the other side of the main path, so that relationship runs through an empty corridor.`);
+    if (!shared) {
+      hints.push(`${name(crossing.left)} crosses ${name(crossing.right)}: move the node of whichever is a branch, return, or second entrance to the other side of the main path, so that relationship runs through an empty corridor.`);
+      continue;
+    }
+    const leftNeighbour = other(crossing.left, shared);
+    const rightNeighbour = other(crossing.right, shared);
+    const location = `${name(crossing.left)} and ${name(crossing.right)} cross next to ${shared}`;
+    hints.push(leftNeighbour === rightNeighbour
+      ? `${location}: trace both routes near ${shared} and check whether each has room for a separate approach.`
+      : `${location}: move node ${leftNeighbour} or ${rightNeighbour} so the two reach ${shared} from different sides (for example one level with it, one directly above or below it).`);
   }
   for (const detour of detours) {
     if (detour.directCorridorBlockers?.length) continue;

@@ -99,7 +99,7 @@ function forwardOrder(items, incoming, outgoing) {
   return { order: finished.reverse(), backward };
 }
 
-function layOutIsland(items, edges, incoming, outgoing, vertical, { alternateTies = false, centerDependency = false } = {}) {
+function layOutIsland(items, edges, incoming, outgoing, vertical, { alternateTies = false, centerDependency = false, alignExternalSource = false } = {}) {
   const { order, backward } = forwardOrder(items, incoming, outgoing);
   const parents = new Map();
   const rank = new Map();
@@ -163,6 +163,22 @@ function layOutIsland(items, edges, incoming, outgoing, vertical, { alternateTie
     const side = (item) => alternateTies ? Math.abs(item.index - anchorOrder) % 2 : 0;
     column.sort((a, b) => preferred.get(a) - preferred.get(b) || side(a) - side(b) || a.index - b.index);
 
+    if (index === 0 && alignExternalSource) {
+      // A root that joins the main path partway through can be separated
+      // from that path by an earlier branch. Try it beside the path while
+      // keeping it on the same side and preserving the other roots' order.
+      const sources = column.filter((item) => {
+        const [edge, next] = outgoing.get(item);
+        return !spine.has(item) && !incoming.get(item).length && edge && !next
+          && spine.has(edge.to) && edge.to !== last && rank.get(edge.to) > 1;
+      });
+      if (sources.length === 1) {
+        const sourceIndex = column.indexOf(sources[0]);
+        const spineIndex = column.findIndex((item) => spine.has(item));
+        const [source] = column.splice(sourceIndex, 1);
+        column.splice(sourceIndex < spineIndex ? spineIndex - 1 : spineIndex + 1, 0, source);
+      }
+    }
     const anchorIndex = Math.max(0, column.findIndex((item) => spine.has(item)));
     const anchor = column[anchorIndex];
     anchor.y = preferred.get(anchor) - anchor.height / 2;
@@ -232,15 +248,19 @@ function chooseIslandLayout(items, edges, incoming, outgoing, vertical, allowAlt
   const smallUnframed = allowAlternate && items.length >= 4 && items.length <= 24 && edges.length <= 36
     && items.every((item) => !item.children && !item.parent.members);
   const layout = layOutIsland(items, edges, incoming, outgoing, vertical, { centerDependency: smallUnframed });
-  // Two bounded attempts for small unframed drafts. Explicit geometry and
-  // frame membership can influence routes in ways this estimate does not see.
+  // Try bounded alternatives for small unframed drafts. Explicit geometry
+  // and frame membership can influence routes in ways this estimate does not see.
   if (!smallUnframed) return layout;
   const score = directRouteInterference(items, edges);
   if (score < 2) return layout;
   const positions = items.map(({ x, y }) => [x, y]);
-  const alternate = layOutIsland(items, edges, incoming, outgoing, vertical, { alternateTies: true, centerDependency: true });
-  if (alternate.width <= layout.width && alternate.height <= layout.height
-    && directRouteInterference(items, edges) <= score - 2) return alternate;
+  const alternatives = [{ alternateTies: true }];
+  if (vertical) alternatives.push({ alignExternalSource: true });
+  for (const options of alternatives) {
+    const alternate = layOutIsland(items, edges, incoming, outgoing, vertical, { ...options, centerDependency: true });
+    if (alternate.width <= layout.width && alternate.height <= layout.height
+      && directRouteInterference(items, edges) <= score - 2) return alternate;
+  }
   for (const [index, item] of items.entries()) [item.x, item.y] = positions[index];
   return layout;
 }
@@ -434,7 +454,7 @@ function idealPositions(root, allowParallel, viewBox) {
     group.parallel = layout.parallel;
     group.vertical = layout.vertical;
     const parallelPeer = placeParallelPeer(group);
-    if (allowParallel && !parallelPeer) placeFrameAttachments(group, layout);
+    if (allowParallel && !parallelPeer) placeFrameAttachments(group, layout, canvasMargin / 2);
     const { width, height } = parallelPeer ?? layout;
     group.width = Math.max(width + group.pad * 2, group.titleWidth);
     group.leftInset = (group.width - width) / 2;

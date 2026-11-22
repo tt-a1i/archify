@@ -187,3 +187,27 @@ test('a facing link straightens once a crossing moves to the lower return corrid
   assert.equal(routes[0].length, 2, 'the neighboring link stays straight');
   assert.ok(routes[2].some(([, y]) => y > 566), 'the return uses the corridor below the boxes');
 });
+
+test('a crossing route can reuse its upper corridor to reach a free target side', () => {
+  const boxes = new Map([
+    ['runtime', 329, 204, 172], ['coordinator', 625, 48, 166],
+    ['worker', 632, 204, 153], ['tasks', 887, 204, 120],
+  ].map(([id, x, y, width]) => [id, { id, x, y, width, height: 60, cx: x + width / 2, cy: y + 30 }]));
+  const connections = [
+    ['input-pty', 'runtime', 'coordinator', '写入 PTY'],
+    ['dispatch', 'runtime', 'worker', '启动并写入任务'],
+    ['report', 'worker', 'runtime', 'team report · HTTP'],
+    ['write-tasks', 'worker', 'tasks', '可编辑任务图'],
+    ['read-tasks', 'runtime', 'tasks', '读取并监听'],
+  ].map(([id, from, to, label]) => ({ id, from, to, label }));
+  const [, , , write, read] = connections;
+  const { pathFor, routingMetrics } = createArchitectureRouter(boxes, connections, { automaticPlacement: true });
+  assert.equal(crossings([pathFor(read).points, pathFor(write).points]), 0);
+  assert.ok(pathFor(read).points.length <= 5, 'the new approach uses at most three bends');
+
+  const authored = { ...read, toSide: 'bottom' };
+  const pinned = createArchitectureRouter(boxes, [...connections.slice(0, -1), authored], { automaticPlacement: true });
+  assert.equal(pinned.connectionSides(authored).toSide, 'bottom');
+  const fixedCanvas = createArchitectureRouter(boxes, connections, { fixedCanvas: true });
+  assert.equal(routingMetrics().gridSearchCount, fixedCanvas.routingMetrics().gridSearchCount);
+});

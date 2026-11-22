@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { automaticComponentPositions } from '../archify/renderers/architecture/automatic-placement.mjs';
-import { rectsOverlap, segmentIntersectsRect } from '../archify/renderers/shared/geometry.mjs';
+import { createArchitectureRouter } from '../archify/renderers/architecture/routing.mjs';
+import { properSegmentIntersection, rectsOverlap, segmentIntersectsRect } from '../archify/renderers/shared/geometry.mjs';
 
 function boxes(components, positions) {
   return components.map(({ id, size: [width, height] = [120, 60] }) => {
@@ -153,4 +154,29 @@ test('automatic architecture places a single shared dependency between the phase
   const ordinaryPositions = automaticComponentPositions({ components, connections: ordinaryConnections });
   const [, , , ordinaryRead, , ordinaryStorage] = boxes(components, ordinaryPositions);
   assert.ok(ordinaryStorage.y > ordinaryRead.y);
+});
+
+test('automatic architecture placement keeps a late input clear of a branch to the final stage', () => {
+  const mainPath = ['sources', 'parse', 'index', 'store', 'query'];
+  const components = [...mainPath, 'notes_worker', 'notes_store', 'revisions'].map((id) => ({ id, size: [160, 60] }));
+  const connections = [
+    ...mainPath.slice(1).map((to, index) => ({ from: mainPath[index], to, label: 'Main stage', variant: 'emphasis' })),
+    { from: 'notes_worker', to: 'notes_store', label: 'Write notes' },
+    { from: 'notes_store', to: 'query', label: 'Read notes' },
+    { from: 'revisions', to: 'index', label: 'Index revisions' },
+  ];
+  const positions = automaticComponentPositions({ components, connections });
+  const measured = new Map(boxes(components, positions).map((box, index) => {
+    const { id } = components[index];
+    return [id, { ...box, id, cx: box.x + box.width / 2, cy: box.y + box.height / 2 }];
+  }));
+  const { pathFor } = createArchitectureRouter(measured, connections, { automaticPlacement: true });
+  const routes = connections.map((connection) => ({ connection, points: pathFor(connection).points }));
+  for (const [index, left] of routes.entries()) {
+    for (const right of routes.slice(index + 1)) {
+      const crosses = left.points.slice(1).some((leftEnd, i) => right.points.slice(1).some((rightEnd, j) =>
+        properSegmentIntersection(left.points[i], leftEnd, right.points[j], rightEnd)));
+      assert.ok(!crosses, `${left.connection.from} → ${left.connection.to} crosses ${right.connection.from} → ${right.connection.to}`);
+    }
+  }
 });

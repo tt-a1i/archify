@@ -56,7 +56,7 @@ function placeLeavesByAttachment(frames, links, layout, adjustedPeers, axes) {
 
 // The parent layout measures frames as boxes. The original endpoints let
 // a shallow peer face the part of a frame it actually connects to.
-export function placeFrameAttachments(group, layout) {
+export function placeFrameAttachments(group, layout, leadingAllowance) {
   if (group.children.length > 24 || group.edges.length > 36) return;
   const frames = group.children.filter((item) => item.children && item.children.length <= 64);
   if (!frames.length) return;
@@ -98,7 +98,16 @@ export function placeFrameAttachments(group, layout) {
     adjustedPeers.add(peer);
   }
   placeLeavesByAttachment(frames, links, layout, adjustedPeers, axes);
-  if (!adjustedPeers.size) return;
+  if (adjustedPeers.size) placeIsolatedPeers(group, layout, axes, links, adjustedPeers);
+  if (group.members || !leadingAllowance || layout.parallel) return;
+  placeOptionalFrames(group, layout, axes, leadingAllowance);
+  placeTerminalCards(group, layout, axes, links);
+}
+
+function placeIsolatedPeers(group, layout, axes, links, adjustedPeers) {
+  const [across, span, inset, along, depth] = axes;
+  const localCenter = (item) => item[across] + item[span] / 2;
+  const frameOrigin = (item) => item[across] + item[inset];
 
   const isolated = [];
   for (const [item, attachments] of links) {
@@ -132,5 +141,76 @@ export function placeFrameAttachments(group, layout) {
         || position >= other[across] + other[span] + attachmentGap)) best = position;
     }
     if (Math.abs(item[across] - desired) > Math.abs(best - desired) + attachmentGap) item[across] = best;
+  }
+}
+
+// An optional terminal frame may be ranked below its source frame even
+// though the attachment is beside that source's incoming edges. Reuse
+// space on the leading side when the endpoint is clear in that direction.
+function placeOptionalFrames(group, layout, axes, leadingAllowance) {
+  const [across, span, inset, along, depth] = axes;
+  const depthInset = layout.vertical ? 'topPad' : 'leftInset';
+  for (const edge of group.edges) {
+    const { from: peer, to: frame, originalFrom: member, originalTo, variant } = edge;
+    if (variant !== 'dashed' || !peer.children || frame.children?.length !== 1
+      || member.parent !== peer || originalTo.parent !== frame || frame[along] < peer[along] + peer[depth]
+      || group.edges.some((other) => other !== edge && (other.from === frame || other.to === frame))) continue;
+
+    const center = (box, axis, size) => box[axis] + box[size] / 2;
+    const track = center(member, across, span);
+    const leading = peer[along] - frame[depth];
+    if (leading < -leadingAllowance || peer.children.some((other) => other !== member
+      && other[along] < member[along] && track >= other[across] && track <= other[across] + other[span])) continue;
+
+    const onlyChild = frame.children[0];
+    const target = peer[across] + peer[inset] + track;
+    const anchor = frame[inset] + center(onlyChild, across, span);
+    const memberAlong = peer[along] + peer[depthInset] + center(member, along, depth);
+    const childAlong = frame[depthInset] + center(onlyChild, along, depth);
+    const oldDistance = Math.abs(frame[across] + anchor - target) + Math.abs(frame[along] + childAlong - memberAlong);
+    const desired = target - anchor;
+    const blockers = group.children.filter((other) => other !== frame
+      && other[along] < leading + frame[depth] && other[along] + other[depth] > leading);
+    const candidates = [desired, ...blockers.flatMap((other) => [
+      other[across] - frame[span] - attachmentGap, other[across] + other[span] + attachmentGap,
+    ])];
+    let best;
+    let bestDistance = oldDistance / 2;
+    for (const candidate of candidates) {
+      if (candidate < 0 || candidate + frame[span] > layout[span]
+        || blockers.some((other) => candidate < other[across] + other[span] + attachmentGap
+          && candidate + frame[span] + attachmentGap > other[across])) continue;
+      const distance = Math.abs(candidate - desired) + Math.abs(leading + childAlong - memberAlong);
+      if (distance < bestDistance) {
+        best = candidate;
+        bestDistance = distance;
+      }
+    }
+    if (best !== undefined) {
+      frame[across] = best;
+      frame[along] = leading;
+    }
+  }
+}
+
+// Bring a detached card to a clear exit on the side that already faces it.
+function placeTerminalCards(group, layout, axes, links) {
+  const [across, span, inset, along, depth] = axes;
+  for (const { from: peer, to: card, originalFrom: member, variant } of group.edges) {
+    if (variant !== 'dashed' || !peer.children || card.children || member.parent !== peer
+      || links.get(card).length !== 1 || card[along] < peer[along] + peer[depth]) continue;
+    const track = member[across] + member[span] / 2;
+    if (peer.children.some((other) => other !== member && other[along] > member[along]
+      && track >= other[across] - 8 && track <= other[across] + other[span] + 8)) continue;
+    const desired = peer[across] + peer[inset] + track - card[span] / 2;
+    const exit = peer[along] + peer[depth];
+    if (desired < 0 || desired + card[span] > layout[span]
+      || card[along] - exit + Math.abs(card[across] - desired) < 2 * attachmentGap) continue;
+    if (group.children.some((other) => other !== card && other !== peer
+      && other[along] < exit + card[depth] && other[along] + other[depth] > exit
+      && other[across] < desired + card[span] + attachmentGap
+      && other[across] + other[span] + attachmentGap > desired)) continue;
+    card[across] = desired;
+    card[along] = exit;
   }
 }
