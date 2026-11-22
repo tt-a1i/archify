@@ -72,23 +72,44 @@ for (const name of ["tool's home & (space)", 'tool %ARCHIFY_COMMAND_EXPANSION% !
   });
 }
 
-test(`check receipt: a copied lead prepares a verified task through ${shellName}`, (t) => {
+function checkWithFindings(t, repoName) {
   const dir = fixture(t);
-  const root = path.join(dir, "repo's sources & spaces");
+  const root = path.join(dir, repoName);
   const out = path.join(dir, "analysis's output & spaces");
   fs.mkdirSync(root);
   fs.writeFileSync(path.join(root, 'app.ts'), 'export function f(x: boolean) { if (x) return 1; return 0; }\n');
   const config = path.join(dir, 'config.json');
   fs.writeFileSync(config, JSON.stringify({ rules: { complexity: { function: { warning: { complexity: 0 } } } } }));
-  const checked = spawnSync(process.execPath, [CHECK, root, '--language', 'ts', '--config', config, '--out', out, '--fail-on', 'never', '--json'], { encoding: 'utf8', timeout: 60000 });
-  assert.equal(checked.status, 0, checked.stdout + checked.stderr);
+  const args = [CHECK, root, '--language', 'ts', '--config', config, '--out', out];
+  const checked = spawnSync(process.execPath, [...args, '--json'], { encoding: 'utf8', timeout: 60000 });
+  assert.equal(checked.status, 1, checked.stdout + checked.stderr);
   const receipt = JSON.parse(checked.stdout);
+  const text = spawnSync(process.execPath, args, { encoding: 'utf8', timeout: 60000 });
+  assert.equal(text.status, 1, text.stdout + text.stderr);
+  return { root, receipt, text: text.stdout };
+}
+
+test(`check text: a copied drill-down command prepares a verified task through ${shellName}`, (t) => {
+  const { receipt, text } = checkWithFindings(t, "repo's sources & spaces");
   assert.equal(receipt.investigation.shell, windows ? 'cmd.exe' : 'POSIX sh');
   const lead = receipt.investigation.leads[0];
   assert.ok(lead, 'fixture produces a real finding');
-  const result = execute(lead.task);
+  const lines = text.split('\n');
+  assert.ok(lines.includes(receipt.gate.adopt), 'the baseline command appears verbatim on its own line');
+  const template = lines.find(line => line === receipt.investigation.drillDown);
+  assert.ok(template, 'the drill-down command appears verbatim on its own line');
+  const result = execute(template.replace('<id>', lead.id));
   assert.equal(result.status, 0, result.stdout + result.stderr);
   const task = JSON.parse(result.stdout);
   assert.ok(task.findings.some((finding) => finding.id === lead.id));
   assert.equal(task.evidence.status, 'valid');
+});
+
+test('check text: commands with a tab in the repository path point to exact JSON values', { skip: windows }, (t) => {
+  const { root, receipt, text } = checkWithFindings(t, 'repo\twith tab');
+  assert.ok(receipt.investigation.drillDown.includes(root));
+  assert.ok(receipt.gate.adopt.includes(root));
+  assert.doesNotMatch(text, /\t|\\u0009|\bnode\b[^\n]*code-analysis (?:check|task) /);
+  assert.match(text, /^\s*Command omitted[^\n]*investigation\.drillDown in --json\.$/m);
+  assert.match(text, /^\s*Command omitted[^\n]*gate\.adopt in --json\.$/m);
 });
