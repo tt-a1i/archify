@@ -17,7 +17,7 @@ import { junctionBends, junctionCandidates } from './junction-placement.mjs';
 import { frameLanePlacements } from './frame-lane-placement.mjs';
 import { facingLabelSpacingCandidate, labelBesideStraightShaft, sideCardPortPreferences } from './label-spacing-placement.mjs';
 import { placeCrossedLeaf, placeCrossedSinks, facingFramePlacements } from './crossed-leaf-placement.mjs';
-import { centeredFanOutCandidates, crossingPlacementCandidates, foldedChain, frameAttachmentCandidates, frameEnclosureCandidates, groupMoveCanPreserveRoutes, groupMovePreservesRoutes, measuredCrossingPairs, nearAlignmentCandidates, routeSpanMeasures, sharedNeighborCandidates, strongestLayerOrder, terminalBranchCandidates } from './automatic-placement-candidates.mjs';
+import { centeredFanOutCandidates, chainReflowCandidates, crossingPlacementCandidates, foldedChain, frameAttachmentCandidates, frameEnclosureCandidates, groupMoveCanPreserveRoutes, groupMovePreservesRoutes, measuredCrossingPairs, nearAlignmentCandidates, routeSpanMeasures, sharedNeighborCandidates, sharedSinkColumnCandidates, strongestLayerOrder, terminalBranchCandidates } from './automatic-placement-candidates.mjs';
 import {
   closeReciprocalLanes, createArchitectureRouter, connectionLabelBoxAt, parallelFrameRunLength,
   MIN_PARALLEL_DEPARTURE, parallelRunMeasures, READABLE_FRAME_GAP, READABLE_PORT_GAP,
@@ -1605,9 +1605,70 @@ function compactJunctions(initial) {
   return best;
 }
 
-const composition = compactJunctions(reserveFacingLabelSpace(improveFrameLanes(
+function reflowSmallDiagrams(initial) {
+  if (!automaticComposition || initial.titles.boundaries.length || components.size > 12 || connections.length > 24
+      || connections.some(connection => connection.fromSide !== undefined || connection.toSide !== undefined)) return initial;
+  const proposals = [...sharedSinkColumnCandidates(initial), ...chainReflowCandidates(initial)];
+  if (!proposals.length) return initial;
+  const baseline = routeBudgetMetrics({ routedRelations: initial.routes });
+  const before = routeSpanMeasures(initial.routes, initial.boxes, initial.viewBox);
+  const oldCrossings = measuredCrossingPairs(initial.routes).length;
+  const oldBends = junctionBends(initial);
+  const oldLabels = drawnLabelProblems(initial);
+  let best = initial;
+  let bestRouter;
+  let score;
+  function shortFacingRoute(points, length) {
+    const [x, y] = points[0];
+    const [u, v] = points.at(-1);
+    const [nextX, nextY] = points[1];
+    const toward = (nextX - x) * (u - x) + (nextY - y) * (v - y) > 0;
+    return toward && length <= Math.abs(x - u) + Math.abs(y - v) + 64;
+  }
+  for (const { boxes, sideFor, fan, axis } of proposals) {
+    const bounds = boundsFor(boxes);
+    const candidate = makeRouter(boxes, bounds, { separateRuns: true, sideFor });
+    const placed = finishAutomaticLabels(resolveConnectionComposition(boxes, candidate.pathFor, bounds), true);
+    const next = simplifyFinishedComposition(placed, candidate);
+    const budget = routeBudgetMetrics({ routedRelations: next.routes });
+    const spans = routeSpanMeasures(next.routes, boxes, next.viewBox);
+    const { bends, avoidable } = junctionBends(next);
+    const crossings = measuredCrossingPairs(next.routes).length;
+    if (crossings > oldCrossings || avoidable > oldBends.avoidable
+        || budget.routesOverSuggestedBends > baseline.routesOverSuggestedBends
+        || budget.routesOverSuggestedStretch > baseline.routesOverSuggestedStretch) continue;
+    if (fan) {
+      if (spans.length >= before.length - 32 || next.routes.some((route, i) =>
+        fan.has(route.relation) && !shortFacingRoute(route.points, spans.spans[i].length))) continue;
+    } else if (bends > oldBends.bends || next.viewBox[axis] >= initial.viewBox[axis] * 0.8
+        || next.viewBox[1 - axis] > (axis ? 1100 : 680)) continue;
+    const nextScore = [crossings, fan ? spans.length : next.viewBox[axis], bends, spans.length];
+    if (score) {
+      const index = nextScore.findIndex((value, index) => value !== score[index]);
+      if (index === -1 || nextScore[index] >= score[index]) continue;
+    }
+    if (!meetsDesktopTextFloor(next) || !candidate.planIsClear(next.viewBox, { checkProvisionalLabels: false })
+        || !preservesLabels(oldLabels, drawnLabelProblems(next))) continue;
+    try {
+      withIsolatedDiagnosticRecording(() => validateArchitecture(next, candidate));
+    } catch (error) {
+      if (!error.archifyDiagnostics?.length) throw error;
+      continue;
+    }
+    best = next;
+    bestRouter = candidate;
+    score = nextScore;
+  }
+  if (bestRouter) {
+    router = bestRouter;
+    for (const [id, box] of best.boxes) components.set(id, box);
+  }
+  return best;
+}
+
+const composition = reflowSmallDiagrams(compactJunctions(reserveFacingLabelSpace(improveFrameLanes(
   alignNearlyFacingCards(simplifyFinishedComposition(placedComposition)),
-)));
+))));
 const {
   titles: { boundaries }, labels: connectionLabels, viewBox,
 } = composition;

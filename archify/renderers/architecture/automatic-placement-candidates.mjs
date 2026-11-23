@@ -617,3 +617,183 @@ export function* frameEnclosureCandidates(components, enclosures) {
     }
   }
 }
+
+export function* sharedSinkColumnCandidates({ boxes, routes }) {
+  const incoming = new Map([...boxes.keys()].map(id => [id, new Set()]));
+  const outgoing = new Map([...boxes.keys()].map(id => [id, []]));
+  for (const { relation } of routes) {
+    incoming.get(relation.to).add(relation.from);
+    outgoing.get(relation.from).push(relation);
+  }
+  const shared = [...boxes.values()].filter(box => !outgoing.get(box.id).length && incoming.get(box.id).size >= 2);
+  if (shared.length < 3 || shared.length > 5) return;
+  const hubIds = new Set(shared.flatMap(sink => [...incoming.get(sink.id)]));
+  if (hubIds.size < 2 || hubIds.size > 3) return;
+  const hubs = [...hubIds].map(id => boxes.get(id)).sort((a, b) => a.cy - b.cy);
+  if (hubs.some(hub => shared.filter(sink => incoming.get(sink.id).has(hub.id)).length < 3)) return;
+  const sinks = [...boxes.values()].filter(box => !outgoing.get(box.id).length
+    && incoming.get(box.id).size && [...incoming.get(box.id)].every(id => hubIds.has(id)));
+  if (sinks.length > shared.length + 1) return;
+  const sinkIds = new Set(sinks.map(box => box.id));
+  const fan = new Set(hubs.flatMap(hub => outgoing.get(hub.id).filter(relation => sinkIds.has(relation.to))));
+  const entry = [...boxes.values()].filter(box => !incoming.get(box.id).size && outgoing.get(box.id).length === 1
+    && hubIds.has(outgoing.get(box.id)[0].to));
+  if (hubs.length + sinks.length + entry.length !== boxes.size || entry.length > 1
+      || hubs.some(hub => outgoing.get(hub.id).some(relation => !fan.has(relation)))) return;
+  const labelGap = [...fan].reduce((gap, relation) => Math.max(gap, horizontalLabelClearance(relation)), 84);
+  const withEntry = entry[0] && outgoing.get(entry[0].id)[0];
+  const leftHub = withEntry ? hubs.find(hub => hub.id === withEntry.to) : hubs[0];
+  const rightHub = hubs.findLast(hub => hub !== leftHub);
+  const leftHubs = hubs.filter(hub => hub !== rightHub);
+  const leftEdge = Math.max(...leftHubs.map(hub => hub.width)) + 48
+    + (withEntry ? entry[0].width + Math.max(84, horizontalLabelClearance(withEntry)) : 0);
+  const sinkWidth = Math.max(...sinks.map(sink => sink.width));
+
+  // A hub on the far side of the column gives its links their own corridor.
+  // Keep the entry on the outside so its link does not pass through the fan.
+  // Two hubs on one side need separate paths past each other. Set the
+  // lower hub closer to the sinks and leave enough space for both lanes.
+  const corridors = hubs.length === 2 ? [[labelGap - 36, 0], [labelGap, 0]] : [[labelGap, 36], [labelGap, 60]];
+  for (const rowGap of [40, 64]) for (const [gap, stagger] of corridors) {
+    for (const centered of [false, true]) {
+      const moved = new Map(boxes);
+      const height = sinks.reduce((sum, sink) => sum + sink.height, rowGap * (sinks.length - 1));
+      for (const group of [leftHubs, [rightHub]]) for (const [index, hub] of group.entries()) {
+        const cy = group.length === 1
+          ? 48 + height * (centered ? (hub === leftHub ? 0.375 : 0.625) : 0.5)
+          : 48 + height * (index + 0.5) / group.length;
+        moved.set(hub.id, move(hub, hub === rightHub ? leftEdge + 2 * gap + sinkWidth : leftEdge - hub.width + (index ? stagger : 0),
+          Math.max(48, cy - hub.height / 2)));
+      }
+      if (withEntry) {
+        const box = entry[0];
+        moved.set(box.id, move(box, 48, moved.get(leftHub.id).cy - box.height / 2));
+      }
+      const barycenter = sink => [...incoming.get(sink.id)].reduce((sum, id) => sum + moved.get(id).cy, 0)
+        / incoming.get(sink.id).size;
+      const ordered = [...sinks].sort((a, b) => barycenter(a) - barycenter(b) || a.cy - b.cy);
+      let y = 48;
+      for (const sink of ordered) {
+        moved.set(sink.id, move(sink, leftEdge + gap + (sinkWidth - sink.width) / 2, y));
+        y += sink.height + rowGap;
+      }
+      if (!cardsHaveClearance(moved)) continue;
+      for (const elbow of [true, false]) {
+        const sideFor = (relation, endpoint) => {
+          if (!fan.has(relation)) return;
+          const source = moved.get(relation.from);
+          const sink = moved.get(relation.to);
+          const right = source.cx < sink.cx;
+          if (endpoint === 'source') return right ? 'right' : 'left';
+          if (elbow && Math.abs(source.cy - sink.cy) >= (source.height + sink.height) / 2 - 18) {
+            return source.cy < sink.cy ? 'top' : 'bottom';
+          }
+          return right ? 'left' : 'right';
+        };
+        yield { boxes: moved, sideFor, fan };
+      }
+    }
+  }
+}
+
+function cardsHaveClearance(boxes) {
+  const cards = [...boxes.values()];
+  return cards.every((box, index) => cards.slice(index + 1).every(other => !rectsOverlap(box, other, 24)));
+}
+
+export function* chainReflowCandidates({ boxes, routes, viewBox: [width, height] }) {
+  const horizontal = width > 1050 && width > height * 1.9;
+  if (!horizontal && (height < 720 || height < width * 1.3)) return;
+  const axis = horizontal ? 0 : 1;
+  const along = horizontal ? 'x' : 'y';
+  const across = horizontal ? 'y' : 'x';
+  const depth = horizontal ? 'width' : 'height';
+  const breadth = horizontal ? 'height' : 'width';
+  const alongCenter = box => box[along] + box[depth] / 2;
+  const acrossCenter = box => box[across] + box[breadth] / 2;
+  const place = (box, depthPosition, breadthPosition) => horizontal
+    ? move(box, depthPosition, breadthPosition) : move(box, breadthPosition, depthPosition);
+  const cards = [...boxes.values()].sort((a, b) => alongCenter(a) - alongCenter(b));
+  const outgoing = new Map(cards.map(card => [card.id, []]));
+  for (const { relation } of routes) {
+    const from = boxes.get(relation.from);
+    const to = boxes.get(relation.to);
+    if (to[along] > from[along] + from[depth]) outgoing.get(from.id).push(to.id);
+  }
+  // Forward edges are acyclic on the long axis, even when the full graph
+  // includes return links. Find the longest forward chain in one sweep.
+  const tails = new Map();
+  for (const box of cards.slice().reverse()) {
+    let tail = [];
+    for (const next of outgoing.get(box.id)) {
+      if (tails.get(next).length > tail.length) tail = tails.get(next);
+    }
+    tails.set(box.id, [box, ...tail]);
+  }
+  const order = [...tails.values()].sort((a, b) => b.length - a.length)[0];
+  if (order.length < 6 || order.length > 9 || boxes.size - order.length > 3
+      || order.slice(1).filter((box, index) => Math.abs(acrossCenter(box) - acrossCenter(order[index])) < box[breadth] / 2).length
+        < order.length - 2) return;
+  const sides = cards.filter(box => !order.includes(box));
+  if (!horizontal && !sides.length) return; // The earlier pure-chain fold handles this shape.
+  const slotDepth = Math.max(...cards.map(box => box[depth]));
+  const laneBreadth = Math.max(...order.map(box => box[breadth]));
+  const labelGap = routes.reduce((gap, { relation }) => Math.max(gap, horizontalLabelClearance(relation)), 84);
+  const sideGap = horizontal ? 56 : labelGap;
+  const orderByRank = box => (a, b) => Math.abs(alongCenter(a) - alongCenter(box)) - Math.abs(alongCenter(b) - alongCenter(box));
+  const peerRanks = sides.map(box => {
+    const peers = new Set(routes.flatMap(({ relation }) =>
+      relation.from === box.id ? [relation.to] : relation.to === box.id ? [relation.from] : []));
+    return order.filter(card => peers.has(card.id)).sort(orderByRank(box))[0];
+  });
+  // A side card needs its own attachment to the chain. Moving an entire
+  // side branch would change its internal spacing and label slots.
+  if (peerRanks.some(peer => !peer)) return;
+  const nearestRanks = sides.map(box => [...order].sort(orderByRank(box))[0]);
+  function* fit(moved) {
+    const inset = Math.min(...[...moved.values()].map(box => box[across]));
+    for (const [id, box] of moved) moved.set(id, place(box, box[along], box[across] - inset + 48));
+    if (cardsHaveClearance(moved)) yield { boxes: moved, axis };
+  }
+  if (!horizontal) {
+    // Shorten a chain in place when folding would complicate its extra links.
+    for (const gap of [36, 44]) {
+      const moved = new Map(boxes);
+      for (const [rank, box] of order.entries()) {
+        moved.set(box.id, place(box, 48 + rank * (slotDepth + gap), box[across]));
+      }
+      for (const [i, box] of sides.entries()) {
+        const peer = peerRanks[i];
+        const anchor = moved.get(peer.id);
+        const pos = acrossCenter(box) >= acrossCenter(peer)
+          ? anchor[across] + anchor[breadth] + sideGap : anchor[across] - box[breadth] - sideGap;
+        moved.set(box.id, place(box, alongCenter(anchor) - box[depth] / 2, pos));
+      }
+      yield* fit(moved);
+    }
+  }
+  const midpoint = Math.ceil(order.length / 2);
+  for (const split of [midpoint, midpoint + 1, midpoint - 1]) {
+    for (const laneGap of [sideGap + 32, sideGap + 110]) {
+      for (const usePeerRank of [true, false]) {
+        const step = slotDepth + (horizontal ? labelGap : 56);
+        const moved = new Map(boxes);
+        for (const [index, box] of order.entries()) {
+          const firstLane = index < split;
+          const rank = firstLane ? index : 2 * split - index - 1;
+          const offset = Math.max(0, order.length - 2 * split);
+          moved.set(box.id, place(box, 48 + (rank + offset) * step + (slotDepth - box[depth]) / 2,
+            48 + (firstLane ? 0 : laneBreadth + laneGap) + (laneBreadth - box[breadth]) / 2));
+        }
+        for (const [i, box] of sides.entries()) {
+          const peer = (usePeerRank ? peerRanks[i] : undefined) ?? nearestRanks[i];
+          const anchor = moved.get(peer.id);
+          const outer = acrossCenter(anchor) > 48 + laneBreadth;
+          const pos = outer ? anchor[across] + anchor[breadth] + sideGap + 24 : anchor[across] - box[breadth] - sideGap - 24;
+          moved.set(box.id, place(box, alongCenter(anchor) - box[depth] / 2 + (usePeerRank ? 0 : i * step), pos));
+        }
+        yield* fit(moved);
+      }
+    }
+  }
+}
