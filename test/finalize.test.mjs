@@ -177,6 +177,7 @@ test('finalize reuses delivery validation, runs one build, and keeps full stage 
   assert.equal(finalized.summary.repositoryReferences.count, 0);
   assert.equal(finalized.summary.codeAnalysisOffer.action, 'offer-code-analysis');
   assert.equal(finalized.summary.codeAnalysisOffer.dependencies, 'installed');
+  assert.equal(finalized.summary.codeAnalysisOffer.diagramButton, false);
   assert.equal(finalized.summary.codeAnalysisOffer.quality, 'showcase');
   assert.deepEqual(finalized.summary.codeAnalysisOffer.start.argv, [
     process.execPath, '/fake/archify.mjs', 'start', directory, '--ir', input, '--quality', 'showcase',
@@ -269,10 +270,14 @@ test('finalize offers Architecture Diagnosis only for supported repository-backe
   for (const [label, navigation] of [
     ['component href', { components: [{ id: 'child', href: 'child.html' }] }],
     ['drilldown list', { components: [{ id: 'child', drilldowns: [{ href: 'child.html', label: 'Child' }] }] }],
-    ['parent link', { meta: { quality_profile: 'showcase', parentHref: 'parent.html' } }],
+    ['parent link', { meta: {
+      quality_profile: 'showcase', parentHref: 'parent.html',
+      repository: { url: 'https://github.com/example/fixture', revision: 'a'.repeat(40) },
+    } }],
   ]) {
     const linked = await finalizeWith({ type: 'architecture', repoRoot: directory, navigation });
     assert.equal(linked.codeAnalysisOffer.linkedDiagrams, true, label);
+    assert.equal(linked.codeAnalysisOffer.diagramButton, label === 'parent link', label);
   }
 
   await t.test('finalize keeps a successful delivery when the Diagnosis dependency check throws', async () => {

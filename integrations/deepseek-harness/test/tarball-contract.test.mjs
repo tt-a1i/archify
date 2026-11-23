@@ -27,7 +27,7 @@ const FORBIDDEN = [
 
 function packTarball() {
   const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-dsh-tarball-'));
-  const out = path.join(scratch, 'tt-a1i-archify-dsh-1.1.0.tgz');
+  const out = path.join(scratch, 'tt-a1i-archify-dsh-1.2.0.tgz');
   const result = spawnSync(process.execPath, [packScript, '--out', out, '--json'], {
     cwd: repoRoot,
     encoding: 'utf8',
@@ -41,7 +41,7 @@ test('pack command emits a real npm tarball with the expected identity and file 
     assert.equal(result.status, 0, result.stderr || result.stdout);
     const receipt = JSON.parse(result.stdout);
     assert.equal(receipt.name, '@tt-a1i/archify-dsh');
-    assert.equal(receipt.version, '1.1.0');
+    assert.equal(receipt.version, '1.2.0');
     assert.equal(fs.existsSync(out), true);
     const files = receipt.files.map((file) => file.path.replace(/^package\//, ''));
     for (const required of [
@@ -68,7 +68,7 @@ test('pack command emits a real npm tarball with the expected identity and file 
       'skills/archify/scripts/check-update.mjs',
       'skills/archify/scripts/update-contract.mjs',
     ]) {
-      assert.equal(files.includes(notifierFile), true, `DSH 1.1.0 must contain ${notifierFile}`);
+      assert.equal(files.includes(notifierFile), true, `DSH 1.2.0 must contain ${notifierFile}`);
     }
     for (const file of files) {
       for (const forbidden of FORBIDDEN) {
@@ -107,6 +107,7 @@ test('packed Skill payload remains byte-identical to the declared immutable sour
       ], {
         cwd: repoRoot,
         encoding: null,
+        maxBuffer: 64 * 1024 * 1024,
       });
       assert.equal(tagged.status, 0, tagged.stderr?.toString('utf8'));
       assert.deepEqual(

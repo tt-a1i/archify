@@ -33,7 +33,7 @@
   <a href="https://skills.sh/tt-a1i/archify/archify"><img src="https://img.shields.io/badge/installs-130K%2B-0EA5E9?style=flat-square" alt="130K+ installs on skills.sh" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-22c55e?style=flat-square" alt="Apache License 2.0" /></a>
   <a href="#installation-options"><img src="https://img.shields.io/badge/works_with-Claude_Code_%7C_Codex_%7C_Cursor_%7C_OpenCode-7C3AED?style=flat-square" alt="Works with Claude Code, Codex, Cursor, and OpenCode" /></a>
-  <a href="CHANGELOG.md#unreleased"><img src="https://img.shields.io/badge/version-3.2.1--dev.1-0891b2?style=flat-square" alt="Development version 3.2.1-dev.1" /></a>
+  <a href="CHANGELOG.md#unreleased"><img src="https://img.shields.io/badge/version-3.3.1--dev.1-0891b2?style=flat-square" alt="Development version 3.3.1-dev.1" /></a>
 </p>
 
 <p align="center">
@@ -156,6 +156,33 @@ The [Proof Lab](https://archify.si/gallery.html) contains all 11 checked-in scen
 
 Archify traced [`mco-org/mco`](https://github.com/mco-org/mco) at `9f1a1cf` and produced this checked map. **[Open it ↗](https://archify.si/cases/mco-runtime.architecture.html?theme=dark&present=1)** · [trace reach ↗](https://archify.si/cases/mco-runtime.architecture.html?theme=dark#focus=router&reach=downstream) · [typed source](docs/cases/mco-runtime.architecture.json)
 
+### Diagnose a repository
+
+<sub>CODE ANALYSIS · Built into the Skill, no extra install</sub>
+
+| Dependency star map | 3D model of the same run |
+|---|---|
+| [![Atlas star map: modules around a ring, file dependencies drawn across it, findings and coupling in the side panel](docs/assets/code-analysis-views/atlas.png)](archify/modules/code-analysis/docs/USAGE.md) | [![Atlas 3D: the most-depended-on module as the trunk, other modules branching at the height of their dependency layer](docs/assets/code-analysis-views/atlas-3d.png)](archify/modules/code-analysis/docs/USAGE.md) |
+
+**Architecture Diagnosis** reads a repository and shows how it actually hangs together: dependency cycles, tightly coupled modules, complexity hotspots and layer-rule breaks, each linked to the source behind it, with a fix task you can hand back to your agent. Pair it with an architecture diagram and every component shows its issue count. JS/TS, Python, Java, Go, Rust, C and C++ are supported; the result is one offline HTML file.
+
+```text
+Use archify Code Analysis on this repository: show module coupling, dependency cycles and hotspots.
+```
+
+[Code Analysis guide](archify/modules/code-analysis/docs/USAGE.md)
+
+### Walk through it as a story, or a pull request
+
+<sub>STORY · PR WALKTHROUGH</sub>
+
+- **Story video.** Ask your agent to add a guided story to any diagram. The page gains a Story mode with a timeline and captions, and **Export → Story video** records it at 1080p, 60 fps (WebM or MP4). Several diagrams can also be choreographed into one stage page or video. [Story authoring](archify/references/story-authoring.md)
+- **PR walkthrough.** Ask your agent to explain a pull request or branch: Archify marks what changed directly on the diagram and can attach light and dark diagrams to a GitHub PR or GitLab MR. The optional `archify-pr` Skill offers this while you prepare a PR, and only for material diffs. [PR review](archify/references/pr-review.md)
+
+```text
+Use archify to add a guided story to this diagram and export it as a video.
+```
+
 ### Easy to extend. More ways to make it yours.
 
 <sub>COMMUNITY STORIES · Selected examples shared by users</sub>
@@ -219,7 +246,7 @@ Open [`examples/web-app.html`](examples/web-app.html) locally to try the complet
 
 ## Quick start
 
-**Current development version:** `v3.2.1-dev.1`. See [Changelog](CHANGELOG.md#unreleased).
+**Current development version:** `v3.3.1-dev.1`. See [Changelog](CHANGELOG.md#unreleased).
 
 ### 1. Install
 
@@ -256,7 +283,7 @@ To try without installing:
 npx skills use tt-a1i/archify@archify --agent codex
 ```
 
-[DSH community opt-in](integrations/deepseek-harness/README.md): `dsh plugin --profile web add @tt-a1i/archify-dsh@1.1.0`
+[DSH community opt-in](integrations/deepseek-harness/README.md): `dsh plugin --profile web add @tt-a1i/archify-dsh@1.2.0`
 
 The [agent switcher](https://archify.si/start.html?agent=cursor&type=architecture) covers `cursor`, `codex`, `claude-code`, `opencode`, and `github-copilot`.
 
@@ -286,7 +313,7 @@ Show 8–12 core components, one primary path, external dependencies, and trust 
 Put supporting detail in cards instead of adding more edges.
 ```
 
-Archify’s built-in **Architecture Diagnosis** maps repository dependencies as a radial star map and a rotatable 3D model. It also shows issue counts on each component of your architecture diagram, with links to the source behind findings such as dependency cycles and dependencies missing from the diagram. Archify offers it once after delivering a repository-backed architecture diagram and starts it only if you say yes. It runs from the installed Skill with no extra install step. See the [Code Analysis guide](archify/modules/code-analysis/docs/USAGE.md).
+Archify’s built-in **Architecture Diagnosis** maps repository dependencies as a radial star map and a rotatable 3D model. It also shows issue counts on each component of your architecture diagram, with links to the source behind findings such as dependency cycles and dependencies missing from the diagram. After delivering a repository-backed architecture diagram, Archify ends its summary with what Diagnosis can do, and the diagram has a Code Analysis button that explains it. Diagnosis starts only if you say yes. It runs from the installed Skill with no extra install step. See the [Code Analysis guide](archify/modules/code-analysis/docs/USAGE.md).
 
 ```text
 Use archify Code Analysis on this repository: show module coupling, dependency cycles and hotspots.
@@ -442,7 +469,7 @@ Settings:
 }
 ```
 
-`meta.locale` localizes page title, Legend, states/errors, a11y, HTML/SVG `lang`—never authored content. `en`, `zh-CN`, `zh-TW`, `es`, `ko`, and `ar` are bundled and need only `meta.locale`; `meta.translations` (canonical message key → translated string) overrides individual keys and keeps the rest of the language. Other languages supply their catalog there (see `archify/examples/locales/`), or the renderer falls back to English and discloses it. Static omits `animation`; `classic` defaults.
+`meta.locale` localizes page title, Legend, states/errors, a11y, HTML/SVG `lang`—never authored content. `en`, `zh-CN`, `zh-TW`, `es`, `ko`, `ar`, and `ru` are bundled and need only `meta.locale`; `meta.translations` (canonical message key → translated string) overrides individual keys and keeps the rest of the language. Other languages supply their catalog there (see `archify/examples/locales/`), or the renderer falls back to English and discloses it. Static omits `animation`; `classic` defaults.
 
 </details>
 
@@ -457,6 +484,7 @@ Settings:
 | Compare one or two semantic roles | <kbd>L</kbd> or `LENS` |
 | Open the live overview radar | <kbd>M</kbd> or `MAP` |
 | Enter Presentation Stage | <kbd>F</kbd> |
+| Play a guided story or export it as video (diagrams with a story) | Motion control → `Story` · Export → `Story video` |
 | Choose visual style (`S` cycles) / toggle theme / open Export | <kbd>S</kbd> / <kbd>T</kbd> / <kbd>E</kbd> |
 | Zoom or reset | <kbd>+</kbd> / <kbd>-</kbd> / <kbd>0</kbd> |
 
@@ -474,7 +502,7 @@ The complete generation and viewer contract lives in [`archify/SKILL.md`](archif
 | **Claude.ai** | Upload `archify.zip` under Settings → Capabilities → Skills | Depends on Node.js access in the sandbox |
 | **Project Knowledge** | Upload `archify.zip` to the project | Prompt-driven architecture fallback |
 | **Hermes Agent** | Opt-in: `hermes skills install skills-sh/tt-a1i/archify/archify -y` | Community Skill-only integration; Node `>=18`; not a Nous official product. No telemetry. It is not a switcher target. [Details](integrations/hermes-agent/README.md). |
-| **DeepSeek Harness** | Opt-in: `dsh plugin --profile web add @tt-a1i/archify-dsh@1.1.0`. Invoke: `Use the archify skill to map this repository's runtime architecture.` Remove: `dsh plugin --profile web remove @tt-a1i/archify-dsh`. | Community integration for developer-preview `@deepseek-ai/dsh@0.2.1-rc.2`; Node `^22.19.0 \|\| >=24.0.0`; not an official DeepSeek product. No telemetry. Shell files need exact workspace paths, not Web Produced Files. [Details](integrations/deepseek-harness/README.md). |
+| **DeepSeek Harness** | Opt-in: `dsh plugin --profile web add @tt-a1i/archify-dsh@1.2.0`. Invoke: `Use the archify skill to map this repository's runtime architecture.` Remove: `dsh plugin --profile web remove @tt-a1i/archify-dsh`. | Community integration for developer-preview `@deepseek-ai/dsh@0.2.2-rc.5`; Node `^22.19.0 \|\| >=24.0.0`; not an official DeepSeek product. No telemetry. Shell files need exact workspace paths, not Web Produced Files. [Details](integrations/deepseek-harness/README.md). |
 
 ## Reference and scope
 
