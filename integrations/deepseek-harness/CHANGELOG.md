@@ -2,12 +2,13 @@
 
 For current publication status, see the [repository integration README](https://github.com/tt-a1i/archify/tree/main/integrations/deepseek-harness).
 
-## 1.2.0
+## 1.2.0 — 2026-11-23
 
 - Bundles Archify 3.3.0 pinned to immutable `v3.3.0` tag commit `af3aaf3c36762f2afb62a4a09533f6c7273b07e5` (Code Analysis & Architecture Diagnosis, Story walkthroughs and 1080p video, PR change walkthroughs, automatic architecture placement, cross-diagram drilldown, Russian locale, lighter Skill package without pre-rendered example HTML, and unified colophon). Adapter MIT licensing remains distinct from the bundled Skill's Apache-2.0 licensing and third-party notices.
 - Retains `includeDefaultRoots: true` (see [#906](https://github.com/tt-a1i/archify/issues/906) and [#1336](https://github.com/tt-a1i/archify/issues/1336)).
 - Targets the exact npm CLI host `@deepseek-ai/dsh@0.2.2-rc.5` after official-source touchpoint review (`dsh-v0.2.1-rc.2` → `dsh-v0.2.2-rc.5`). No blanket 0.2.x or Desktop/Electron support claim; historical 1.0.0 and 1.1.0 evidence does not certify 1.2.0.
 - Acceptance covers clean installation and same-profile upgrades from 0.1.0, 1.0.0, and 1.1.0, and checks older same-name personal/project `archify` copies against the effective loaded body/path. Plugin upgrade does not override higher-precedence Skill copies.
+- Published tarball SHA256 `6dbe684f5723d7ea07b1d66a0d3b1d4f810f4c58b889d3f2db1ea41d1f4d342a` from adapter tag `archify-dsh-v1.2.0`. The three-platform tag gate and npm Trusted Publishing run (`45095276646`) passed and the public install examples were verified against that release.
 
 ## 1.1.0 — 2026-11-08
 
