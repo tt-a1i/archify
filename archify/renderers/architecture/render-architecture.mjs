@@ -13,6 +13,7 @@ import { translateMessage as i18nText } from '../shared/i18n.mjs';
 import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeFrameAttrs, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeNodeAttrs, changeReviewFor, nodeChangeBadgePos, renderChangeBadge, renderChangeEdgePrefix, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
 import { gridLayout, resolveComponentPos, validateGridPlacement } from './grid.mjs';
 import { automaticComponentPositions, boundaryInsets } from './automatic-placement.mjs';
+import { junctionBends, junctionCandidates } from './junction-placement.mjs';
 import { frameLanePlacements } from './frame-lane-placement.mjs';
 import { facingLabelSpacingCandidate, labelBesideStraightShaft, sideCardPortPreferences } from './label-spacing-placement.mjs';
 import { placeCrossedLeaf, placeCrossedSinks, facingFramePlacements } from './crossed-leaf-placement.mjs';
@@ -1531,7 +1532,82 @@ function reserveFacingLabelSpace(initial) {
   return current;
 }
 
-const composition = reserveFacingLabelSpace(improveFrameLanes(alignNearlyFacingCards(simplifyFinishedComposition(placedComposition))));
+function compactJunctions(initial) {
+  // Compare with the finished ordinary layout so a rejected placement
+  // cannot spend the routing attempts used by other repairs.
+  if (!automaticComposition || components.size > 16 || connections.length > 24
+      || connections.some(connection => connection.fromSide !== undefined || connection.toSide !== undefined)) return initial;
+  const proposals = junctionCandidates(initial, 16);
+  if (!proposals.length) return initial;
+  const baseline = routeBudgetMetrics({ routedRelations: initial.routes });
+  const before = routeSpanMeasures(initial.routes, initial.boxes, initial.viewBox);
+  const oldCrossings = measuredCrossingPairs(initial.routes).length;
+  const oldBends = junctionBends(initial);
+  const oldCorridors = corridorMeasures(initial);
+  const area = scene => scene.viewBox[0] * scene.viewBox[1];
+  let best = initial;
+  let bestRouter;
+  let bestLength = before.length;
+  const labels = new Map(initial.labels.map(label => [label.relation, label]));
+  const labelSlots = new Set(initial.routes.filter(route => labelBesideStraightShaft(route, labels.get(route.relation)))
+    .map(route => route.relation));
+  const oldLabels = drawnLabelProblems(initial);
+  for (let { boxes, junction, sideFor } of proposals) {
+    let bounds = boundsFor(boxes);
+    let left = Infinity;
+    for (const rects of [boxes.values(), bounds]) {
+      for (const { x } of rects) left = Math.min(left, x);
+    }
+    // An earlier placement can leave room on the left for routes that
+    // no longer use it. Refit the cards and frames to the canvas inset.
+    const shift = left - layout.margin;
+    if (shift >= layout.margin) {
+      boxes = new Map([...boxes].map(([id, box]) => [id, { ...box, x: box.x - shift, cx: box.cx - shift }]));
+      bounds = boundsFor(boxes);
+    }
+    if (frameEnclosures(boxes, bounds).length) continue;
+    const candidate = makeRouter(boxes, bounds, { separateRuns: true, sideFor });
+    const placed = finishAutomaticLabels(resolveConnectionComposition(boxes, candidate.pathFor, bounds), true);
+    const next = simplifyFinishedComposition(placed, candidate);
+    const budget = routeBudgetMetrics({ routedRelations: next.routes });
+    const spans = routeSpanMeasures(next.routes, boxes, next.viewBox);
+    const { bends, avoidable } = junctionBends(next);
+    const corridors = corridorMeasures(next);
+    const newLabels = new Map(next.labels.map(label => [label.relation, label]));
+    if (spans.length > before.length - 32 || spans.length >= bestLength || area(next) > area(initial)
+        || bends > oldBends.bends || avoidable > oldBends.avoidable
+        || budget.routesOverSuggestedBends > baseline.routesOverSuggestedBends
+        || budget.routesOverSuggestedStretch > baseline.routesOverSuggestedStretch
+        || measuredCrossingPairs(next.routes).length > oldCrossings
+        || corridors.length > oldCorridors.length + 0.0001 || corridors.border > oldCorridors.border + 0.0001
+        || next.routes.some((route, i) => {
+          const { relation } = route;
+          return (relation.from !== junction && relation.to !== junction
+              && initial.routes[i].points.length === 2 && route.points.length > 2)
+            || (labelSlots.has(relation) && !labelBesideStraightShaft(route, newLabels.get(relation)));
+        })
+        || !meetsDesktopTextFloor(next) || !candidate.planIsClear(next.viewBox, { checkProvisionalLabels: false })
+        || !preservesLabels(oldLabels, drawnLabelProblems(next))) continue;
+    try {
+      withIsolatedDiagnosticRecording(() => validateArchitecture(next, candidate));
+    } catch (error) {
+      if (!error.archifyDiagnostics?.length) throw error;
+      continue;
+    }
+    best = next;
+    bestRouter = candidate;
+    bestLength = spans.length;
+  }
+  if (bestRouter) {
+    router = bestRouter;
+    for (const [id, box] of best.boxes) components.set(id, box);
+  }
+  return best;
+}
+
+const composition = compactJunctions(reserveFacingLabelSpace(improveFrameLanes(
+  alignNearlyFacingCards(simplifyFinishedComposition(placedComposition)),
+)));
 const {
   titles: { boundaries }, labels: connectionLabels, viewBox,
 } = composition;
