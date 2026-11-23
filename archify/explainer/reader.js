@@ -773,6 +773,31 @@
   setupWalks();
   setupAsk();
   setupSourceCards();
+  all('[data-feedback-menu]').forEach(menu=>{
+    const summary = menu.querySelector('summary'), copyBtn = menu.querySelector('[data-copy-email]');
+    let copyTimer;
+    document.addEventListener('click',event=>{ if (menu.open && !menu.contains(event.target)) menu.open = false; });
+    menu.addEventListener('keydown',event=>{
+      if (event.key === 'Escape' && menu.open) { event.stopPropagation(); menu.open = false; summary?.focus({preventScroll:true}); }
+    });
+    if (copyBtn) {
+      const label = copyBtn.querySelector('[data-copy-label]'), initialText = label?.textContent || '';
+      copyBtn.addEventListener('click',async()=>{
+        const email = copyBtn.dataset.copyEmail || '';
+        let ok = false;
+        try { await copyText(email); ok = true; } catch {
+          const area = document.createElement('textarea'); area.value = email; area.setAttribute('readonly','');
+          area.style.cssText = 'position:fixed;opacity:0;pointer-events:none'; document.body.appendChild(area); area.select();
+          try { ok = document.execCommand('copy'); } catch {} area.remove();
+        }
+        if (!label || !ok) return;
+        label.textContent = words.copied;
+        copyBtn.classList.add('is-copied');
+        clearTimeout(copyTimer);
+        copyTimer = setTimeout(()=>{ label.textContent = initialText; copyBtn.classList.remove('is-copied'); },1800);
+      });
+    }
+  });
   layoutBoard();
   const relayout = () => { layoutBoard(); ensureDiagramReadability(); };
   Promise.resolve(document.fonts?.ready).then(()=>requestAnimationFrame(()=>requestAnimationFrame(relayout)));
