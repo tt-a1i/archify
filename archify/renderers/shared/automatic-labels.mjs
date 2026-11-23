@@ -9,7 +9,7 @@ export function placeAutomaticLabels({
   gridSweep = false, maxOwnRouteDistance = Infinity, protectedEndpoints = new Map(), onlyProtectedEndpoints = false,
   arrowheads = [], clearanceBorders = [], ownershipMargin = 0, repairOwnership = false, searchBand = false,
   coversRouteStroke = () => false, coversOwnShaft, coversFrame, preferShaftAttachment = false,
-  canMove = () => true, allowsPlacement = () => true,
+  canMove = () => true, allowsPlacement = () => true, requiresPlacement = () => false,
 }) {
   const preferRouteMidpoint = Boolean(coversOwnShaft);
   const placed = [...labels];
@@ -320,7 +320,8 @@ export function placeAutomaticLabels({
 
   const pinned = label => ['labelAt', 'labelDx', 'labelDy', 'labelSegment']
     .some(key => label.relation[key] !== undefined);
-  const needsPlacement = (label, index) => coversEndpoint(label) || touchesBorder(label) || coversRouteStroke(label)
+  const needsPlacement = (label, index) => requiresPlacement(label)
+    || coversEndpoint(label) || touchesBorder(label) || coversRouteStroke(label)
     || (repairOwnership && !keepsOwner(label)) || (!onlyProtectedEndpoints && (!inside(label)
     || components.some(component => rectsOverlap(label, component, -2))
     || titles.some(title => rectsOverlap(label, title))

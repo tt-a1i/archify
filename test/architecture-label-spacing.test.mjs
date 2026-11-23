@@ -162,3 +162,82 @@ test('stacked members keep their straight side slot and frame padding', t => {
   assert.deepEqual(result.components, before.components);
   assert.deepEqual(result.boundaries, before.boundaries);
 });
+
+const stage = index => `stage-${index}`;
+
+function sideCardDiagram({ side, count, width, height, level, peers, label, framed, mainVariant }) {
+  const chain = Array.from({ length: count }, (_, index) => stage(index));
+  const ids = side === 'right' ? [...chain, 'policy'] : [...chain];
+  if (side === 'left') ids.splice(framed ? 0 : 1, 0, 'policy');
+  const links = chain.slice(1).map((id, index) => [chain[index], id]);
+  links.push(...[level, ...peers].sort((a, b) => a - b)
+    .map(index => ['policy', stage(index), index === level ? label : undefined]));
+  links.push([stage(level - 1), 'policy']);
+  const diagram = automaticDiagram(links, width);
+  diagram.components.sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id));
+  diagram.components.forEach(card => { card.size[1] = height; });
+  diagram.connections.forEach((connection, index) => {
+    if (index < count - 1) connection.variant = mainVariant;
+    else if (connection.from === 'policy') connection.variant = 'dashed';
+  });
+  if (framed) {
+    diagram.boundaries = [{ label: 'Policy scope', kind: 'region', wraps: ['policy', stage(level - 1), stage(level)] }];
+  }
+  return diagram;
+}
+
+for (const {
+  side, count, width, height, level, peers, label, framed, mainVariant,
+} of [
+  { side: 'left', count: 9, width: 155, height: 72, level: 4, peers: [5, 6],
+    label: 'Apply retention and privacy', framed: false, mainVariant: 'default' },
+  { side: 'right', count: 8, width: 300, height: 60, level: 2, peers: [0, 5],
+    label: 'Monthly usage reconciliation', framed: false, mainVariant: 'emphasis' },
+  { side: 'left', count: 10, width: 610, height: 86, level: 3, peers: [5],
+    label: 'Apply retention and privacy', framed: true, mainVariant: 'emphasis' },
+  { side: 'right', count: 10, width: 560, height: 72, level: 4, peers: [6],
+    label: 'Inject workspace restrictions', framed: true, mainVariant: 'emphasis' },
+]) {
+  test(`a ${framed ? 'framed' : 'standalone'} side card on the ${side} reserves a label slot for its level link`, t => {
+    const diagram = sideCardDiagram({ side, count, width, height, level, peers, label, framed, mainVariant });
+    const result = render(t, diagram);
+    const policy = result.components.find(card => card.id === 'policy');
+    const outgoing = result.connections.filter(route => route.from === 'policy');
+    const levelRoute = outgoing.find(route => route.to === stage(level));
+    const plate = result.labels.find(entry => entry.text === label);
+    assert.equal(levelRoute.points.length, 2, 'the level link should use a single shaft');
+    const [[startX, shaftY], [endX, endY]] = levelRoute.points;
+    assert.equal(shaftY, endY);
+    assert.equal(startX < endX, side === 'left');
+    assert.ok(plate.x >= Math.round(Math.min(startX, endX)) + 13);
+    assert.ok(plate.x + plate.width <= Math.round(Math.max(startX, endX)) - 13);
+    const clearance = Math.max(shaftY - plate.y - plate.height, plate.y - shaftY);
+    assert.ok(clearance > 0 && clearance <= 7, 'the label should sit beside its horizontal shaft');
+
+    const verticalPorts = new Map();
+    for (const { points, to } of outgoing.filter(route => route !== levelRoute)) {
+      const peer = result.components.find(card => card.id === to);
+      const face = peer.y < policy.y ? policy.y : policy.y + policy.height;
+      const [[portX, portY], [nextX, nextY]] = points;
+      assert.equal(portY, face, 'the other link should leave toward its row');
+      assert.equal(portX, nextX);
+      assert.equal(nextY < portY, peer.y < policy.y);
+      for (const otherX of verticalPorts.get(face) ?? []) assert.ok(Math.abs(portX - otherX) >= 22);
+      verticalPorts.set(face, [...(verticalPorts.get(face) ?? []), portX]);
+    }
+
+    for (const { points } of result.connections.slice(0, count - 1)) {
+      assert.equal(points.length, 2, 'the main chain should keep its straight links');
+      assert.equal(points[0][0], points[1][0]);
+    }
+    if (framed) framedMemberBounds(result);
+  });
+}
+
+test('side-card spacing preserves a showcase diagram at the desktop text floor', t => {
+  const diagram = sideCardDiagram({ side: 'left', count: 10, width: 620, height: 86, level: 3, peers: [5],
+    label: 'Apply retention and privacy', framed: true, mainVariant: 'emphasis' });
+  const result = render(t, diagram);
+  // At the 930 px Reader budget a 10 px source label must project to at least 6 px.
+  assert.ok(result.viewBox[0] <= 930 * 10 / 6);
+});

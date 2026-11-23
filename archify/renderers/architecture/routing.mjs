@@ -167,7 +167,7 @@ export function* closeReciprocalLanes(points, otherPoints) {
 // Use the same architecture route preferences for rendering and placement checks.
 export function createArchitectureRouter(components, connections, {
   frames = [], fixedCanvas = false, automaticPlacement = false, acceptSimplification,
-  readablePorts = false, spreadLanes = false, frameClearance = 0, separateRuns = false,
+  readablePorts = false, spreadLanes = false, frameClearance = 0, separateRuns = false, sideFor = null,
 } = {}) {
   return createRouter(components, connections, {
     distinctAutomaticPorts: true,
@@ -178,6 +178,7 @@ export function createArchitectureRouter(components, connections, {
     spreadLanes,
     frameClearance,
     separateRuns,
+    sideFor,
     acceptSimplification,
     // Intrinsic canvases can use one outward stub without shrinking their text.
     readabilityBottomMargin: fixedCanvas ? 0 : 24,

@@ -8,13 +8,13 @@ import { rendererFailure, throwDiagnosticProblems, withIsolatedDiagnosticRecordi
 import { legendFootprint, relationshipLegendObstacles, resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth, nodeTextFit } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
-import { minimumReadableSourceTextPx } from '../shared/desktop-readability.mjs';
+import { declaredWideReadabilityBudget, minimumReadableSourceTextPx } from '../shared/desktop-readability.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
 import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeFrameAttrs, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeNodeAttrs, changeReviewFor, nodeChangeBadgePos, renderChangeBadge, renderChangeEdgePrefix, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
 import { gridLayout, resolveComponentPos, validateGridPlacement } from './grid.mjs';
 import { automaticComponentPositions, boundaryInsets } from './automatic-placement.mjs';
 import { frameLanePlacements } from './frame-lane-placement.mjs';
-import { facingLabelSpacingCandidate, labelBesideStraightShaft } from './label-spacing-placement.mjs';
+import { facingLabelSpacingCandidate, labelBesideStraightShaft, sideCardPortPreferences } from './label-spacing-placement.mjs';
 import { placeCrossedLeaf, placeCrossedSinks, facingFramePlacements } from './crossed-leaf-placement.mjs';
 import { centeredFanOutCandidates, crossingPlacementCandidates, foldedChain, frameAttachmentCandidates, frameEnclosureCandidates, groupMoveCanPreserveRoutes, groupMovePreservesRoutes, measuredCrossingPairs, nearAlignmentCandidates, routeSpanMeasures, sharedNeighborCandidates, strongestLayerOrder, terminalBranchCandidates } from './automatic-placement-candidates.mjs';
 import {
@@ -67,6 +67,7 @@ const componentTextFit = {
   tagMinimum: 6,
 };
 const scalableComponentText = /^[ -~·←↑→↓、。！？：；「」，“”\p{Unified_Ideograph}\u3041-\u3096\u30A1-\u30FA\uAC00-\uD7A3]+$/u;
+const readerMinimumTextPx = 7.5;
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const layoutJsonMode = process.argv.includes('--layout-json');
@@ -992,7 +993,7 @@ function frameOutline(frame) {
   return prepareCrossingPath(segments);
 }
 
-function finishAutomaticLabels(scene, repairFixedCanvas = false, { canMove, sideOnly = false, requiresSlot } = {}) {
+function finishAutomaticLabels(scene, repairFixedCanvas = false, { canMove, sideOnly = false, requiresSlot, enforceSlot = false } = {}) {
   if ((!auto && !canMove) || !scene.labels.length) return scene;
   // A standard diagram with authored layout and canvas keeps its default
   // label, so a collision still reaches the placement diagnostic.
@@ -1013,6 +1014,7 @@ function finishAutomaticLabels(scene, repairFixedCanvas = false, { canMove, side
     allowsPlacement: requiresSlot
       ? rect => requiresSlot(rect) && (!allowsGapPlacement || allowsGapPlacement(rect))
       : allowsGapPlacement,
+    requiresPlacement: enforceSlot ? rect => !requiresSlot(rect) : undefined,
     arrowheads,
     clearanceBorders,
     // The quadratic outline approximates the SVG's round corners within
@@ -1446,50 +1448,85 @@ function improveFrameLanes(initial) {
 
 const placedComposition = automaticComposition ? finishAutomaticLabels(automaticComposition)
   : repairFixedCanvasLabels(fixedCanvasComposition(resolveConnectionComposition(components, pathFor, rawBoundaries)));
+
+function meetsDesktopTextFloor({ boxes, labels, titles, viewBox: [width, height] }) {
+  let minimumFont = Infinity;
+  for (const box of boxes.values()) {
+    const { rows } = componentTextRows(box, resolveNodeDrilldowns(box));
+    minimumFont = Math.min(minimumFont, rows.title.font, rows.sublabel?.font ?? Infinity);
+  }
+  for (const label of labels) minimumFont = Math.min(minimumFont, connectionLabelTextFit(label.relation, label.width).fontSize);
+  for (const { title } of titles.boundaries) minimumFont = Math.min(minimumFont, title.fontSize);
+  const declared = declaredWideReadabilityBudget({
+    viewBoxWidth: width, viewBoxHeight: height, minimumSourceTextPx: minimumFont, requestedMinimumTextPx: readerMinimumTextPx,
+  });
+  return declared?.hardFloorMet ?? (minimumFont >= minimumReadableSourceTextPx(width));
+}
+
+function tryFacingLabelSpacing(current, { moved, relations }, bounds, routingOptions) {
+  const candidate = routePlacement(moved, bounds, routingOptions);
+  const composed = resolveConnectionComposition(moved, candidate.pathFor, bounds);
+  const routes = new Map(composed.routes.map(route => [route.relation, route]));
+  const next = simplifyFinishedComposition(finishAutomaticLabels(composed, true, {
+    requiresSlot: label => !relations.has(label.relation)
+      || labelBesideStraightShaft(routes.get(label.relation), label),
+    enforceSlot: Boolean(routingOptions?.sideFor),
+  }), candidate);
+  const labels = new Map(next.labels.map(label => [label.relation, label]));
+  const oldLabels = new Map(current.labels.map(label => [label.relation, label]));
+  if (next.routes.some((route, index) => {
+    const before = current.routes[index];
+    const { relation } = route;
+    return route.points.length > before.points.length
+      || ((relations.has(relation) || labelBesideStraightShaft(before, oldLabels.get(relation)))
+        && !labelBesideStraightShaft(route, labels.get(relation)));
+  })) return;
+  const crossings = measuredCrossingPairs(current.routes);
+  if (measuredCrossingPairs(next.routes).some(([a, b]) => !crossings.some(([x, y]) => a === x && b === y))) return;
+  const before = routeBudgetMetrics({ routedRelations: current.routes });
+  const after = routeBudgetMetrics({ routedRelations: next.routes });
+  if (after.routesOverSuggestedStretch > before.routesOverSuggestedStretch
+      // A wider canvas can shrink any semantic label below the Reader floor.
+      || (routingOptions?.sideFor && (!meetsDesktopTextFloor(next)
+        || spacingDebt(next).portDebt > spacingDebt(current).portDebt + 0.0001))
+      || !candidate.planIsClear(next.viewBox, { checkProvisionalLabels: false })
+      || !preservesLabels(drawnLabelProblems(current), drawnLabelProblems(next))) return;
+  try {
+    withIsolatedDiagnosticRecording(() => validateArchitecture(next, candidate));
+  } catch (error) {
+    if (!error.archifyDiagnostics?.length) throw error;
+    return;
+  }
+  return { candidate, next };
+}
+
 function reserveFacingLabelSpace(initial) {
   if (!whollyInferred || !remainingPlacementRoutes || !initial.labels.length
       || connections.some(conn => !canRoute(conn) || !hasAutomaticRouteGeometry(conn)
         || ['fromSide', 'toSide', 'labelAt', 'labelDx', 'labelDy', 'labelSegment'].some(key => conn[key] !== undefined))) return initial;
   let current = initial;
-  for (const horizontal of [true, false]) {
-    if (!remainingPlacementRoutes) break;
-    const spacing = facingLabelSpacingCandidate(current, horizontal);
-    if (!spacing) continue;
-    const { moved, relations } = spacing;
+  function applySpacing(spacing, options) {
+    if (!spacing) return false;
+    const { moved } = spacing;
     const bounds = boundsFor(moved);
-    if (frameEnclosures(moved, bounds).length) continue;
-    const candidate = routePlacement(moved, bounds, initial.routingOptions);
-    const composed = resolveConnectionComposition(moved, candidate.pathFor, bounds);
-    const routes = new Map(composed.routes.map(route => [route.relation, route]));
-    const next = simplifyFinishedComposition(finishAutomaticLabels(composed, true, {
-      requiresSlot: label => !relations.has(label.relation)
-        || labelBesideStraightShaft(routes.get(label.relation), label),
-    }), candidate);
-    const labels = new Map(next.labels.map(label => [label.relation, label]));
-    const oldLabels = new Map(current.labels.map(label => [label.relation, label]));
-    if (next.routes.some((route, index) => {
-      const before = current.routes[index];
-      const { relation } = route;
-      return route.points.length > before.points.length
-        || ((relations.has(relation) || labelBesideStraightShaft(before, oldLabels.get(relation)))
-          && !labelBesideStraightShaft(route, labels.get(relation)));
-    })) continue;
-    const crossings = measuredCrossingPairs(current.routes);
-    if (measuredCrossingPairs(next.routes).some(([a, b]) => !crossings.some(([x, y]) => a === x && b === y))) continue;
-    const before = routeBudgetMetrics({ routedRelations: current.routes });
-    const after = routeBudgetMetrics({ routedRelations: next.routes });
-    if (after.routesOverSuggestedStretch > before.routesOverSuggestedStretch
-        || !candidate.planIsClear(next.viewBox, { checkProvisionalLabels: false })
-        || !preservesLabels(drawnLabelProblems(current), drawnLabelProblems(next))) continue;
-    try {
-      withIsolatedDiagnosticRecording(() => validateArchitecture(next, candidate));
-    } catch (error) {
-      if (!error.archifyDiagnostics?.length) throw error;
-      continue;
-    }
+    if (frameEnclosures(moved, bounds).length) return false;
+    const accepted = tryFacingLabelSpacing(current, spacing, bounds, options);
+    if (!accepted) return false;
+    const { candidate, next } = accepted;
     router = candidate;
     for (const [id, box] of moved) components.set(id, box);
     current = next;
+    return true;
+  }
+  const horizontal = facingLabelSpacingCandidate(current, true);
+  const widened = applySpacing(horizontal, initial.routingOptions);
+  const extended = remainingPlacementRoutes && applySpacing(facingLabelSpacingCandidate(current, false), initial.routingOptions);
+  // Keep the ordinary proposals first. A side-card retry can use a spare
+  // routing attempt without taking it away from a vertical label slot.
+  if (horizontal && !widened && remainingPlacementRoutes) {
+    const spacing = extended ? facingLabelSpacingCandidate(current, true) : horizontal;
+    const sideFor = spacing && sideCardPortPreferences(current, spacing.relations);
+    if (sideFor) applySpacing(spacing, { ...initial.routingOptions, sideFor });
   }
   return current;
 }
@@ -2153,12 +2190,10 @@ function renderConnectionPath(conn, index, marker) {
   return `        <g data-graph-role="automatic-crossover" style="--step:${index}">\n${underlay}${edge.replace(/^        /, '          ')}\n        </g>`;
 }
 
-function renderConnectionLabel(conn, index) {
-  const box = connectionLabelBox(conn);
-  if (!box) return '';
+function connectionLabelTextFit(conn, width) {
   const label = conn.label;
   const mono = /^[!-~·]+(?: [!-~·]+)*$/u.test(label);
-  const availableWidth = box.width - 4 - changeEdgeLabelExtraWidth(conn);
+  const availableWidth = width - 4 - changeEdgeLabelExtraWidth(conn);
   const preferredSize = 10;
   // Fit the bundled monospace glyphs to the existing mask. Keep CJK glyphs at
   // their natural proportions and leave other fallback text at its old size.
@@ -2169,10 +2204,18 @@ function renderConnectionLabel(conn, index) {
     const widthInEms = [...label].reduce((sum, glyph) => sum + (glyph.codePointAt(0) <= 0xff ? 0.6 : 1.1), 0);
     fontSize = Math.max(8, Math.min(preferredSize, Math.floor(10 * availableWidth / widthInEms) / 10));
   }
-  const weight = fontSize > 8 ? ' font-weight="500"' : '';
   const fit = mono && minimumNodeTextWidth(label, preferredSize) > availableWidth
     ? ` textLength="${availableWidth}" lengthAdjust="spacingAndGlyphs"`
     : '';
+  return { fontSize, fit };
+}
+
+function renderConnectionLabel(conn, index) {
+  const box = connectionLabelBox(conn);
+  if (!box) return '';
+  const label = conn.label;
+  const { fontSize, fit } = connectionLabelTextFit(conn, box.width);
+  const weight = fontSize > 8 ? ' font-weight="500"' : '';
   return `        <g data-detail="context" ${focusEdgeAttrs(conn.from, conn.to, conn.label, index, conn.id)}${changeEdgeAttrs(changeReview, conn)}>
           <rect x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" rx="3" class="c-mask"/>
           <text x="${box.lx}" y="${box.ly}" class="${edgeLabelAccent(conn.variant)}" font-size="${fontSize}"${weight}${fit} text-anchor="middle">${renderChangeEdgePrefix(conn)}${esc(label)}</text>
@@ -2339,7 +2382,7 @@ function renderSvg() {
   // A complete repository architecture is allowed to use normal page scroll;
   // keep its common-desktop text at a comfortable reading size instead of
   // shrinking a semantically rich graph to the universal emergency floor.
-  const readerMinimumText = arch.meta?.viewBox ? '' : ' data-reader-min-text="7.5"';
+  const readerMinimumText = arch.meta?.viewBox ? '' : ` data-reader-min-text="${readerMinimumTextPx}"`;
   const readerPrimaryText = arch.meta?.viewBox ? '' : ' data-reader-primary-text="14"';
   return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(arch.meta)} ${NODE_CARD_ATTR}${readerFit}${readerMinimumText}${readerPrimaryText}>
 ${svgAccessibleText(arch.meta, 'architecture')}

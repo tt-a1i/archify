@@ -51,6 +51,51 @@ function availableSlots(frames, along, size, across, breadth, track, near, far) 
   return slots;
 }
 
+export function sideCardPortPreferences({ boxes, routes }, relations) {
+  const incident = new Map();
+  for (const { relation } of routes) {
+    if (relation.from === relation.to) continue;
+    for (const [id, peer, endpoint] of [[relation.from, relation.to, 'source'], [relation.to, relation.from, 'target']]) {
+      if (!incident.has(id)) incident.set(id, []);
+      incident.get(id).push({ relation, peer: boxes.get(peer), endpoint });
+    }
+  }
+  const preferences = new Map();
+  function prefer(relation, endpoint, side) {
+    if (!preferences.has(relation)) preferences.set(relation, {});
+    preferences.get(relation)[endpoint] = side;
+  }
+  for (const relation of relations) {
+    const from = boxes.get(relation.from);
+    const to = boxes.get(relation.to);
+    const facing = facingPortCorridor(from, to);
+    if (facing?.axis !== 1) continue;
+    for (const [side, level, toward, facingSide] of [
+      [from, to, 'source', facing.fromSide], [to, from, 'target', facing.toSide],
+    ]) {
+      const inColumn = peer => {
+        const lane = facingPortCorridor(level, peer);
+        return lane?.axis === 0 && lane.low <= lane.high;
+      };
+      if (!incident.get(level.id).some(({ peer }) => inColumn(peer))) continue;
+      const peers = incident.get(side.id).filter(({ peer }) => inColumn(peer));
+      if (!peers.length) continue;
+      const entrySide = toward === 'source' ? facing.toSide : facing.fromSide;
+      prefer(relation, toward, facingSide);
+      prefer(relation, toward === 'source' ? 'target' : 'source', entrySide);
+      // Widening the column gap changes the dominant axis. Keep links to
+      // other rows on the near vertical face of the side card, with a
+      // sideways approach to the chain so its vertical ports stay free.
+      for (const { relation: peerRelation, peer, endpoint } of peers) {
+        if (peer.x < side.x + side.width && side.x < peer.x + peer.width) continue;
+        prefer(peerRelation, endpoint, peer.cy < side.cy ? 'top' : 'bottom');
+        prefer(peerRelation, endpoint === 'source' ? 'target' : 'source', entrySide);
+      }
+    }
+  }
+  if (preferences.size) return (relation, endpoint) => preferences.get(relation)?.[endpoint];
+}
+
 // Use the finished placement so rank rotation, frame attachments and
 // later placement candidates all reserve space in the same coordinates.
 export function facingLabelSpacingCandidate({ boxes, routes, labels, titles }, horizontal) {
