@@ -72,7 +72,7 @@ test('Bottom node index preserves readable rows and native Viewer interaction', 
   assert.equal(bottom.nameWhiteSpace, 'normal');
   assert.equal(bottom.descriptionWhiteSpace, 'normal');
   assert.equal(bottom.nameOverflowWrap, 'anywhere');
-  assert.equal(bottom.groupDisplay, 'flex');
+  assert.equal(bottom.groupDisplay, 'grid');
   async function assertStackedItemLayout() {
     const items = await run(`(() => [...document.querySelectorAll('[data-outline-node]')].map(item => {
       const firstLine = element => {
@@ -165,14 +165,25 @@ test('Bottom node index preserves readable rows and native Viewer interaction', 
   assert.equal(await run('document.querySelectorAll("[data-outline-node]").length > 0'), true);
 
   const wrappedInput = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/web-app.architecture.json'), 'utf8'));
-  wrappedInput.components = wrappedInput.components.filter(node => ['users', 'worker'].includes(node.id));
+  const baseUsers = wrappedInput.components.find(node => node.id === 'users');
+  const baseWorker = wrappedInput.components.find(node => node.id === 'worker');
   wrappedInput.boundaries = [];
   wrappedInput.connections = [];
-  wrappedInput.components.find(node => node.id === 'users').label = 'Cross-region authorization and audit service with durable recovery, compliance controls, and incident coordination';
-  wrappedInput.components.find(node => node.id === 'users').sublabel = 'Tenant-aware decisions with durable audit records and cross-region recovery';
-  wrappedInput.components.find(node => node.id === 'users').pos = [40, 40];
-  wrappedInput.components.find(node => node.id === 'users').size = [1100, 80];
-  wrappedInput.components.find(node => node.id === 'worker').pos = [1200, 40];
+  wrappedInput.components = [
+    { ...baseUsers, id: 'host', label: '宿主应用', sublabel: 'Codex / Claude Code / magpie 宿主', pos: [40, 40], size: [220, 80] },
+    { ...baseUsers, id: 'skill', label: 'SuperCodex Skill', sublabel: 'agent 调用说明', pos: [300, 40], size: [220, 80] },
+    { ...baseUsers, id: 'mcp', label: 'MCP stdio 服务', sublabel: 'JSON-RPC · 工具与资源', pos: [560, 40], size: [220, 80] },
+    { ...baseUsers, id: 'ui', label: '自包含 UI 资源', sublabel: '内联脚本与样式', pos: [820, 40], size: [220, 80] },
+    {
+      ...baseUsers,
+      id: 'users',
+      label: 'Cross-region authorization and audit service with durable recovery, compliance controls, and incident coordination',
+      sublabel: 'Tenant-aware decisions with durable audit records and cross-region recovery',
+      pos: [40, 160],
+      size: [1100, 80],
+    },
+    { ...baseWorker, id: 'worker', pos: [1200, 160] },
+  ];
   delete wrappedInput.components.find(node => node.id === 'worker').sublabel;
   const wrappedPath = path.join(scratch, 'wrapped.json');
   const wrappedArtifact = path.join(scratch, 'wrapped.html');
@@ -187,6 +198,35 @@ test('Bottom node index preserves readable rows and native Viewer interaction', 
     await run('Archify.readerLayout.whenStable()');
   }
   assert.equal(await run('document.documentElement.getAttribute("data-reader-rail")'), 'bottom');
+  const gridAlignment = await run(`(() => {
+    const items = [...document.querySelectorAll('.node-outline-group > ul > li')].map(li => {
+      const r = li.getBoundingClientRect();
+      const dot = li.querySelector('.node-outline-dot').getBoundingClientRect();
+      const strong = li.querySelector('strong').getBoundingClientRect();
+      const small = li.querySelector('small')?.getBoundingClientRect();
+      return {
+        id: li.querySelector('[data-outline-node]')?.dataset.outlineNode,
+        left: r.left,
+        top: r.top,
+        dotTop: dot.top,
+        strongTop: strong.top,
+        smallTop: small?.top ?? null,
+      };
+    });
+    const firstRowTop = items[0]?.top;
+    const firstRow = items.filter(item => Math.abs(item.top - firstRowTop) <= 2);
+    const wrappedRows = items.filter(item => item.top - firstRowTop > 2);
+    const misaligned = wrappedRows.filter(item => !firstRow.some(col => Math.abs(item.left - col.left) <= 1));
+    return { firstRow, wrappedRows, misaligned };
+  })()`);
+  assert.ok(gridAlignment.firstRow.length >= 2, `expected multi-column grid: ${JSON.stringify(gridAlignment)}`);
+  assert.ok(gridAlignment.wrappedRows.length >= 1, `expected wrapped second row: ${JSON.stringify(gridAlignment)}`);
+  assert.deepEqual(gridAlignment.misaligned, [], `expected uniform grid column alignment across rows: ${JSON.stringify(gridAlignment)}`);
+  const hostItem = gridAlignment.firstRow.find(item => item.id === 'host');
+  const skillItem = gridAlignment.firstRow.find(item => item.id === 'skill');
+  assert.ok(hostItem && skillItem, `expected host and skill items on first row: ${JSON.stringify(gridAlignment.firstRow)}`);
+  assert.ok(Math.abs(hostItem.dotTop - skillItem.dotTop) <= 1, 'mixed CJK/Latin items should align dot tops');
+  assert.ok(Math.abs(hostItem.smallTop - skillItem.smallTop) <= 1, 'mixed CJK/Latin items should align sublabel tops');
   const wrappedItems = await assertStackedItemLayout();
   assert.ok(wrappedItems.find(item => item.id === 'users').nameLines > 1);
   assert.equal(wrappedItems.find(item => item.id === 'worker').hasDescription, false);

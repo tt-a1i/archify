@@ -476,5 +476,17 @@
   "legend.change.added": "+ Aggiunto",
   "legend.change.modified": "~ Modificato",
   "legend.change.removed": "− Rimosso",
-  "legend.change.unchanged": "Invariato"
+  "legend.change.unchanged": "Invariato",
+  "viewer.feedback.label": "Feedback e supporto",
+  "viewer.feedback.tagline": "Trasforma tutto ciò che vuoi capire, pianificare o condividere in una visualizzazione interattiva.",
+  "viewer.feedback.trigger": "Feedback",
+  "viewer.feedback.issue": "Apri una issue",
+  "viewer.feedback.issueHint": "Segnala un bug o un suggerimento",
+  "viewer.feedback.email": "Invia email",
+  "viewer.feedback.copyEmail": "Copia indirizzo email",
+  "viewer.feedback.starPrompt": "Se Archify ti è stato utile",
+  "viewer.feedback.star": "Lascia una Star",
+  "viewer.feedback.starLabel": "Lascia una stella ad Archify su GitHub",
+  "viewer.feedback.starTitle": "Supporta Archify su GitHub",
+  "viewer.feedback.starBody": "Ogni stella ci aiuta a continuare a migliorarlo in open source."
 }
