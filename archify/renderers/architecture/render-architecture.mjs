@@ -17,7 +17,7 @@ import { junctionBends, junctionCandidates } from './junction-placement.mjs';
 import { frameLanePlacements } from './frame-lane-placement.mjs';
 import { facingLabelSpacingCandidate, labelBesideStraightShaft, sideCardPortPreferences } from './label-spacing-placement.mjs';
 import { placeCrossedLeaf, placeCrossedSinks, facingFramePlacements } from './crossed-leaf-placement.mjs';
-import { centeredFanOutCandidates, chainReflowCandidates, crossingPlacementCandidates, foldedChain, frameAttachmentCandidates, frameEnclosureCandidates, groupMoveCanPreserveRoutes, groupMovePreservesRoutes, measuredCrossingPairs, nearAlignmentCandidates, routeSpanMeasures, sharedNeighborCandidates, sharedSinkColumnCandidates, strongestLayerOrder, terminalBranchCandidates } from './automatic-placement-candidates.mjs';
+import { blockedLinkCount, centeredFanOutCandidates, chainReflowCandidates, crossingPlacementCandidates, directLinkCandidates, foldedChain, frameAttachmentCandidates, frameEnclosureCandidates, groupMoveCanPreserveRoutes, groupMovePreservesRoutes, measuredCrossingPairs, nearAlignmentCandidates, routeSpanMeasures, sharedNeighborCandidates, sharedSinkColumnCandidates, strongestLayerOrder, terminalBranchCandidates } from './automatic-placement-candidates.mjs';
 import {
   closeReciprocalLanes, createArchitectureRouter, connectionLabelBoxAt, parallelFrameRunLength,
   MIN_PARALLEL_DEPARTURE, parallelRunMeasures, READABLE_FRAME_GAP, READABLE_PORT_GAP,
@@ -1605,11 +1605,20 @@ function compactJunctions(initial) {
   return best;
 }
 
-function reflowSmallDiagrams(initial) {
+function reflowSmallDiagrams(initial, { direct = false } = {}) {
   if (!automaticComposition || initial.titles.boundaries.length || components.size > 12 || connections.length > 24
       || connections.some(connection => connection.fromSide !== undefined || connection.toSide !== undefined)) return initial;
-  const proposals = [...sharedSinkColumnCandidates(initial), ...chainReflowCandidates(initial)];
+  const proposals = [];
+  if (direct) {
+    for (const proposal of directLinkCandidates(initial)) {
+      proposals.push(proposal);
+      if (proposals.length === 24) break;
+    }
+  } else {
+    proposals.push(...sharedSinkColumnCandidates(initial), ...chainReflowCandidates(initial));
+  }
   if (!proposals.length) return initial;
+  const oldBlocked = direct ? blockedLinkCount(initial) : 0;
   const baseline = routeBudgetMetrics({ routedRelations: initial.routes });
   const before = routeSpanMeasures(initial.routes, initial.boxes, initial.viewBox);
   const oldCrossings = measuredCrossingPairs(initial.routes).length;
@@ -1625,7 +1634,18 @@ function reflowSmallDiagrams(initial) {
     const toward = (nextX - x) * (u - x) + (nextY - y) * (v - y) > 0;
     return toward && length <= Math.abs(x - u) + Math.abs(y - v) + 64;
   }
-  for (const { boxes, sideFor, fan, axis } of proposals) {
+  for (let { boxes, sideFor, fan, axis, links } of proposals) {
+    if (direct) {
+      let insetX = Infinity;
+      let insetY = Infinity;
+      for (const box of boxes.values()) {
+        insetX = Math.min(insetX, box.x - layout.margin);
+        insetY = Math.min(insetY, box.y - layout.margin);
+      }
+      boxes = new Map([...boxes].map(([id, box]) => [id, {
+        ...box, x: box.x - insetX, y: box.y - insetY, cx: box.cx - insetX, cy: box.cy - insetY,
+      }]));
+    }
     const bounds = boundsFor(boxes);
     const candidate = makeRouter(boxes, bounds, { separateRuns: true, sideFor });
     const placed = finishAutomaticLabels(resolveConnectionComposition(boxes, candidate.pathFor, bounds), true);
@@ -1637,12 +1657,18 @@ function reflowSmallDiagrams(initial) {
     if (crossings > oldCrossings || avoidable > oldBends.avoidable
         || budget.routesOverSuggestedBends > baseline.routesOverSuggestedBends
         || budget.routesOverSuggestedStretch > baseline.routesOverSuggestedStretch) continue;
+    const blocked = direct ? blockedLinkCount(next) : 0;
     if (fan) {
       if (spans.length >= before.length - 32 || next.routes.some((route, i) =>
         fan.has(route.relation) && !shortFacingRoute(route.points, spans.spans[i].length))) continue;
+    } else if (direct) {
+      if (bends > oldBends.bends || spans.length >= before.length
+          || blocked > oldBlocked
+          || next.routes.some((route, index) => links.includes(route.relation) && spans.spans[index].bends)) continue;
     } else if (bends > oldBends.bends || next.viewBox[axis] >= initial.viewBox[axis] * 0.8
         || next.viewBox[1 - axis] > (axis ? 1100 : 680)) continue;
-    const nextScore = [crossings, fan ? spans.length : next.viewBox[axis], bends, spans.length];
+    const nextScore = direct ? [crossings, blocked, bends, spans.length]
+      : [crossings, fan ? spans.length : next.viewBox[axis], bends, spans.length];
     if (score) {
       const index = nextScore.findIndex((value, index) => value !== score[index]);
       if (index === -1 || nextScore[index] >= score[index]) continue;
@@ -1666,9 +1692,10 @@ function reflowSmallDiagrams(initial) {
   return best;
 }
 
-const composition = reflowSmallDiagrams(compactJunctions(reserveFacingLabelSpace(improveFrameLanes(
+const reflowedComposition = reflowSmallDiagrams(compactJunctions(reserveFacingLabelSpace(improveFrameLanes(
   alignNearlyFacingCards(simplifyFinishedComposition(placedComposition)),
 ))));
+const composition = reflowSmallDiagrams(reflowedComposition, { direct: true });
 const {
   titles: { boundaries }, labels: connectionLabels, viewBox,
 } = composition;

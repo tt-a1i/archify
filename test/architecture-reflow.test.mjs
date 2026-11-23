@@ -97,3 +97,75 @@ test('an overwide chain folds into rows with straight relationships', t => {
   const { viewBox: [width, height] } = renderChain(t, 6, 1, true);
   assert.ok(width < 800 && height >= width / 1.75, `folded canvas is ${width} × ${height}`);
 });
+
+function assertDirectLink(layout, from, to, reciprocal = false) {
+  const forward = layout.connections.find(route => route.from === from && route.to === to);
+  const path = normalizeRoutePoints(forward.points);
+  assert.equal(path.length, 2, `${from} to ${to} has a straight shaft`);
+  const along = path[0][0] === path[1][0] ? 1 : 0;
+  const across = 1 - along;
+  const [start, end] = [path[0][along], path[1][along]].sort((a, b) => a - b);
+  for (const card of layout.components.filter(card => card.id !== from && card.id !== to)) {
+    const near = along ? card.y : card.x;
+    const far = near + (along ? card.height : card.width);
+    const acrossStart = along ? card.x : card.y;
+    const acrossSize = along ? card.width : card.height;
+    const lane = path[0][across];
+    assert.ok(far <= start || near >= end || lane < acrossStart || lane > acrossStart + acrossSize,
+      `${card.id} stays out of the direct link corridor`);
+  }
+  if (reciprocal) {
+    const reverse = layout.connections.find(route => route.from === to && route.to === from);
+    const back = normalizeRoutePoints(reverse.points);
+    assert.equal(back.length, 2, `${to} to ${from} has a straight shaft`);
+    assert.equal(back[0][across], back[1][across], 'both arrows follow the same axis');
+    assert.ok((path[1][along] - path[0][along]) * (back[1][along] - back[0][along]) < 0);
+    const separation = Math.abs(path[0][across] - back[0][across]);
+    assert.ok(separation >= 18 && separation <= 44, `shaft separation is ${separation}`);
+  }
+}
+
+const triangleCards = [['a', [120, 60]], ['b', [150, 60]], ['c', [146, 60]]];
+const triangleLinks = [['a', 'c', 'Load editor'], ['a', 'b', 'Start here'], ['b', 'c', 'Apply changes']];
+
+for (const reciprocal of [false, true]) for (const hasTail of [false, true]) {
+  test(`a ${reciprocal ? 'reciprocal' : 'one-way'} skip link passes beside the intermediate card${hasTail ? ' in a four-card flow' : ''}`, t => {
+    const cards = [...triangleCards, ...(hasTail ? [['d', [125, 60]]] : [])];
+    const links = [...triangleLinks, ...(reciprocal ? [['c', 'a', 'Notify host']] : []),
+      ...(hasTail ? [['c', 'd', 'Save output']] : [])];
+    const layout = render(t, cards, links);
+    assertDirectLink(layout, 'a', 'c', reciprocal);
+    assert.equal(crossingCount(layout.connections), 0);
+    assert.ok(layout.connections.reduce((sum, route) => sum + normalizeRoutePoints(route.points).length - 2, 0) <= 2);
+  });
+}
+
+test('a displaced intermediate card keeps its reciprocal neighbor aligned', t => {
+  const layout = render(t, [...triangleCards, ['d', [125, 60]], ['e', [150, 60]],
+    ...['g', 'h', 'i'].map(id => [id, [140, 60]])], [
+    triangleLinks[0], ['c', 'a', 'Notify host'], ...triangleLinks.slice(1),
+    ['a', 'g', 'Read storage'], ['c', 'h', 'Commit history'], ['c', 'i', 'Render shapes'],
+    ['b', 'd', 'Send updates'], ['d', 'b', 'Get updates'], ['b', 'e', 'Save output'],
+  ]);
+  assertDirectLink(layout, 'a', 'c', true);
+  assertDirectLink(layout, 'b', 'd', true);
+  assert.equal(crossingCount(layout.connections), 0);
+  assert.ok(layout.connections.reduce((sum, route) => sum + normalizeRoutePoints(route.points).length - 2, 0) <= 4);
+});
+
+test('a reciprocal skip link also clears an intermediate card in a column', t => {
+  const cards = triangleCards.map(([id], i) => [id, [300 + 8 * i, 60]]);
+  const layout = render(t, cards, [...triangleLinks, ['c', 'a', 'Notify host']]);
+  assertDirectLink(layout, 'a', 'c', true);
+  assert.equal(crossingCount(layout.connections), 0);
+  const { points } = layout.connections.find(route => route.from === 'a' && route.to === 'c');
+  assert.equal(points[0][0], points.at(-1)[0], 'the main flow keeps its vertical reading direction');
+});
+
+test('a diagonal reciprocal pair can align with another neighbor still attached', t => {
+  const layout = render(t, [...triangleCards, ['d', [125, 60]]], [
+    triangleLinks[0], ['c', 'a', 'Notify host'], ...triangleLinks.slice(1), ['b', 'd', 'Save output'],
+  ]);
+  assertDirectLink(layout, 'a', 'c', true);
+  assert.equal(crossingCount(layout.connections), 0);
+});

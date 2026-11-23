@@ -797,3 +797,150 @@ export function* chainReflowCandidates({ boxes, routes, viewBox: [width, height]
     }
   }
 }
+
+const placementAxes = [
+  { start: 'x', size: 'width', center: 'cx' },
+  { start: 'y', size: 'height', center: 'cy' },
+];
+
+function obstructedAxis(from, to, boxes) {
+  for (const [axis, along] of placementAxes.entries()) {
+    const across = placementAxes[1 - axis];
+    const low = Math.min(from[along.start] + from[along.size], to[along.start] + to[along.size]);
+    const high = Math.max(from[along.start], to[along.start]);
+    const lane = (from[across.center] + to[across.center]) / 2;
+    if (low >= high || Math.abs(from[across.center] - to[across.center]) > 12) continue;
+    const blockers = [...boxes.values()].filter(box => box[along.start] >= low
+      && box[along.start] + box[along.size] <= high
+      && box[across.start] < lane && box[across.start] + box[across.size] > lane);
+    if (blockers.length) return { axis, blockers };
+  }
+}
+
+export function blockedLinkCount({ boxes, routes }) {
+  return routes.filter(({ relation, points }) => points.length > 2
+    && obstructedAxis(boxes.get(relation.from), boxes.get(relation.to), boxes)).length;
+}
+
+export function* directLinkCandidates({ boxes, routes }) {
+  const neighbors = new Map([...boxes.keys()].map(id => [id, new Map()]));
+  for (const { relation } of routes) {
+    neighbors.get(relation.from).set(relation.to, relation);
+  }
+  const peers = id => [...boxes.keys()].filter(other => id !== other
+    && (neighbors.get(id).has(other) || neighbors.get(other).has(id)));
+  const considered = new Set();
+  const targets = [];
+  for (const { relation, points } of routes) {
+    const { from, to } = relation;
+    if (from === to || points.length <= 2 || considered.has(relation)) continue;
+    const reverse = neighbors.get(to).get(from);
+    const obstruction = obstructedAxis(boxes.get(from), boxes.get(to), boxes);
+    if (!obstruction && !reverse) continue;
+    const links = reverse ? [relation, reverse] : [relation];
+    for (const link of links) considered.add(link);
+    targets.push({ links, obstruction, first: boxes.get(from), second: boxes.get(to) });
+  }
+  // Spend the routing budget on blocked reciprocal links first, then
+  // blocked one-way links, then pairs that only need alignment.
+  const priority = ({ obstruction, links }) => obstruction ? links.length : 0;
+  targets.sort((a, b) => priority(b) - priority(a));
+  for (const { links, obstruction, first, second } of targets) {
+    const gap = links.reduce((value, link) => Math.max(value, horizontalLabelClearance(link)), 96);
+    if (!obstruction) {
+      for (const axis of [0, 1]) {
+        const along = placementAxes[axis];
+        const across = placementAxes[1 - axis];
+        for (const [anchor, peer] of [[first, second], [second, first]]) {
+          const pos = (peer[along.center] < anchor[along.center]
+            ? anchor[along.start] - peer[along.size] : anchor[along.start] + anchor[along.size]);
+          const direction = peer[along.center] < anchor[along.center] ? -1 : 1;
+          const beside = [peer[along.start], pos + direction * (axis ? 76 : gap)];
+          for (const start of beside) {
+            const aligned = anchor[across.center] - peer[across.size] / 2;
+            const moved = new Map(boxes).set(peer.id, axis ? move(peer, aligned, start) : move(peer, start, aligned));
+            if (cardsHaveClearance(moved)) yield { boxes: moved, links };
+          }
+        }
+      }
+      continue;
+    }
+    const { axis, blockers } = obstruction;
+    if (blockers.length !== 1) continue;
+    const [blocker] = blockers;
+    // A separate one-way input enters this flow at the intermediate card.
+    // Keep that entry path in place instead of moving it with the shortcut.
+    if (peers(blocker.id).some(id => id !== first.id && id !== second.id
+        && neighbors.get(id).has(blocker.id) && !neighbors.get(blocker.id).has(id))) continue;
+    const along = placementAxes[axis];
+    const across = placementAxes[1 - axis];
+    const place = (box, a, b) => axis ? move(box, b, a) : move(box, a, b);
+    const [leading, trailing] = first[along.start] < second[along.start] ? [first, second] : [second, first];
+    const leavesOf = id => peers(id).filter(peer => peers(peer).length === 1);
+    const leaves = leavesOf(blocker.id).map(id => boxes.get(id));
+    const partner = leaves.find(box => neighbors.get(box.id).has(blocker.id) && neighbors.get(blocker.id).has(box.id));
+    const [leadingSide, trailingSide] = axis ? ['top', 'bottom'] : ['left', 'right'];
+    const acrossSides = axis ? ['left', 'right'] : ['top', 'bottom'];
+    function* fit(moved, direction) {
+      const sideFor = (link, endpoint) => {
+        const id = endpoint === 'source' ? link.from : link.to;
+        if (links.includes(link)) return id === leading.id ? trailingSide : leadingSide;
+        const peer = endpoint === 'source' ? link.to : link.from;
+        if (id === blocker.id && (peer === leading.id || peer === trailing.id)) return peer === leading.id ? leadingSide : trailingSide;
+        if (peer === blocker.id && (id === leading.id || id === trailing.id)) return acrossSides[direction > 0 ? 1 : 0];
+      };
+      if (!cardsHaveClearance(moved)) return;
+      yield { boxes: moved, links, sideFor };
+      const aligned = new Map(moved);
+      for (const endpoint of [leading, trailing]) for (const id of leavesOf(endpoint.id)) {
+        const anchor = moved.get(endpoint.id);
+        const leaf = moved.get(id);
+        if (Math.abs(leaf[across.center] - anchor[across.center]) < (leaf[across.size] + anchor[across.size]) / 2 + 24) continue;
+        const next = place(leaf, anchor[along.center] - leaf[along.size] / 2, leaf[across.start]);
+        if (next[along.start] === leaf[along.start]
+            || [...aligned.values()].some(box => box.id !== id && rectsOverlap(box, next, 24))) continue;
+        aligned.set(id, next);
+      }
+      if ([...aligned.values()].some(box => moved.get(box.id) !== box)) yield { boxes: aligned, links, sideFor };
+    }
+    const originalGap = trailing[along.start] - leading[along.start] - leading[along.size];
+    const minimumGap = axis ? 72 : gap;
+    const gaps = new Set([minimumGap, blocker[along.size] + 20, blocker[along.size] + 56, originalGap]
+      .map(value => Math.min(originalGap, Math.max(minimumGap, value))));
+    const adjacentGaps = axis ? [56, 88] : [72, 104];
+    for (const targetGap of gaps) for (const direction of [1, -1]) for (const spacing of adjacentGaps) {
+      const moved = new Map(boxes);
+      const shift = targetGap - originalGap;
+      for (const [id, box] of boxes) {
+        if (box[along.center] >= trailing[along.center]) {
+          moved.set(id, place(box, box[along.start] + shift, box[across.start]));
+        }
+      }
+      const near = direction > 0
+        ? Math.max(leading[across.start] + leading[across.size], trailing[across.start] + trailing[across.size])
+        : Math.min(leading[across.start], trailing[across.start]) - blocker[across.size];
+      // Center the displaced card between the facing edges. With unequal
+      // endpoint widths, centering between the cards can crowd one elbow.
+      const blockerAlong = (leading[along.start] + leading[along.size] + moved.get(trailing.id)[along.start]
+        - blocker[along.size]) / 2;
+      const blockerAcross = near + direction * spacing;
+      moved.set(blocker.id, place(blocker, blockerAlong, blockerAcross));
+      yield* fit(new Map(moved), direction);
+      if (!partner) continue;
+      const beyond = direction > 0 ? blockerAcross + blocker[across.size] : blockerAcross - partner[across.size];
+      moved.set(partner.id, place(partner, blockerAlong + (blocker[along.size] - partner[along.size]) / 2,
+        beyond + direction * spacing));
+      yield* fit(moved, direction);
+      for (const other of leaves) {
+        if (other === partner) continue;
+        const otherGap = Math.max(96, horizontalLabelClearance(neighbors.get(blocker.id).get(other.id)
+          ?? neighbors.get(other.id).get(blocker.id)));
+        const side = other[along.center] < blocker[along.center] ? -1 : 1;
+        const pos = side > 0 ? blockerAlong + blocker[along.size] + otherGap : blockerAlong - other[along.size] - otherGap;
+        const alternate = new Map(moved).set(other.id, place(other, pos,
+          blockerAcross + (blocker[across.size] - other[across.size]) / 2));
+        yield* fit(alternate, direction);
+      }
+    }
+  }
+}
