@@ -172,6 +172,33 @@ visual explanation skill across technical and everyday scenarios:
 年假规划、月薪分配、求职状态跟踪，到网络协议科普、业务方案推演与代码仓库
 源码实证架构图，都可以用同一套 Archify 技能快速生成并继续迭代扩展。
 
+### 2.4 Repository diagnosis, Story video and PR walkthroughs
+
+- **Architecture Diagnosis (Code Analysis)** is built into the Skill with no extra
+  install. `archify code-analysis prepare <repo> --out <dir>` writes one offline
+  `repo.analysis.html`: a radial dependency star map (the Atlas), a rotatable 3D
+  model and ranked findings (dependency cycles, coupling, complexity hotspots,
+  layer-rule breaks), each linked to its source with a copyable fix task for the
+  agent. Paired with an architecture diagram, each component shows its issue
+  count and undrawn dependencies are flagged. After a repository-backed
+  architecture diagram, the agent offers Diagnosis once and runs it only if the
+  user agrees. Supported languages: JS/TS, Python, Java, Go, Rust, C and C++
+  (Go, Rust and C/C++ need their own toolchains). Findings come from static
+  analysis of one revision, not runtime traces.
+- **Story walkthroughs** add a guided story to any native diagram: a Story mode
+  with timeline and captions, and a 1080p, 60 fps video export (WebM or MP4).
+  `story stage|svg|video` can also choreograph several diagrams into one offline
+  stage page, animated SVG or video.
+- **PR walkthroughs** mark changes directly on the diagram and can attach
+  light and dark diagrams to a GitHub PR or GitLab MR. The optional `archify-pr`
+  companion Skill offers this while preparing a PR, only for material diffs.
+
+中文摘要：Skill 内置架构诊断（Code Analysis），无需额外安装：生成离线 HTML，
+包含依赖星图、可旋转 3D 模型和带源码链接与修复任务的发现（循环依赖、耦合、
+复杂度热点、分层违规），支持 JS/TS、Python、Java、Go、Rust、C、C++，结论来自
+静态分析而非运行时追踪。任意图可加导览故事并导出 1080p、60 fps 视频；PR 改动
+可直接标在图上并附到 GitHub PR 或 GitLab MR。
+
 ## 3. Supported agents and prerequisites
 
 Archify works with agents that can read and write local files and run Node.js,

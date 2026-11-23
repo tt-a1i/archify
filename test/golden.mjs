@@ -217,9 +217,10 @@ const webApp = fs.readFileSync(path.join(repoRoot, 'examples/web-app.html'), 'ut
 // Viewer styles in the document head and executable scripts pass through
 // applyTemplate untouched. Renderer-owned SVG styles are covered by golden renders.
 for (const tag of ['style', 'script']) {
-  // The guided-view JSON script is generated from meta.views; compare only
-  // template-owned executable scripts, not per-diagram data payloads.
-  const isTemplateOwned = (block) => !block.includes('type="application/json"');
+  // Compare the shared Viewer blocks. This example has no repository pin,
+  // so it omits the Code Analysis launcher stylesheet as well as evidence data.
+  const isTemplateOwned = (block) => !block.includes('type="application/json"') &&
+    !block.startsWith('<style id="code-analysis-entry-style">');
   const t = blocks(template, tag).filter((b) => !b.includes('[PROJECT NAME]') && isTemplateOwned(b));
   const viewerHtml = tag === 'style' ? webApp.slice(0, webApp.indexOf('</head>')) : webApp;
   const w = blocks(viewerHtml, tag).filter((b) => !b.includes('Sample Web App') && isTemplateOwned(b));

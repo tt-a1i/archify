@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="dark light">
-  <meta name="generator" content="archify 3.2.1-dev.1">
+  <meta name="generator" content="archify 3.3.1-dev.1">
   <meta name="archify-reader-contract" content="declared-wide-v1">
   <title>[PROJECT NAME] Architecture Diagram</title>
   <script>
@@ -3029,15 +3029,14 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     html[data-reader-rail="bottom"] .node-outline-group + .node-outline-group { margin-top: 0; }
     html[data-reader-rail="bottom"] .node-outline-group:has(> .node-outline-heading) { padding-bottom: 0.25rem; }
     html[data-reader-rail="bottom"] .node-outline-group > ul {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.25rem 0.5rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr));
+      align-items: start;
+      gap: 0.25rem 0.75rem;
     }
     html[data-reader-rail="bottom"] .node-outline-group > ul::before { display: none; }
     html[data-reader-rail="bottom"] .node-outline-group li {
-      flex: 0 1 auto;
-      min-width: min(100%, 12rem);
-      max-width: min(100%, 32rem);
+      min-width: 0;
     }
     html[data-reader-rail="bottom"] .node-outline-heading {
       justify-content: flex-start;
@@ -3260,14 +3259,18 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     .node-outline-item[data-previewing] small,
     .node-outline-item[aria-current="true"] small { color: var(--text-muted); }
 
-    /* The desktop bottom rail is an index: compact rows keep related nodes
-       together while allowing full names and descriptions to wrap naturally. */
+    /* The desktop bottom rail is an index: uniform columns align across rows and
+       groups while allowing full names and descriptions to wrap naturally. */
     html[data-reader-rail="bottom"] .node-outline-item {
       grid-template-columns: 0.625rem minmax(0, 1fr) 0.75rem;
-      align-items: first baseline;
+      align-items: start;
+      row-gap: 0.125rem;
       column-gap: 0.375rem;
       min-height: 0;
       padding-block: 0.375rem;
+    }
+    html[data-reader-rail="bottom"] .node-outline-item .node-outline-dot {
+      margin-top: 0.3125rem;
     }
     html[data-reader-rail="bottom"] .node-outline-item strong,
     html[data-reader-rail="bottom"] .node-outline-item small {
@@ -3279,10 +3282,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     html[data-reader-rail="bottom"] .node-outline-item strong {
       grid-column: 2;
       grid-row: 1;
+      line-height: 1.4;
     }
     html[data-reader-rail="bottom"] .node-outline-item small {
       grid-column: 2;
       grid-row: 2;
+      line-height: 1.35;
       text-align: left;
     }
     html[data-reader-rail="bottom"] .node-outline-item::after {
@@ -3515,6 +3520,498 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     .toolbar { gap: 0.5rem; }
     .toolbar #btn-export { margin-left: 0; }
     .toolbar #btn-export::before { inset: 0.25rem 0; border-radius: 0.6875rem; }
+
+    /* Colophon footer: Archify mark on the left, centered GitHub Star pill-in-pill
+       with hover card, and Feedback popover on the right. Excluded from exports,
+       print, embed and Presentation Stage. */
+    .page-feedback {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 0.75rem 1.25rem;
+      width: 100%;
+      max-width: var(--archify-reader-width, 1440px);
+      margin: 1.5rem auto 0;
+      padding: 1rem 0 0;
+      border-top: 1px solid color-mix(in srgb, var(--panel-border) 75%, transparent);
+      color: var(--text-muted);
+      font-size: 0.8125rem;
+      line-height: 1.4;
+    }
+    .page-feedback-brand {
+      justify-self: start;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.625rem;
+      min-width: 0;
+      color: var(--text);
+      text-decoration: none;
+    }
+    .page-feedback-brand:hover .page-feedback-name { color: var(--frontend-stroke); }
+    .page-feedback-mark {
+      display: inline-block;
+      width: 2rem;
+      height: 2rem;
+      border-radius: 0.5625rem;
+      box-shadow: inset 0 0 0 1px var(--panel-border);
+      background: var(--panel) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 360' fill='none'%3E%3Cpath d='M151 94 81 164C67 178 60 191 60 212V248H97V212C97 204 100 199 106 193L179 120Z' fill='%230856F5'/%3E%3Cpath d='M238 135C252 132 261 126 270 116L321 167C334 180 339 194 339 213V248H303V213C303 204 300 199 294 193Z' fill='%231DBBB7'/%3E%3Crect x='146' y='16' width='110' height='104' rx='30' fill='%230856F5'/%3E%3Crect x='18' y='238' width='110' height='104' rx='28' fill='%230856F5'/%3E%3Crect x='274' y='238' width='108' height='104' rx='28' fill='%231DBBB7'/%3E%3C/svg%3E") center / 1.1875rem 1.07rem no-repeat;
+      flex-shrink: 0;
+    }
+    .page-feedback-words {
+      display: grid;
+      gap: 0.25rem;
+      min-width: 0;
+    }
+    .page-feedback-name {
+      font-size: 0.84375rem;
+      font-weight: 650;
+      line-height: 1;
+      letter-spacing: -0.01em;
+      color: var(--text);
+      transition: color 0.15s ease;
+    }
+    .page-feedback-tagline {
+      font-size: 0.71875rem;
+      line-height: 1.3;
+      color: var(--text-muted);
+    }
+    .page-feedback-menu {
+      justify-self: end;
+      position: relative;
+    }
+    .page-feedback-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      height: 1.875rem;
+      padding: 0 0.75rem;
+      border: 1px solid var(--panel-border);
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--panel) 85%, transparent);
+      color: var(--text);
+      font-size: 0.75rem;
+      font-weight: 500;
+      line-height: 1;
+      text-decoration: none;
+      cursor: pointer;
+      user-select: none;
+      list-style: none;
+      transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+    }
+    .page-feedback-btn::-webkit-details-marker { display: none; }
+    .page-feedback-btn:hover,
+    .page-feedback-menu[open] > .page-feedback-btn {
+      border-color: color-mix(in srgb, var(--text) 28%, var(--panel-border));
+      background: var(--panel);
+    }
+    .page-feedback-icon,
+    .page-feedback-item-icon {
+      display: inline-block;
+      flex-shrink: 0;
+      background: currentColor;
+      -webkit-mask: var(--fb-glyph) center / contain no-repeat;
+      mask: var(--fb-glyph) center / contain no-repeat;
+    }
+    .page-feedback-icon { width: 0.8125rem; height: 0.8125rem; color: var(--text-muted); }
+    .page-feedback-btn:hover .page-feedback-icon,
+    .page-feedback-menu[open] > .page-feedback-btn .page-feedback-icon { color: var(--text); }
+    .page-feedback-icon[data-icon="chat"] { --fb-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.5 3.5h11a1 1 0 0 1 1 1v6.2a1 1 0 0 1-1 1H6.6L3.5 14v-2.3h-1a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1Z'/%3E%3C/svg%3E"); }
+    .page-feedback-item-icon { width: 0.9375rem; height: 0.9375rem; color: var(--text-muted); margin-top: 0.0625rem; }
+    .page-feedback-item-icon[data-icon="issue"] { --fb-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='8' cy='8' r='6'/%3E%3Ccircle cx='8' cy='8' r='1.2' fill='black' stroke='none'/%3E%3C/svg%3E"); }
+    .page-feedback-item-icon[data-icon="mail"] { --fb-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='3.2' width='12' height='9.6' rx='1.6'/%3E%3Cpath d='m2.6 4.2 5.4 4.1 5.4-4.1'/%3E%3C/svg%3E"); }
+    .page-feedback-item-icon[data-icon="copy"] { --fb-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='5.5' y='5.5' width='8' height='8' rx='1.5'/%3E%3Cpath d='M10.5 5.5V3.8A1.3 1.3 0 0 0 9.2 2.5H3.8A1.3 1.3 0 0 0 2.5 3.8v5.4a1.3 1.3 0 0 0 1.3 1.3h1.7'/%3E%3C/svg%3E"); }
+    .page-feedback-menu:not([open]) > .page-feedback-popover { display: none; }
+    .page-feedback-popover {
+      position: absolute;
+      bottom: calc(100% + 0.5rem);
+      inset-inline-end: 0;
+      z-index: 40;
+      width: 15rem;
+      padding: 0.375rem;
+      border: 1px solid var(--panel-border);
+      border-radius: 0.875rem;
+      background: var(--toolbar-menu-bg, var(--panel));
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.28), 0 2px 8px rgba(0, 0, 0, 0.12);
+      backdrop-filter: blur(12px);
+    }
+    html[data-theme="light"] .page-feedback-popover {
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12), 0 2px 6px rgba(15, 23, 42, 0.05);
+    }
+    .page-feedback-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.625rem;
+      width: 100%;
+      padding: 0.5rem 0.625rem;
+      border: 0;
+      border-radius: 0.5625rem;
+      background: transparent;
+      color: var(--text);
+      font: inherit;
+      text-align: start;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background-color 0.12s ease;
+    }
+    .page-feedback-item:hover,
+    .page-feedback-item:focus-visible {
+      background: color-mix(in srgb, var(--text) 7%, transparent);
+    }
+    .page-feedback-item-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 0.125rem;
+      min-width: 0;
+    }
+    .page-feedback-item-copy strong {
+      font-size: 0.78125rem;
+      font-weight: 550;
+      line-height: 1.3;
+      color: var(--text);
+    }
+    .page-feedback-item-copy span {
+      font-size: 0.71875rem;
+      line-height: 1.3;
+      color: var(--text-muted);
+      overflow-wrap: anywhere;
+    }
+    .page-feedback-copy.is-copied .page-feedback-item-copy strong,
+    .page-feedback-copy.is-copied .page-feedback-item-icon {
+      color: var(--backend-stroke, #16a34a);
+    }
+    .page-feedback-divider {
+      height: 1px;
+      margin: 0.25rem 0.5rem;
+      background: color-mix(in srgb, var(--panel-border) 80%, transparent);
+    }
+    .page-feedback-star-wrap {
+      justify-self: center;
+      position: relative;
+      display: inline-flex;
+    }
+    .page-feedback-star {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5625rem;
+      padding: 0.1875rem 0.25rem 0.1875rem 0.75rem;
+      border: 1px solid color-mix(in srgb, var(--panel-border) 88%, transparent);
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--panel) 70%, transparent);
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      line-height: 1;
+      text-decoration: none;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+    }
+    .page-feedback-star:hover {
+      border-color: color-mix(in srgb, #e2a421 55%, var(--panel-border));
+      background: var(--panel);
+      color: var(--text);
+    }
+    .page-feedback-gh {
+      display: inline-block;
+      width: 0.875rem;
+      height: 0.875rem;
+      flex-shrink: 0;
+      background: currentColor;
+      opacity: 0.78;
+      -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='black' d='M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z'/%3E%3C/svg%3E") center / contain no-repeat;
+      mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='black' d='M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z'/%3E%3C/svg%3E") center / contain no-repeat;
+    }
+    .page-feedback-star:hover .page-feedback-gh { opacity: 1; }
+    .page-feedback-star-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3125rem;
+      height: 1.625rem;
+      padding: 0 0.6875rem;
+      border: 1px solid color-mix(in srgb, #e2a421 38%, var(--panel-border));
+      border-radius: 999px;
+      background: color-mix(in srgb, #e2a421 12%, var(--panel));
+      color: var(--text);
+      font-size: 0.75rem;
+      font-weight: 600;
+      transition: border-color 0.15s ease, background-color 0.15s ease;
+    }
+    .page-feedback-star:hover .page-feedback-star-pill {
+      border-color: color-mix(in srgb, #e2a421 68%, var(--panel-border));
+      background: color-mix(in srgb, #e2a421 20%, var(--panel));
+    }
+    .page-feedback-star-arrow { opacity: 0.55; font-size: 0.6875rem; }
+    .page-feedback-star-tip {
+      position: absolute;
+      bottom: calc(100% + 0.5rem);
+      left: 50%;
+      z-index: 40;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      width: 16rem;
+      max-width: calc(100vw - 2rem);
+      padding: 0.625rem 0.75rem;
+      border: 1px solid var(--panel-border);
+      border-radius: 0.875rem;
+      background: var(--toolbar-menu-bg, var(--panel));
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.28), 0 2px 8px rgba(0, 0, 0, 0.12);
+      backdrop-filter: blur(12px);
+      text-align: start;
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+      transform: translate(-50%, 4px);
+      transition: opacity 0.16s ease, transform 0.16s ease, visibility 0.16s;
+    }
+    html[data-theme="light"] .page-feedback-star-tip {
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12), 0 2px 6px rgba(15, 23, 42, 0.05);
+    }
+    .page-feedback-star-tip strong {
+      font-size: 0.78125rem;
+      font-weight: 600;
+      line-height: 1.3;
+      color: var(--text);
+    }
+    .page-feedback-star-tip span {
+      font-size: 0.71875rem;
+      line-height: 1.45;
+      color: var(--text-muted);
+    }
+    .page-feedback-star-wrap:is(:hover, :focus-within) .page-feedback-star-tip {
+      opacity: 1;
+      visibility: visible;
+      transform: translate(-50%, 0);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .page-feedback-star-tip { transform: translateX(-50%); transition: opacity 0.12s ease, visibility 0.12s; }
+    }
+    .page-feedback-star .diagram-guide-star { width: 0.8125rem; height: 0.8125rem; color: #e2a421; }
+    .page-feedback-star:hover .diagram-guide-star {
+      -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M8 1.6l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.4l-3.8 2 .7-4.3-3.1-3 4.3-.6z' stroke='black' stroke-width='1.3' stroke-linejoin='round'/%3E%3C/svg%3E");
+      mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M8 1.6l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.4l-3.8 2 .7-4.3-3.1-3 4.3-.6z' stroke='black' stroke-width='1.3' stroke-linejoin='round'/%3E%3C/svg%3E");
+    }
+    .page-feedback :is(a, summary, button):focus-visible { outline: 2px solid var(--frontend-stroke); outline-offset: 2px; }
+    html[data-embed="true"] .page-feedback,
+    html[data-present="true"] .page-feedback { display: none; }
+    @media (max-width: 960px) {
+      .page-feedback { display: flex; flex-wrap: wrap; justify-content: space-between; }
+    }
+    @media (max-width: 560px) {
+      .page-feedback-popover { inset-inline-end: auto; inset-inline-start: 0; }
+      .page-feedback-star-tip { left: 0; transform: translateY(4px); }
+      .page-feedback-star-wrap:is(:hover, :focus-within) .page-feedback-star-tip { transform: translateY(0); }
+    }
+    @media (forced-colors: active) {
+      .page-feedback-star .diagram-guide-star { forced-color-adjust: none; background: LinkText; }
+      .page-feedback-gh, .page-feedback-icon, .page-feedback-item-icon { forced-color-adjust: none; background: ButtonText; }
+    }
+
+    #code-analysis-dialog {
+      --analysis-accent: var(--frontend-stroke);
+      box-sizing: border-box;
+      width: min(35rem, calc(100% - 2rem));
+      max-width: none;
+      max-height: calc(100% - 2rem);
+      margin: auto;
+      overflow: auto;
+      padding: clamp(1.125rem, 4vw, 1.625rem);
+      border: 1px solid color-mix(in srgb, var(--panel-border) 80%, var(--analysis-accent));
+      border-radius: 1.125rem;
+      background: var(--panel);
+      background-image:
+        radial-gradient(120% 70% at 0% 0%, color-mix(in srgb, var(--analysis-accent) 11%, transparent), transparent 62%),
+        linear-gradient(var(--toolbar-menu-bg), var(--toolbar-menu-bg));
+      color: var(--text);
+      box-shadow: 0 1.5rem 4rem -1rem rgba(2, 6, 23, 0.45), 0 0 0 1px color-mix(in srgb, var(--text) 4%, transparent) inset;
+      font-size: 0.875rem;
+      line-height: 1.55;
+      overflow-wrap: anywhere;
+    }
+    #code-analysis-dialog[open] { animation: analysis-info-in 180ms cubic-bezier(.2, .8, .2, 1); }
+    #code-analysis-dialog::backdrop { background: rgba(2, 6, 23, 0.5); backdrop-filter: blur(3px); }
+    @keyframes analysis-info-in { from { opacity: 0; transform: translateY(6px) scale(.985); } }
+    @media (prefers-reduced-motion: reduce) { #code-analysis-dialog[open] { animation: none; } }
+    .analysis-info-header {
+      display: flex;
+      align-items: center;
+      gap: 0.875rem;
+    }
+    .analysis-info-mark {
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+      width: 3rem;
+      height: 3rem;
+      border-radius: 0.875rem;
+      color: var(--analysis-accent);
+      background:
+        linear-gradient(135deg, color-mix(in srgb, var(--analysis-accent) 18%, transparent), color-mix(in srgb, var(--backend-stroke) 12%, transparent));
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--analysis-accent) 28%, transparent) inset;
+    }
+    .analysis-info-mark::before {
+      content: "";
+      width: 2.25rem;
+      height: 2.25rem;
+      background: currentColor;
+      -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='24' cy='24' r='17' stroke-width='1.25' opacity='.4'/%3E%3Ccircle cx='24' cy='24' r='9.5' stroke-width='1.25' opacity='.6'/%3E%3Cpath d='M24 24V7M24 24l14.7 8.5M24 24 9.3 32.5M24 24l8.2-6.6M24 24l-8.2-6.6M24 24v9.5' stroke-width='1.5'/%3E%3Cg fill='black' stroke='none'%3E%3Ccircle cx='24' cy='7' r='2.6'/%3E%3Ccircle cx='38.7' cy='32.5' r='2.6'/%3E%3Ccircle cx='9.3' cy='32.5' r='2.6'/%3E%3Ccircle cx='32.2' cy='17.4' r='1.8'/%3E%3Ccircle cx='15.8' cy='17.4' r='1.8'/%3E%3Ccircle cx='24' cy='33.5' r='1.8'/%3E%3Ccircle cx='24' cy='24' r='3.4'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat;
+      mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='24' cy='24' r='17' stroke-width='1.25' opacity='.4'/%3E%3Ccircle cx='24' cy='24' r='9.5' stroke-width='1.25' opacity='.6'/%3E%3Cpath d='M24 24V7M24 24l14.7 8.5M24 24 9.3 32.5M24 24l8.2-6.6M24 24l-8.2-6.6M24 24v9.5' stroke-width='1.5'/%3E%3Cg fill='black' stroke='none'%3E%3Ccircle cx='24' cy='7' r='2.6'/%3E%3Ccircle cx='38.7' cy='32.5' r='2.6'/%3E%3Ccircle cx='9.3' cy='32.5' r='2.6'/%3E%3Ccircle cx='32.2' cy='17.4' r='1.8'/%3E%3Ccircle cx='15.8' cy='17.4' r='1.8'/%3E%3Ccircle cx='24' cy='33.5' r='1.8'/%3E%3Ccircle cx='24' cy='24' r='3.4'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat;
+    }
+    .analysis-info-heading { min-width: 0; }
+    .analysis-info-header h2 {
+      margin: 0 0 0.3rem;
+      font-size: 1.1875rem;
+      font-weight: 650;
+      letter-spacing: -0.01em;
+      line-height: 1.25;
+    }
+    .analysis-info-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      margin: 0;
+      padding: 0.125rem 0.5rem;
+      border-radius: 0.625rem;
+      color: var(--text-muted);
+      background: color-mix(in srgb, var(--text) 6%, transparent);
+      font-size: 0.75rem;
+      line-height: 1.4;
+    }
+    .analysis-info-badge::before {
+      content: "";
+      width: 0.375rem;
+      height: 0.375rem;
+      border-radius: 50%;
+      background: var(--backend-stroke);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--backend-stroke) 22%, transparent);
+    }
+    .analysis-info-header form { margin-inline-start: auto; align-self: flex-start; }
+    .analysis-info-features {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.625rem;
+      margin: 1.25rem 0;
+      padding: 0;
+      list-style: none;
+    }
+    .analysis-info-features li {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      padding: 0.8125rem 0.875rem 0.875rem;
+      border: 1px solid color-mix(in srgb, var(--panel-border) 85%, transparent);
+      border-radius: 0.75rem;
+      background: color-mix(in srgb, var(--text) 3%, transparent);
+      color: var(--text);
+      font-size: 0.8125rem;
+      line-height: 1.5;
+    }
+    .analysis-info-copy { display: flex; flex-direction: column; gap: 0.125rem; min-width: 0; }
+    .analysis-info-copy strong { font-size: 0.875rem; font-weight: 650; color: var(--text); }
+    .analysis-info-copy > span { color: var(--text-muted); }
+    .analysis-info-features li[data-feature="star"] { --feature: var(--frontend-stroke); --feature-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='8.5' opacity='.45'/%3E%3Cpath d='M12 12V3.5M12 12l7.4 4.2M12 12l-7.4 4.2'/%3E%3Ccircle cx='12' cy='12' r='2' fill='black'/%3E%3C/svg%3E"); }
+    .analysis-info-features li[data-feature="model"] { --feature: var(--database-stroke); --feature-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3 20 7.5v9L12 21l-8-4.5v-9z'/%3E%3Cpath d='M4 7.5 12 12l8-4.5M12 12v9'/%3E%3C/svg%3E"); }
+    .analysis-info-features li[data-feature="counts"] { --feature: var(--messagebus-stroke); --feature-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='6' width='12' height='12' rx='2.5'/%3E%3Ccircle cx='17.5' cy='6.5' r='3.5' fill='black'/%3E%3C/svg%3E"); }
+    .analysis-info-features li[data-feature="fix"] { --feature: var(--backend-stroke); --feature-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m8 8-4 4 4 4M16 8l4 4-4 4'/%3E%3Cpath d='M13.5 5 10.5 19' opacity='.6'/%3E%3C/svg%3E"); }
+    .analysis-info-icon {
+      display: grid;
+      place-items: center;
+      width: 1.875rem;
+      height: 1.875rem;
+      border-radius: 0.5625rem;
+      background: color-mix(in srgb, var(--feature) 16%, transparent);
+    }
+    .analysis-info-icon::before {
+      content: "";
+      width: 1.125rem;
+      height: 1.125rem;
+      background: var(--feature);
+      -webkit-mask: var(--feature-icon) center / contain no-repeat;
+      mask: var(--feature-icon) center / contain no-repeat;
+    }
+    .analysis-info-start {
+      padding-top: 1.125rem;
+      border-top: 1px solid color-mix(in srgb, var(--panel-border) 85%, transparent);
+    }
+    .analysis-info-start p { margin: 0; }
+    .analysis-info-ask {
+      margin-bottom: 0.5rem !important;
+      color: var(--text-muted);
+      font-size: 0.8125rem;
+    }
+    .analysis-info-bubble {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 0.75rem 0.75rem 1rem;
+      border: 1px solid color-mix(in srgb, var(--analysis-accent) 32%, var(--panel-border));
+      border-radius: 0.875rem 0.875rem 0.875rem 0.25rem;
+      background: color-mix(in srgb, var(--analysis-accent) 8%, transparent);
+    }
+    .analysis-info-prompt { flex: 1 1 14rem; min-width: 0; }
+    .analysis-info-start q {
+      font-size: 0.9375rem;
+      font-weight: 650;
+      color: var(--text);
+    }
+    .analysis-info-start q:lang(zh) { quotes: "「" "」"; }
+    #code-analysis-dialog button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      min-height: 2.75rem;
+      border: 1px solid var(--panel-border);
+      border-radius: 0.625rem;
+      background: var(--toolbar-menu-bg);
+      color: var(--text);
+      padding: 0.375rem 0.875rem;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    #code-analysis-dialog .analysis-info-glyph {
+      width: 1.125rem;
+      height: 1.125rem;
+      flex: 0 0 auto;
+      background: currentColor;
+      -webkit-mask: var(--glyph) center / contain no-repeat;
+      mask: var(--glyph) center / contain no-repeat;
+    }
+    #code-analysis-dialog .analysis-info-close .analysis-info-glyph { --glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 5l10 10M15 5 5 15'/%3E%3C/svg%3E"); }
+    #code-analysis-copy .analysis-info-glyph { --glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='7' y='7' width='9' height='9' rx='2'/%3E%3Cpath d='M13 4.5H6A1.5 1.5 0 0 0 4.5 6v7'/%3E%3C/svg%3E"); }
+    #code-analysis-dialog button:focus-visible { outline: 2px solid var(--analysis-accent); outline-offset: 2px; }
+    #code-analysis-dialog #code-analysis-copy {
+      border-color: transparent;
+      background: var(--text);
+      color: var(--toolbar-menu-bg);
+    }
+    #code-analysis-dialog #code-analysis-copy:hover { background: color-mix(in srgb, var(--text) 86%, var(--toolbar-menu-bg)); }
+    #code-analysis-dialog .analysis-info-close {
+      min-width: 2.75rem;
+      padding: 0;
+      border-color: transparent;
+      background: transparent;
+      color: var(--text-muted);
+    }
+    #code-analysis-dialog .analysis-info-close:hover { background: color-mix(in srgb, var(--text) 8%, transparent); color: var(--text); }
+    #code-analysis-copy-status { color: var(--backend-stroke); font-size: 0.8125rem; font-weight: 600; }
+    #code-analysis-copy-status:not(:empty) { margin-top: 0.5rem; }
+    @media (max-width: 30rem) {
+      .analysis-info-features { grid-template-columns: 1fr; }
+      .analysis-info-features li { flex-direction: row; align-items: flex-start; gap: 0.75rem; }
+      .analysis-info-icon { flex: 0 0 auto; }
+      .analysis-info-bubble #code-analysis-copy { flex: 1 1 100%; }
+    }@media (forced-colors: active) {
+      #code-analysis-dialog .analysis-info-glyph,
+      .analysis-info-mark::before,
+      .analysis-info-icon::before,
+      .analysis-info-badge::before { forced-color-adjust: none; background: CanvasText; }
+      #code-analysis-dialog #code-analysis-copy .analysis-info-glyph { background: ButtonText; }
+      #code-analysis-dialog .analysis-info-close { border-color: ButtonText; }
+    }
+
+
     /* Tools share one quiet capsule; the capsule is drawn inside the 44px row
        so the controls keep their hit area without a tall visible box. */
     .toolbar-group {
@@ -4145,6 +4642,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         margin-left: auto;
         margin-bottom: 1rem;
       }
+      .toolbar:has(> #code-analysis-info) { flex-wrap: wrap; }
       .header { margin-bottom: 1.25rem; padding-right: 0; }
       html[data-preset="signal-flow"] .header,
       html[data-preset="blueprint"] .header,
@@ -5500,6 +5998,54 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       .focus-chip[data-explaining="true"] { overflow: hidden; }
     }
   </style>
+  <!-- ARCHIFY:DIAGNOSIS_START -->
+  <style id="code-analysis-entry-style">
+    /* The Code Analysis entry in the diagram toolbar: the static information
+       button, the live launcher before a run and the layer toggle after it
+       (#btn-bauify, overlay.js). It sits before Export, drawn as its own capsule
+       like the tool group, so Export stays the one primary action at the end. */
+    .toolbar .analysis-entry { padding-inline: 0.75rem 0.8rem; color: var(--text); }
+    .toolbar .analysis-entry::before {
+      inset: 0.25rem 0;
+      border: 1px solid color-mix(in srgb, var(--panel-border) 85%, transparent);
+      border-radius: 0.6875rem;
+      background: color-mix(in srgb, var(--panel) 78%, transparent);
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 20px -14px rgba(15, 23, 42, 0.22);
+      backdrop-filter: blur(12px);
+    }
+    .toolbar .analysis-entry:hover::before,
+    .toolbar .analysis-entry[aria-expanded="true"]::before { background: color-mix(in srgb, var(--text) 6%, var(--panel)); }
+    .toolbar .analysis-entry[aria-pressed="true"]::before {
+      border-color: color-mix(in srgb, var(--backend-stroke, #34D399) 55%, transparent);
+      background: color-mix(in srgb, var(--backend-stroke, #34D399) 14%, var(--panel));
+    }
+    .toolbar .analysis-entry:disabled { cursor: default; color: var(--text-muted); }
+    .toolbar .analysis-entry[aria-busy="true"] { cursor: progress; }
+    .analysis-entry-icon {
+      width: 0.95rem; height: 0.95rem; flex: 0 0 auto; background: currentColor;
+      -webkit-mask: var(--analysis-entry-icon) center / contain no-repeat;
+      mask: var(--analysis-entry-icon) center / contain no-repeat;
+      --analysis-entry-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12h4l3-8 4 16 3-8h4'/%3E%3C/svg%3E");
+    }
+    .analysis-entry[aria-pressed="true"] .analysis-entry-icon { color: var(--backend-stroke, #34D399); }
+    .analysis-entry[aria-busy="true"] .analysis-entry-icon {
+      --analysis-entry-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M12 3a9 9 0 1 0 9 9'/%3E%3C/svg%3E");
+      animation: analysis-entry-spin 0.9s linear infinite;
+    }
+    @keyframes analysis-entry-spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .analysis-entry[aria-busy="true"] .analysis-entry-icon { animation: none; } }
+    /* The finding count is generated content, so the button's text stays its label. */
+    .analysis-entry[data-count]::after {
+      content: attr(data-count);
+      min-width: 1.25rem; padding: 0.0625rem 0.375rem; box-sizing: border-box;
+      border-radius: 999px; text-align: center;
+      font-size: 0.6875rem; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.1rem;
+      color: var(--text-muted); background: color-mix(in srgb, var(--text) 9%, transparent);
+    }
+    .analysis-entry[aria-pressed="true"][data-count]::after { color: var(--text); background: color-mix(in srgb, var(--backend-stroke, #34D399) 22%, transparent); }
+    .analysis-entry[data-tone="error"][data-count]::after { color: #fff; background: #E11D48; }
+  </style>
+  <!-- ARCHIFY:DIAGNOSIS_END -->
 </head>
 <body>
   <!-- Toolbar: theme, live visual style, trace motion, presentation stage, and export.
@@ -5565,6 +6111,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       <span id="present-label">{{i18n:viewer.present.present}}</span>
     </button>
     </div>
+    <!-- ARCHIFY:DIAGNOSIS_START -->
+    <button id="code-analysis-info" class="analysis-entry" type="button"
+            aria-haspopup="dialog" aria-expanded="false" aria-controls="code-analysis-dialog">
+      <span class="analysis-entry-icon" aria-hidden="true"></span>
+      <span>{{i18n:viewer.diagnosis.button}}</span>
+    </button>
+    <!-- ARCHIFY:DIAGNOSIS_END -->
     <div class="export-wrap">
       <button id="btn-export" type="button"
               title="{{i18n:viewer.export.button.title}}"
@@ -6025,6 +6578,96 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
   </div>
 
+  <!-- ARCHIFY:FEEDBACK_START -->
+  <footer class="page-feedback no-print" aria-label="{{i18n:viewer.feedback.label}}">
+    <a class="page-feedback-brand" href="https://github.com/tt-a1i/archify" target="_blank" rel="noopener noreferrer">
+      <span class="page-feedback-mark" aria-hidden="true"></span>
+      <span class="page-feedback-words">
+        <span class="page-feedback-name">Archify</span>
+        <span class="page-feedback-tagline">{{i18n:viewer.feedback.tagline}}</span>
+      </span>
+    </a>
+    <span class="page-feedback-star-wrap">
+      <a class="page-feedback-star" href="https://github.com/tt-a1i/archify" target="_blank" rel="noopener noreferrer" aria-label="{{i18n:viewer.feedback.starLabel}}" aria-describedby="page-feedback-star-tip">
+        <span class="page-feedback-gh" aria-hidden="true"></span>
+        <span class="page-feedback-star-prompt">{{i18n:viewer.feedback.starPrompt}}</span>
+        <span class="page-feedback-star-pill">
+          <span class="diagram-guide-star" aria-hidden="true"></span>
+          <span>{{i18n:viewer.feedback.star}}</span>
+          <span class="page-feedback-star-arrow" aria-hidden="true">&#8599;</span>
+        </span>
+      </a>
+      <span class="page-feedback-star-tip" id="page-feedback-star-tip" role="tooltip">
+        <strong>{{i18n:viewer.feedback.starTitle}}</strong>
+        <span>{{i18n:viewer.feedback.starBody}}</span>
+      </span>
+    </span>
+    <details class="page-feedback-menu" id="page-feedback-menu">
+      <summary class="page-feedback-btn">
+        <span class="page-feedback-icon" data-icon="chat" aria-hidden="true"></span>
+        <span>{{i18n:viewer.feedback.trigger}}</span>
+      </summary>
+      <div class="page-feedback-popover" role="menu" aria-label="{{i18n:viewer.feedback.trigger}}">
+        <a class="page-feedback-item" role="menuitem" href="https://github.com/tt-a1i/archify/issues/new/choose" target="_blank" rel="noopener noreferrer">
+          <span class="page-feedback-item-icon" data-icon="issue" aria-hidden="true"></span>
+          <span class="page-feedback-item-copy">
+            <strong>{{i18n:viewer.feedback.issue}}</strong>
+            <span>{{i18n:viewer.feedback.issueHint}}</span>
+          </span>
+        </a>
+        <a class="page-feedback-item" role="menuitem" href="mailto:2801884530@qq.com?subject=Archify%20feedback">
+          <span class="page-feedback-item-icon" data-icon="mail" aria-hidden="true"></span>
+          <span class="page-feedback-item-copy">
+            <strong>{{i18n:viewer.feedback.email}}</strong>
+            <span>2801884530@qq.com</span>
+          </span>
+        </a>
+        <div class="page-feedback-divider" role="separator"></div>
+        <button class="page-feedback-item page-feedback-copy" type="button" role="menuitem" data-copy-email="2801884530@qq.com">
+          <span class="page-feedback-item-icon" data-icon="copy" aria-hidden="true"></span>
+          <span class="page-feedback-item-copy">
+            <strong data-copy-label>{{i18n:viewer.feedback.copyEmail}}</strong>
+          </span>
+        </button>
+      </div>
+    </details>
+  </footer>
+  <!-- ARCHIFY:FEEDBACK_END -->
+
+  <!-- ARCHIFY:DIAGNOSIS_START -->
+  <dialog id="code-analysis-dialog" class="no-print" aria-labelledby="code-analysis-title">
+    <header class="analysis-info-header">
+      <span class="analysis-info-mark" aria-hidden="true"></span>
+      <div class="analysis-info-heading">
+        <h2 id="code-analysis-title">{{i18n:viewer.diagnosis.title}}</h2>
+        <p class="analysis-info-badge">{{i18n:viewer.diagnosis.local}}</p>
+      </div>
+      <form method="dialog">
+        <button class="analysis-info-close" type="submit" aria-label="{{i18n:viewer.common.close}}" autofocus><span class="analysis-info-glyph" aria-hidden="true"></span></button>
+      </form>
+    </header>
+    <ul class="analysis-info-features">
+      <li data-feature="star"><span class="analysis-info-icon" aria-hidden="true"></span><span class="analysis-info-copy"><strong>{{i18n:viewer.diagnosis.starMapTitle}}</strong> <span>{{i18n:viewer.diagnosis.starMap}}</span></span></li>
+      <li data-feature="model"><span class="analysis-info-icon" aria-hidden="true"></span><span class="analysis-info-copy"><strong>{{i18n:viewer.diagnosis.modelTitle}}</strong> <span>{{i18n:viewer.diagnosis.model}}</span></span></li>
+      <li data-feature="counts"><span class="analysis-info-icon" aria-hidden="true"></span><span class="analysis-info-copy"><strong>{{i18n:viewer.diagnosis.countsTitle}}</strong> <span>{{i18n:viewer.diagnosis.counts}}</span></span></li>
+      <li data-feature="fix"><span class="analysis-info-icon" aria-hidden="true"></span><span class="analysis-info-copy"><strong>{{i18n:viewer.diagnosis.findingsTitle}}</strong> <span>{{i18n:viewer.diagnosis.findings}}</span></span></li>
+    </ul>
+    <section class="analysis-info-start">
+      <p class="analysis-info-ask">{{i18n:viewer.diagnosis.ask}}</p>
+      <div class="analysis-info-bubble">
+        <div class="analysis-info-prompt">
+          <p><q id="code-analysis-prompt">{{i18n:viewer.diagnosis.prompt}}</q></p>
+        </div>
+        <button id="code-analysis-copy" type="button">
+          <span class="analysis-info-glyph" aria-hidden="true"></span>
+          <span>{{i18n:viewer.diagnosis.copy}}</span>
+        </button>
+      </div>
+      <div id="code-analysis-copy-status" role="status"></div>
+    </section>
+  </dialog>
+  <!-- ARCHIFY:DIAGNOSIS_END -->
+
   <script>
     var Archify = {};
     var archifyI18nData = (function () {
@@ -6070,7 +6713,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       } catch (_) { return null; }
     }
 
-    function copyReaderText(value) {
+    function copyReaderText(value, container) {
       function fallbackCopy() {
         var previousFocus = document.activeElement;
         var field = document.createElement('textarea');
@@ -6078,7 +6721,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         field.setAttribute('readonly', '');
         field.style.position = 'fixed';
         field.style.opacity = '0';
-        document.body.appendChild(field);
+        (container || document.body).appendChild(field);
         field.select();
         var copied = false;
         try { copied = document.execCommand('copy'); } catch (_) {}
@@ -6096,6 +6739,71 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       return Promise.resolve(fallbackCopy());
     }
+
+    (function () {
+      var trigger = document.getElementById('code-analysis-info');
+      if (!trigger) return;
+      var dialog = document.getElementById('code-analysis-dialog');
+      var status = document.getElementById('code-analysis-copy-status');
+      trigger.addEventListener('click', function () {
+        status.textContent = '';
+        dialog.showModal();
+        trigger.setAttribute('aria-expanded', 'true');
+      });
+      dialog.addEventListener('close', function () {
+        trigger.setAttribute('aria-expanded', 'false');
+        trigger.focus({ preventScroll: true });
+      });
+      // Keep Viewer shortcuts outside the modal while allowing native dialog keys.
+      dialog.addEventListener('keydown', function (event) { event.stopPropagation(); });
+      dialog.addEventListener('click', function (event) {
+        if (event.target !== dialog) return;
+        var bounds = dialog.getBoundingClientRect();
+        if (event.clientX < bounds.left || event.clientX > bounds.right ||
+            event.clientY < bounds.top || event.clientY > bounds.bottom) dialog.close();
+      });
+      document.getElementById('code-analysis-copy').addEventListener('click', function () {
+        var prompt = document.getElementById('code-analysis-prompt').textContent;
+        copyReaderText(prompt, dialog).then(function (copied) {
+          status.textContent = viewerText(copied ? 'viewer.common.copied' : 'viewer.common.copyFailed');
+        });
+      });
+    })();
+
+    (function () {
+      var menu = document.getElementById('page-feedback-menu');
+      if (!menu) return;
+      var summary = menu.querySelector('summary');
+      var copyBtn = menu.querySelector('[data-copy-email]');
+      var copyTimer = null;
+      document.addEventListener('click', function (event) {
+        if (menu.open && !menu.contains(event.target)) menu.open = false;
+      });
+      menu.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && menu.open) {
+          event.stopPropagation();
+          menu.open = false;
+          if (summary) summary.focus({ preventScroll: true });
+        }
+      });
+      if (copyBtn) {
+        var label = copyBtn.querySelector('[data-copy-label]');
+        var initialText = label ? label.textContent : '';
+        copyBtn.addEventListener('click', function () {
+          var email = copyBtn.getAttribute('data-copy-email') || '';
+          copyReaderText(email, menu).then(function (copied) {
+            if (!label) return;
+            label.textContent = viewerText(copied ? 'viewer.common.copied' : 'viewer.common.copyFailed');
+            copyBtn.classList.toggle('is-copied', Boolean(copied));
+            clearTimeout(copyTimer);
+            copyTimer = setTimeout(function () {
+              label.textContent = initialText;
+              copyBtn.classList.remove('is-copied');
+            }, 1800);
+          });
+        });
+      }
+    })();
 
     function hasDrawableGeometry(element) {
       if (!element || element.hasAttribute('data-ambient-flow-overlay')) return false;
@@ -6141,7 +6849,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
       attachToolbarNavigation(
         document.querySelector('.toolbar'),
-        ':scope > .toolbar-group > button, :scope > .toolbar-group > .preset-wrap > #btn-preset, :scope > .export-wrap > #btn-export'
+        ':scope > .toolbar-group > button, :scope > .toolbar-group > .preset-wrap > #btn-preset, :scope > .analysis-entry, :scope > .export-wrap > #btn-export'
       );
       attachToolbarNavigation(document.querySelector('.diagram-nav'), ':scope > button');
       attachToolbarNavigation(document.querySelector('.rail-controls'), ':scope > button');
@@ -11262,6 +11970,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       // otherwise it starts collapsed and the reader can still open it.
       var RAIL_COMFORT_PRIMARY_PX = 12;
       var railPanel = shell && shell.querySelector('.reader-rail');
+      var feedback = document.querySelector('.page-feedback');
       var railReveal = document.getElementById('rail-reveal');
       var railCollapse = document.getElementById('rail-collapse');
       var railPlacement = document.getElementById('rail-placement');
@@ -11449,10 +12158,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       function fitBottomCards() {
         return fitCards && html.getAttribute('data-reader-rail') === 'bottom' && visible(cards);
       }
-      // The diagram can pass containment on its own when bottom notes need
-      // to scroll. First-screen card fitting is best effort.
+      // The diagram can pass containment on its own when bottom notes or the
+      // page colophon sit below the fold. First-screen card fitting is best effort.
       function belowFold() {
-        return html.getAttribute('data-reader-rail') === 'bottom' ? outerHeight(railPanel) : 0;
+        return (html.getAttribute('data-reader-rail') === 'bottom' ? outerHeight(railPanel) : 0) +
+          outerHeight(feedback);
       }
       // A docked rail may run past a short diagram down to the viewport floor,
       // so the index uses that space instead of scrolling inside the diagram's
