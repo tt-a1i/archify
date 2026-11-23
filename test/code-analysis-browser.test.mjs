@@ -7,7 +7,9 @@ import { test } from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { ChromeVisualBrowser, findChrome } from '../archify/bin/visual-check.mjs';
 import { startAnalysisView } from '../archify/modules/code-analysis/bin/serve.mjs';
+import { assertOfflineArtifact } from './helpers/offline-fonts.mjs';
 
+const cli = fileURLToPath(new URL('../archify/bin/archify.mjs', import.meta.url));
 const chrome = process.env.ARCHIFY_CHROME ? findChrome() : null;
 
 test('Code Analysis highlights exact duplicate characters and retains both locations through source navigation', {
@@ -399,10 +401,22 @@ test('Code Analysis refuses changed IR and preserves captured source in the curr
   const git = (...args) => execFileSync('git', ['-C', root, ...args], { encoding: 'utf8' });
   git('init', '-q'); git('config', 'user.name', 'Test'); git('config', 'user.email', 'test@example.invalid');
   git('add', '.'); git('commit', '-qm', 'Browser fixture');
+  const url = 'https://github.com/example/analysis-fixture';
+  git('remote', 'add', 'origin', url);
+  const repository = { url, revision: git('rev-parse', 'HEAD').trim(), link_mode: 'local-only' };
   fs.writeFileSync(path.join(root, 'a.mjs'), "import './b.mjs';\n// Saved but not committed.\n");
   const ir = path.join(scratch, 'input.json');
   // app -> lib is drawn; the code also imports lib -> app, which the diagram does not draw.
-  const original = JSON.stringify({ schema_version: 1, diagram_type: 'architecture', meta: { title: 'Analysis browser regression', output: 'architecture.html' }, components: [{ id: 'app', type: 'backend', label: 'App', pos: [40, 40], size: [170, 64] }, { id: 'lib', type: 'backend', label: 'Lib', pos: [320, 40], size: [170, 64] }], connections: [{ from: 'app', to: 'lib' }] });
+  const source = {
+    schema_version: 1, diagram_type: 'architecture',
+    meta: { title: 'Analysis browser regression', output: 'architecture.html', repository },
+    components: [
+      { id: 'app', type: 'backend', label: 'App', pos: [40, 40], size: [170, 64], sources: [{ path: 'a.mjs' }] },
+      { id: 'lib', type: 'backend', label: 'Lib', pos: [320, 40], size: [170, 64] },
+    ],
+    connections: [{ from: 'app', to: 'lib' }],
+  };
+  const original = JSON.stringify(source);
   fs.writeFileSync(ir, original);
   const map = path.join(scratch, 'map.json');
   fs.writeFileSync(map, JSON.stringify({ app: ['a'], lib: ['b'] }));
@@ -420,14 +434,103 @@ test('Code Analysis refuses changed IR and preserves captured source in the curr
     return response.result?.value;
   };
   const wait = expression => run(`new Promise((resolve, reject) => { const start = Date.now(); const poll = () => { if (${expression}) return resolve(true); if (Date.now() - start > 10000) return reject(new Error('Timed out waiting for UI')); setTimeout(poll, 25); }; poll(); })`);
-  const load = async () => {
+  const load = async (url = view.url) => {
     const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
-    await send('Page.navigate', { url: view.url });
+    await send('Page.navigate', { url });
     await loaded;
     await run('document.fonts.ready');
   };
+  const render = (doc, name) => {
+    const input = path.join(scratch, `${name}.json`);
+    const output = path.join(scratch, `${name}.html`);
+    fs.writeFileSync(input, JSON.stringify(doc));
+    execFileSync(process.execPath, [cli, 'render', doc.diagram_type, input, output, '--repo-root', root]);
+    return output;
+  };
+  await t.test('the offline diagnosis entry is gated, keyboard accessible, localized and absent from exports', async () => {
+    const workflow = JSON.parse(fs.readFileSync(new URL('../archify/examples/agent-tool-call.workflow.json', import.meta.url), 'utf8'));
+    workflow.meta.repository = repository;
+    workflow.nodes[0].sources = [{ path: 'a.mjs' }];
+    const unpinned = {
+      ...source,
+      meta: { title: source.meta.title, output: 'unpinned.html' },
+      components: source.components.map(({ sources, ...component }) => component),
+    };
+    for (const file of [render(unpinned, 'unpinned'), render(workflow, 'workflow')]) {
+      assert.doesNotMatch(fs.readFileSync(file, 'utf8'), /<(?:button|dialog) id="code-analysis-/);
+    }
+
+    const key = async (key, windowsVirtualKeyCode) => {
+      await send('Input.dispatchKeyEvent', { type: 'keyDown', key, code: key, windowsVirtualKeyCode, text: key === 'Enter' ? '\r' : undefined });
+      await send('Input.dispatchKeyEvent', { type: 'keyUp', key, code: key, windowsVirtualKeyCode });
+    };
+    await send('Emulation.setDeviceMetricsOverride', { width: 375, height: 700, deviceScaleFactor: 1, mobile: true });
+    const publicRepository = { url, revision: repository.revision };
+    const localized = render({
+      ...source, meta: { ...source.meta, locale: 'zh-CN', repository: publicRepository },
+    }, 'localized');
+    // The prompt targets the reader's own project, so a pinned public repository stays out of it.
+    for (const [file, theme, label, title, prompt] of [
+      [view.delivered, 'dark', 'Code Analysis', 'Architecture Diagnosis', 'Use Archify to create an architecture diagram for this project and start Architecture Diagnosis.'],
+      [localized, 'light', '架构诊断', '架构诊断', '用 Archify 为当前项目生成架构图，并启动架构诊断'],
+    ]) {
+      const html = fs.readFileSync(file, 'utf8');
+      assertOfflineArtifact(html, file);
+      assert.ok(!html.includes(scratch), 'the local checkout path stays off the page');
+      await load(`${pathToFileURL(file).href}?theme=${theme}`);
+      await run("document.getElementById('btn-export').focus()");
+      await key('ArrowLeft', 37);
+      assert.deepEqual(await run("[document.activeElement.id, document.activeElement.textContent.trim()]"), ['code-analysis-info', label]);
+      assert.ok(await run(`[...document.querySelectorAll('.toolbar > button, .toolbar #btn-export')].every(button => {
+        const bounds = button.getBoundingClientRect();
+        return bounds.left >= 0 && bounds.right <= innerWidth;
+      })`), 'the toolbar fits the viewport');
+      await key('Enter', 13);
+      assert.deepEqual(await run(`(() => {
+        const dialog = document.querySelector('dialog:modal');
+        const rect = dialog.getBoundingClientRect();
+        return [dialog.querySelector('h2').textContent, dialog.querySelectorAll('li').length, document.activeElement.className,
+          rect.left >= 8 && rect.right <= innerWidth - 8 && rect.top >= 8 && rect.bottom <= innerHeight - 8,
+          getComputedStyle(dialog).backgroundColor === getComputedStyle(document.querySelector('.diagram-container')).backgroundColor];
+      })()`), [title, 4, 'analysis-info-close', true, true]);
+      assert.equal(await run("document.querySelector('dialog:modal').innerText.includes(" + JSON.stringify(url) + ")"), false);
+      await run("Object.defineProperty(navigator, 'clipboard', { value: { writeText: async text => { window.copiedPrompt = text; } } })");
+      await key('Tab', 9);
+      assert.equal(await run('document.activeElement.id'), 'code-analysis-copy');
+      await key('Enter', 13);
+      assert.equal(await run('window.copiedPrompt'), prompt);
+      await key('Escape', 27);
+      await wait("document.getElementById('code-analysis-info').getAttribute('aria-expanded') === 'false'");
+      assert.equal(await run('document.activeElement.id'), 'code-analysis-info');
+      await key('Enter', 13);
+      assert.equal(await run("Boolean(document.querySelector('dialog:modal'))"), true);
+      for (const type of ['mousePressed', 'mouseReleased']) {
+        await send('Input.dispatchMouseEvent', { type, x: 2, y: 2, button: 'left', clickCount: 1 });
+      }
+      await wait("document.getElementById('code-analysis-info').getAttribute('aria-expanded') === 'false'");
+      assert.equal(await run('document.activeElement.id'), 'code-analysis-info');
+    }
+
+    await key('Enter', 13);
+    const svgSources = await run(`(async () => {
+      const sources = [], createUrl = URL.createObjectURL;
+      URL.createObjectURL = blob => {
+        if (blob.type.startsWith('image/svg+xml')) sources.push(blob.text());
+        return createUrl.call(URL, blob);
+      };
+      HTMLAnchorElement.prototype.click = () => {};
+      await Archify.exportMenu.run('svg');
+      await Archify.exportMenu.run('png');
+      await Archify.motion.recordWebm({ duration: 350, fps: 10 });
+      return Promise.all(sources);
+    })()`);
+    assert.equal(svgSources.length, 3, 'each export serialized a diagram SVG');
+    for (const svg of svgSources) assert.doesNotMatch(svg, /code-analysis-|analysis-info-|analysis-entry|启动架构诊断/);
+  });
   await send('Emulation.setDeviceMetricsOverride', { width: 1600, height: 1000, deviceScaleFactor: 1, mobile: false });
   await load();
+  assert.deepEqual(await run("[...document.querySelectorAll('.toolbar .analysis-entry')].map(button => button.id)"), ['code-analysis-start']);
+  assert.equal(await run("document.getElementById('code-analysis-dialog')"), null);
   fs.writeFileSync(ir, original.replace('"app"', '"after"'));
   await run("document.getElementById('code-analysis-start').click()");
   await wait("document.getElementById('code-analysis-note').textContent.includes('Architecture has changed.')");
@@ -448,6 +551,7 @@ test('Code Analysis refuses changed IR and preserves captured source in the curr
   await load();
   await run("document.getElementById('code-analysis-start').click()");
   await wait("document.documentElement.getAttribute('data-bauify') === 'on'");
+  assert.deepEqual(await run("[...document.querySelectorAll('.toolbar .analysis-entry')].map(button => button.id)"), ['btn-bauify']);
   // The reader is a fly-out over the diagram: it starts closed, with the project overview as its home.
   assert.equal(await run("document.getElementById('bauify-overview').hidden"), false);
   assert.deepEqual(await run("[document.getElementById('bauify-reader').classList.contains('fly-closed'), document.getElementById('bauify-reader').inert, document.documentElement.hasAttribute('data-bauify-fly')]"), [true, true, false]);

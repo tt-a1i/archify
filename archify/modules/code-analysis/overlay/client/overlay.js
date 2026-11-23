@@ -15,6 +15,8 @@
   if (!externalToggle) btn.id = 'btn-bauify'; btn.type = 'button'; btn.setAttribute('aria-pressed', 'false');
   btn.title = tr("Show or hide the code analysis layer (C)"); btn.textContent = tr("Code Analysis");
   if (!externalToggle) {
+    document.getElementById('code-analysis-info')?.remove();
+    document.getElementById('code-analysis-dialog')?.remove();
     // Same capsule as the launcher it replaces (entry.css), placed before Export.
     var entryIcon = document.createElement('span'); entryIcon.className = 'analysis-entry-icon'; entryIcon.setAttribute('aria-hidden', 'true');
     btn.className = 'analysis-entry'; btn.prepend(entryIcon);
