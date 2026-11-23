@@ -4,6 +4,8 @@ Community DeepSeek Harness integration for [Archify](https://github.com/tt-a1i/a
 
 The currently published npm package is **v1.1.0**. It bundles Archify Skill **3.2.0** and supports the exact developer-preview **`@deepseek-ai/dsh@0.2.1-rc.2`** on Node.js **`^22.19.0 || >=24.0.0`**. The 1.1 adapter contract covers this exact DSH host version; it does not make the host stable or guarantee compatibility with other DSH versions.
 
+Release candidate **1.2.0** is prepared in `release.json` and `package.json`: it bundles **Archify 3.3.0** pinned to stable `main` commit `af3aaf3c36762f2afb62a4a09533f6c7273b07e5` (the `v3.3.0` tag) and targets the exact developer-preview **`@deepseek-ai/dsh@0.2.2-rc.5`**. Once tagged (`archify-dsh-v1.2.0`), passed through the three-platform release gate, and published to npm, the published release lines and install examples below will advance to `1.2.0`.
+
 Version 1.1.0 was published on 2026-11-08: [npm package](https://www.npmjs.com/package/@tt-a1i/archify-dsh/v/1.1.0) · [release and verified tarball](https://github.com/tt-a1i/archify/releases/tag/archify-dsh-v1.1.0). It is a Skill-only bundle: it inserts one filesystem Skill provider named `archify-plugin` and exposes **Archify 3.2.0**, pinned to stable `main` commit `edf158c4e7a1d18d20cc329840f864289634c090`. This snapshot includes the Apache-2.0 transition (`9c306ee89`) and the standalone third-party notice fix (`edf158c4e`) that landed after the `v3.2.0` tag; it is not a byte-for-byte copy of that tag. Both bundled version manifests declare 3.2.0. It adds the ERD, Class, Tree, Timeline and Waterfall types from 3.1 and the one-page explainer from 3.2, and it is the first adapter release that sets `includeDefaultRoots: true`. The adapter remains MIT-licensed; the bundled Skill is Apache-2.0 and retains historical MIT grants and third-party notices. Inspect `LICENSE`, `LICENSE-MIT`, `NOTICE` and `THIRD_PARTY_NOTICES.md` in the actual bundled Skill, not just the outer package's license field.
 
 Version 1.0.0 (2026-10-04) bundled **Archify 3.0.1**, pinned to `main` commit `7158026e852f3aa6578c741e673b46d7878c92c1`, and supported `@deepseek-ai/dsh@0.1.2-rc.1`. It included the Skill installation fix from [#704](https://github.com/tt-a1i/archify/pull/704) after the `v3.0.1` tag, and it set `includeDefaultRoots: false`, which 1.1.0 fixes. Its [release record](https://github.com/tt-a1i/archify/releases/tag/archify-dsh-v1.0.0) remains the reference for that host.
@@ -89,6 +91,23 @@ For each new target:
 2. Compare the adapter's consumed surface against both exact official host revisions: bundle metadata, patch parsing/activation and `baseUrl`, filesystem provider configuration and Skill loading, and manifest/dependency compatibility checks. Separate Host, Web Client and standalone Skill CLI APIs. A migration card applies only if this adapter uses that surface; record missing version edges rather than treating a zero-hit scan as a complete audit.
 3. Baseline the existing package contracts. For an approved implementation change, rerun affected checks and real isolated installation, discovery/load, installed CLI smoke, same-profile upgrade and uninstall. Keep dependency cohorts coherent. Do not run a community verifier or its install lifecycle scripts implicitly, widen peer ranges, grant version exemptions, or disable security scanning to obtain a pass.
 4. Attach the tested artifact digest, source/host coordinates, date and results to the release record. Explicitly distinguish reused results from new-head checks and missing native-platform coverage. Change the support statement only after the proposed scope has its own acceptance evidence; publication remains a separate action.
+
+### Review recorded on 2026-11-23 (`0.2.1-rc.2` → `0.2.2-rc.5`)
+
+Official DeepSeek Harness tags compared for the 1.2.0 release candidate:
+
+| Host | Official source commit |
+| --- | --- |
+| `0.2.1-rc.2` | [`687f282e8625c6b8d11ff58211a90524be2e4317`](https://github.com/deepseek-ai/deepseek-harness/tree/687f282e8625c6b8d11ff58211a90524be2e4317) |
+| `0.2.2-rc.5` | [`9c2670d3bce5275e0d1610272958121af87787bb`](https://github.com/deepseek-ai/deepseek-harness/tree/9c2670d3bce5275e0d1610272958121af87787bb) |
+
+| Actual touchpoint | Finding across those sources | Consequence for this adapter |
+| --- | --- | --- |
+| `packages/boot/app-boot/src/plugin-compatibility.ts` | Byte-identical (`2e4ca5736a`). | No peer compatibility change; adapter keeps zero `@deepseek-ai/dsh*` peer dependencies. |
+| `vendor/loader/src/config/utils.ts` | Byte-identical (`8e28be0c4c`). | `!!js` expression context (`baseUrl` / `createRequire`) is unchanged. |
+| `packages/boot/app-boot/src/profile.ts` | Moves shipped templates into `@deepseek-ai/dsh-official-bundles`, reads `optionalDependencies`, and adds optional `assertBundlePlatform(bundle.platforms, process.platform)`. | Single `dsh.bundle.patch` string and `cordis.patch.yml` loading are unchanged; adapter omits `platforms` and stays cross-platform. |
+| `packages/skill/skill-filesystem/src/index.ts` | Adds `AbortSignal` checks and catches individual root discovery errors without aborting remaining roots. | `providerName`, `includeDefaultRoots`, and `bundledSkillDir` options are unchanged; the [#1336](https://github.com/tt-a1i/archify/issues/1336) double-scan tradeoff remains. |
+| `vendor/include/src/index.ts` | Adds atomic temp-file/rename config writes and stable anonymous entry IDs. | Patch application (`applyPatches`) remains compatible. |
 
 ### Review recorded on 2026-10-05
 
