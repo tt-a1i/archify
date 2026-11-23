@@ -52,6 +52,10 @@
             "none"
           ]
         },
+        "feedback_links": {
+          "type": "boolean",
+          "description": "false hides the page footer with feedback and GitHub star links."
+        },
         "visual_preset": {
           "enum": [
             "classic",

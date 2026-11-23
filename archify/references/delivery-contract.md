@@ -427,22 +427,39 @@ finalize `quality`, passes it in `start.argv`, and records a `dependencies`
 status of `installed` or `missing`. Finalize performs these checks without
 starting analysis or installing anything.
 
-Ask once per repository in the task after delivering the diagram. Skip the
-offer if the user already asked for or declined analysis. Use the user's
-language. Include the final parenthetical only when `dependencies` is
-`missing`, which means the installed Skill copy is incomplete; analysis
-cannot start until Archify is reinstalled. If the offer includes `linkedDiagrams: true`, tell
-the user to use the original delivered diagram for navigation links to sibling
-diagrams. Those links are unavailable on the Diagnosis server. Wait for yes
-before starting.
+End the delivery summary with the capability section below, in the user's
+language, once per repository in the task. It is part of the summary, not a
+separate question, so users learn what Diagnosis does even if they never
+reply. Skip it if the user already asked for or declined analysis in this
+task. Keep the bullets; adapt only wording, not the claims. If `dependencies`
+is `missing`, the installed Skill copy is incomplete: replace the closing line
+with the reinstall line, because analysis cannot start. If the offer includes
+`linkedDiagrams: true`, add that sibling-diagram links work from the original
+delivered diagram, not from the Diagnosis server. Mention the diagram button
+only when `codeAnalysisOffer.diagramButton` is `true`; otherwise drop that
+sentence. Start only after the user agrees.
 
 **中文**
 
-想不想换个角度看这个仓库？Archify 自带**架构诊断**，可以把整个代码库画成一张**环形星图**和一个**可旋转的 3D 模型**，几千个文件、几万个函数之间的依赖一眼看全。也可以直接在这张架构图上，给每个组件标出问题数：哪里最拥挤、哪里有循环依赖、哪些依赖图里根本没画。每条都能点开看源码，也能一键交给 AI 修。要试试吗？（分析组件缺失，需要先重新安装 Archify）
+**还可以：架构诊断**（Archify 自带，在本机运行）
+- **环形星图**：几千个文件、几万个函数之间的依赖一眼看全
+- **可旋转的 3D 模型**：换个角度看模块怎么连在一起
+- **组件问题数**：直接标在这张架构图上，哪里最拥挤、哪里有循环依赖、哪些依赖图里没画
+- 每条发现都能点开看源码，也能一键交给 AI 修
+
+回复「好」我就启动。图右上角的「架构诊断」按钮也随时能看到这个功能。
+（依赖缺失时，最后一句改为：分析组件缺失，需要先重新安装 Archify 才能使用。）
 
 **English**
 
-Want to see this repository from another angle? Archify's built-in **Architecture Diagnosis** turns the whole codebase into a **radial star map** and a **rotatable 3D model**, so dependencies across thousands of files and functions are visible at a glance. It can also mark each component on this diagram with its issue count: where things are most crowded, where dependencies cycle, and which dependencies the diagram doesn't show. Every item opens its source and can be handed to an AI as a fix task. Want to try it? (The analysis components are missing; reinstall Archify first.)
+**Also available: Architecture Diagnosis** (built into Archify, runs locally)
+- **Radial star map**: dependencies across thousands of files and functions at a glance
+- **Rotatable 3D model**: see how modules connect from any angle
+- **Issue counts per component**, right on this diagram: where things are most crowded, where dependencies cycle, and which dependencies the diagram doesn't show
+- Every finding opens its source and can be handed to an AI as a fix task
+
+Reply "yes" and I'll start it. The **Code Analysis** button at the top right of the diagram shows this anytime.
+(If dependencies are missing, the closing line becomes: The analysis components are missing; reinstall Archify to use it.)
 
 After consent, run `start.argv`. Add `--locale zh-CN` for Chinese or
 `--locale en` for English if needed. For a repository with several supported
