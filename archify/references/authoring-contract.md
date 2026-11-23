@@ -80,10 +80,10 @@ chooses one primary locale for the Viewer; follow an explicit primary-language
 request, then prompt order or conversation dominance.
 
 Bundled Viewer catalogs are enrolled in `locales/manifest.json`: currently
-`en`, `zh-CN`, `zh-TW`, `es`, `ko`, `ar`, and `ru`. For these, `meta.locale` alone selects the full
-catalog. Tags match case-insensitively (`zh-cn` selects `zh-CN`), but region
-and script variants are distinct: `zh-Hant`, `es-MX`, or `ko-KR` select no
-bundled catalog.
+`en`, `zh-CN`, `zh-TW`, `es`, `ko`, `ar`, `ru`, and `pt-BR`. For these,
+`meta.locale` alone selects the full catalog. Tags match case-insensitively
+(`zh-cn` selects `zh-CN`), but region and script variants are distinct:
+`zh-Hant`, `es-MX`, or `ko-KR` select no bundled catalog.
 
 `meta.translations` is an optional per-key override: an object mapping the
 renderer's canonical message keys (`locales/en.json`, or `catalogKeys()` in

@@ -27,6 +27,7 @@ never collapsed onto another catalog.
 | `ko` | uygnoey (#457) | Complete; not independently native-reviewed |
 | `ar` | jahfaliabdulrahman-dev | Complete: 486/486 keys with placeholder parity checked mechanically; not independently native-reviewed |
 | `ru` | uygnoey (#457 example catalog) | Complete: 516/516 keys with placeholder parity checked mechanically; count-neutral `.other` wording; UI fit reviewed in the bundled Viewer; not independently native-reviewed |
+| `pt-BR` | GabrielMesquitaOliveira | Complete: 542/542 keys with placeholder parity checked mechanically; based on `examples/locales/pt.json`, completed and copy-edited for Brazilian Portuguese with AI assistance; UI fit checked in the bundled Viewer; not independently native-reviewed |
 
 Completeness checks prove key and placeholder coverage, not native wording,
 plural grammar, right-to-left layout, or glyph coverage.
