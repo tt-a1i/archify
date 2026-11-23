@@ -43,6 +43,7 @@
         "output": { "$ref": "common.schema.json#/$defs/portableOutputPath" },
         "animation": { "$ref": "common.schema.json#/$defs/animation" },
         "visual_preset": { "$ref": "common.schema.json#/$defs/visualPreset" },
+        "feedback_links": { "type": "boolean", "description": "false hides the page footer with feedback and GitHub star links." },
         "quality_profile": { "$ref": "common.schema.json#/$defs/qualityProfile" },
         "parentHref": { "$ref": "common.schema.json#/$defs/parentHref" },
         "engineering_profile": { "enum": ["deployment-ownership"] },

@@ -1,5 +1,5 @@
-/* The Code Analysis entry in the diagram toolbar: the launcher before a run
-   (#code-analysis-start, bin/serve.mjs) and the layer toggle after it
+/* The Code Analysis entry in the diagram toolbar: the static information
+   button, the live launcher before a run and the layer toggle after it
    (#btn-bauify, overlay.js). It sits before Export, drawn as its own capsule
    like the tool group, so Export stays the one primary action at the end. */
 .toolbar .analysis-entry { padding-inline: 0.75rem 0.8rem; color: var(--text); }
@@ -11,7 +11,8 @@
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 20px -14px rgba(15, 23, 42, 0.22);
   backdrop-filter: blur(12px);
 }
-.toolbar .analysis-entry:hover::before { background: color-mix(in srgb, var(--text) 6%, var(--panel)); }
+.toolbar .analysis-entry:hover::before,
+.toolbar .analysis-entry[aria-expanded="true"]::before { background: color-mix(in srgb, var(--text) 6%, var(--panel)); }
 .toolbar .analysis-entry[aria-pressed="true"]::before {
   border-color: color-mix(in srgb, var(--backend-stroke, #34D399) 55%, transparent);
   background: color-mix(in srgb, var(--backend-stroke, #34D399) 14%, var(--panel));
