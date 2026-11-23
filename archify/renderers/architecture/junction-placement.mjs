@@ -200,3 +200,70 @@ export function junctionBends({ routes, boxes }) {
   }
   return { bends, avoidable };
 }
+
+// Try open slots for the terminal cards involved in crossings. Projected
+// paths only prioritize the slots. The renderer routes and checks each finalist.
+export function denseTerminalCandidates({ boxes, routes }, crossingPairs) {
+  const cards = [...boxes.values()];
+  const affected = new Set(crossingPairs.flat());
+  const proposals = [];
+  const right = cards.reduce((max, card) => Math.max(max, card.x + card.width), 0);
+  const bottom = cards.reduce((max, card) => Math.max(max, card.y + card.height), 0);
+  for (const box of cards) {
+    const incoming = routes.filter(({ relation }) => relation.to === box.id);
+    if (!incoming.some(({ relation }) => affected.has(relation))
+        || routes.some(({ relation }) => relation.from === box.id)
+        || incoming.some(({ relation }) => relation.variant === 'emphasis')) continue;
+    const otherCards = cards.filter(other => other !== box);
+    const fixedRoutes = routes.filter(route => !incoming.includes(route));
+    const fixedSegments = fixedRoutes.flatMap(route => segments(route.points));
+    const xs = new Set(cards.map(card => Math.min(card.cx, right - box.width / 2)));
+    const ys = new Set(cards.map(card => card.cy));
+    for (const { relation } of incoming) {
+      const peer = boxes.get(relation.from);
+      const gap = Math.max(64, horizontalLabelClearance(relation));
+      xs.add(peer.x - gap - box.width / 2);
+      xs.add(peer.x + peer.width + gap + box.width / 2);
+      ys.add(peer.y - 64 - box.height / 2);
+      ys.add(peer.y + peer.height + 64 + box.height / 2);
+    }
+    const ranked = [];
+    for (const cx of xs) for (const cy of ys) {
+      if (cx === box.cx && cy === box.cy) continue;
+      const moved = move(box, cx, cy);
+      if (moved.x < 40 || moved.y < 40 || moved.x + box.width > right || moved.y + box.height > bottom
+          || otherCards.some(other => rectsOverlap(other, moved, 28))) continue;
+      let misses = 0;
+      let crossings = 0;
+      let span = 0;
+      for (const { relation } of incoming) {
+        const peer = boxes.get(relation.from);
+        const obstacles = otherCards.filter(other => other !== peer);
+        const path = projectedPath(peer, moved, obstacles) ?? projectedPath(moved, peer, obstacles);
+        if (!path) misses++;
+        else {
+          for (const [a, b] of segments(path)) {
+            for (const [c, d] of fixedSegments) {
+              if (properSegmentIntersection(a, b, c, d)) crossings++;
+            }
+          }
+        }
+        span += Math.abs(peer.cx - cx) + Math.abs(peer.cy - cy);
+      }
+      // Leave room for the fixed routes when possible. The real router
+      // can still find a better route around a displaced obstacle.
+      const blocks = fixedSegments.filter(([start, end]) => segmentIntersectsRect({ start, end }, moved, 6)).length;
+      ranked.push({ moved, conflicts: misses + crossings + blocks, span });
+    }
+    const seen = new Set();
+    for (const { moved, conflicts, span } of ranked.sort((a, b) =>
+      a.conflicts - b.conflicts || a.span - b.span)) {
+      const slot = `${Math.round(moved.cx / 48)}:${Math.round(moved.cy / 48)}`;
+      if (seen.has(slot)) continue;
+      seen.add(slot);
+      proposals.push({ boxes: new Map(boxes).set(box.id, moved), order: seen.size, conflicts, span });
+      if (seen.size === 10) break;
+    }
+  }
+  return proposals.sort((a, b) => a.order - b.order || a.conflicts - b.conflicts || a.span - b.span);
+}

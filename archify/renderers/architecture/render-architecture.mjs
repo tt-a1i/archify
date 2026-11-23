@@ -13,7 +13,7 @@ import { translateMessage as i18nText } from '../shared/i18n.mjs';
 import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeFrameAttrs, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeNodeAttrs, changeReviewFor, nodeChangeBadgePos, renderChangeBadge, renderChangeEdgePrefix, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
 import { gridLayout, resolveComponentPos, validateGridPlacement } from './grid.mjs';
 import { automaticComponentPositions, boundaryInsets } from './automatic-placement.mjs';
-import { junctionBends, junctionCandidates } from './junction-placement.mjs';
+import { denseTerminalCandidates, junctionBends, junctionCandidates } from './junction-placement.mjs';
 import { frameLanePlacements } from './frame-lane-placement.mjs';
 import { facingLabelSpacingCandidate, labelBesideStraightShaft, sideCardPortPreferences } from './label-spacing-placement.mjs';
 import { placeCrossedLeaf, placeCrossedSinks, facingFramePlacements } from './crossed-leaf-placement.mjs';
@@ -1692,10 +1692,62 @@ function reflowSmallDiagrams(initial, { direct = false } = {}) {
   return best;
 }
 
-const reflowedComposition = reflowSmallDiagrams(compactJunctions(reserveFacingLabelSpace(improveFrameLanes(
+function reduceDenseCrossings(initial) {
+  if (!automaticComposition || initial.titles.boundaries.length
+      || components.size < 9 || components.size > 12 || connections.length < 12 || connections.length > 15
+      || connections.some(conn => conn.fromSide !== undefined || conn.toSide !== undefined)) return initial;
+  const pairs = measuredCrossingPairs(initial.routes);
+  if (!pairs.length) return initial;
+  const budgetFor = scene => routeBudgetMetrics({ routedRelations: scene.routes });
+  const lengthFor = scene => routeSpanMeasures(scene.routes, scene.boxes, scene.viewBox).length;
+  const baseline = budgetFor(initial);
+  const oldBends = junctionBends(initial);
+  let oldLabels;
+  let best = initial;
+  let bestRouter;
+  let score = [pairs.length, oldBends.avoidable, oldBends.bends, lengthFor(initial)];
+  for (const { boxes } of denseTerminalCandidates(initial, pairs).slice(0, 16)) {
+    const bounds = boundsFor(boxes);
+    const candidate = makeRouter(boxes, bounds, { separateRuns: true });
+    const placed = finishAutomaticLabels(resolveConnectionComposition(boxes, candidate.pathFor, bounds), true);
+    const next = simplifyFinishedComposition(placed, candidate);
+    const crossings = measuredCrossingPairs(next.routes).length;
+    if (crossings >= pairs.length || crossings > score[0] || next.viewBox[0] > initial.viewBox[0]) continue;
+    const budget = budgetFor(next);
+    const { bends, avoidable } = junctionBends(next);
+    if (avoidable > oldBends.avoidable || budget.routesOverSuggestedBends > baseline.routesOverSuggestedBends
+        || budget.routesOverSuggestedStretch > baseline.routesOverSuggestedStretch) continue;
+    const nextScore = [crossings, avoidable, bends, lengthFor(next)];
+    const index = nextScore.findIndex((value, i) => value !== score[i]);
+    if (index === -1 || nextScore[index] >= score[index]) continue;
+    oldLabels ??= drawnLabelProblems(initial);
+    if (!meetsDesktopTextFloor(next) || !candidate.planIsClear(next.viewBox, { checkProvisionalLabels: false })
+        || !preservesLabels(oldLabels, drawnLabelProblems(next))) continue;
+    try {
+      withIsolatedDiagnosticRecording(() => validateArchitecture(next, candidate));
+    } catch (error) {
+      if (!error.archifyDiagnostics?.length) throw error;
+      continue;
+    }
+    best = next;
+    bestRouter = candidate;
+    score = nextScore;
+  }
+  if (bestRouter) {
+    router = bestRouter;
+    for (const [id, box] of best.boxes) components.set(id, box);
+  }
+  return best;
+}
+
+const compactedComposition = compactJunctions(reserveFacingLabelSpace(improveFrameLanes(
   alignNearlyFacingCards(simplifyFinishedComposition(placedComposition)),
-))));
-const composition = reflowSmallDiagrams(reflowedComposition, { direct: true });
+)));
+const reflowedComposition = reflowSmallDiagrams(reflowSmallDiagrams(compactedComposition), { direct: true });
+// A single-card move can undo the shared column or direct path already
+// arranged by the coordinated reflow passes.
+const composition = reflowedComposition === compactedComposition
+  ? reduceDenseCrossings(reflowedComposition) : reflowedComposition;
 const {
   titles: { boundaries }, labels: connectionLabels, viewBox,
 } = composition;
