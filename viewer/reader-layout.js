@@ -44,6 +44,7 @@
       // otherwise it starts collapsed and the reader can still open it.
       var RAIL_COMFORT_PRIMARY_PX = 12;
       var railPanel = shell && shell.querySelector('.reader-rail');
+      var feedback = document.querySelector('.page-feedback');
       var railReveal = document.getElementById('rail-reveal');
       var railCollapse = document.getElementById('rail-collapse');
       var railPlacement = document.getElementById('rail-placement');
@@ -231,10 +232,11 @@
       function fitBottomCards() {
         return fitCards && html.getAttribute('data-reader-rail') === 'bottom' && visible(cards);
       }
-      // The diagram can pass containment on its own when bottom notes need
-      // to scroll. First-screen card fitting is best effort.
+      // The diagram can pass containment on its own when bottom notes or the
+      // page colophon sit below the fold. First-screen card fitting is best effort.
       function belowFold() {
-        return html.getAttribute('data-reader-rail') === 'bottom' ? outerHeight(railPanel) : 0;
+        return (html.getAttribute('data-reader-rail') === 'bottom' ? outerHeight(railPanel) : 0) +
+          outerHeight(feedback);
       }
       // A docked rail may run past a short diagram down to the viewport floor,
       // so the index uses that space instead of scrolling inside the diagram's

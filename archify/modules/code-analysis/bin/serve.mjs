@@ -327,12 +327,16 @@ function client(token, messages, makeTranslator, standalone, entryCss) {
   var tr = makeTranslator(messages);
   var toolbar = document.querySelector('.toolbar');
   if (!toolbar) return;
+  document.getElementById('code-analysis-info')?.remove();
+  document.getElementById('code-analysis-dialog')?.remove();
   var button = document.createElement('button');
   button.id = 'code-analysis-start'; button.type = 'button'; button.className = 'analysis-entry';
   button.title = tr("Analyze the repository and show the result on this diagram");
   // Icon + label in its own capsule before Export (overlay/client/entry.css).
-  var entryStyle = document.createElement('style'); entryStyle.id = 'code-analysis-entry-style'; entryStyle.textContent = entryCss;
-  document.head.appendChild(entryStyle);
+  if (!document.getElementById('code-analysis-entry-style')) {
+    var entryStyle = document.createElement('style'); entryStyle.id = 'code-analysis-entry-style'; entryStyle.textContent = entryCss;
+    document.head.appendChild(entryStyle);
+  }
   var entryLabel = document.createElement('span');
   var setLabel = function (text) { entryLabel.textContent = text; };
   button.innerHTML = '<span class="analysis-entry-icon" aria-hidden="true"></span>'; button.appendChild(entryLabel);

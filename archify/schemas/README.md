@@ -49,6 +49,10 @@ report rejected entries and the final resolved coverage to stderr.
 motion-forward presentation), `blueprint` (high-contrast engineering review),
 or `editorial` (warm publication-style design review and documentation).
 Presets change only viewer styling; they do not alter semantic IDs or geometry.
+Every diagram page, and the Explainer footer, ends with a quiet line linking to email
+feedback, GitHub Issues and the GitHub repository (star). Set `meta.feedback_links: false`
+to omit it, for example in a client-facing document; Explainer shorthand uses
+`@meta feedback_links=false`. The line never appears in SVG, image or video exports.
 Sequence `meta` additionally accepts `column_fit`. The default `spread` applies whether or not `meta.viewBox` is supplied.
 Explicit `fixed` keeps the historical 108px column gap and 86px participant
 boxes. `spread` derives column distance and box width from the viewBox, with
