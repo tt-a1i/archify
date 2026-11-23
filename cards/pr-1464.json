@@ -1,0 +1,10 @@
+{
+  "templateVersion": 1,
+  "repository": "tt-a1i/archify",
+  "number": 1464,
+  "author": "tt-a1i",
+  "title": "feat(dsh): prepare 1.2.0 bundling Archify 3.3.0 for DSH 0.2.2-rc.5",
+  "mergedAt": "2026-11-23T01:33:54Z",
+  "mergeCommit": "428ca67657297febfa284a87ec47b306a0290ac5",
+  "url": "https://github.com/tt-a1i/archify/pull/1464"
+}
