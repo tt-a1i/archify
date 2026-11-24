@@ -334,10 +334,11 @@ function configuredProjects(root, files, inputs, snapshot, { mixedSdks, captured
       const scope = path.posix.dirname(relative);
       const inside = name => name.startsWith(`${scope}/`);
       const missingExtends = allowUnavailable && scope !== '.' && files.some(inside) && roots.every(inside)
-        ? missingPackageConfigs(loaded.config, errors, inputs, path.dirname(file)) : [];
+        ? missingPackageConfigs(loaded.config, errors, inputs, path.dirname(file), compilerPath) : [];
       if (!missingExtends.length) invalidConfig(relative, errors);
       unavailable.set(scope, { config: relative, missingExtends });
       parsed.set(relative, null);
+      followReferences(result.projectReferences);
       return null;
     }
     const options = result.options;
@@ -416,13 +417,15 @@ function configuredProjects(root, files, inputs, snapshot, { mixedSdks, captured
   };
 }
 
-function missingPackageConfigs(config, errors, inputs, directory) {
+function missingPackageConfigs(config, errors, inputs, directory, configFile) {
   const configExtends = Array.isArray(config.extends) ? config.extends : [config.extends];
   const choices = new Map(configExtends.filter(value => typeof value === 'string'
     && /^(?:@[a-z0-9_.-]+\/)?[a-z0-9_-][a-z0-9_.-]*(?:\/[a-z0-9_.-]+)*$/i.test(value)
     && !value.split('/').some(part => part === '.' || part === '..'))
     .map(value => [`File '${value}' not found.`, value]));
-  const missing = errors.map(error => error.code === 6053 && choices.get(error.messageText));
+  const missing = errors.map(error => error.code === 6053
+    && (!error.file || toPosix(path.resolve(error.file.fileName)) === toPosix(path.resolve(configFile)))
+    && choices.get(error.messageText));
   if (missing.some(value => !value)) return [];
   const manifest = inputs.readFile(path.join(directory, 'package.json'));
   if (!manifest) return [];
@@ -431,7 +434,14 @@ function missingPackageConfigs(config, errors, inputs, directory) {
   const declared = ['dependencies', 'devDependencies', 'optionalDependencies', 'peerDependencies'].map(field => pkg?.[field]);
   return missing.every(value => {
     const name = value.split('/').slice(0, value.startsWith('@') ? 2 : 1).join('/');
-    return declared.some(group => group && Object.hasOwn(group, name));
+    if (!declared.some(group => group && Object.hasOwn(group, name))) return false;
+    let ancestor = directory;
+    while (true) {
+      if (inputs.directoryExists(path.join(ancestor, 'node_modules', name))) return false;
+      const parent = path.dirname(ancestor);
+      if (parent === ancestor) return true;
+      ancestor = parent;
+    }
   }) ? [...new Set(missing)].sort(compareText) : [];
 }
 

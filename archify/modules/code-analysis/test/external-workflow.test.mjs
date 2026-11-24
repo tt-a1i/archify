@@ -86,6 +86,32 @@ test('external workflow: default TypeScript settings remain comparable with pre-
   assert.equal(after.review.comparison.new, 0);
 });
 
+test('external workflow: incomplete TypeScript projects still produce a new-only receipt', async t => {
+  const f = fixture(t);
+  const website = path.join(f.root, 'website');
+  fs.mkdirSync(website);
+  write(path.join(website, 'package.json'), { devDependencies: { 'shared-config': '1.0.0' } });
+  write(path.join(website, 'tsconfig.json'), { extends: 'shared-config/strict' });
+  fs.writeFileSync(path.join(website, 'entry.ts'), 'export const unavailable = 1;\n');
+  f.config.include = ['src/**/*.ts', 'website/**/*.ts'];
+  write(f.configFile, f.config);
+  await f.prepareComparison();
+  const out = path.join(f.dir, 'partial-comparison');
+  const result = f.check(['--compare', path.join(f.out, 'findings.json'), '--new-only', '--fail-on', 'never', '--out', out]);
+  assert.equal(result.status, 'incomplete');
+  assert.equal(result.coverage.unavailableTypeScriptFiles, 1);
+  assert.ok(result.comparisonReasons.some(reason => reason.code === 'typescript-project-coverage-incomplete'));
+  assert.ok(fs.existsSync(path.join(out, 'findings.json')));
+  const gated = f.check(['--compare', path.join(f.out, 'findings.json'), '--new-only', '--out', path.join(f.dir, 'partial-gate')], 2);
+  assert.equal(gated.status, 'incomplete');
+  assert.equal(gated.gate.blocked, 'typescript-project-coverage-incomplete');
+  const manifest = f.manifest('eslint');
+  manifest.configDigest = hash('changed eslint configuration');
+  write(path.join(f.root, 'reports/eslint.manifest.json'), manifest);
+  const unverified = f.check(['--compare', path.join(f.out, 'findings.json'), '--new-only', '--fail-on', 'never'], 2);
+  assert.equal(unverified.diagnostics[0].code, 'external/comparison-unverified');
+});
+
 test('external workflow: evaluateGraph validates combined findings and records checked sources even for valid empty reports', (t) => {
   const f = fixture(t);
   const config = loadConfig(f.configFile);

@@ -129,7 +129,9 @@ export async function runCheck(argv) {
   }
 
   const review = reviewFindings(findings.diagnostics, { baseline: loadBaseline(baselineFile), previous, analysis: findings.analysis, files: [...facts.files, ...(findings.externalEvidence || [])].map((f) => f.path) });
-  if (options['--new-only'] && review.comparison && (findings.analysis.external?.length || previous?.analysis?.external?.length) && review.comparison.comparable !== true) {
+  if (options['--new-only'] && review.comparison && (findings.analysis.external?.length || previous?.analysis?.external?.length)
+    && review.comparison.comparable !== true
+    && review.comparison.reasons.some(reason => reason.code !== 'typescript-project-coverage-incomplete')) {
     fail('external/comparison-unverified', 'New-only gating requires comparable external reports.', { evidence: { reasons: review.comparison.reasons }, supportedFixes: ['provide matching tool versions, rule configuration, complete scan scope and source-bound reports', 'run a full check without --new-only to inspect the available diagnostics'] });
   }
   const run = { rules: findings.rules, suppressed: config.ignore || [], exclude: config.exclude || [], otherLanguages, boundaries: config.boundaries || null, duplicates: findings.analysis?.duplicates || null, external: findings.analysis?.external || [], review };

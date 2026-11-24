@@ -34,6 +34,21 @@ function run(args, extra = []) {
   return spawnSync(process.execPath, [cli, 'code-analysis', 'task', '--question', args.question, '--base-root', args.baseRoot, '--root', args.root, '--entry', args.entry, '--format', 'json', ...extra], { encoding: 'utf8' });
 }
 
+test('paired change questions disclose omitted TypeScript projects on both sides', t => {
+  const files = {
+    'entry.mjs': source,
+    'website/package.json': '{"devDependencies":{"shared-config":"1.0.0"}}',
+    'website/tsconfig.json': '{"extends":"shared-config/strict"}',
+    'website/app.ts': 'export const unavailable = 1;',
+  };
+  const args = setup(t, files, files);
+  const result = run(args);
+  assert.equal(result.status, 1, result.stderr + result.stdout);
+  const brief = JSON.parse(result.stdout);
+  assert.equal(brief.status, 'partial');
+  assert.deepEqual(brief.comparison.reasons.filter(reason => reason.code === 'typescript-project-coverage-incomplete').map(reason => reason.side).sort(), ['base', 'head']);
+});
+
 test('paired multi-SDK captures disclose a changed subproject version', t => {
   const files = {
     'a/package.json': JSON.stringify({ devDependencies: { typescript: '5.9.71' } }),

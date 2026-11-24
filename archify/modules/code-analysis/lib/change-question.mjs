@@ -464,6 +464,8 @@ export function buildChangeQuestion({ question, entry, base, head, config }) {
   const sides = { base: inspectSide(base, 'base'), head: inspectSide(head, 'head') };
   const reasons = [];
   for (const [name, side] of Object.entries(sides)) {
+    const unavailableProjects = side.facts.languageScope?.unavailableProjects || [];
+    if (unavailableProjects.length) reasons.push({ code: 'typescript-project-coverage-incomplete', side: name, count: unavailableProjects.length, message: 'Some TypeScript projects were omitted because their configurations were unavailable.' });
     if (side.summary.unavailableFiles.total) reasons.push({ code: 'source-regions-unavailable', side: name, count: side.summary.unavailableFiles.total, message: 'Some captured source regions failed parsing or freshness checks; other valid regions remain available.' });
     if (!side.resolutionFresh) reasons.push({ code: 'resolution-input-changed', side: name, message: 'A configuration/package input changed after capture; call and dependency navigation for this side is unavailable.' });
     if (language === 'go' && !side.hasInterfaceEvidence) reasons.push({ code: 'interface-implementation-evidence-unavailable', side: name, message: 'This capture has no interface implementation edges. Direct references remain available; interface-mediated candidates are unavailable, not zero.' });

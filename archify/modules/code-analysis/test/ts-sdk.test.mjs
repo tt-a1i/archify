@@ -116,6 +116,37 @@ test('root, malformed, local, undeclared and cross-package config failures stay 
     'an entirely omitted selection must not return empty success');
 });
 
+test('an installed config package with a missing subpath is a configuration error', t => {
+  const root = project(t, {
+    'website/package.json': '{"devDependencies":{"shared-config":"1.0.0"}}',
+    'website/tsconfig.json': '{"extends":"shared-config/strict"}',
+    'website/app.ts': 'export {}',
+    'node_modules/shared-config/package.json': '{"name":"shared-config","version":"1.0.0"}',
+    'node_modules/shared-config/base.json': '{}',
+  });
+  assert.throws(() => extract(root, config), error => error.diagnostics?.[0].code === 'extract/tsconfig-invalid');
+});
+
+test('unavailable nested configs do not hide inherited or referenced errors', t => {
+  const shared = {
+    'website/package.json': '{"devDependencies":{"shared-config":"1.0.0"}}',
+    'website/app.ts': 'export {}',
+  };
+  for (const files of [
+    {
+      'website/tsconfig.json': '{"extends":["shared-config/strict","../base.json"]}',
+      'base.json': '{"extends":"shared-config/strict"}',
+    },
+    {
+      'website/tsconfig.json': '{"extends":"shared-config/strict","references":[{"path":"../other"}]}',
+      'other/tsconfig.json': '{"compilerOptions": broken}',
+    },
+  ]) {
+    const root = project(t, { ...shared, ...files });
+    assert.throws(() => extract(root, config), error => error.diagnostics?.[0].code === 'extract/tsconfig-invalid');
+  }
+});
+
 test('default and explicit bundled mode follow project references without loading installed SDKs', t => {
   const parent = project(t, {
     'package.json': '{"devDependencies":{"typescript":"5.9.71"}}',

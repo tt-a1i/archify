@@ -496,7 +496,7 @@ node bin/archify.mjs code-analysis check "/path/to/project" --baseline analysis-
 | `--update-baseline [--reason text]` | Write the baseline instead of checking. |
 | `--json` | Print a machine-readable receipt instead of the summary. |
 
-Exit codes: `0` passed, `1` the gate failed, `2` the analysis could not run (the diagnostic says why). A failing run without `--baseline` offers the command that records today's findings in `analysis-baseline.json`, for a first run or after a rule became stricter. If the baseline or drill-down command contains control characters, the summary points to the exact command in the `--json` receipt under `gate.adopt` or `investigation.drillDown`. The printed summary lists failing findings as `path:line` with their ids, the comparison counts, and stale baseline entries.
+Exit codes: `0` passed, `1` the gate failed, `2` the analysis could not run or project coverage was incomplete. With `--json`, incomplete TypeScript project coverage returns a receipt with `status: "incomplete"` and exit 2, while `--fail-on never` returns that incomplete receipt with exit 0. Other analysis errors return `status: "error"` and diagnostics. A failing run without `--baseline` offers the command that records today's findings in `analysis-baseline.json`, for a first run or after a rule became stricter. If the baseline or drill-down command contains control characters, the summary points to the exact command in the `--json` receipt under `gate.adopt` or `investigation.drillDown`. The printed summary lists failing findings as `path:line` with their ids, the comparison counts, and stale baseline entries.
 
 
 ## Config files
