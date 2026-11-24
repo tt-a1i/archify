@@ -3,7 +3,7 @@ name: archify
 description: "Create validated architecture, workflow, sequence, data-flow, lifecycle/state, ERD, class, tree, timeline, and waterfall diagrams as explorable standalone HTML with dark/light themes, motion and image/SVG/WebM export. Accept requirements or Mermaid; inspect repository evidence for code-backed diagrams. Also investigate local repository architecture health, coupling and refactoring scope with source-backed Code Analysis. Use when visualizing systems, API calls, pipelines, schemas, histories, timings, or everyday steps, parts, relationships and states. Also turn an answer into a one-page explainer, with the conclusion first, structured panels, native diagrams and charts, when the user asks for a page, an explainer or an answer to share (做成一页, 用页面讲), and by default unasked for a complex flow, diagnosis, comparison or test report; an [archify explainer: on-demand] rules line limits pages to requests. Optionally add a guided story and video export to an existing native diagram. Not for dashboards."
 license: Apache-2.0
 metadata:
-  version: "3.2"
+  version: "3.3"
   author: tt-a1i
 ---
 

@@ -13,7 +13,7 @@
     {
       "id": "signal-flow",
       "artifact": "docs/gallery/artifacts/agent-tool-call.workflow.html",
-      "artifactSha256": "3e545f16bbdf61c65d8445f2c2cdfbbb5605b6ec66f535bccafa3ae6ead68124",
+      "artifactSha256": "05c2baf82b4d27800ebfd7c01277ba05c8e716ad427df3598d1731a6d4f6cdee",
       "hash": "#focus=planner&reach=downstream",
       "eyebrow": "WORKFLOW · SIGNAL FLOW",
       "title": "Agent Tool Call",
@@ -22,7 +22,7 @@
     {
       "id": "blueprint",
       "artifact": "docs/gallery/artifacts/production-deployment.architecture.html",
-      "artifactSha256": "9d0d6fddafe868c13f5a232b24f009aeff84c807c36ddc93a44b8c4d4e621991",
+      "artifactSha256": "546110e559938e1f2c3e59efb5ae0b8201af0b6bf4a5f0fb33601f88e66f99c9",
       "hash": "#lens=backend~database",
       "eyebrow": "ARCHITECTURE · BLUEPRINT",
       "title": "Production Deployment",
@@ -31,7 +31,7 @@
     {
       "id": "classic",
       "artifact": "docs/gallery/artifacts/cache-miss.sequence.html",
-      "artifactSha256": "7c9deee25bd4a99892f0e5a33bd010b408132936f2a0442ae34ed4709d85c3b4",
+      "artifactSha256": "3d48940b68e0d1a8c3d1745de9603887b2eda9f5b88922c9cbf4910eb157a3bb",
       "hash": "#route=web~db",
       "eyebrow": "SEQUENCE · CLASSIC",
       "title": "Cache Miss Request",

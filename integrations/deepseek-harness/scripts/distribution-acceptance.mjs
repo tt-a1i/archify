@@ -29,6 +29,11 @@ const PREVIOUS_RELEASES = Object.freeze([{
   skillVersion: '3.0.1',
   includeDefaultRoots: false,
   integrity: 'sha512-ae5L+SyZngy3EzYnWHHfccAYJCZh5e9MTkEBh7mrwTMfpwpFtkIhiOg2vI5xnluCS8CSb+Ne1hi1kOWRQQtGBQ==',
+}, {
+  version: '1.1.0',
+  skillVersion: '3.2.0',
+  includeDefaultRoots: true,
+  integrity: 'sha512-UgC/xWfN9lh+ns0unXd5/+o5k9NdWGjar2stGtp4nPGdDw7eP1oiLqcLJusQhaaQKCqRyBvAn+HdKSsyR0zPWw==',
 }]);
 const DSH_RUNTIME_INSTALL_TIMEOUT = process.platform === 'win32' ? 600_000 : 300_000;
 const PLUGIN_MUTATION_TIMEOUT = 180_000;
