@@ -390,10 +390,10 @@ Archify 现已原生支持 **10 种图型**（`architecture` 架构图、`workfl
 
 很多研发团队画完仓库架构图后，紧接着就会问：“哪些模块存在循环依赖？哪些文件耦合最重？重构应该从哪里下手？”
 
-`v3.3` 将 **Architecture Diagnosis（架构诊断）** 直接内置进 Skill，无需额外安装插件：
+`v3.3` 将 **Architecture Diagnosis（架构诊断）** 直接内置进 Skill，无需额外安装插件。日常使用直接让 Agent 执行架构诊断即可；如需手动运行 CLI，从已安装的 Skill 目录路径调用 `bin/archify.mjs`（例如 `~/.claude/skills/archify` 或 `~/.codex/skills/archify`），并传入目标仓库路径：
 
 ```bash
-node bin/archify.mjs code-analysis prepare <repo> --out <dir> --locale zh-CN
+node <已安装-skill-目录>/bin/archify.mjs code-analysis prepare <repo> --out <dir> --locale zh-CN
 ```
 
 运行后会产出一个单文件离线诊断工作台 `repo.analysis.html`：

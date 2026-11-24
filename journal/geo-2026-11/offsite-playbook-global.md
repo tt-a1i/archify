@@ -517,10 +517,10 @@ When one diagram still leaves readers asking *why*, `.archify.md` **one-page exp
 
 A recurring request from teams mapping real repositories was: *"Now that we see the modules, where are the dependency cycles, hotspots, and layer violations?"*
 
-In `v3.3`, **Architecture Diagnosis** is built directly into the Skill with no extra install:
+In `v3.3`, **Architecture Diagnosis** is built directly into the Skill with no extra install. You can ask your agent to run Archify Code Analysis directly, or invoke the CLI from the installed Skill directory (for example `~/.claude/skills/archify` or `~/.codex/skills/archify`) while passing your target repository path:
 
 ```sh
-node bin/archify.mjs code-analysis prepare <repo> --out <dir>
+node <installed-skill-dir>/bin/archify.mjs code-analysis prepare <repo> --out <dir>
 ```
 
 It generates a single offline `repo.analysis.html` workbench containing:
