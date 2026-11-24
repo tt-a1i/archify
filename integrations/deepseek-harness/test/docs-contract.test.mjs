@@ -14,9 +14,9 @@ function read(relativePath) {
 const manifest = JSON.parse(read('integrations/deepseek-harness/package.json'));
 const release = JSON.parse(read('integrations/deepseek-harness/release.json'));
 const published = Object.freeze({
-  adapterVersion: '1.1.0',
-  skillVersion: '3.2.0',
-  dshVersion: '0.2.1-rc.2',
+  adapterVersion: '1.2.0',
+  skillVersion: '3.3.0',
+  dshVersion: '0.2.2-rc.5',
 });
 const bundled = Object.freeze({
   adapterVersion: manifest.version,
