@@ -12,7 +12,7 @@
   "artifact": {
     "sha256": "b92b4d55446966fd74e5338a45d6de9a7a1b194420cd5eb14d2cdc39f1053b80"
   },
-  "summary": "Polishes automatic Architecture column alignment, lateral subtrees, spine labels, crossing reduction, and Classic styling, and deduplicates repeated cited files in Explainer pages.",
+  "summary": "Polishes automatic Architecture layout, spine labels, crossing reduction, and Classic styling, and deduplicates cited Explainer files.",
   "releaseNotes": "https://github.com/tt-a1i/archify/releases/tag/v3.3.1",
   "severity": "normal"
 }
