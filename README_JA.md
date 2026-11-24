@@ -183,6 +183,22 @@ Use archify to add a guided story to this diagram and export it as a video.
 
 <sub>D1〜D4 の切り替え、場所カードを開く、地図リンクをたどる、といった操作を試してみてください。時刻や場所の情報は作者の元の行程に基づいています。</sub>
 
+## DeepSeek Harness で試す
+
+<p align="center"><a href="integrations/deepseek-harness/README.md"><img src="docs/assets/archify-dsh-lockup.svg" alt="Archify × DSH" width="440" /></a></p>
+
+Archify はコミュニティプラグイン **`@tt-a1i/archify-dsh`** を通じて [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（DSH）でも動きます。1.2.0 は Archify 3.3.0 Skill を同梱しており、コマンド 1 つで dsh セッションに図、1 ページの解説、コード分析が加わります。
+
+```bash
+dsh plugin --profile web add @tt-a1i/archify-dsh@1.2.0
+```
+
+あとは `Use the archify skill to map this repository's runtime architecture.` と頼むだけです。
+
+<p align="center"><a href="integrations/deepseek-harness/README.md#install"><img src="https://img.shields.io/badge/Archify_%C3%97_DSH_%E3%82%92%E8%A9%A6%E3%81%99-%E3%82%A4%E3%83%B3%E3%82%B9%E3%83%88%E3%83%BC%E3%83%AB%E3%82%AC%E3%82%A4%E3%83%89_%E2%86%92-0856F5?style=for-the-badge" alt="Archify × DSH を試す：インストールガイド" /></a></p>
+
+<sub>開発者プレビュー版 `@deepseek-ai/dsh@0.2.2-rc.5`、Node `^22.19.0 || >=24.0.0` 向けのコミュニティ統合です。DeepSeek 公式製品ではありません。互換性、アップグレード、削除は[インストールガイド](integrations/deepseek-harness/README.md)を参照してください。</sub>
+
 ## コミュニティと評価
 
 - **GitHub Trending の週間・全言語リポジトリランキングで 1 位。** [作者が 2026 年 9 月 1 日に公開したランキングのスクリーンショット](https://x.com/t20000622yy/status/2094656813576880285)（全言語・「This week」を選択した状態）。

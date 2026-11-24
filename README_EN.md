@@ -209,6 +209,22 @@ The output is a self-contained HTML file. Download it and open it in your browse
 
 <sub>Try switching between D1–D4, opening a place card, or following a map link. Times and place information reflect the author's original itinerary.</sub>
 
+## Try it in DeepSeek Harness
+
+<p align="center"><a href="integrations/deepseek-harness/README.md"><img src="docs/assets/archify-dsh-lockup.svg" alt="Archify × DSH" width="440" /></a></p>
+
+Archify also runs in [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH) through **`@tt-a1i/archify-dsh`**, a community plugin. Version 1.2.0 bundles the Archify 3.3.0 Skill, so one command adds diagrams, one-page answers and Code Analysis to your dsh sessions:
+
+```bash
+dsh plugin --profile web add @tt-a1i/archify-dsh@1.2.0
+```
+
+Then ask: `Use the archify skill to map this repository's runtime architecture.`
+
+<p align="center"><a href="integrations/deepseek-harness/README.md#install"><img src="https://img.shields.io/badge/Try_Archify_%C3%97_DSH-Install_guide_%E2%86%92-0856F5?style=for-the-badge" alt="Try Archify × DSH: install guide" /></a></p>
+
+<sub>Community integration for the developer-preview `@deepseek-ai/dsh@0.2.2-rc.5` on Node `^22.19.0 || >=24.0.0`. Not an official DeepSeek product. See the [install guide](integrations/deepseek-harness/README.md) for compatibility, upgrades and removal.</sub>
+
 ## Community and recognition
 
 - **#1 on GitHub Trending's weekly, all-language repository list.** [Ranking screenshot published by the creator on September 1, 2026](https://x.com/t20000622yy/status/2094656813576880285), with all languages and “This week” selected.

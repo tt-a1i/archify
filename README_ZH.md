@@ -209,6 +209,22 @@ Archify 追踪 [`mco-org/mco`](https://github.com/mco-org/mco) 的 `9f1a1cf` 版
 
 <sub>试试切换 D1–D4、点击地点卡片，或打开地图链接。行程中的时间和地点信息为作者创作时的记录。</sub>
 
+## 在 DeepSeek Harness 里试试
+
+<p align="center"><a href="integrations/deepseek-harness/README.md"><img src="docs/assets/archify-dsh-lockup.svg" alt="Archify × DSH" width="440" /></a></p>
+
+Archify 也能在 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（DSH）里使用，通过社区插件 **`@tt-a1i/archify-dsh`** 接入。1.2.0 版内置 Archify 3.3.0 Skill，一条命令就能在 dsh 会话里画图、生成一页式解答和做代码分析：
+
+```bash
+dsh plugin --profile web add @tt-a1i/archify-dsh@1.2.0
+```
+
+然后直接说：`Use the archify skill to map this repository's runtime architecture.`
+
+<p align="center"><a href="integrations/deepseek-harness/README.md#install"><img src="https://img.shields.io/badge/%E8%AF%95%E7%94%A8_Archify_%C3%97_DSH-%E5%AE%89%E8%A3%85%E6%8C%87%E5%8D%97_%E2%86%92-0856F5?style=for-the-badge" alt="试用 Archify × DSH：安装指南" /></a></p>
+
+<sub>社区集成，面向开发者预览版 `@deepseek-ai/dsh@0.2.2-rc.5`，Node `^22.19.0 || >=24.0.0`。不是 DeepSeek 官方产品。兼容范围、升级和卸载见[安装指南](integrations/deepseek-harness/README.md)。</sub>
+
 ## 社区与关注
 
 - **GitHub Trending 全球仓库周榜第一。** [作者于 2026 年 9 月 1 日发布的榜单截图](https://x.com/t20000622yy/status/2094656813576880285)，筛选为所有语言、This week。

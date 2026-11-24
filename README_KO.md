@@ -120,6 +120,22 @@ Use archify Code Analysis on this repository: show module coupling, dependency c
 Use archify to add a guided story to this diagram and export it as a video.
 ```
 
+## DeepSeek Harness에서 사용해 보기
+
+<p align="center"><a href="integrations/deepseek-harness/README.md"><img src="docs/assets/archify-dsh-lockup.svg" alt="Archify × DSH" width="440" /></a></p>
+
+Archify는 커뮤니티 플러그인 **`@tt-a1i/archify-dsh`**를 통해 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)(DSH)에서도 동작합니다. 1.2.0은 Archify 3.3.0 Skill을 포함하므로, 명령 하나로 dsh 세션에서 다이어그램, 한 페이지 답변, 코드 분석을 사용할 수 있습니다.
+
+```bash
+dsh plugin --profile web add @tt-a1i/archify-dsh@1.2.0
+```
+
+그다음 `Use the archify skill to map this repository's runtime architecture.`라고 요청하세요.
+
+<p align="center"><a href="integrations/deepseek-harness/README.md#install"><img src="https://img.shields.io/badge/Archify_%C3%97_DSH_%EC%82%AC%EC%9A%A9%ED%95%B4_%EB%B3%B4%EA%B8%B0-%EC%84%A4%EC%B9%98_%EA%B0%80%EC%9D%B4%EB%93%9C_%E2%86%92-0856F5?style=for-the-badge" alt="Archify × DSH 사용해 보기: 설치 가이드" /></a></p>
+
+<sub>개발자 프리뷰 `@deepseek-ai/dsh@0.2.2-rc.5`, Node `^22.19.0 || >=24.0.0`용 커뮤니티 통합입니다. DeepSeek 공식 제품이 아닙니다. 호환 범위, 업그레이드, 제거는 [설치 가이드](integrations/deepseek-harness/README.md)를 참고하세요.</sub>
+
 ## 빠른 시작
 
 **현재 개발 버전:** `v3.3.2-dev.1` (안정 릴리스가 아닙니다). [변경 이력](CHANGELOG.md#unreleased)을 확인하세요.
