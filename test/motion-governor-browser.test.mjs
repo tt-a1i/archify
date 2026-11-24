@@ -284,7 +284,13 @@ test('Motion Governor preserves mode, ownership, continuous Live flow and real c
         Math.round(element.getPointAtLength(element.getTotalLength() / 2).y)).sort((a, b) => a - b);
       const canvas = CanvasRenderingContext2D.prototype;
       const originalArc = canvas.arc, originalClear = canvas.clearRect;
+      const originalMove = canvas.moveTo, originalStroke = canvas.stroke;
       const current = new WeakMap(), seen = [];
+      const starts = new WeakMap(), pulses = [];
+      const participants = [...svg.querySelectorAll('[data-node-id] > [data-animate="node"]')].map(element => {
+        const box = element.getBBox();
+        return { id: element.closest('[data-node-id]').getAttribute('data-node-id'), x: box.x, y: box.y };
+      });
       let peak = 0, last = 0;
       const started = performance.now();
       try {
@@ -305,11 +311,25 @@ test('Motion Governor preserves mode, ownership, continuous Live flow and real c
           }
           return originalArc.apply(this, arguments);
         };
+        canvas.moveTo = function (x, y) {
+          starts.set(this, { x, y });
+          return originalMove.apply(this, arguments);
+        };
+        canvas.stroke = function () {
+          const start = starts.get(this);
+          if (start && this.shadowBlur > 0 && this.lineWidth < 3.2) {
+            const participant = participants.find(item => Math.abs(start.x - item.x) < 12 && Math.abs(start.y - item.y) < 8);
+            if (participant) pulses.push({ id: participant.id, at: performance.now() - started });
+          }
+          return originalStroke.apply(this, arguments);
+        };
         const video = await Archify.motion.recordWebm({ fps: 24, duration: ${duration} });
-        return { rows, seen, peak, last, elapsed: performance.now() - started, size: video.size, type: video.type };
+        return { rows, seen, peak, last, pulses, participants, elapsed: performance.now() - started, size: video.size, type: video.type };
       } finally {
         canvas.arc = originalArc;
         canvas.clearRect = originalClear;
+        canvas.moveTo = originalMove;
+        canvas.stroke = originalStroke;
       }
     })()`);
     assert.match(result.type, /^video\/webm/);
@@ -318,6 +338,7 @@ test('Motion Governor preserves mode, ownership, continuous Live flow and real c
     assert.equal(result.peak, 1);
     assert.ok(result.elapsed >= duration && result.elapsed < duration + 2200, 'recording uses the requested duration');
     assert.ok(result.last > duration * 0.61, 'the final authored message remains animated near the end of the timeline');
+    assert.ok(new Set(result.pulses.map(pulse => pulse.id)).size >= 2, 'sender and receiver participants pulse during the recording');
   });
 
   await t.test('settled Live node glow preserves Classic card depth across themes', async () => {
