@@ -147,9 +147,9 @@ After successful analysis, `<out>/analysis/` contains:
 - `overview.json`
 - `repo.analysis.html`
 
-Each run is written to a fresh `<out>/analysis.next-*` directory. Once the return data is readable, the current result moves to `<out>/analysis.previous/` and the candidate becomes `<out>/analysis/`. A failed publish reverses those moves and restores both completed reports.
+Each run is written to a fresh staging directory inside the output lock. Once the return data is readable, the current result moves to `<out>/analysis.previous/` and the candidate becomes `<out>/analysis/`. A successful rollback restores both completed reports if publication fails.
 
-`check` also stages its complete output before publishing. Report publication and workbench review saves share an output-directory lock, covering the choice of automatic comparison through publication. A process interrupted before publication can be replaced on the next run from the same host. An interrupted publication or a failed rollback retains the move plan and backups for recovery.
+`check` also stages its complete output before publishing. Report publication and workbench review saves share an output-directory lock, covering the choice of automatic comparison through publication. A same-host retry after an interruption before publication discards the abandoned staging directory. Workers write to directories prepared by the lock owner. An interrupted publication or a failed rollback retains the move plan and backups for recovery. A failed rollback records a terminal state so retries can report that recovery even while the workbench process is alive.
 
 The analysis HTML embeds source context for mapped and evidence files and can display existing results offline. It cannot rescan a project without the local server.
 

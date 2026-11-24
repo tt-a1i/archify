@@ -9,6 +9,8 @@ export const OUTPUT_BUSY = 'analysis/output-busy';
 const OWNER = /^([0-9a-f]{16})-([1-9][0-9]{0,9})-[0-9a-f]{16}$/;
 const HOST = createHash('sha256').update(os.hostname()).digest('hex').slice(0, 16);
 const MOVE_PLAN = 'move-plan.json';
+const ROLLBACK_FAILED = 'rollback-failed';
+const RECOVERY_FIXES = ['retain the output and backups for recovery', 'use another --out directory for a new run'];
 
 export function needsOutputRecovery(error) {
   return error instanceof DiagnosticError && error.diagnostics.some(diagnostic => diagnostic.code === RECOVERY_REQUIRED);
@@ -85,14 +87,20 @@ function claimOutput(lock) {
     const [owner] = owners;
     const ownerParts = owners.length === 1 && owner.isDirectory() ? OWNER.exec(owner.name) : null;
     const pid = ownerParts ? Number(ownerParts[2]) : null;
-    if (ownerParts?.[1] !== HOST || pid > 0x7fffffff || processExists(pid)) busy(lock, pid);
+    if (!ownerParts || pid > 0x7fffffff) busy(lock, pid);
 
     const abandoned = path.join(lock, owner.name);
     const plan = path.join(abandoned, MOVE_PLAN);
-    if (fs.existsSync(plan)) {
-      fail(RECOVERY_REQUIRED, 'An interrupted analysis left a publication that needs recovery.', {
+    // A workbench can stay alive after its publication has stopped.
+    const rollbackFailed = outputEntry(path.join(abandoned, ROLLBACK_FAILED));
+    if (!rollbackFailed && (ownerParts[1] !== HOST || processExists(pid))) busy(lock, pid);
+    if (rollbackFailed || outputEntry(plan)) {
+      const message = rollbackFailed
+        ? 'An analysis publication still needs recovery after a failed rollback.'
+        : 'An interrupted analysis left a publication that needs recovery.';
+      fail(RECOVERY_REQUIRED, message, {
         subject: { out: path.dirname(lock), lock, plan }, evidence: { pid },
-        supportedFixes: ['retain the output and backups for recovery', 'use another --out directory for a new run'],
+        supportedFixes: RECOVERY_FIXES,
       });
     }
     try {
@@ -135,7 +143,8 @@ export function outputEntry(target, { directory = false } = {}) {
 // All destinations have been made vacant by the time their move is applied.
 // Reverse order restores both the staged candidate and any public entries.
 export function publishAnalysisMoves(moves, lock) {
-  fs.writeFileSync(path.join(lock, MOVE_PLAN), JSON.stringify(moves, null, 2), { flag: 'wx' });
+  const plan = path.join(lock, MOVE_PLAN);
+  fs.writeFileSync(plan, JSON.stringify(moves, null, 2), { flag: 'wx' });
   const applied = [];
   try {
     for (const [from, to] of moves) {
@@ -149,10 +158,18 @@ export function publishAnalysisMoves(moves, lock) {
         fs.renameSync(to, from);
         applied.pop();
       } catch (rollback) {
+        const evidence = {
+          publishError: error.message,
+          rollbackError: rollback.message,
+          restore: applied.reverse().map(([before, after]) => ({ from: after, to: before })),
+        };
+        // The plan already protects the backups if recording the terminal state also fails.
+        try { fs.writeFileSync(path.join(lock, ROLLBACK_FAILED), '', { flag: 'wx' }); }
+        catch (markerError) { evidence.recoveryMarkerError = markerError.message; }
         fail(RECOVERY_REQUIRED, 'Analysis publication failed and the previous output could not be fully restored.', {
-          subject: { out: path.dirname(path.dirname(lock)), lock },
-          evidence: { publishError: error.message, rollbackError: rollback.message, restore: applied.reverse().map(([before, after]) => ({ from: after, to: before })) },
-          supportedFixes: ['retain the output and backups for recovery', 'use another --out directory for a new run'],
+          subject: { out: path.dirname(path.dirname(lock)), lock, plan },
+          evidence,
+          supportedFixes: RECOVERY_FIXES,
         });
       }
     }

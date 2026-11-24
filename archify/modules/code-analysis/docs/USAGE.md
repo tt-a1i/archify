@@ -89,7 +89,7 @@ Use `--ir architecture.json` only for an existing relevant diagram or an explici
 
 `prepare` shares extraction, rules, tasks and result publication with `serve`, then exits. The JSON receipt gives scoped counts, coverage, priority leads and `html` (`out/project-analysis/analysis/repo.analysis.html`); `diagram` is null without IR, otherwise names the untouched delivered diagram. Open the HTML directly: the workbench and Atlas are ready offline, with captured tasks, source excerpts, an architecture brief and manual-copy fallbacks.
 
-Report publication and workbench review saves share an output-directory lock. If another process is using the same `--out`, wait for it to finish or choose a different directory. After `analysis/output-recovery-required`, keep the output and the retained move plan together for recovery.
+Report publication and workbench review saves share an output-directory lock. If another process is using the same `--out`, wait for it to finish or choose a different directory. If a process stops before publication, a retry on the same host cleans up its staged report. After `analysis/output-recovery-required`, keep the output, move plan, and backups together for recovery.
 
 Under **Recheck after edits**, copy the saved start command and run it on the generating machine. It preserves language, locale, config, baseline and optional IR/map. Without IR, opening the printed URL starts analysis and compares with the captured result; with IR, click Code Analysis. Later edits use **Re-analyze**. The report never runs a command automatically. Tasks remain captured snapshots until current source is verified.
 

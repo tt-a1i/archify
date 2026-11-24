@@ -52,7 +52,7 @@ export function writeAnalysisView(dir, overlay, review) {
 // `html` is the page Archify delivered for `ir`; it is read, never modified.
 // `baseline` (file) marks accepted findings; `previous` (a findings.json from
 // an earlier run) adds a comparison. Both are recorded in review.json.
-export function analyzeRepository({ root, ir = null, html = null, out, locale = null, language = null, config = null, map = null, irSnapshot = null, baseline = null, previous = null, resume = null, openAnalysis = false, source = null, pullRequest = null }) {
+export function analyzeRepository({ root, ir = null, html = null, out, locale = null, language = null, config = null, map = null, irSnapshot = null, baseline = null, previous = null, resume = null, openAnalysis = false, source = null, pullRequest = null }, { createOutput = true } = {}) {
   const absRoot = path.resolve(root);
   const irPath = ir ? path.resolve(ir) : null;
   const htmlPath = html ? path.resolve(html) : null;
@@ -61,7 +61,8 @@ export function analyzeRepository({ root, ir = null, html = null, out, locale = 
   if (irPath && (!htmlPath || !fs.existsSync(htmlPath))) fail('cli/input-invalid', `Not a file: ${html}`, { subject: { file: html }, supportedFixes: ['deliver the diagram with `archify deliver` first'] });
   if (path.resolve(dir, 'repo.analysis.html') === htmlPath) fail('cli/out-invalid', 'The analysis output must not overwrite the delivered HTML.', { supportedFixes: ['use a different --out directory'] });
   if (map && !irPath) fail('cli/input-invalid', '--map requires --ir.', { supportedFixes: ['provide the authored architecture IR or omit --map'] });
-  fs.mkdirSync(dir, { recursive: true });
+  if (createOutput) fs.mkdirSync(dir, { recursive: true });
+  else if (!fs.statSync(dir).isDirectory()) fail('cli/out-invalid', 'The analysis staging path must be a directory.', { subject: { dir } });
   const { adapter, facts, config: cfg, otherLanguages } = extractFacts(absRoot, {
     language, config, capturedOnly: source?.sourceKind === 'git-tree',
   });

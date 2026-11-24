@@ -10,6 +10,7 @@ import { setTimeout as pause } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import { runCheck } from '../bin/check.mjs';
 import { prepareAnalysisView } from '../bin/prepare.mjs';
+import { startAnalysisView } from '../bin/serve.mjs';
 
 const prepare = fileURLToPath(new URL('../bin/prepare.mjs', import.meta.url));
 const read = file => JSON.parse(fs.readFileSync(file, 'utf8'));
@@ -91,7 +92,7 @@ test('a failed prepare publication restores both reports and compares with the l
   assert.deepEqual(fingerprints(previous), first);
   const rename = fs.renameSync;
   fs.renameSync = (from, to) => {
-    if (to === current && path.basename(from).startsWith('analysis.next-')) throw ioError();
+    if (to === current && from !== previous) throw ioError();
     return rename(from, to);
   };
   f.write(true);
@@ -107,6 +108,61 @@ test('a failed prepare publication restores both reports and compares with the l
   await prepareAnalysisView(f.args);
   assert.deepEqual(fingerprints(previous), lastGood);
   assert.ok(read(path.join(current, 'review.json')).comparison.new.length > 0);
+});
+
+test('a failed rollback still requires recovery while the workbench stays open', async t => {
+  const f = fixture(t);
+  const current = path.join(f.out, 'analysis'), previous = path.join(f.out, 'analysis.previous');
+  const view = await startAnalysisView(f.args);
+  t.after(() => new Promise(resolve => {
+    view.server.close(resolve);
+    view.server.closeAllConnections();
+  }));
+  const refresh = async () => {
+    const response = await fetch(view.url + '/analyze', {
+      method: 'POST',
+      headers: { Origin: view.url, 'x-analysis-token': view.token, 'x-analysis-refresh': '1' },
+    });
+    const body = await response.text();
+    return { status: response.status, diagnostics: response.ok ? [] : JSON.parse(body).diagnostics };
+  };
+  assert.equal((await refresh()).status, 200);
+  const older = fingerprints(current);
+  fs.writeFileSync(path.join(f.root, 'a.ts'), 'export const a = 3;');
+  assert.equal((await refresh()).status, 200);
+  const lastGood = fingerprints(current);
+  f.write(true);
+
+  const rename = fs.renameSync;
+  fs.renameSync = (from, to) => {
+    // Both publishing the staged report and restoring the current one fail.
+    if (to === current) throw ioError();
+    return rename(from, to);
+  };
+  let failed;
+  try {
+    failed = await refresh();
+  } finally {
+    fs.renameSync = rename;
+  }
+  assert.equal(failed.status, 500);
+  assert.equal(failed.diagnostics[0].code, 'analysis/output-recovery-required');
+
+  const retry = await refresh();
+  assert.equal(retry.status, 500);
+  assert.equal(retry.diagnostics[0].code, 'analysis/output-recovery-required');
+  const plan = retry.diagnostics[0].subject.plan;
+  assert.equal(failed.diagnostics[0].subject.plan, plan);
+  const separate = spawnSync(process.execPath, [prepare, ...f.args], { encoding: 'utf8', timeout: 12000 });
+  assert.equal(separate.status, 2, separate.stdout + separate.stderr);
+  const [diagnostic] = JSON.parse(separate.stdout).diagnostics;
+  assert.equal(diagnostic.code, 'analysis/output-recovery-required');
+  assert.equal(diagnostic.subject.plan, plan);
+  assert.deepEqual(fingerprints(previous), lastGood);
+  const backup = read(plan).find(([from]) => from === previous)?.[1];
+  assert.ok(backup, 'the move plan identifies the backup of the older report');
+  assert.deepEqual(fingerprints(backup), older);
+  assert.equal(fs.existsSync(current), false);
 });
 
 test('a second prepare process cannot publish into an output directory in use', { timeout: 45000 }, async t => {
@@ -156,35 +212,57 @@ test('a second prepare process cannot publish into an output directory in use', 
   assert.deepEqual(read(path.join(current, 'review.json')).comparison.new, []);
 });
 
-test('an analysis stopped before publication does not prevent a retry', { timeout: 30000 }, async t => {
+test('a retry discards the staged report of a process stopped before publication', { timeout: 30000 }, async t => {
   const f = fixture(t);
   await prepareAnalysisView(f.args);
   const current = path.join(f.out, 'analysis');
   const original = fingerprints(current);
+  f.write(true);
   const ready = path.join(f.directory, 'ready');
-  const output = new URL('../lib/output.mjs', import.meta.url).href;
-  const child = spawn(process.execPath, ['--input-type=module', '--eval', `
-    import fs from 'node:fs';
-    import { withAnalysisOutput } from ${JSON.stringify(output)};
-    await withAnalysisOutput(${JSON.stringify(f.out)}, () => {
-      fs.writeFileSync(${JSON.stringify(ready)}, '');
-      return new Promise(() => setInterval(() => {}, 1000));
-    });
-  `], { stdio: 'ignore' });
+  const hook = path.join(f.directory, 'hold-staged-report.cjs');
+  fs.writeFileSync(hook, `
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const read = fs.readFileSync;
+    fs.readFileSync = (file, ...args) => {
+      const value = read(file, ...args);
+      if (typeof file === 'string' && path.basename(file) === 'repo.analysis.html'
+          && path.dirname(file) !== ${JSON.stringify(current)}) {
+        fs.writeFileSync(${JSON.stringify(ready)}, path.dirname(file));
+        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 15000);
+        throw new Error('Timed out waiting for the test to stop publication');
+      }
+      return value;
+    };
+  `);
+  const child = spawn(process.execPath, ['--require', hook, prepare, ...f.args], { stdio: 'ignore' });
   const closed = once(child, 'close');
   try {
     await waitFor(ready);
   } finally {
-    child.kill();
+    child.kill('SIGKILL');
     await closed;
   }
+  const abandoned = fs.readFileSync(ready, 'utf8');
+  assert.ok(fs.existsSync(path.join(abandoned, 'findings.json')), 'the stopped run produced a staged report');
   assert.deepEqual(fingerprints(current), original);
+  const unrelated = 'analysis.next-000000000000';
+  fs.mkdirSync(path.join(f.out, unrelated));
+  fs.writeFileSync(path.join(f.out, unrelated, 'note.txt'), 'keep');
 
-  f.write(true);
   await prepareAnalysisView(f.args);
+  assert.equal(fs.existsSync(abandoned), false);
   assert.deepEqual(fingerprints(path.join(f.out, 'analysis.previous')), original);
   assert.ok(read(path.join(current, 'review.json')).comparison.new.length > 0);
-  assert.deepEqual(fs.readdirSync(f.out).sort(), ['analysis', 'analysis.previous']);
+
+  // A worker that starts after its owner is reclaimed must not recreate the lock.
+  const worker = fileURLToPath(new URL('../bin/analyze-run.mjs', import.meta.url));
+  const orphan = spawnSync(process.execPath, [worker], {
+    input: JSON.stringify({ root: f.root, language: 'ts', out: abandoned }), encoding: 'utf8', timeout: 12000,
+  });
+  assert.equal(orphan.status, 1, orphan.stdout + orphan.stderr);
+  assert.deepEqual(fs.readdirSync(f.out).sort(), ['analysis', unrelated, 'analysis.previous']);
+  assert.equal(fs.readFileSync(path.join(f.out, unrelated, 'note.txt'), 'utf8'), 'keep');
 });
 
 test('a prepare process killed during publication leaves both previous reports for recovery', { timeout: 30000 }, async t => {

@@ -39,6 +39,7 @@ const TASK_BODY_LIMIT = 16 * 1024;
 // Failures come back as the worker's structured diagnostics.
 export function runWorker(options) {
   return new Promise((resolve, reject) => {
+    fs.mkdirSync(options.out, { recursive: true });
     const child = spawn(process.execPath, [worker], { stdio: ['pipe', 'pipe', 'pipe'] });
     let stdout = '', stderr = '';
     child.stdout.setEncoding('utf8').on('data', (chunk) => { stdout += chunk; });
@@ -156,7 +157,7 @@ async function createAnalysisSession({ root, ir, out, options, irBytes, doc, loc
 export async function runSessionAnalysis({ root, ir, doc, locale, delivered, out, options, baselineFile, resume, pullRequest = null, openAnalysis = false }, lock, { preparePRSources = preparePullRequest } = {}) {
   const analysisDir = path.join(out, 'analysis');
   const previousDir = path.join(out, 'analysis.previous');
-  const next = path.join(out, `analysis.next-${randomBytes(6).toString('hex')}`);
+  const next = path.join(lock, 'next');
   const current = outputEntry(analysisDir, { directory: true });
   const previous = outputEntry(previousDir, { directory: true });
   let capture = null;
@@ -166,7 +167,7 @@ export async function runSessionAnalysis({ root, ir, doc, locale, delivered, out
       const { loadConfig, stableJson } = await import('../lib/analysis.mjs');
       const { selectAdapter } = await import('../extract/index.mjs');
       capture = await preparePRSources({ ...pullRequest, out });
-      fs.mkdirSync(next, { recursive: true });
+      fs.mkdirSync(next);
       const cfg = loadConfig(config);
       config = path.join(next, 'captured-config.json');
       fs.writeFileSync(config, stableJson(cfg));
@@ -200,10 +201,7 @@ export async function runSessionAnalysis({ root, ir, doc, locale, delivered, out
     publishAnalysisMoves(moves, lock);
     return { html, summary };
   } catch (error) {
-    if (!needsOutputRecovery(error)) {
-      fs.rmSync(next, { recursive: true, force: true });
-      if (capture) fs.rmSync(capture.directory, { recursive: true, force: true });
-    }
+    if (capture && !needsOutputRecovery(error)) fs.rmSync(capture.directory, { recursive: true, force: true });
     throw error;
   }
 }
