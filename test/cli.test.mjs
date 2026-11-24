@@ -1765,10 +1765,13 @@ test('cli: validate --json --with-layout returns the verdict and the --layout-js
     timeline: 'payment-incident.timeline.json',
     waterfall: 'checkout-request.waterfall.json',
   };
-  const before = new Set(fs.readdirSync(tmp));
+  // validate owns its working directory under os.tmpdir(); point that at an
+  // empty directory so a leaked layout report or artifact is observable.
+  const validateTemp = fs.mkdtempSync(path.join(tmp, 'with-layout-temp-'));
+  const env = { ...process.env, TMPDIR: validateTemp, TMP: validateTemp, TEMP: validateTemp };
   for (const [type, file] of Object.entries(examples)) {
     const input = path.join(skillRoot, 'examples', file);
-    const combined = run(['validate', type, input, '--json', '--with-layout']);
+    const combined = run(['validate', type, input, '--json', '--with-layout'], { env });
     assert.equal(combined.status, 0, `${type}: ${combined.stderr || combined.stdout}`);
     const { layout, ...verdict } = JSON.parse(combined.stdout);
     const separate = run(['validate', type, input, '--layout-json']);
@@ -1782,8 +1785,8 @@ test('cli: validate --json --with-layout returns the verdict and the --layout-js
       assert.equal(verdict.ok, true, type);
       assert.equal(verdict.nextAction.command, 'finalize', type);
     }
+    assert.deepEqual(fs.readdirSync(validateTemp), [], `${type}: validate must remove its working directory`);
   }
-  assert.deepEqual(new Set(fs.readdirSync(tmp)), before);
 });
 
 test('cli: validate --with-layout starts the renderer and the artifact check once and fails closed without a layout report', () => {
