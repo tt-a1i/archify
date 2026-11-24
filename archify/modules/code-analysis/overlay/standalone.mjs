@@ -14,6 +14,7 @@ export function standaloneShell({ locale = 'en', title = 'Repository' } = {}) {
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
 .header{padding:16px;display:flex;align-items:center;justify-content:space-between;gap:12px}h1{font-size:20px;margin:0;overflow-wrap:anywhere}.toolbar{display:flex;gap:8px;flex:none}button{font:inherit;color:var(--text);border:1px solid var(--panel-border);background:var(--panel);border-radius:7px;padding:7px 11px;cursor:pointer}button:focus-visible{outline:2px solid var(--backend-stroke);outline-offset:2px}.theme-icon{display:grid;place-items:center;width:34px;height:34px;padding:0;border-color:transparent;background:none;color:var(--text-muted)}.theme-icon:hover{color:var(--text);background:color-mix(in srgb,var(--text) 5%,transparent)}
 .container{--analysis-reader-width:420px;display:grid;grid-template-columns:minmax(0,1fr) var(--analysis-reader-width);gap:16px;padding:0 16px 16px;height:calc(100dvh - 74px);min-height:480px;transition:grid-template-columns 320ms cubic-bezier(.22,.68,.20,1)}
+html[data-bauify-source="on"] .container{--analysis-reader-width:min(760px,54vw)}
 .analysis-reader-shell,.analysis-stage{min-width:0;min-height:0;position:relative;grid-row:1}
 .analysis-reader-shell{grid-column:2}
 .analysis-stage{grid-column:1}
@@ -23,7 +24,7 @@ export function standaloneShell({ locale = 'en', title = 'Repository' } = {}) {
 .reader-restore span{width:3px;height:36px;border-radius:2px;background:var(--text-muted);opacity:.6}
 .reader-restore:hover span,.reader-restore:focus-visible span{background:var(--backend-stroke);opacity:1}
 .reader-restore:focus-visible{outline-offset:-2px}
-html[data-analysis-mode="standalone"] #bauify-reader{position:relative;inset:auto;width:var(--analysis-reader-width);height:100%;max-width:none;max-height:none;margin:0;transition:opacity 220ms ease,transform 320ms cubic-bezier(.22,.68,.20,1),visibility 0ms}
+html[data-analysis-mode="standalone"] #bauify-reader{position:relative;inset:auto;width:100%;height:100%;max-width:none;max-height:none;margin:0;transition:opacity 220ms ease,transform 320ms cubic-bezier(.22,.68,.20,1),visibility 0ms}
 html[data-analysis-mode="standalone"][data-bauify-reader-collapsed] .container{grid-template-columns:minmax(0,1fr) 20px}
 html[data-analysis-mode="standalone"] #bauify-reader.collapsed{opacity:0;transform:translateX(100%);visibility:hidden;pointer-events:none;transition:opacity 180ms ease,transform 320ms cubic-bezier(.22,.68,.20,1),visibility 0ms 320ms}
 html[data-analysis-mode="standalone"] #bauify-atlas{position:relative;inset:auto;height:100%;z-index:auto}

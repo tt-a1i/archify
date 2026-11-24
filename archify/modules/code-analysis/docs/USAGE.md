@@ -27,6 +27,45 @@ This layer performs no new extraction or repository traversal. Reading is bounde
 
 In PR mode, short file/function addition and removal counts follow the original module labels, with detailed counts available on hover. Change badges (+/−/◇) open the captured source; grey dashed spikes show merge-base complexity alongside the current spikes. Removed functions can be marked against a surviving file; deleted files/modules remain in the change list. These annotations do not appear in ordinary repository analysis. A same-metric source edit can have a change badge without implying increased complexity or changed behavior.
 
+## Offline review of two local commits
+
+Use exact Git commit IDs to generate a self-contained review without contacting GitHub:
+
+```sh
+node bin/archify.mjs code-analysis prepare /path/to/repo \
+  --base <40-character-base> --head <40-character-head> --language ts \
+  --out out/pinned-review
+```
+
+Provision the Code Analysis dependencies and language tools beforehand. Git objects
+needed by the selected scope must be available locally. Missing commit or tree
+objects produce a diagnostic, and a failed run keeps the last good report.
+The reader compares the selected base directly with head. To match GitHub's PR
+comparison, resolve and pass its merge-base yourself. A dirty checkout, Git
+branch moves and untracked files do not change the selected commits or evidence.
+For a large repository, use `--scope <repo-directory>` to select a subtree.
+Git uses 50% similarity to detect renames; moves across the scope boundary
+appear as additions or removals, and Git may skip expensive similarity searches
+when more than 1000 unmatched paths remain.
+
+Open `out/pinned-review/analysis/repo.analysis.html` directly in a browser.
+**Review commits** shows the full Git identities. **Files** in Atlas lists
+changed files, and a rename links both saved paths. Source buttons are available
+for captured text. Changed files outside the analysis selection may still have
+a preview if they are regular UTF-8 files (up to 128 KiB per file and 4 MiB
+per side for supplemental previews). These previews do not expand analysis coverage. **Architecture assessment**
+links observed dependency changes to source. For JS/TS, add an existing
+`--ir architecture.json` and optional `--map overlay-map.json` to compare
+authored component relations using the same static analysis as `drift`.
+Select a relation to highlight its components or open its import evidence.
+Uncertain ownership, resolution and parsing remain visible in the relation.
+
+**Download review .md** exports both commits, changed paths, recorded
+dependency changes, source coordinates and coverage. The export omits source
+text. The HTML includes captured source excerpts and tasks. Share it with
+people who may read that source. You can also use the same pinned options with
+`archify start` or `code-analysis serve`.
+
 From the `archify/` package directory inside the Archify repository:
 
 ```sh
