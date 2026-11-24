@@ -557,13 +557,13 @@
     };
     codePane.querySelector('.close').addEventListener('click', backToSourceParent);
     codePane.querySelector('.source-back').addEventListener('click', backToSourceParent);
-    codePane.onkeydown = returnFocus ? function (event) {
+    codePane.onkeydown = sourcePair || returnFocus ? function (event) {
       if (event.key !== 'Escape') return;
       event.preventDefault();
       event.stopPropagation();
       backToSourceParent();
     } : null;
-    if (returnFocus) codePane.querySelector('.source-back').focus();
+    if (sourcePair || returnFocus) codePane.querySelector('.source-back').focus();
     var hit = codePane.querySelector('.ln.hit');
     if (hit) codePane.scrollTop = Math.max(0, hit.offsetTop - codePane.offsetTop - codePane.clientHeight / 2);
   }
@@ -880,11 +880,11 @@
     if(record.kind!=='known-users'&&record.callers&&record.callers.coverage!=='available') h+='<p class="pr-assessment-scope">'+esc(tr('Callsite coverage unavailable'))+'</p>';
     var primary=record.locations.findIndex(function(loc){return loc.side==='head';});if(primary<0)primary=0;
     var at=record.locations[primary];
-    if(at)h+='<button type="button" class="text-action pr-impact-path" data-impact-location="'+index+':'+primary+'">'+esc(at.file+':'+at.line)+' · '+esc(tr(at.side==='base'?'Merge-base':'PR head'))+'</button>';
+    if(at)h+='<button type="button" class="text-action pr-impact-path" data-impact-location="'+index+':'+primary+'">'+esc(at.file+':'+at.line)+' · '+esc(tr(data.pullRequest.local ? (at.side === 'base' ? 'Pinned base' : 'Pinned head') : (at.side === 'base' ? 'Merge-base' : 'PR head')))+'</button>';
     h+='<details class="pr-impact-evidence"><summary>'+esc(tr('Change evidence and affected references'))+'</summary>';
     if(record.kind==='dependency-changed') h+='<pre class="pr-impact-forms">'+esc(JSON.stringify({base:record.before.forms,head:record.after.forms},null,2))+'</pre>';
     if(record.kind==='structural-measures') h+='<p class="pr-assessment-scope">'+esc(tr('These are existing rule measurements from both snapshots; the cause of an individual edge is not established.'))+'</p>';
-    record.locations.forEach(function(loc,i){h+='<button type="button" class="text-action" data-impact-location="'+index+':'+i+'">'+esc(tr(loc.side==='base'?'Merge-base':'PR head'))+' · '+esc(loc.file+':'+loc.line)+(loc.relation?' · '+esc(tr(loc.relation==='bound-call'?'Bound source call':'File import')):'')+(loc.unchanged?' · '+esc(tr('unchanged file')):'')+'</button>';});
+    record.locations.forEach(function(loc,i){h+='<button type="button" class="text-action" data-impact-location="'+index+':'+i+'">'+esc(tr(data.pullRequest.local ? (loc.side === 'base' ? 'Pinned base' : 'Pinned head') : (loc.side === 'base' ? 'Merge-base' : 'PR head')))+' · '+esc(loc.file+':'+loc.line)+(loc.relation?' · '+esc(tr(loc.relation==='bound-call'?'Bound source call':'File import')):'')+(loc.unchanged?' · '+esc(tr('unchanged file')):'')+'</button>';});
     (record.contexts||[]).forEach(function(context){h+='<p class="pr-assessment-scope">'+esc(tr('Related existing constraint'))+' · <button type="button" class="text-action" data-finding="'+esc(context.id)+'">'+esc(GROUPS[context.code]||context.code)+'</button></p>';});
     h+='</details>';
     if(finding)h+=quickHandoff(finding,true)+taskHtml(finding);

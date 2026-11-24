@@ -1,7 +1,7 @@
 import { normalizeRoutePoints, properSegmentIntersection, rectsOverlap } from '../shared/geometry.mjs';
 import { analyzeSvgPath } from '../shared/svg-path-analysis.mjs';
 import { prepareCrossingPath, visibleCrossings } from '../shared/route-crossings.mjs';
-import { horizontalLabelClearance } from './routing.mjs';
+import { facingPortCorridor, horizontalLabelClearance } from './routing.mjs';
 
 export function measuredCrossingPairs(routes) {
   const paths = routes.map(({ d }) => analyzeSvgPath(d).subpaths
@@ -13,6 +13,87 @@ export function measuredCrossingPairs(routes) {
 
 function move(box, x, y) {
   return { ...box, x, y, cx: x + box.width / 2, cy: y + box.height / 2 };
+}
+
+export function* centeredFanOutCandidates({ boxes, routes }) {
+  const neighbors = new Map([...boxes.keys()].map(id => [id, new Set()]));
+  for (const { relation: { from, to } } of routes) {
+    neighbors.get(from).add(to);
+    neighbors.get(to).add(from);
+  }
+  for (const [id, peers] of neighbors) {
+    if (peers.size < 4 || [...peers].some(peer => neighbors.get(peer).size !== 1)) continue;
+    const hub = boxes.get(id);
+    if (hub.pos) continue;
+    const leaves = [...peers].map(peer => boxes.get(peer));
+    for (const [along, alongSize, rankCenter, acrossCenter] of [
+      ['x', 'width', 'cx', 'cy'], ['y', 'height', 'cy', 'cx'],
+    ]) {
+      // A one-sided rank of leaves can pull its hub to the end of the
+      // rank when the layout aligns the hub with the selected main path.
+      if (!leaves.every(leaf => leaf[along] >= hub[along] + hub[alongSize])
+          && !leaves.every(leaf => leaf[along] + leaf[alongSize] <= hub[along])) continue;
+      if (leaves.some(leaf => Math.abs(leaf[rankCenter] - leaves[0][rankCenter]) > 0.0001)) continue;
+      const ordered = leaves.map(leaf => leaf[acrossCenter]).sort((a, b) => a - b);
+      const shift = ordered[Math.floor((ordered.length - 1) / 2)] - hub[acrossCenter];
+      if (Math.abs(shift) < 60) continue;
+      const moved = along === 'x' ? move(hub, hub.x, hub.y + shift) : move(hub, hub.x + shift, hub.y);
+      if ([...boxes.values()].some(box => box !== hub && rectsOverlap(box, moved, 28))) continue;
+      yield new Map(boxes).set(id, moved);
+    }
+  }
+}
+
+export function* nearAlignmentCandidates({ boxes, routes, titles }) {
+  // Open a lane between the legal port ranges with a small perpendicular
+  // nudge. Avoid repacking cards or changing a frame's membership.
+  for (const route of routes) {
+    if (route.points.length <= 2) continue;
+    const { relation } = route;
+    const from = boxes.get(relation.from);
+    const to = boxes.get(relation.to);
+    const corridor = facingPortCorridor(from, to);
+    if (!corridor?.offset) continue;
+    const { axis, low, high, offset } = corridor;
+    const distance = 8 - (high - low);
+    if (distance <= 0 || distance > 24 || distance > Math.abs(offset)) continue;
+    for (const [box, change] of [[from, -Math.sign(offset) * distance], [to, Math.sign(offset) * distance]]) {
+      if (box.pos) continue;
+      const moved = move(box, box.x + (axis ? 0 : change), box.y + (axis ? change : 0));
+      if (moved.x < 0 || moved.y < 0 || [...boxes.values()].some(other => other !== box && rectsOverlap(other, moved, 12))
+          || titles.boundaries.some(frame => !frame.wraps.includes(box.id)
+            && rectsOverlap(frame, moved, 12) && !rectsOverlap(frame, box, 12))) continue;
+      yield { relation, boxes: new Map(boxes).set(box.id, moved) };
+    }
+  }
+}
+
+export function compositionImbalance({ boxes, routes, titles, viewBox }) {
+  const balanced = { leadingVoid: 0, sunkenRoots: 0, score: 0 };
+  if (boxes.size < 6 || titles.boundaries.length) return balanced;
+  const cards = [...boxes.values()];
+  if (cards.some(card => card.pos)) return balanced;
+
+  const minX = Math.min(...cards.map(card => card.x));
+  const minY = Math.min(...cards.map(card => card.y));
+  const spanX = Math.max(...cards.map(card => card.x + card.width)) - minX;
+  const spanY = Math.max(...cards.map(card => card.y + card.height)) - minY;
+  const leading = { x: minX, y: minY, width: spanX * 0.42, height: spanY * 0.42 };
+  const leadingVoid = spanX >= 420 && spanY >= 360 && !cards.some(card => rectsOverlap(card, leading))
+    ? leading.width * leading.height / (viewBox[0] * viewBox[1]) : 0;
+
+  const incoming = new Set();
+  const outgoing = new Set();
+  for (const { relation: { from, to, variant } } of routes) {
+    if (from === to || variant === 'dashed') continue;
+    incoming.add(to);
+    outgoing.add(from);
+  }
+  const roots = [...outgoing].filter(id => !incoming.has(id)).map(id => boxes.get(id));
+  const bottomBand = minY + spanY * 0.68;
+  const sunkenRoots = roots.length && roots.every(card => card.cy > bottomBand)
+    && cards.some(card => card.y === minY && !roots.includes(card)) ? 1 : 0;
+  return { leadingVoid, sunkenRoots, score: leadingVoid + sunkenRoots };
 }
 
 export function routeSpanMeasures(routes, boxes, viewBox) {
@@ -561,6 +642,471 @@ export function* frameEnclosureCandidates(components, enclosures) {
         const moved = clear(box, x, y);
         if (moved) yield moved;
       }
+    }
+  }
+}
+
+export function* sharedSinkColumnCandidates({ boxes, routes }) {
+  const incoming = new Map([...boxes.keys()].map(id => [id, new Set()]));
+  const outgoing = new Map([...boxes.keys()].map(id => [id, []]));
+  for (const { relation } of routes) {
+    incoming.get(relation.to).add(relation.from);
+    outgoing.get(relation.from).push(relation);
+  }
+  const shared = [...boxes.values()].filter(box => !outgoing.get(box.id).length && incoming.get(box.id).size >= 2);
+  if (shared.length < 3 || shared.length > 5) return;
+  const hubIds = new Set(shared.flatMap(sink => [...incoming.get(sink.id)]));
+  if (hubIds.size < 2 || hubIds.size > 3) return;
+  const hubs = [...hubIds].map(id => boxes.get(id)).sort((a, b) => a.cy - b.cy);
+  if (hubs.some(hub => shared.filter(sink => incoming.get(sink.id).has(hub.id)).length < 3)) return;
+  const sinks = [...boxes.values()].filter(box => !outgoing.get(box.id).length
+    && incoming.get(box.id).size && [...incoming.get(box.id)].every(id => hubIds.has(id)));
+  if (sinks.length > shared.length + 1) return;
+  const sinkIds = new Set(sinks.map(box => box.id));
+  const fan = new Set(hubs.flatMap(hub => outgoing.get(hub.id).filter(relation => sinkIds.has(relation.to))));
+  const entry = [...boxes.values()].filter(box => !incoming.get(box.id).size && outgoing.get(box.id).length === 1
+    && hubIds.has(outgoing.get(box.id)[0].to));
+  if (hubs.length + sinks.length + entry.length !== boxes.size || entry.length > 1
+      || hubs.some(hub => outgoing.get(hub.id).some(relation => !fan.has(relation)))) return;
+  const labelGap = [...fan].reduce((gap, relation) => Math.max(gap, horizontalLabelClearance(relation)), 84);
+  const withEntry = entry[0] && outgoing.get(entry[0].id)[0];
+  const leftHub = withEntry ? hubs.find(hub => hub.id === withEntry.to) : hubs[0];
+  const rightHub = hubs.findLast(hub => hub !== leftHub);
+  const leftHubs = hubs.filter(hub => hub !== rightHub);
+  const leftEdge = Math.max(...leftHubs.map(hub => hub.width)) + 48
+    + (withEntry ? entry[0].width + Math.max(84, horizontalLabelClearance(withEntry)) : 0);
+  const sinkWidth = Math.max(...sinks.map(sink => sink.width));
+
+  // A hub on the far side of the column gives its links their own corridor.
+  // Keep the entry on the outside so its link does not pass through the fan.
+  // Two hubs on one side need separate paths past each other. Set the
+  // lower hub closer to the sinks and leave enough space for both lanes.
+  const corridors = hubs.length === 2 ? [[labelGap - 36, 0], [labelGap, 0]] : [[labelGap, 36], [labelGap, 60]];
+  for (const rowGap of [40, 64]) for (const [gap, stagger] of corridors) {
+    for (const centered of [false, true]) {
+      const moved = new Map(boxes);
+      const height = sinks.reduce((sum, sink) => sum + sink.height, rowGap * (sinks.length - 1));
+      for (const group of [leftHubs, [rightHub]]) for (const [index, hub] of group.entries()) {
+        const cy = group.length === 1
+          ? 48 + height * (centered ? (hub === leftHub ? 0.375 : 0.625) : 0.5)
+          : 48 + height * (index + 0.5) / group.length;
+        moved.set(hub.id, move(hub, hub === rightHub ? leftEdge + 2 * gap + sinkWidth : leftEdge - hub.width + (index ? stagger : 0),
+          Math.max(48, cy - hub.height / 2)));
+      }
+      if (withEntry) {
+        const box = entry[0];
+        moved.set(box.id, move(box, 48, moved.get(leftHub.id).cy - box.height / 2));
+      }
+      const barycenter = sink => [...incoming.get(sink.id)].reduce((sum, id) => sum + moved.get(id).cy, 0)
+        / incoming.get(sink.id).size;
+      const ordered = [...sinks].sort((a, b) => barycenter(a) - barycenter(b) || a.cy - b.cy);
+      let y = 48;
+      for (const sink of ordered) {
+        moved.set(sink.id, move(sink, leftEdge + gap + (sinkWidth - sink.width) / 2, y));
+        y += sink.height + rowGap;
+      }
+      if (!cardsHaveClearance(moved)) continue;
+      for (const elbow of [true, false]) {
+        const sideFor = (relation, endpoint) => {
+          if (!fan.has(relation)) return;
+          const source = moved.get(relation.from);
+          const sink = moved.get(relation.to);
+          const right = source.cx < sink.cx;
+          if (endpoint === 'source') return right ? 'right' : 'left';
+          if (elbow && Math.abs(source.cy - sink.cy) >= (source.height + sink.height) / 2 - 18) {
+            return source.cy < sink.cy ? 'top' : 'bottom';
+          }
+          return right ? 'left' : 'right';
+        };
+        yield { boxes: moved, sideFor, fan };
+      }
+    }
+  }
+}
+
+export function cardsHaveClearance(boxes) {
+  const cards = [...boxes.values()];
+  return cards.every((box, index) => cards.slice(index + 1).every(other => !rectsOverlap(box, other, 24)));
+}
+
+export function* chainReflowCandidates({ boxes, routes, viewBox: [width, height] }) {
+  const horizontal = width > 1050 && width > height * 1.9;
+  if (!horizontal && (height < 720 || height < width * 1.3)) return;
+  const axis = horizontal ? 0 : 1;
+  const along = horizontal ? 'x' : 'y';
+  const across = horizontal ? 'y' : 'x';
+  const depth = horizontal ? 'width' : 'height';
+  const breadth = horizontal ? 'height' : 'width';
+  const alongCenter = box => box[along] + box[depth] / 2;
+  const acrossCenter = box => box[across] + box[breadth] / 2;
+  const place = (box, depthPosition, breadthPosition) => horizontal
+    ? move(box, depthPosition, breadthPosition) : move(box, breadthPosition, depthPosition);
+  const cards = [...boxes.values()].sort((a, b) => alongCenter(a) - alongCenter(b));
+  const outgoing = new Map(cards.map(card => [card.id, []]));
+  for (const { relation } of routes) {
+    const from = boxes.get(relation.from);
+    const to = boxes.get(relation.to);
+    if (to[along] > from[along] + from[depth]) outgoing.get(from.id).push(to.id);
+  }
+  // Forward edges are acyclic on the long axis, even when the full graph
+  // includes return links. Find the longest forward chain in one sweep.
+  const tails = new Map();
+  for (const box of cards.slice().reverse()) {
+    let tail = [];
+    for (const next of outgoing.get(box.id)) {
+      if (tails.get(next).length > tail.length) tail = tails.get(next);
+    }
+    tails.set(box.id, [box, ...tail]);
+  }
+  const order = [...tails.values()].sort((a, b) => b.length - a.length)[0];
+  if (order.length < 6 || order.length > 9 || boxes.size - order.length > 3
+      || order.slice(1).filter((box, index) => Math.abs(acrossCenter(box) - acrossCenter(order[index])) < box[breadth] / 2).length
+        < order.length - 2) return;
+  const sides = cards.filter(box => !order.includes(box));
+  if (!horizontal && !sides.length) return; // The earlier pure-chain fold handles this shape.
+  const slotDepth = Math.max(...cards.map(box => box[depth]));
+  const laneBreadth = Math.max(...order.map(box => box[breadth]));
+  const labelGap = routes.reduce((gap, { relation }) => Math.max(gap, horizontalLabelClearance(relation)), 84);
+  const sideGap = horizontal ? 56 : labelGap;
+  const orderByRank = box => (a, b) => Math.abs(alongCenter(a) - alongCenter(box)) - Math.abs(alongCenter(b) - alongCenter(box));
+  const peerRanks = sides.map(box => {
+    const peers = new Set(routes.flatMap(({ relation }) =>
+      relation.from === box.id ? [relation.to] : relation.to === box.id ? [relation.from] : []));
+    return order.filter(card => peers.has(card.id)).sort(orderByRank(box))[0];
+  });
+  // A side card needs its own attachment to the chain. Moving an entire
+  // side branch would change its internal spacing and label slots.
+  if (peerRanks.some(peer => !peer)) return;
+  const nearestRanks = sides.map(box => [...order].sort(orderByRank(box))[0]);
+  function* fit(moved) {
+    const inset = Math.min(...[...moved.values()].map(box => box[across]));
+    for (const [id, box] of moved) moved.set(id, place(box, box[along], box[across] - inset + 48));
+    if (cardsHaveClearance(moved)) yield { boxes: moved, axis };
+  }
+  if (!horizontal) {
+    // Shorten a chain in place when folding would complicate its extra links.
+    for (const gap of [36, 44]) {
+      const moved = new Map(boxes);
+      for (const [rank, box] of order.entries()) {
+        moved.set(box.id, place(box, 48 + rank * (slotDepth + gap), box[across]));
+      }
+      for (const [i, box] of sides.entries()) {
+        const peer = peerRanks[i];
+        const anchor = moved.get(peer.id);
+        const pos = acrossCenter(box) >= acrossCenter(peer)
+          ? anchor[across] + anchor[breadth] + sideGap : anchor[across] - box[breadth] - sideGap;
+        moved.set(box.id, place(box, alongCenter(anchor) - box[depth] / 2, pos));
+      }
+      yield* fit(moved);
+    }
+  }
+  const midpoint = Math.ceil(order.length / 2);
+  for (const split of [midpoint, midpoint + 1, midpoint - 1]) {
+    for (const laneGap of [sideGap + 32, sideGap + 110]) {
+      for (const usePeerRank of [true, false]) {
+        const step = slotDepth + (horizontal ? labelGap : 56);
+        const moved = new Map(boxes);
+        for (const [index, box] of order.entries()) {
+          const firstLane = index < split;
+          const rank = firstLane ? index : 2 * split - index - 1;
+          const offset = Math.max(0, order.length - 2 * split);
+          moved.set(box.id, place(box, 48 + (rank + offset) * step + (slotDepth - box[depth]) / 2,
+            48 + (firstLane ? 0 : laneBreadth + laneGap) + (laneBreadth - box[breadth]) / 2));
+        }
+        for (const [i, box] of sides.entries()) {
+          const peer = (usePeerRank ? peerRanks[i] : undefined) ?? nearestRanks[i];
+          const anchor = moved.get(peer.id);
+          const outer = acrossCenter(anchor) > 48 + laneBreadth;
+          const pos = outer ? anchor[across] + anchor[breadth] + sideGap + 24 : anchor[across] - box[breadth] - sideGap - 24;
+          moved.set(box.id, place(box, alongCenter(anchor) - box[depth] / 2 + (usePeerRank ? 0 : i * step), pos));
+        }
+        yield* fit(moved);
+      }
+    }
+  }
+}
+
+const placementAxes = [
+  { start: 'x', size: 'width', center: 'cx' },
+  { start: 'y', size: 'height', center: 'cy' },
+];
+
+function obstructedAxis(from, to, boxes) {
+  for (const [axis, along] of placementAxes.entries()) {
+    const across = placementAxes[1 - axis];
+    const low = Math.min(from[along.start] + from[along.size], to[along.start] + to[along.size]);
+    const high = Math.max(from[along.start], to[along.start]);
+    const lane = (from[across.center] + to[across.center]) / 2;
+    if (low >= high || Math.abs(from[across.center] - to[across.center]) > 12) continue;
+    const blockers = [...boxes.values()].filter(box => box[along.start] >= low
+      && box[along.start] + box[along.size] <= high
+      && box[across.start] < lane && box[across.start] + box[across.size] > lane);
+    if (blockers.length) return { axis, blockers };
+  }
+}
+
+export function blockedLinkCount({ boxes, routes }) {
+  return routes.filter(({ relation, points }) => points.length > 2
+    && obstructedAxis(boxes.get(relation.from), boxes.get(relation.to), boxes)).length;
+}
+
+export function* directLinkCandidates({ boxes, routes }) {
+  const neighbors = new Map([...boxes.keys()].map(id => [id, new Map()]));
+  for (const { relation } of routes) {
+    neighbors.get(relation.from).set(relation.to, relation);
+  }
+  const peers = id => [...boxes.keys()].filter(other => id !== other
+    && (neighbors.get(id).has(other) || neighbors.get(other).has(id)));
+  const considered = new Set();
+  const targets = [];
+  for (const { relation, points } of routes) {
+    const { from, to } = relation;
+    if (from === to || points.length <= 2 || considered.has(relation)) continue;
+    const reverse = neighbors.get(to).get(from);
+    const obstruction = obstructedAxis(boxes.get(from), boxes.get(to), boxes);
+    if (!obstruction && !reverse) continue;
+    const links = reverse ? [relation, reverse] : [relation];
+    for (const link of links) considered.add(link);
+    targets.push({ links, obstruction, first: boxes.get(from), second: boxes.get(to) });
+  }
+  // Spend the routing budget on blocked reciprocal links first, then
+  // blocked one-way links, then pairs that only need alignment.
+  const priority = ({ obstruction, links }) => obstruction ? links.length : 0;
+  targets.sort((a, b) => priority(b) - priority(a));
+  for (const { links, obstruction, first, second } of targets) {
+    const gap = links.reduce((value, link) => Math.max(value, horizontalLabelClearance(link)), 96);
+    if (!obstruction) {
+      for (const axis of [0, 1]) {
+        const along = placementAxes[axis];
+        const across = placementAxes[1 - axis];
+        for (const [anchor, peer] of [[first, second], [second, first]]) {
+          const pos = (peer[along.center] < anchor[along.center]
+            ? anchor[along.start] - peer[along.size] : anchor[along.start] + anchor[along.size]);
+          const direction = peer[along.center] < anchor[along.center] ? -1 : 1;
+          const beside = [peer[along.start], pos + direction * (axis ? 76 : gap)];
+          for (const start of beside) {
+            const aligned = anchor[across.center] - peer[across.size] / 2;
+            const moved = new Map(boxes).set(peer.id, axis ? move(peer, aligned, start) : move(peer, start, aligned));
+            if (cardsHaveClearance(moved)) yield { boxes: moved, links };
+          }
+        }
+      }
+      continue;
+    }
+    const { axis, blockers } = obstruction;
+    if (blockers.length !== 1) continue;
+    const [blocker] = blockers;
+    // A separate one-way input enters this flow at the intermediate card.
+    // Keep that entry path in place instead of moving it with the shortcut.
+    if (peers(blocker.id).some(id => id !== first.id && id !== second.id
+        && neighbors.get(id).has(blocker.id) && !neighbors.get(blocker.id).has(id))) continue;
+    const along = placementAxes[axis];
+    const across = placementAxes[1 - axis];
+    const place = (box, a, b) => axis ? move(box, b, a) : move(box, a, b);
+    const [leading, trailing] = first[along.start] < second[along.start] ? [first, second] : [second, first];
+    const leavesOf = id => peers(id).filter(peer => peers(peer).length === 1);
+    const leaves = leavesOf(blocker.id).map(id => boxes.get(id));
+    const partner = leaves.find(box => neighbors.get(box.id).has(blocker.id) && neighbors.get(blocker.id).has(box.id));
+    const [leadingSide, trailingSide] = axis ? ['top', 'bottom'] : ['left', 'right'];
+    const acrossSides = axis ? ['left', 'right'] : ['top', 'bottom'];
+    function* fit(moved, direction) {
+      const sideFor = (link, endpoint) => {
+        const id = endpoint === 'source' ? link.from : link.to;
+        if (links.includes(link)) return id === leading.id ? trailingSide : leadingSide;
+        const peer = endpoint === 'source' ? link.to : link.from;
+        if (id === blocker.id && (peer === leading.id || peer === trailing.id)) return peer === leading.id ? leadingSide : trailingSide;
+        if (peer === blocker.id && (id === leading.id || id === trailing.id)) return acrossSides[direction > 0 ? 1 : 0];
+      };
+      if (!cardsHaveClearance(moved)) return;
+      yield { boxes: moved, links, sideFor };
+      const aligned = new Map(moved);
+      for (const endpoint of [leading, trailing]) for (const id of leavesOf(endpoint.id)) {
+        const anchor = moved.get(endpoint.id);
+        const leaf = moved.get(id);
+        if (Math.abs(leaf[across.center] - anchor[across.center]) < (leaf[across.size] + anchor[across.size]) / 2 + 24) continue;
+        const next = place(leaf, anchor[along.center] - leaf[along.size] / 2, leaf[across.start]);
+        if (next[along.start] === leaf[along.start]
+            || [...aligned.values()].some(box => box.id !== id && rectsOverlap(box, next, 24))) continue;
+        aligned.set(id, next);
+      }
+      if ([...aligned.values()].some(box => moved.get(box.id) !== box)) yield { boxes: aligned, links, sideFor };
+    }
+    const originalGap = trailing[along.start] - leading[along.start] - leading[along.size];
+    const minimumGap = axis ? 72 : gap;
+    const gaps = new Set([minimumGap, blocker[along.size] + 20, blocker[along.size] + 56, originalGap]
+      .map(value => Math.min(originalGap, Math.max(minimumGap, value))));
+    const adjacentGaps = axis ? [56, 88] : [72, 104];
+    for (const targetGap of gaps) for (const direction of [1, -1]) for (const spacing of adjacentGaps) {
+      const moved = new Map(boxes);
+      const shift = targetGap - originalGap;
+      for (const [id, box] of boxes) {
+        if (box[along.center] >= trailing[along.center]) {
+          moved.set(id, place(box, box[along.start] + shift, box[across.start]));
+        }
+      }
+      const near = direction > 0
+        ? Math.max(leading[across.start] + leading[across.size], trailing[across.start] + trailing[across.size])
+        : Math.min(leading[across.start], trailing[across.start]) - blocker[across.size];
+      // Center the displaced card between the facing edges. With unequal
+      // endpoint widths, centering between the cards can crowd one elbow.
+      const blockerAlong = (leading[along.start] + leading[along.size] + moved.get(trailing.id)[along.start]
+        - blocker[along.size]) / 2;
+      const blockerAcross = near + direction * spacing;
+      moved.set(blocker.id, place(blocker, blockerAlong, blockerAcross));
+      yield* fit(new Map(moved), direction);
+      if (!partner) continue;
+      const beyond = direction > 0 ? blockerAcross + blocker[across.size] : blockerAcross - partner[across.size];
+      moved.set(partner.id, place(partner, blockerAlong + (blocker[along.size] - partner[along.size]) / 2,
+        beyond + direction * spacing));
+      yield* fit(moved, direction);
+      for (const other of leaves) {
+        if (other === partner) continue;
+        const otherGap = Math.max(96, horizontalLabelClearance(neighbors.get(blocker.id).get(other.id)
+          ?? neighbors.get(other.id).get(blocker.id)));
+        const side = other[along.center] < blocker[along.center] ? -1 : 1;
+        const pos = side > 0 ? blockerAlong + blocker[along.size] + otherGap : blockerAlong - other[along.size] - otherGap;
+        const alternate = new Map(moved).set(other.id, place(other, pos,
+          blockerAcross + (blocker[across.size] - other[across.size]) / 2));
+        yield* fit(alternate, direction);
+      }
+    }
+  }
+}
+
+export function* pendantSubtreeCandidates({ boxes, routes, titles }) {
+  const neighbors = new Map([...boxes.keys()].map(id => [id, new Set()]));
+  const outgoing = new Map([...boxes.keys()].map(id => [id, new Set()]));
+  for (const { relation: { from, to } } of routes) {
+    if (from === to) continue;
+    neighbors.get(from).add(to);
+    neighbors.get(to).add(from);
+    outgoing.get(from).add(to);
+  }
+  const frames = titles.boundaries;
+  const scopeOf = id => frames.map(frame => Number(frame.wraps.includes(id))).join('');
+  const contentRight = Math.max(...[...boxes.values()].map(box => box.x + box.width));
+  const contentBottom = Math.max(...[...boxes.values()].map(box => box.y + box.height));
+  const seenBridges = new Set();
+  const seenMoves = new Set();
+
+  for (const { relation: { from: anchorId, to: rootId } } of routes) {
+    if (anchorId === rootId) continue;
+    const bridgeKey = `${anchorId}->${rootId}`;
+    if (seenBridges.has(bridgeKey)) continue;
+    seenBridges.add(bridgeKey);
+
+    const subtree = new Set([rootId]);
+    const queue = [rootId];
+    let isBridge = true;
+    for (const current of queue) {
+      for (const next of neighbors.get(current)) {
+        if ((current === rootId && next === anchorId) || (current === anchorId && next === rootId)) continue;
+        if (next === anchorId) {
+          isBridge = false;
+          break;
+        }
+        if (!subtree.has(next)) {
+          subtree.add(next);
+          queue.push(next);
+        }
+      }
+      if (!isBridge || subtree.size > 6) break;
+    }
+    const fanOutChildren = [...outgoing.get(rootId)].filter(id => subtree.has(id)).length;
+    if (!isBridge || subtree.size < 3 || subtree.size > 6 || subtree.size > boxes.size - 2
+        || fanOutChildren < 2 || frames.length) continue;
+    const rootScope = scopeOf(rootId);
+    const inner = [...subtree].map(id => boxes.get(id));
+    if (inner.some(box => box.pos || scopeOf(box.id) !== rootScope)) continue;
+
+    const anchor = boxes.get(anchorId);
+    const root = boxes.get(rootId);
+    if (Math.abs(root.cx - anchor.cx) < 48 || Math.abs(root.cy - anchor.cy) < 48) continue;
+
+    const links = routes.filter(({ relation: r }) =>
+      (r.from === anchorId && r.to === rootId) || (r.from === rootId && r.to === anchorId));
+    const others = [...boxes.values()].filter(box => !subtree.has(box.id));
+    const minBridgeGapX = Math.max(72, ...links.map(({ relation }) => horizontalLabelClearance(relation)));
+    const gap = 28;
+
+    const subTop = Math.min(...inner.map(member => member.y));
+    const subBottom = Math.max(...inner.map(member => member.y + member.height));
+    const subHeight = subBottom - subTop;
+    const side = Math.sign(root.cx - anchor.cx) || 1;
+    const sideBlockers = others.filter(other => side > 0
+      ? other.x + other.width > anchor.x + anchor.width + 24
+      : other.x < anchor.x - 24);
+    const firstSideBlockerTop = sideBlockers.length ? Math.min(...sideBlockers.map(other => other.y)) : Infinity;
+    const upperPocketRootCy = subTop > 200 && firstSideBlockerTop - 36 - subHeight >= 40
+      ? root.cy + (firstSideBlockerTop - 36 - subBottom)
+      : null;
+
+    const shifts = [];
+    for (const targetCy of [
+      anchor.cy,
+      ...(upperPocketRootCy !== null ? [upperPocketRootCy] : []),
+      ...(root.cy > anchor.cy + 80 ? [anchor.cy - anchor.height - 68, anchor.cy - 96] : []),
+    ]) {
+      const dy = targetCy - root.cy;
+      const dxCandidates = new Set([0]);
+      if (side > 0) {
+        const minRootX = targetCy === anchor.cy ? anchor.x + anchor.width + minBridgeGapX : anchor.x + anchor.width + 72;
+        let minShiftForOthers = -Infinity;
+        for (const member of inner) {
+          const top = member.y + dy;
+          const bottom = top + member.height;
+          for (const other of others) {
+            if (other.y + other.height + gap <= top || bottom + gap <= other.y) continue;
+            if (other.cx <= member.cx + 80) {
+              minShiftForOthers = Math.max(minShiftForOthers, other.x + other.width + 44 - member.x);
+            }
+          }
+        }
+        const pulledDx = Math.max(minRootX - root.x, minShiftForOthers);
+        if (Number.isFinite(pulledDx)) dxCandidates.add(pulledDx);
+        if (minShiftForOthers > 0) dxCandidates.add(minShiftForOthers);
+      } else {
+        const maxRootX = targetCy === anchor.cy ? anchor.x - root.width - minBridgeGapX : anchor.x - root.width - 72;
+        let maxShiftForOthers = Infinity;
+        for (const member of inner) {
+          const top = member.y + dy;
+          const bottom = top + member.height;
+          for (const other of others) {
+            if (other.y + other.height + gap <= top || bottom + gap <= other.y) continue;
+            if (other.cx >= member.cx - 80) {
+              maxShiftForOthers = Math.min(maxShiftForOthers, other.x - 44 - member.width - member.x);
+            }
+          }
+        }
+        const pulledDx = Math.min(maxRootX - root.x, maxShiftForOthers);
+        if (Number.isFinite(pulledDx)) dxCandidates.add(pulledDx);
+        if (maxShiftForOthers < 0) dxCandidates.add(maxShiftForOthers);
+      }
+      for (const dx of dxCandidates) shifts.push([dx, dy]);
+    }
+    {
+      const dx = anchor.cx - root.cx;
+      shifts.push([dx, 0]);
+      const vSide = Math.sign(root.cy - anchor.cy) || 1;
+      const targetRootY = vSide > 0 ? anchor.y + anchor.height + 72 : anchor.y - root.height - 72;
+      shifts.push([dx, targetRootY - root.y]);
+    }
+
+    for (const [dx, dy] of shifts) {
+      if (Math.abs(dx) + Math.abs(dy) < 48) continue;
+      const changed = inner.map(member => move(member, member.x + dx, member.y + dy));
+      if (changed.some((member, index) => member.x < 40 || member.y < 40
+          || member.x + member.width > contentRight + 48.0001
+          || member.y + member.height > contentBottom + 0.0001
+          || others.some(other => rectsOverlap(other, member, gap))
+          || frames.some(frame => !frame.wraps.includes(member.id) && rectsOverlap(frame, member, 12)
+            && !rectsOverlap(frame, inner[index], 12)))) continue;
+      const key = JSON.stringify(changed.map(({ id, x, y }) => [id, Math.round(x), Math.round(y)]));
+      if (seenMoves.has(key)) continue;
+      seenMoves.add(key);
+      const moved = new Map(boxes);
+      for (const member of changed) moved.set(member.id, member);
+      yield { boxes: moved };
     }
   }
 }
