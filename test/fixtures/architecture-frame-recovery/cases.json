@@ -150,12 +150,12 @@
   "review8/frame-recovery": {
     "file": "review8-frame-recovery.json",
     "passes": true,
-    "round7Svg": "fbf36efd308563b628158edf3d981d4bc8ae3b446f6321e13fde62508520c30d"
+    "round11Svg": "6d737d78bf48d6e0b4b2f96f7f0a8d508456bccccfd2385f26570ae1a5eb7936"
   },
   "review8/frame-recovery-second": {
     "file": "review8-frame-recovery-second.json",
     "passes": true,
-    "round7Svg": "02b777161db1bbe88486b10b10c165c4135810d7a5b0a57ed20a0a905b86e365"
+    "straightConnections": [["n0", "n1"]]
   },
   "review8/load-inventory-detour": {
     "file": "review8-load-inventory-detour.json",
@@ -180,7 +180,7 @@
   "review9/fixed-096": {
     "file": "review9-fixed-096.json",
     "passes": true,
-    "round8Svg": "545ab0658abe95fd9e74a196ca85df2a5ac7eccfd0c53dea2f74a2099f9d02f0",
+    "straightConnections": [["n3", "n4"]],
     "cleanArtifact": true
   }
 }

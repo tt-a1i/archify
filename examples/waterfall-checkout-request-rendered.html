@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="dark light">
-  <meta name="generator" content="archify 3.3.0">
+  <meta name="generator" content="archify 3.3.1">
   <meta name="archify-reader-contract" content="declared-wide-v1">
   <title>Checkout request execution Diagram</title>
   <script>
@@ -192,6 +192,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
       --arrow: #94a3b8;
       --arrow-emphasis: #34d399;
+      --arrow-security: #e28295;
+      --arrow-dashed: #9d8df1;
       --edge-label: var(--arrow);
 
       /* Opaque mask color used behind semi-transparent component fills
@@ -237,6 +239,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
       --arrow: #64748b;
       --arrow-emphasis: #059669;
+      --arrow-security: #b43b57;
+      --arrow-dashed: #6d4fc2;
       --edge-label: var(--text-muted);
 
       --mask: #ffffff;
@@ -298,6 +302,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --external-stroke: #a5b4c7;
       --arrow: #7890ad;
       --arrow-emphasis: #2dd4bf;
+      --arrow-security: var(--security-stroke);
+      --arrow-dashed: var(--database-stroke);
       --edge-label: var(--arrow);
       --toolbar-bg: rgba(7, 16, 30, 0.86);
       --toolbar-border: #29415f;
@@ -334,6 +340,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --external-stroke: #607a8c;
       --arrow: #7b97aa;
       --arrow-emphasis: #0d9488;
+      --arrow-security: var(--security-stroke);
+      --arrow-dashed: var(--database-stroke);
       --edge-label: var(--text-muted);
     }
 
@@ -371,6 +379,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --external-stroke: #a7cad9;
       --arrow: #78a3b7;
       --arrow-emphasis: #64dfc1;
+      --arrow-security: var(--security-stroke);
+      --arrow-dashed: var(--database-stroke);
       --edge-label: var(--arrow);
       --toolbar-bg: rgba(7, 28, 45, 0.92);
       --toolbar-border: #34799a;
@@ -407,6 +417,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --external-stroke: #506f7e;
       --arrow: #6d93a5;
       --arrow-emphasis: #087f69;
+      --arrow-security: var(--security-stroke);
+      --arrow-dashed: var(--database-stroke);
       --edge-label: var(--text-muted);
       --toolbar-bg: rgba(247, 252, 254, 0.94);
       --toolbar-border: #8ab5c5;
@@ -450,6 +462,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --external-stroke: #b8ad99;
       --arrow: #948978;
       --arrow-emphasis: #dd6b3d;
+      --arrow-security: var(--security-stroke);
+      --arrow-dashed: var(--database-stroke);
       --edge-label: var(--arrow);
       --toolbar-bg: rgba(35, 31, 24, 0.92);
       --toolbar-border: #625a4a;
@@ -488,6 +502,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --external-stroke: #746b5e;
       --arrow: #8a806f;
       --arrow-emphasis: #bb4c23;
+      --arrow-security: var(--security-stroke);
+      --arrow-dashed: var(--database-stroke);
       --edge-label: var(--text-muted);
       --toolbar-bg: rgba(251, 248, 241, 0.94);
       --toolbar-border: #c4b9a6;
@@ -4945,8 +4961,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
        while the text stays readable on the label mask. */
     .t-edge-default  { fill: var(--edge-label); }
     .t-edge-emphasis { fill: var(--arrow-emphasis); }
-    .t-edge-security { fill: var(--security-stroke); }
-    .t-edge-dashed   { fill: var(--database-stroke); }
+    .t-edge-security { fill: var(--arrow-security); }
+    .t-edge-dashed   { fill: var(--arrow-dashed); }
 
     /* Classic canvas: a quiet dot field replaces drafting grid lines, and nodes
        read as lifted cards with hairline strokes. Paint only; authored geometry,
@@ -4958,8 +4974,45 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     }
     svg[data-preset="classic"] .c-grid { stroke: transparent; }
     html[data-preset="classic"][data-theme="light"] .diagram-container > svg [data-node-id] > rect:not(.c-mask) {
-      --ambient-node-base-filter: drop-shadow(0 1px 1px rgba(17, 24, 39, 0.05)) drop-shadow(0 6px 12px rgba(17, 24, 39, 0.06));
+      --ambient-node-base-filter: drop-shadow(0 1px 2px rgba(15, 23, 42, 0.045)) drop-shadow(0 6px 14px rgba(15, 23, 42, 0.055));
       filter: var(--ambient-node-base-filter);
+    }
+    html[data-preset="classic"] .diagram-container > svg[data-node-ui] [data-node-id] > rect,
+    html[data-preset="signal-flow"] .diagram-container > svg[data-node-ui] [data-node-id] > rect {
+      rx: 10px;
+    }
+    html[data-preset="classic"][data-theme="light"] .diagram-container > svg[data-node-ui] [data-node-id] > rect:not(.c-mask).c-frontend {
+      fill: color-mix(in srgb, var(--frontend-stroke) 8.5%, var(--mask));
+      stroke: color-mix(in srgb, var(--frontend-stroke) 56%, var(--lane-stroke));
+    }
+    html[data-preset="classic"][data-theme="light"] .diagram-container > svg[data-node-ui] [data-node-id] > rect:not(.c-mask).c-backend {
+      fill: color-mix(in srgb, var(--backend-stroke) 8.5%, var(--mask));
+      stroke: color-mix(in srgb, var(--backend-stroke) 56%, var(--lane-stroke));
+    }
+    html[data-preset="classic"][data-theme="light"] .diagram-container > svg[data-node-ui] [data-node-id] > rect:not(.c-mask).c-database {
+      fill: color-mix(in srgb, var(--database-stroke) 8.5%, var(--mask));
+      stroke: color-mix(in srgb, var(--database-stroke) 56%, var(--lane-stroke));
+    }
+    html[data-preset="classic"][data-theme="light"] .diagram-container > svg[data-node-ui] [data-node-id] > rect:not(.c-mask).c-cloud {
+      fill: color-mix(in srgb, var(--cloud-stroke) 8.5%, var(--mask));
+      stroke: color-mix(in srgb, var(--cloud-stroke) 56%, var(--lane-stroke));
+    }
+    html[data-preset="classic"][data-theme="light"] .diagram-container > svg[data-node-ui] [data-node-id] > rect:not(.c-mask).c-security {
+      fill: color-mix(in srgb, var(--security-stroke) 8.5%, var(--mask));
+      stroke: color-mix(in srgb, var(--security-stroke) 56%, var(--lane-stroke));
+    }
+    html[data-preset="classic"][data-theme="light"] .diagram-container > svg[data-node-ui] [data-node-id] > rect:not(.c-mask).c-messagebus {
+      fill: color-mix(in srgb, var(--messagebus-stroke) 8.5%, var(--mask));
+      stroke: color-mix(in srgb, var(--messagebus-stroke) 56%, var(--lane-stroke));
+    }
+    html[data-preset="classic"][data-theme="light"] .diagram-container > svg[data-node-ui] [data-node-id] > rect:not(.c-mask).c-external {
+      fill: color-mix(in srgb, var(--external-stroke) 8.5%, var(--mask));
+      stroke: color-mix(in srgb, var(--external-stroke) 56%, var(--lane-stroke));
+    }
+    html[data-preset="classic"] .diagram-container > svg[data-node-ui] g[data-edge-from] > rect.c-mask,
+    html[data-preset="signal-flow"] .diagram-container > svg[data-node-ui] g[data-edge-from] > rect.c-mask {
+      rx: 6px;
+      stroke: none;
     }
     html[data-preset="classic"][data-theme="dark"] .diagram-container > svg [data-node-id] > rect:not(.c-mask) {
       --ambient-node-base-filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.35));
@@ -5075,14 +5128,14 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     /* Arrows */
     .a-default   { stroke: var(--arrow); fill: none; }
     .a-emphasis  { stroke: var(--arrow-emphasis); fill: none; }
-    .a-security  { stroke: var(--security-stroke); fill: none; stroke-dasharray: 5,5; }
-    .a-dashed    { stroke: var(--database-stroke); fill: none; stroke-dasharray: 4,4; }
+    .a-security  { stroke: var(--arrow-security); fill: none; stroke-dasharray: 5,5; }
+    .a-dashed    { stroke: var(--arrow-dashed); fill: none; stroke-dasharray: 4,4; }
 
     /* Arrowhead markers reference these */
     .m-default   { fill: var(--arrow); }
     .m-emphasis  { fill: var(--arrow-emphasis); }
-    .m-security  { fill: var(--security-stroke); }
-    .m-dashed    { fill: var(--database-stroke); }
+    .m-security  { fill: var(--arrow-security); }
+    .m-dashed    { fill: var(--arrow-dashed); }
 
     /* ==========================================================
        CHANGE REVIEW MARKS — authored `change` / `emphasis` on elements.
