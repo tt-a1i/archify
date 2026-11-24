@@ -18,6 +18,12 @@ test('Code Analysis exposes the workbench, checks, task and verification command
   const help = run(['serve', '--help']);
   assert.equal(help.status, 0, help.stderr);
   assert.match(help.stdout, /archify code-analysis serve/);
+  for (const output of [prepareHelp.stdout, help.stdout]) {
+    assert.match(output, /--base <commit> --head <commit>/);
+  }
+  for (const synopsis of publicHelp.stdout.split('\n').filter(line => /archify (?:start|code-analysis (?:prepare|serve)) <repo-root>/.test(line))) {
+    assert.match(synopsis, /--base <commit> --head <commit>/);
+  }
   const checkHelp = run(['check', '--help']);
   assert.equal(checkHelp.status, 0, checkHelp.stderr);
   assert.match(checkHelp.stdout, /archify code-analysis check <repo-root>/);

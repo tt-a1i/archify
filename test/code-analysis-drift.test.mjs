@@ -27,6 +27,31 @@ test('CLI compares pinned directed pairs; the authored IR and dirty working tree
   assert.match(report, /Architecture drift/);
 });
 
+test('pinned PR workbench exposes a new mapped dependency and its head import witness', t => {
+  const f = driftFixture(t);
+  const cli = fileURLToPath(new URL('../archify/bin/archify.mjs', import.meta.url));
+  const out = path.join(f.dir, 'review');
+  const run = spawnSync(process.execPath, [cli, 'code-analysis', 'prepare', f.repo,
+    '--base', f.base, '--head', f.head, '--ir', f.ir, '--map', f.map,
+    '--language', 'ts', '--out', out], {
+    env: { ...process.env, ARCHIFY_UPDATE_CHECK_DISABLED: '1', GIT_ALLOW_PROTOCOL: '' },
+    encoding: 'utf8', windowsHide: true, timeout: 90000,
+  });
+  assert.equal(run.status, 0, run.stdout + run.stderr);
+  const receipt = JSON.parse(run.stdout);
+  const html = fs.readFileSync(receipt.html, 'utf8');
+  const data = JSON.parse(html.match(/id="bauify-analysis">([\s\S]*?)<\/script>/u)[1]);
+  const { pullRequest: review, snippets } = data;
+  assert.deepEqual([review.baseSHA, review.headSHA], [f.base, f.head]);
+  const edge = review.componentDrift.edges.find(item => item.from === 'app' && item.to === 'db');
+  assert.equal(edge?.state, 'new-undeclared');
+  assert.deepEqual(edge.base, []);
+  assert.deepEqual(edge.head, [{ path: 'src/app/main.ts', line: 2 }]);
+  assert.match(snippets['src/app/main.ts'].lines[1], /import \{ db \}/u);
+  assert.match(review.markdown, /Pinned head · src\/app\/main\.ts:2/u);
+  assert.doesNotMatch(review.markdown, /import \{ db \}/u);
+});
+
 test('cannot treat an affected parse failure or ambiguous component as absence', t => {
   const f = driftFixture(t);
   f.write('src/app/main.ts', 'export const broken = ;\n');
