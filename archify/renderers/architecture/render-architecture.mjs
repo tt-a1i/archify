@@ -1668,39 +1668,79 @@ function reflowSmallDiagrams(initial, { direct = false } = {}) {
   return best;
 }
 
-function reduceDenseCrossings(initial, beforeDirect) {
+function reduceDenseCrossings(initial, beforeDirect, initialRouter = router) {
+  let current = { next: initial, candidate: initialRouter };
   if (!automaticComposition || initial.titles.boundaries.length
-      || components.size < 9 || components.size > 12 || connections.length < 12 || connections.length > 15
-      || connections.some(conn => conn.fromSide !== undefined || conn.toSide !== undefined)) return initial;
-  const baseline = measureCandidateScene(initial);
-  const pairs = baseline.crossings;
-  if (!pairs.length) return initial;
+      || components.size < 5 || components.size > 16 || connections.length < 6 || connections.length > 24
+      || connections.some(conn => conn.fromSide !== undefined || conn.toSide !== undefined)) return current;
+  const pairs = measuredCrossingPairs(initial.routes);
+  if (!pairs.length) return current;
+  const baseline = measureCandidateScene(initial, pairs);
   const checkLabels = candidateLabelCheck(initial);
   const oldBlocked = beforeDirect && blockedLinkCount(initial);
   const straightened = beforeDirect && new Set(initial.routes.filter((route, i) =>
     baseline.spans.spans[i].bends === 0 && beforeDirect.routes[i].points.length > 2).map(route => route.relation));
-  let best = initial;
-  let bestRouter;
-  let score = [pairs.length, baseline.avoidable, baseline.bends, baseline.spans.length, baseline.imbalance.score];
-  for (const { boxes } of denseTerminalCandidates(initial, pairs).slice(0, 16)) {
-    const { candidate, next, crossings, budget, spans, bends, avoidable, imbalance, isValid } =
-      evaluateCandidateScene(boxes, { routingOptions: { separateRuns: true }, checkDesktopFloor: true, checkLabels });
-    if (crossings.length >= pairs.length || next.viewBox[0] > initial.viewBox[0]
-        || avoidable > baseline.avoidable || exceedsRouteBudget(baseline.budget, budget)) continue;
-    const nextScore = [crossings.length, avoidable, bends, spans.length, imbalance.score];
-    if (!betterScore(nextScore, score)
-        || (straightened && (blockedLinkCount(next) > oldBlocked
-          || next.routes.some((route, i) => straightened.has(route.relation) && spans.spans[i].bends)))
-        || !isValid()) continue;
-    best = next;
-    bestRouter = candidate;
-    score = nextScore;
+  const scoreFor = ({ crossings, avoidable, bends, spans }) => [crossings.length, avoidable, bends, spans.length];
+  current = { ...current, ...baseline };
+  for (let step = 0; step < 3 && current.crossings.length; step++) {
+    let best;
+    let score = scoreFor(current);
+    const maxWidth = Math.max(initial.viewBox[0], current.next.viewBox[0]);
+    const proposals = denseTerminalCandidates(current.next, current.crossings, {
+      limit: 16, refine: current.avoidable ? current.terminal : undefined,
+    });
+    for (const { boxes: moved, terminal } of proposals) {
+      const proposal = evaluateCandidateScene(refitBoxesToMargin(moved), {
+        routingOptions: { separateRuns: true }, checkDesktopFloor: true, checkLabels,
+      });
+      const { next, crossings, budget, spans, avoidable, area, imbalance, isValid } = proposal;
+      const nextScore = scoreFor(proposal);
+      const widthLimit = maxWidth + (!crossings.length && area <= baseline.area * 1.08 ? 48 : 0);
+      if ((step === 0 && crossings.length >= pairs.length) || next.viewBox[0] > widthLimit
+          || avoidable > baseline.avoidable || exceedsRouteBudget(baseline.budget, budget)
+          || imbalance.sunkenRoots > current.imbalance.sunkenRoots || !betterScore(nextScore, score)
+          || (straightened && (blockedLinkCount(next) > oldBlocked
+            || next.routes.some((route, i) => straightened.has(route.relation) && spans.spans[i].bends)))
+          || !isValid()) continue;
+      best = { ...proposal, terminal };
+      score = nextScore;
+    }
+    if (!best) break;
+    current = best;
   }
-  if (bestRouter) {
-    router = bestRouter;
-    for (const [id, box] of best.boxes) components.set(id, box);
+  return current;
+}
+
+function balanceFanOutPlacement(initial, ordinary) {
+  if (!automaticComposition || !whollyInferred || initial.titles.boundaries.length || components.size > 24
+      || connections.some(conn => conn.fromSide !== undefined || conn.toSide !== undefined)) return ordinary;
+  const pairs = measuredCrossingPairs(initial.routes);
+  const initialImbalance = compositionImbalance(initial);
+  if (!initialImbalance.score && pairs.length < 2) return ordinary;
+  const positions = automaticComponentPositions(placementInput, undefined, { balanceFanOut: true });
+  const boxes = new Map(sizedComponents.map(([component, size]) =>
+    [component.id, measureComponent(component, size, positions)]));
+  if ([...boxes].every(([id, box]) => box.x === initial.boxes.get(id).x && box.y === initial.boxes.get(id).y)) {
+    return ordinary;
   }
-  return best;
+  const checkLabels = candidateLabelCheck(ordinary.next);
+  const proposal = evaluateCandidateScene(boxes, {
+    routingOptions: { separateRuns: true }, checkDesktopFloor: true, checkLabels,
+  });
+  if (!proposal.isValid()) return ordinary;
+  const reduced = proposal.crossings.length ? reduceDenseCrossings(proposal.next, undefined, proposal.candidate) : proposal;
+  const balanced = reduced.next === proposal.next ? proposal : reduced;
+  const { imbalance, budget, avoidable } = balanced;
+  const improvesBalance = (initialImbalance.sunkenRoots > 0 && !imbalance.sunkenRoots)
+    || (initialImbalance.leadingVoid > 0 && !imbalance.leadingVoid);
+  const widthLimit = improvesBalance ? Math.max(initial.viewBox[0], 1060) : initial.viewBox[0];
+  const ordinaryMetrics = ordinary.crossings ? ordinary : measureCandidateScene(ordinary.next);
+  const scoreFor = ({ crossings, imbalance, avoidable, bends, spans }) =>
+    [crossings.length, imbalance.sunkenRoots, Math.round(imbalance.leadingVoid * 1000), avoidable, bends, spans.length];
+  if (balanced.next.viewBox[0] > widthLimit || avoidable > ordinaryMetrics.avoidable
+      || exceedsRouteBudget(ordinaryMetrics.budget, budget)
+      || !betterScore(scoreFor(balanced), scoreFor(ordinaryMetrics))) return ordinary;
+  return balanced;
 }
 
 const compactedComposition = compactJunctions(reserveFacingLabelSpace(improveFrameLanes(
@@ -1710,9 +1750,12 @@ const structuredReflow = reflowSmallDiagrams(compactedComposition);
 const directReflow = reflowSmallDiagrams(structuredReflow, { direct: true });
 // Keep a coordinated column or fold intact. A direct shortcut only protects
 // the links it straightened and the number of remaining blocked links.
-const composition = structuredReflow === compactedComposition
-  ? reduceDenseCrossings(directReflow, directReflow !== structuredReflow ? structuredReflow : undefined)
-  : directReflow;
+const { next: composition, candidate: compositionRouter } = structuredReflow === compactedComposition
+  ? balanceFanOutPlacement(directReflow,
+    reduceDenseCrossings(directReflow, directReflow !== structuredReflow ? structuredReflow : undefined))
+  : { next: directReflow, candidate: router };
+router = compositionRouter;
+for (const [id, box] of composition.boxes) components.set(id, box);
 const {
   titles: { boundaries }, labels: connectionLabels, viewBox,
 } = composition;

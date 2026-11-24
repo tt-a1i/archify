@@ -104,7 +104,33 @@ function forwardOrder(items, incoming, outgoing) {
   return { order: finished.reverse(), backward };
 }
 
-function layOutIsland(items, edges, incoming, outgoing, vertical, { alternateTies = false, centerDependency = false, alignExternalSource = false } = {}) {
+// Keep shared targets between the outer branches when their preferred lanes
+// leave enough clearance for all cards in the rank.
+function fitBalancedColumn(column, preferred, crossGap) {
+  if (column.length < 2) return false;
+  const first = column[0];
+  const tail = column.at(-1);
+  const desiredSpan = preferred.get(tail) - preferred.get(first);
+  const interiorHeight = column.slice(1, -1).reduce((sum, item) => sum + item.height, 0);
+  const fittingGap = (desiredSpan - interiorHeight - (first.height + tail.height) / 2) / (column.length - 1);
+  if (fittingGap < 40) return false;
+
+  const gap = Math.min(crossGap, fittingGap);
+  tail.y = preferred.get(tail) - tail.height / 2;
+  for (let i = column.length - 2; i > 0; i--) {
+    const item = column[i];
+    item.y = column[i + 1].y - gap - item.height;
+  }
+  first.y = preferred.get(first) - first.height / 2;
+  for (let i = 1; i < column.length - 1; i++) {
+    const item = column[i];
+    const previous = column[i - 1];
+    item.y = Math.max(previous.y + previous.height + gap, Math.min(item.y, preferred.get(item) - item.height / 2));
+  }
+  return true;
+}
+
+function layOutIsland(items, edges, incoming, outgoing, vertical, { alternateTies = false, centerDependency = false, alignExternalSource = false, balanceFanOut = false } = {}) {
   const { order, backward } = forwardOrder(items, incoming, outgoing);
   const parents = new Map();
   const rank = new Map();
@@ -147,8 +173,6 @@ function layOutIsland(items, edges, incoming, outgoing, vertical, { alternateTie
 
   const crossGap = vertical ? 64 : verticalGap;
   let columnX = 0;
-  let top = Infinity;
-  let bottom = -Infinity;
   let right = 0;
   for (const [index, column] of columns.entries()) {
     const preferred = new Map();
@@ -159,7 +183,7 @@ function layOutIsland(items, edges, incoming, outgoing, vertical, { alternateTie
       const desiredY = predecessors.length
         ? predecessors.reduce((sum, edge) => sum + edge.from.y + edge.from.height / 2, 0) / predecessors.length
         : 0;
-      preferred.set(item, spine.has(item) ? 0 : desiredY);
+      preferred.set(item, !balanceFanOut && spine.has(item) ? 0 : desiredY);
     }
     // Try putting every other tied sibling across the main path. The
     // normal order stays authoritative unless it needlessly blocks routes.
@@ -183,26 +207,46 @@ function layOutIsland(items, edges, incoming, outgoing, vertical, { alternateTie
         column.splice(sourceIndex < spineIndex ? spineIndex - 1 : spineIndex + 1, 0, source);
       }
     }
-    const anchorIndex = Math.max(0, column.findIndex((item) => spine.has(item)));
-    const anchor = column[anchorIndex];
-    anchor.y = preferred.get(anchor) - anchor.height / 2;
-    for (let i = anchorIndex + 1; i < column.length; i++) {
-      const previous = column[i - 1];
-      const item = column[i];
-      item.y = Math.max(previous.y + previous.height + crossGap, preferred.get(item) - item.height / 2);
+    if (!balanceFanOut || !fitBalancedColumn(column, preferred, crossGap)) {
+      const anchorIndex = Math.max(0, column.findIndex((item) => spine.has(item)));
+      const anchor = column[anchorIndex];
+      anchor.y = preferred.get(anchor) - anchor.height / 2;
+      for (let i = anchorIndex + 1; i < column.length; i++) {
+        const previous = column[i - 1];
+        const item = column[i];
+        item.y = Math.max(previous.y + previous.height + crossGap, preferred.get(item) - item.height / 2);
+      }
+      for (let i = anchorIndex - 1; i >= 0; i--) {
+        const next = column[i + 1];
+        const item = column[i];
+        item.y = Math.min(next.y - item.height - crossGap, preferred.get(item) - item.height / 2);
+      }
+      if (balanceFanOut && column.length > 1) {
+        const first = column[0];
+        const tail = column.at(-1);
+        const midpoint = (first.y + first.height / 2 + tail.y + tail.height / 2) / 2;
+        const desired = (preferred.get(first) + preferred.get(tail)) / 2;
+        for (const item of column) item.y += desired - midpoint;
+      }
     }
-    for (let i = anchorIndex - 1; i >= 0; i--) {
-      const next = column[i + 1];
-      const item = column[i];
-      item.y = Math.min(next.y - item.height - crossGap, preferred.get(item) - item.height / 2);
-    }
-    for (const item of column) {
-      item.x = columnX + (columnWidth - item.width) / 2;
-      top = Math.min(top, item.y);
-      bottom = Math.max(bottom, item.y + item.height);
-    }
+    for (const item of column) item.x = columnX + (columnWidth - item.width) / 2;
     right = columnX + columnWidth;
     columnX = right + gaps[index];
+  }
+  if (balanceFanOut) {
+    for (let index = columns.length - 2; index >= 0; index--) {
+      if (columns[index].length !== 1) continue;
+      const [item] = columns[index];
+      const targets = outgoing.get(item).filter(edge => !backward.has(edge) && rank.get(edge.to) === index + 1);
+      if (targets.length < 2) continue;
+      item.y = targets.reduce((sum, { to }) => sum + to.y + to.height / 2, 0) / targets.length - item.height / 2;
+    }
+  }
+  let top = Infinity;
+  let bottom = -Infinity;
+  for (const item of items) {
+    top = Math.min(top, item.y);
+    bottom = Math.max(bottom, item.y + item.height);
   }
   const emphasizedSpine = pathWeight.get(last) === emphasisPriority * rank.get(last);
   if (centerDependency && emphasizedSpine) placeSharedDependency(items, edges, spine, rank, right);
@@ -281,13 +325,13 @@ function layOutReciprocalPeers(items, edges, incoming, outgoing, allowedWidth) {
   return { items, width, height, top: 0 };
 }
 
-function chooseIslandLayout(items, edges, incoming, outgoing, vertical, allowAlternate, allowedWidth) {
+function chooseIslandLayout(items, edges, incoming, outgoing, vertical, allowAlternate, allowedWidth, balanceFanOut) {
   const small = items.length >= 4 && items.length <= 24 && edges.length <= 36;
   const threeNodeCandidate = !vertical && items.length === 3 && edges.length >= 4 && edges.length <= 6;
   const allowsAlternatives = allowAlternate && (small || threeNodeCandidate)
     && items.every((item) => !item.children && !item.parent.members);
   const smallUnframed = small && allowsAlternatives;
-  const layout = layOutIsland(items, edges, incoming, outgoing, vertical, { centerDependency: smallUnframed });
+  const layout = layOutIsland(items, edges, incoming, outgoing, vertical, { centerDependency: smallUnframed, balanceFanOut });
   if (allowsAlternatives && threeNodeCandidate) {
     const reciprocal = layOutReciprocalPeers(items, edges, incoming, outgoing, allowedWidth);
     if (reciprocal) return reciprocal;
@@ -301,7 +345,7 @@ function chooseIslandLayout(items, edges, incoming, outgoing, vertical, allowAlt
   const alternatives = [{ alternateTies: true }];
   if (vertical) alternatives.push({ alignExternalSource: true });
   for (const options of alternatives) {
-    const alternate = layOutIsland(items, edges, incoming, outgoing, vertical, { ...options, centerDependency: true });
+    const alternate = layOutIsland(items, edges, incoming, outgoing, vertical, { ...options, centerDependency: true, balanceFanOut });
     if (alternate.width <= layout.width && alternate.height <= layout.height
       && directRouteInterference(items, edges) <= score - 2) return alternate;
   }
@@ -309,7 +353,7 @@ function chooseIslandLayout(items, edges, incoming, outgoing, vertical, allowAlt
   return layout;
 }
 
-function layOutSiblings(items, edges, vertical, allowParallel, allowedWidth) {
+function layOutSiblings(items, edges, vertical, allowParallel, allowedWidth, balanceFanOut) {
   if (!items.length) return { width: 0, height: 0 };
   const { outgoing, incoming, neighbors } = directedRelationships(items, edges);
   const islands = membersOf(items, neighbors).map((group) => ({ group, edges: [] }));
@@ -325,7 +369,7 @@ function layOutSiblings(items, edges, vertical, allowParallel, allowedWidth) {
       for (const item of group) [item.width, item.height] = [item.height, item.width];
     }
     const layout = (allowParallel && !direction && layOutParallelPaths(group, edges, neighbors, islandVertical))
-      || chooseIslandLayout(group, edges, incoming, outgoing, islandVertical, allowParallel, allowedWidth);
+      || chooseIslandLayout(group, edges, incoming, outgoing, islandVertical, allowParallel, allowedWidth, balanceFanOut);
     for (const item of group) {
       item.y -= layout.top;
       if (direction?.reverse) item.x = layout.width - item.x - item.width;
@@ -374,15 +418,15 @@ function layOutSiblings(items, edges, vertical, allowParallel, allowedWidth) {
   return { width, height: y + rowHeight, parallel: layouts.length === 1 && layouts[0].parallel, vertical };
 }
 
-function fitSiblingLayout(items, edges, allowParallel, viewBox) {
+function fitSiblingLayout(items, edges, allowParallel, viewBox, balanceFanOut) {
   const allowedWidth = viewBox ? viewBox[0] - canvasMargin : comfortableWidth;
   const allowedHeight = viewBox ? viewBox[1] - canvasMargin : Infinity;
   const overflow = ({ width, height }) => Math.max(0, width - allowedWidth) + Math.max(0, height - allowedHeight);
-  const horizontal = layOutSiblings(items, edges, false, allowParallel, allowedWidth);
+  const horizontal = layOutSiblings(items, edges, false, allowParallel, allowedWidth, balanceFanOut);
   if (!overflow(horizontal)) return horizontal;
 
   const positions = items.map(({ x, y }) => [x, y]);
-  const vertical = layOutSiblings(items, edges, true, allowParallel, allowedWidth);
+  const vertical = layOutSiblings(items, edges, true, allowParallel, allowedWidth, balanceFanOut);
   if (overflow(vertical) < overflow(horizontal)) return vertical;
   for (const [index, item] of items.entries()) [item.x, item.y] = positions[index];
   return horizontal;
@@ -489,7 +533,7 @@ function placeParallelPeer(group) {
   };
 }
 
-function idealPositions(root, { allowParallel, viewBox, relocatesLabels }) {
+function idealPositions(root, { allowParallel, viewBox, relocatesLabels, balanceFanOut }) {
   const groups = [root];
   for (const group of groups) {
     for (const child of group.children) {
@@ -498,7 +542,7 @@ function idealPositions(root, { allowParallel, viewBox, relocatesLabels }) {
   }
   for (const group of [...groups].reverse()) {
     group.children.sort((a, b) => a.index - b.index);
-    const layout = fitSiblingLayout(group.children, group.edges, allowParallel, viewBox);
+    const layout = fitSiblingLayout(group.children, group.edges, allowParallel, viewBox, balanceFanOut);
     group.parallel = layout.parallel;
     group.vertical = layout.vertical;
     const parallelPeer = placeParallelPeer(group);
@@ -730,7 +774,7 @@ function avoidPinnedComponents(byId, connections, boundaries, viewBox, composedT
   }
 }
 
-export function automaticComponentPositions(arch, defaultSize = [120, 60], { fixedCanvasRecovery } = {}) {
+export function automaticComponentPositions(arch, defaultSize = [120, 60], { fixedCanvasRecovery, balanceFanOut = false } = {}) {
   const byId = new Map(asArray(arch.components).filter(Boolean).map((component, index) => {
     const [width, height] = isPoint(component.size) ? component.size : defaultSize;
     const pin = isPoint(component.pos) ? component.pos : undefined;
@@ -748,7 +792,7 @@ export function automaticComponentPositions(arch, defaultSize = [120, 60], { fix
       && !edge?.labelAt && edge?.labelDx == null && edge?.labelDy == null && edge?.labelSegment == null
       && (!edge?.route || edge.route === 'auto'));
   const viewBox = isPoint(arch.meta?.viewBox) ? arch.meta.viewBox : undefined;
-  idealPositions(root, { allowParallel, viewBox, relocatesLabels: arch.meta?.quality_profile === 'showcase' });
+  idealPositions(root, { allowParallel, viewBox, balanceFanOut, relocatesLabels: arch.meta?.quality_profile === 'showcase' });
   avoidPinnedComponents(byId, connections, boundaries, viewBox, Boolean(arch.meta?.quality_profile),
     viewBox && fixedCanvasRecovery);
   return new Map([...byId].map(([id, item]) => [id, item.pin ?? [item.x, item.y]]));
