@@ -329,7 +329,11 @@ test('story SVGs render in <img>/<picture>, settle under prefers-reduced-motion,
     const combinations = BAKE_PRESETS.flatMap(preset => BAKE_THEMES.map(theme => {
       const vars = resolveThemeVariables(rules, { theme, preset });
       const backend = vars.get('--backend-stroke');
-      const node = theme === 'dark' ? compileColorMix(`color-mix(in srgb, ${backend} 72%, ${vars.get('--mask')})`) : backend;
+      const node = theme === 'dark'
+        ? compileColorMix(`color-mix(in srgb, ${backend} 72%, ${vars.get('--mask')})`)
+        : preset === 'classic'
+          ? compileColorMix(`color-mix(in srgb, ${backend} 56%, ${vars.get('--lane-stroke')})`)
+          : backend;
       return { preset, theme, background: vars.get('--bg'), node, text: vars.get('--text') };
     }));
     const result = await evalJs(`(async () => {
