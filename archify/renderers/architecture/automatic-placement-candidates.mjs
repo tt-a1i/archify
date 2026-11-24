@@ -68,6 +68,34 @@ export function* nearAlignmentCandidates({ boxes, routes, titles }) {
   }
 }
 
+export function compositionImbalance({ boxes, routes, titles, viewBox }) {
+  const balanced = { leadingVoid: 0, sunkenRoots: 0, score: 0 };
+  if (boxes.size < 6 || titles.boundaries.length) return balanced;
+  const cards = [...boxes.values()];
+  if (cards.some(card => card.pos)) return balanced;
+
+  const minX = Math.min(...cards.map(card => card.x));
+  const minY = Math.min(...cards.map(card => card.y));
+  const spanX = Math.max(...cards.map(card => card.x + card.width)) - minX;
+  const spanY = Math.max(...cards.map(card => card.y + card.height)) - minY;
+  const leading = { x: minX, y: minY, width: spanX * 0.42, height: spanY * 0.42 };
+  const leadingVoid = spanX >= 420 && spanY >= 360 && !cards.some(card => rectsOverlap(card, leading))
+    ? leading.width * leading.height / (viewBox[0] * viewBox[1]) : 0;
+
+  const incoming = new Set();
+  const outgoing = new Set();
+  for (const { relation: { from, to, variant } } of routes) {
+    if (variant === 'dashed') continue;
+    incoming.add(to);
+    outgoing.add(from);
+  }
+  const roots = [...outgoing].filter(id => !incoming.has(id)).map(id => boxes.get(id));
+  const bottomBand = minY + spanY * 0.68;
+  const sunkenRoots = roots.length && roots.every(card => card.cy > bottomBand)
+    && cards.some(card => card.y === minY && !roots.includes(card)) ? 1 : 0;
+  return { leadingVoid, sunkenRoots, score: leadingVoid + sunkenRoots };
+}
+
 export function routeSpanMeasures(routes, boxes, viewBox) {
   const spans = routes.map(({ relation, points }) => {
     const from = boxes.get(relation.from);
