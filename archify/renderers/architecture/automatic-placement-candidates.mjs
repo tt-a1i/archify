@@ -85,7 +85,7 @@ export function compositionImbalance({ boxes, routes, titles, viewBox }) {
   const incoming = new Set();
   const outgoing = new Set();
   for (const { relation: { from, to, variant } } of routes) {
-    if (variant === 'dashed') continue;
+    if (from === to || variant === 'dashed') continue;
     incoming.add(to);
     outgoing.add(from);
   }

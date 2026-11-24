@@ -1714,7 +1714,7 @@ function reduceDenseCrossings(initial, beforeDirect, initialRouter = router) {
 }
 
 function balanceFanOutPlacement(initial, ordinary) {
-  if (!automaticComposition || !whollyInferred || initial.titles.boundaries.length || components.size > 24
+  if (!automaticComposition || !whollyInferred || initial.titles.boundaries.length || components.size > 16
       || connections.some(conn => conn.fromSide !== undefined || conn.toSide !== undefined)) return ordinary;
   const pairs = measuredCrossingPairs(initial.routes);
   const initialImbalance = compositionImbalance(initial);

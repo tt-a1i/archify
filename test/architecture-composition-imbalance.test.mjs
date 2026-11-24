@@ -26,6 +26,7 @@ test('an empty leading quadrant is measured relative to the canvas', () => {
 test('only an entirely sunken set of primary entries is penalized, ignoring dashed feedback', () => {
   const layout = scene([180, 420], [280, 215]);
   layout.routes.push({ relation: { from: 2, to: 0, variant: 'dashed' } });
+  layout.routes.push({ relation: { from: 0, to: 0 } });
   const { leadingVoid, sunkenRoots, score } = compositionImbalance(layout);
   assert.ok(leadingVoid > 0);
   assert.equal(sunkenRoots, 1);

@@ -232,6 +232,7 @@ function transposeFrame(frame, boxes, routes, affected) {
   if (frame.wraps.length < 2 || frame.wraps.length > 3) return;
   const members = new Set(frame.wraps);
   const peers = frame.wraps.map(id => boxes.get(id));
+  if (peers.some(peer => !peer)) return;
   const touches = ({ from, to }) => members.has(from) || members.has(to);
   if (![...affected].some(touches)
       || routes.some(({ relation: { from, to } }) => members.has(from) && members.has(to))) return;

@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { compositionImbalance } from '../archify/renderers/architecture/automatic-placement-candidates.mjs';
+import { normalizeRoutePoints } from '../archify/renderers/shared/geometry.mjs';
 import { denseArchitecture } from './helpers/dense-architecture.mjs';
 
 const renderer = fileURLToPath(new URL('../archify/renderers/architecture/render-architecture.mjs', import.meta.url));
@@ -147,8 +148,34 @@ test('a nine-card fan-out keeps the entry above the bottom band and fills the le
   const scene = { boxes, routes: spec.connections.map(relation => ({ relation })),
     titles: { boundaries: [] }, viewBox: layout.viewBox };
   assert.deepEqual(compositionImbalance(scene), { leadingVoid: 0, sunkenRoots: 0, score: 0 });
-  assert.equal(boxes.get('collect').y, boxes.get('samples').y);
-  assert.equal(boxes.get('update').y, boxes.get('history').y);
+  const routePoints = (from, to) => normalizeRoutePoints(
+    layout.connections.find(conn => conn.from === from && conn.to === to).points,
+  );
+  assert.equal(routePoints('collect', 'samples').length, 2);
+  assert.equal(routePoints('update', 'history').length, 2);
+});
+
+test('a crossed framed scene with an unknown boundary member still emits its layout diagnostic', t => {
+  const directory = mkdtempSync(join(tmpdir(), 'archify-dense-'));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  const input = join(directory, 'input.json');
+  writeFileSync(input, JSON.stringify({
+    schema_version: 1,
+    diagram_type: 'architecture',
+    layout: { mode: 'auto' },
+    meta: { title: 'Unknown frame member', output: 'chart.html' },
+    components: ['client', 'api', 'worker', 'queue', 'db', 'media', 'ml'].map(id => ({ id, label: id, type: 'backend' })),
+    boundaries: [{ kind: 'region', label: 'Application', wraps: ['api', 'missing'] }],
+    connections: [
+      ['api', 'db'], ['api', 'ml'], ['api', 'media'], ['client', 'api'],
+      ['worker', 'queue'], ['worker', 'ml'], ['worker', 'media'], ['worker', 'db'], ['api', 'queue'],
+    ].map(([from, to]) => ({ from, to, variant: to === 'queue' ? 'dashed' : undefined })),
+  }));
+  const result = spawnSync(process.execPath, [renderer, input, '--layout-json'], { encoding: 'utf8' });
+  assert.equal(result.status, 1);
+  const report = JSON.parse(result.stdout);
+  assert.equal(report.ok, false);
+  assert.ok(Array.isArray(report.diagnostics) && report.diagnostics.length > 0);
 });
 
 function renderDense(t, spec) {
