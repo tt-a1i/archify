@@ -56,9 +56,9 @@ Paste messy Mermaid source into your configured agent and ask it to re-author th
 
 When one diagram still leaves readers asking "why?", an `.archify.md` one-page explainer leads with the conclusion first and explains each sub-question side by side with prose, tables, charts, code, and interactive diagrams — lighting up the exact part of the diagram each step refers to. Readers can switch among **four visual styles**, toggle light/dark mode, export long images or PDF, and trigger panel-scoped follow-up questions. Explore recorded examples: the [P99 tail-latency explainer](cases/explainer/p99-tail-latency.html) and the [first TLS visit explainer](cases/explainer/tls-first-visit.html).
 
-### 4. Map a real codebase with pinned source evidence
+### 4. Map, diagnose, and walk through a real codebase with pinned source evidence
 
-When understanding software matters, ask the agent to trace a concrete request or module at a specific revision and attach source file paths cleanly to diagram nodes. See the [MCO runtime case](cases/mco-runtime.html) and its [MCO architecture artifact](cases/mco-runtime.architecture.html), plus the [repository evidence checklist](agent-diagrams.html#repository-evidence).
+When understanding software matters, ask the agent to trace a concrete request or module at a specific revision and attach source file paths cleanly to diagram nodes. See the [MCO runtime case](cases/mco-runtime.html) and its [MCO architecture artifact](cases/mco-runtime.architecture.html), plus the [repository evidence checklist](agent-diagrams.html#repository-evidence). You can also run built-in **Architecture Diagnosis** (an offline dependency Atlas, rotatable 3D model, and ranked static findings across JS/TS, Python, Java, Go, Rust, and C/C++), link overview-to-detail HTML artifacts via cross-diagram drilldowns, add a **Story mode** walkthrough with 1080p 60 fps video export, or attach light/dark change diagrams to a **GitHub PR or GitLab MR**.
 
 <span id="limits" class="section-anchor" aria-hidden="true"></span>
 

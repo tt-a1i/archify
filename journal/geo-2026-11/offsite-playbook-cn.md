@@ -352,3 +352,89 @@ npx -y skills@latest add https://archify.si --skill archify --agent codex --glob
 4. **保持诚实边界**：利益相关声明（`tt-a1i/archify` 维护者）、非云端多人实时白板（多人手绘选 Excalidraw）、README 小图用 Mermaid、本地校验管结构防穿模不管现实事实真伪。
 5. **回链锚点**：`https://archify.si/zh/compare`、`https://archify.si/zh/gallery`、`https://archify.si/llms-full.txt`。
 
+
+
+---
+
+## 母稿 5 — 掘金 / 知乎 / 公众号：破 10 万 Star + v3.3 演进实录（中文，10 万星当天即发版）
+
+> **适用渠道**：掘金专栏、知乎专栏/回答、公众号技术深度文、V2EX 分享创造。
+> **发布前替换**：将正文中的 `[10 万+]` 替换为突破当天实时 Star 数，保留维护者利益相关说明。
+
+````markdown
+# 从 5 种图到 [10 万+] Star：Archify v3.3 为什么不再只是“画图 Skill”？
+
+> 利益相关说明：本文由开源项目 `tt-a1i/archify`（Apache-2.0）维护者整理，涉及能力均基于已发布的 `v3.3` 版本与官网 [archify.si/zh](https://archify.si/zh) 可直接点击验证的在线成品。
+
+2026 年 9 月刚出圈时，很多文章把 Archify 概括成“给 Claude Code / Cursor 用的 5 大图型画图 Skill”。几个月过去，在仓库迈向并突破 **[10 万+] GitHub Star** 的 `v3.3` 版本里，社区真实使用它的方式早就远远超出了“给代码画几张框图”——既有人拿它零代码做旅游攻略、租房避坑一页式网页，也有工程团队拿它直接做**离线仓库架构诊断、导出 1080p 60fps 演进视频、给 GitHub PR / GitLab MR 挂可视化变更图解**。
+
+这篇文章按已上线的真实功能，系统拆解 `v3.3` 到底进化了什么，以及哪些场景依然不该选它。
+
+## 一、十种原生图型 + 四风格一页式解答（完全不限于代码）
+
+Archify 现已原生支持 **10 种图型**（`architecture` 架构图、`workflow` 工作流、`sequence` 时序图、`dataflow` 数据流、`lifecycle` 生命周期、`erd` 实体关系、`class` 类图、`tree` 树图、`timeline` 时间线、`waterfall` 瀑布图），新建架构图支持 `"layout": {"mode": "auto"}` 自动布局与防穿模路由校验。
+
+四个较新图型的公开成品可直接在线点开体验（免登录、离线单 HTML）：
+
+- **类图（Class）**：[支付模块类型与契约关系](https://archify.si/gallery/artifacts/payments.class)
+- **树图（Tree）**：[支付平台单亲能力树](https://archify.si/gallery/artifacts/payment-platform.tree)
+- **时间线（Timeline）**：[支付事故多泳道时间线复盘](https://archify.si/gallery/artifacts/payment-incident.timeline)
+- **瀑布图（Waterfall）**：[结账请求嵌套与并发耗时瀑布图](https://archify.si/gallery/artifacts/checkout-request.waterfall)
+
+如果一张图讲不清来龙去脉，`.archify.md` **一页式解答（Explainer）** 会采用“结论先行 + 文字/表格/图表与校验示意图左右联动”的结构，支持 **4 套排版风格**，读到哪一步图上就同步亮起对应部分；而且**完全不需要有代码仓库**：
+
+- 技术原理拆解：[为什么 P99 尾延迟暴涨而均值风平浪静](https://archify.si/cases/explainer/p99-tail-latency)、[首次访问 HTTPS 发生了什么](https://archify.si/cases/explainer/tls-first-visit)
+- 生活决策与社区扩展：[大城市首次租房签合同避坑指南](https://archify.si/cases/explainer/first-rental)、社区用户二次扩展的[上海四天 CityWalk 互动行程](https://archify.si/cases/community/shanghai-citywalk)
+
+## 二、内置离线架构诊断（Code Analysis）：循环依赖、热点与 3D 依赖星图
+
+很多研发团队画完仓库架构图后，紧接着就会问：“哪些模块存在循环依赖？哪些文件耦合最重？重构应该从哪里下手？”
+
+`v3.3` 将 **Architecture Diagnosis（架构诊断）** 直接内置进 Skill，无需额外安装插件：
+
+```bash
+node bin/archify.mjs code-analysis prepare <repo> --out <dir> --locale zh-CN
+```
+
+运行后会产出一个单文件离线诊断工作台 `repo.analysis.html`：
+
+- **径向依赖星图（Atlas）+ 可旋转 3D 模型**：一眼看清模块耦合中心与跨层调用。
+- **按优先级排序的静态发现**：覆盖循环依赖、耦合、复杂度热点、分层规则违规，每一条都关联到源码位置，并附带可直接复制给 Agent 执行的修复任务卡片。
+- **多语言支持**：JS/TS、Python、Java、Go、Rust、C、C++（Go、Rust、C/C++ 需本机具备对应工具链）。
+- **与架构图联动**：传入 `--ir <architecture.json>` 后，架构图上的每个组件会直接显示问题数量，并标出图中漏画的真实依赖。
+
+> 边界说明：架构诊断结论来自单次工作区版本的静态分析，不代表生产运行时链路追踪或在线故障证明。
+
+## 三、Story 模式 1080p 60fps 视频导出 + 多图钻取跳转
+
+复杂架构图在文档评审、异步汇报或技术分享里常常“图太大、读者不知道先看哪”。`v3.3` 新增两项高实用能力：
+
+- **导览故事（Story 模式）与视频导出**：任意原生图均可附加带时间轴与字幕的分步导览，并通过 `story stage|svg|video` 将单张或多张图编排为离线舞台页、双主题动态 SVG，或直接导出 **1080p 60fps 视频（WebM / MP4）**。
+- **多图钻取跳转（Cross-Diagram Drilldowns）**：支持通过节点的 `href` 或 `drilldowns` 字段从总览图点击钻取到同目录子图 HTML，并可通过 `meta.parentHref` 或 `?from=` 自动展示返回总览按钮。
+
+## 四、GitHub PR / GitLab MR 变更图解
+
+面对几百行改动的 PR，光看代码 diff 很难立刻看懂结构影响。`v3.3` 现支持直接把新增、修改、删除标注在合并超集架构图上，并将深浅双主题图解附到 **GitHub PR 或 GitLab MR**（配合可选 `archify-pr` 伴随 Skill，可在准备实质性代码变更 PR 时按需触发）。
+
+## 五、实事求是的选型边界与校验说明
+
+- 原生图表通过 `finalize` 默认执行 Schema 校验、布局/路由防穿模检查与真实浏览器渲染检查；Explainer 默认执行结构与交付校验，按需传入 `--browser-check` 运行浏览器检查。自动校验保证的是结构与可度量排版质量，不替代人工视觉审阅，也不替真实业务事实或生产运行时行为背书。
+- **什么时候不该选 Archify？** README 里塞三五个小方框直接用 **Mermaid** 最轻省；多人实时同屏手绘白板选 **Excalidraw**；追求纯文本 CI 行级 diff 选 **PlantUML / D2 / LikeC4**；需要云端账号权限协同工作区选 **Eraser.io**。详细对比与边界见 **[archify.si/zh/compare](https://archify.si/zh/compare)**。
+
+## 六、最新官方安装命令（已替代早期旧命令）
+
+> 注意：2026 年 9 月早期文章里常见的 `npx skills add tt-a1i/archify -g` 已过时，请统一使用以下带版本发现与来源校验的官方命令（先查看技能清单，再按你的 Agent 安装）：
+
+```bash
+# 1. 只读查看官方 Skill 清单
+npx -y skills@latest add https://archify.si --list --full-depth
+
+# 2. 安装到 Claude Code（可替换为 codex / cursor / opencode / github-copilot；去掉 --global 为项目级安装）
+npx -y skills@latest add https://archify.si --skill archify --agent claude-code --global --copy --yes
+```
+
+- 中文官网与在线画廊：https://archify.si/zh/gallery
+- 工具对比与边界：https://archify.si/zh/compare
+- 完整权威文档（含中文摘要）：https://archify.si/llms-full.txt
+- GitHub 源码（Apache-2.0）：https://github.com/tt-a1i/archify
+````
