@@ -1,0 +1,10 @@
+{
+  "templateVersion": 1,
+  "repository": "tt-a1i/archify",
+  "number": 1478,
+  "author": "tt-a1i",
+  "title": "fix(seo): resolve Bing SEO warnings and ship GEO v4 v3.3 capabilities & 100k drafts",
+  "mergedAt": "2026-11-24T15:09:26Z",
+  "mergeCommit": "62f3a995eb26ee23f784bdea4a7992340078e9be",
+  "url": "https://github.com/tt-a1i/archify/pull/1478"
+}
