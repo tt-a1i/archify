@@ -1670,7 +1670,7 @@ function reflowSmallDiagrams(initial, { direct = false } = {}) {
 
 function reduceDenseCrossings(initial, beforeDirect, initialRouter = router) {
   let current = { next: initial, candidate: initialRouter };
-  if (!automaticComposition || initial.titles.boundaries.length
+  if (!automaticComposition || !whollyInferred || initial.titles.boundaries.length > 2
       || components.size < 5 || components.size > 16 || connections.length < 6 || connections.length > 24
       || connections.some(conn => conn.fromSide !== undefined || conn.toSide !== undefined)) return current;
   const pairs = measuredCrossingPairs(initial.routes);
@@ -1689,14 +1689,16 @@ function reduceDenseCrossings(initial, beforeDirect, initialRouter = router) {
     const proposals = denseTerminalCandidates(current.next, current.crossings, {
       limit: 16, refine: current.avoidable ? current.terminal : undefined,
     });
-    for (const { boxes: moved, terminal } of proposals) {
-      const proposal = evaluateCandidateScene(refitBoxesToMargin(moved), {
-        routingOptions: { separateRuns: true }, checkDesktopFloor: true, checkLabels,
+    for (const { boxes: moved, terminal, compactedSink } of proposals) {
+      if (compactedSink && score[0] === 0) break;
+      const proposal = evaluateCandidateScene(refitBoxesToMargin(moved, boundsFor(moved)), {
+        routingOptions: { separateRuns: true }, checkDesktopFloor: true, checkEnclosures: true, checkLabels,
       });
       const { next, crossings, budget, spans, avoidable, area, imbalance, isValid } = proposal;
       const nextScore = scoreFor(proposal);
       const widthLimit = maxWidth + (!crossings.length && area <= baseline.area * 1.08 ? 48 : 0);
-      if ((step === 0 && crossings.length >= pairs.length) || next.viewBox[0] > widthLimit
+      if ((step === 0 && crossings.length >= pairs.length)
+          || (compactedSink && crossings.length >= current.crossings.length) || next.viewBox[0] > widthLimit
           || avoidable > baseline.avoidable || exceedsRouteBudget(baseline.budget, budget)
           || imbalance.sunkenRoots > current.imbalance.sunkenRoots || !betterScore(nextScore, score)
           || (straightened && (blockedLinkCount(next) > oldBlocked

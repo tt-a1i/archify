@@ -724,7 +724,7 @@ export function* sharedSinkColumnCandidates({ boxes, routes }) {
   }
 }
 
-function cardsHaveClearance(boxes) {
+export function cardsHaveClearance(boxes) {
   const cards = [...boxes.values()];
   return cards.every((box, index) => cards.slice(index + 1).every(other => !rectsOverlap(box, other, 24)));
 }

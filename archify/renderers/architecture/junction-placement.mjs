@@ -1,4 +1,5 @@
 import { normalizeRoutePoints, properSegmentIntersection, rectsOverlap, segmentIntersectsRect } from '../shared/geometry.mjs';
+import { cardsHaveClearance } from './automatic-placement-candidates.mjs';
 import { horizontalLabelClearance } from './routing.mjs';
 
 const axes = [
@@ -203,23 +204,96 @@ export function junctionBends({ routes, boxes }) {
 
 // Try open slots for terminals on crossing routes or beside their hubs. Projected
 // paths only prioritize the slots. The renderer routes and checks each finalist.
-export function denseTerminalCandidates({ boxes, routes }, crossingPairs, { limit, refine }) {
+function clearsFrames(box, frames) {
+  return frames.every(frame => !rectsOverlap(frame, box, 20));
+}
+
+function compactSinkSlots(box, parents, cards, frames) {
+  const distances = (cx, cy) => parents.map(parent => Math.abs(parent.cx - cx) + Math.abs(parent.cy - cy));
+  const before = distances(box.cx, box.cy);
+  const xs = new Set(cards.map(card => card.cx));
+  const ys = new Set(cards.map(card => card.cy));
+  const slots = [];
+  for (const cx of xs) for (const cy of ys) {
+    if (!parents.some(parent => parent.cx === cx || parent.cy === cy)) continue;
+    const savings = distances(cx, cy).map((distance, i) => before[i] - distance);
+    if (savings.some(delta => delta < -8)) continue;
+    const total = savings.reduce((sum, delta) => sum + delta, 0);
+    if (total < 96) continue;
+    const moved = move(box, cx, cy);
+    if (moved.x < 40 || moved.y < 40 || !clearsFrames(moved, frames)
+        || cards.some(card => card !== box && rectsOverlap(card, moved, 28))) continue;
+    slots.push({ moved, total });
+  }
+  return slots.sort((a, b) => b.total - a.total).slice(0, 2).map(({ moved }) => moved);
+}
+
+function transposeFrame(frame, boxes, routes, affected) {
+  if (frame.wraps.length < 2 || frame.wraps.length > 3) return;
+  const members = new Set(frame.wraps);
+  const peers = frame.wraps.map(id => boxes.get(id));
+  const touches = ({ from, to }) => members.has(from) || members.has(to);
+  if (![...affected].some(touches)
+      || routes.some(({ relation: { from, to } }) => members.has(from) && members.has(to))) return;
+  const along = axes.findIndex(({ center }, axis) => peers.every(peer =>
+    Math.abs(peer[axes[1 - axis].center] - peers[0][axes[1 - axis].center]) <= 8)
+    && peers.some(peer => peer[center] !== peers[0][center]));
+  if (along === -1) return;
+  const across = axes[along];
+  const { pos, size, center } = axes[1 - along];
+  const barycenter = peer => {
+    const neighbors = routes.flatMap(({ relation: { from, to } }) =>
+      from === peer.id ? [boxes.get(to)] : to === peer.id ? [boxes.get(from)] : []);
+    return neighbors.length ? neighbors.reduce((sum, box) => sum + box[center], 0) / neighbors.length : peer[center];
+  };
+  const origin = Math.min(...peers.map(peer => peer[pos]));
+  const lane = Math.min(...peers.map(peer => peer[across.pos]))
+    + Math.max(...peers.map(peer => peer[across.size])) / 2;
+  const ordered = peers.map(peer => ({ peer, order: barycenter(peer) })).sort((a, b) => a.order - b.order);
+  const moved = new Map(boxes);
+  let start = origin;
+  for (const { peer } of ordered) {
+    const nextCenter = start + peer[size] / 2;
+    moved.set(peer.id, along === 0 ? move(peer, lane, nextCenter) : move(peer, nextCenter, lane));
+    start += peer[size] + 64;
+  }
+  if (cardsHaveClearance(moved)) return { boxes: moved };
+}
+
+export function denseTerminalCandidates({ boxes, routes, titles }, crossingPairs, { limit, refine }) {
   const cards = [...boxes.values()];
+  const frames = titles?.boundaries ?? [];
+  const unframed = box => frames.every(frame => !frame.wraps.includes(box.id));
   const affected = new Set(crossingPairs.flat());
+  const crossedCards = new Set([...affected].flatMap(({ from, to }) => [from, to]));
+  const crossedFrameMembers = new Set(frames.filter(frame => frame.wraps.some(id => crossedCards.has(id)))
+    .flatMap(frame => frame.wraps));
   const crossingEndpoints = [...affected].map(({ from, to }) => [boxes.get(from), boxes.get(to)]);
   const nearCrossing = hub => crossingEndpoints.some(([from, to]) => hub === from || hub === to
     || axes.every(({ center }) => hub[center] >= Math.min(from[center], to[center]) - 24
       && hub[center] <= Math.max(from[center], to[center]) + 24));
   const proposals = [];
   const refinements = [];
+  const paired = [];
+  const compacted = new Map();
+  const terminals = cards.filter(unframed).map(box => ({
+    box, links: routes.filter(({ relation }) => relation.to === box.id || relation.from === box.id),
+  })).filter(({ links }) => links.length && !links.some(({ relation }) => relation.variant === 'emphasis'));
   const right = cards.reduce((max, card) => Math.max(max, card.x + card.width), 0);
   const bottom = cards.reduce((max, card) => Math.max(max, card.y + card.height), 0);
-  for (const box of cards) {
-    const links = routes.filter(({ relation }) => relation.to === box.id || relation.from === box.id);
-    if (!links.length || links.some(({ relation }) => relation.variant === 'emphasis')) continue;
+  for (const { box, links } of terminals) {
+    if (links.some(({ relation }) => relation.from === box.id || affected.has(relation))) continue;
+    const parents = links.map(({ relation }) => boxes.get(relation.from));
+    const slots = compactSinkSlots(box, parents, cards, frames);
+    if (slots.length) compacted.set(box, slots);
+  }
+  for (const { box, links } of terminals) {
     const peerFor = ({ from, to }) => boxes.get(from === box.id ? to : from);
     const crosses = links.some(({ relation }) => affected.has(relation));
-    const sink = crosses && links.every(({ relation }) => relation.from !== box.id);
+    // A shared sink can occupy a usable frame exit even when its own routes
+    // do not cross. Include it when the crossing reaches one of its peers' frames.
+    const sink = links.every(({ relation }) => relation.from !== box.id)
+      && (crosses || (links.length > 1 && links.some(({ relation }) => crossedFrameMembers.has(relation.from))));
     const secondarySource = links.some(({ relation }) => relation.from === box.id
       && relation.to !== box.id && affected.has(relation))
       && links.every(({ relation }) => relation.to !== box.id || relation.variant === 'dashed');
@@ -230,22 +304,28 @@ export function denseTerminalCandidates({ boxes, routes }, crossingPairs, { limi
     const fixedSegments = routes.filter(route => !links.includes(route)).flatMap(route => segments(route.points));
     const xs = new Set(cards.map(card => Math.min(card.cx, right - box.width / 2)));
     const ys = new Set(cards.map(card => card.cy));
+    const addSlots = (rect, gap) => {
+      xs.add(rect.x - gap - box.width / 2);
+      xs.add(rect.x + rect.width + gap + box.width / 2);
+      ys.add(rect.y - 64 - box.height / 2);
+      ys.add(rect.y + rect.height + 64 + box.height / 2);
+    };
+    let frameGap = 64;
     for (const { relation } of links) {
-      const peer = peerFor(relation);
       const gap = Math.max(64, horizontalLabelClearance(relation));
-      xs.add(peer.x - gap - box.width / 2);
-      xs.add(peer.x + peer.width + gap + box.width / 2);
-      ys.add(peer.y - 64 - box.height / 2);
-      ys.add(peer.y + peer.height + 64 + box.height / 2);
+      addSlots(peerFor(relation), gap);
+      frameGap = Math.max(frameGap, gap);
     }
+    for (const frame of frames) addSlots(frame, frameGap);
     const opensSlot = moved => {
       const extraX = moved.x + box.width - right;
       const extraY = moved.y + box.height - bottom;
       const swapsRight = corridorLeaf && box.cx < hub.cx && moved.cx > hub.cx;
       const swapsDown = corridorLeaf && box.cy < hub.cy && moved.cy > hub.cy;
       return moved.x >= 40 && moved.y >= 40
-        && extraX <= (swapsRight ? box.width : 0) && extraY <= (swapsDown ? box.width : 0)
-        && otherCards.every(other => !rectsOverlap(other, moved, 28));
+        && extraX <= (swapsRight ? box.width : 0)
+        && extraY <= (frames.length ? box.height + 96 : swapsDown ? box.width : 0)
+        && clearsFrames(moved, frames);
     };
     const proposalFor = moved => ({ boxes: new Map(boxes).set(box.id, moved), terminal: box.id });
     // An accepted move can open a route but leave a narrow port lane. Save
@@ -253,7 +333,9 @@ export function denseTerminalCandidates({ boxes, routes }, crossingPairs, { limi
     if (box.id === refine && crosses) {
       for (const dx of [-24, 24]) for (const dy of [-24, 24]) {
         const moved = move(box, box.cx + dx, box.cy + dy);
-        if (opensSlot(moved)) refinements.push(proposalFor(moved));
+        if (opensSlot(moved) && otherCards.every(other => !rectsOverlap(other, moved, 28))) {
+          refinements.push(proposalFor(moved));
+        }
       }
     }
     const ranked = [];
@@ -261,6 +343,22 @@ export function denseTerminalCandidates({ boxes, routes }, crossingPairs, { limi
       if (cx === box.cx && cy === box.cy) continue;
       const moved = move(box, cx, cy);
       if (!opensSlot(moved)) continue;
+      const blockers = otherCards.filter(other => rectsOverlap(other, moved, 28));
+      if (blockers.length) {
+        const [blocker] = blockers;
+        if (!crosses || blockers.length !== 1 || !rectsOverlap(blocker, moved)) continue;
+        for (const compact of compacted.get(blocker) ?? []) {
+          if (rectsOverlap(compact, moved, 28)) continue;
+          const distance = Math.abs(blocker.cx - cx) + Math.abs(blocker.cy - cy);
+          const span = links.reduce((sum, { relation }) => {
+            const peer = peerFor(relation);
+            return sum + Math.abs(peer.cx - cx) + Math.abs(peer.cy - cy);
+          }, 0);
+          paired.push({ boxes: new Map(boxes).set(box.id, moved).set(compact.id, compact),
+            terminal: box.id, compactedSink: true, distance, span });
+        }
+        continue;
+      }
       let misses = 0;
       let crossings = 0;
       let span = 0;
@@ -294,5 +392,7 @@ export function denseTerminalCandidates({ boxes, routes }, crossingPairs, { limi
     }
   }
   proposals.sort((a, b) => a.order - b.order || a.conflicts - b.conflicts || a.span - b.span);
-  return [...proposals.slice(0, limit - refinements.length), ...refinements];
+  const transposed = frames.map(frame => transposeFrame(frame, boxes, routes, affected)).filter(Boolean);
+  paired.sort((a, b) => a.distance - b.distance || a.span - b.span);
+  return [...proposals.slice(0, limit - refinements.length), ...refinements, ...transposed, ...paired.slice(0, 4)];
 }

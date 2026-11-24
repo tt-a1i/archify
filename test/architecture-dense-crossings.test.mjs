@@ -67,6 +67,54 @@ test('an uncrossed side leaf moves out of the skip-link corridor', t => {
   assert.ok(leaf.y >= intermediate.y + intermediate.height, 'the leaf clears the route beside the intermediate card');
 });
 
+test('shared external sinks route without crossings and stay outside the frame', t => {
+  const wraps = ['api', 'worker'];
+  const sinks = ['queue', 'db', 'media', 'ml'];
+  const diagram = renderDense(t, {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    layout: { mode: 'auto' },
+    meta: { title: 'Shared external services', output: 'chart.html' },
+    components: ['client', ...wraps, ...sinks].map(id => ({ id, label: id, type: 'backend' })),
+    boundaries: [{ kind: 'region', label: 'Application', wraps }],
+    connections: [
+      ['api', 'db'], ['api', 'ml'], ['api', 'media'], ['client', 'api'],
+      ['worker', 'queue'], ['worker', 'ml'], ['worker', 'media'], ['worker', 'db'], ['api', 'queue'],
+    ].map(([from, to]) => ({ from, to, variant: to === 'queue' ? 'dashed' : undefined })),
+  });
+  const { metrics } = diagram.check();
+  assert.equal(metrics.resolvedCrossovers + metrics.properCrossings, 0);
+  const { boundaries: [frame], components } = diagram.layout();
+  assert.deepEqual(frame.wraps, wraps);
+  for (const card of components) {
+    if (wraps.includes(card.id)) {
+      assert.ok(card.x >= frame.x && card.x + card.width <= frame.x + frame.width
+        && card.y >= frame.y && card.y + card.height <= frame.y + frame.height, card.id);
+    } else {
+      assert.ok(card.x >= frame.x + frame.width || card.x + card.width <= frame.x
+        || card.y >= frame.y + frame.height || card.y + card.height <= frame.y, card.id);
+    }
+  }
+});
+
+test('compacting a shared sink opens a slot for a crossed leaf', t => {
+  const diagram = renderDense(t, {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    layout: { mode: 'auto' },
+    meta: { title: 'Context rendering', output: 'chart.html' },
+    components: ['server', 'engine', 'context', 'writer', 'reg', 'table', 'binding', 'render']
+      .map(id => ({ id, label: id, type: 'backend', size: [240, 60] })),
+    connections: [
+      ['server', 'engine'], ['engine', 'context'], ['context', 'writer'], ['writer', 'server'],
+      ['reg', 'table'], ['engine', 'table'], ['context', 'binding'], ['context', 'render'],
+      ['render', 'writer'], ['engine', 'writer'],
+    ].map(([from, to]) => ({ from, to })),
+  });
+  const { metrics } = diagram.check();
+  assert.equal(metrics.resolvedCrossovers + metrics.properCrossings, 0);
+});
+
 test('a nine-card fan-out keeps the entry above the bottom band and fills the leading region', t => {
   const cards = [
     ['client', 135], ['entry', 156], ['collect', 120], ['search', 120], ['update', 128],
