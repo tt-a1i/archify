@@ -1752,6 +1752,97 @@ test('cli: validate --layout-json keeps one contract across all native diagram t
   }
 });
 
+test('cli: validate --json --with-layout returns the verdict and the --layout-json report together for every native type', () => {
+  const examples = {
+    architecture: 'web-app.architecture.json',
+    workflow: 'agent-tool-call.workflow.json',
+    sequence: 'cache-miss-request.sequence.json',
+    dataflow: 'event-stream.dataflow.json',
+    lifecycle: 'agent-run.lifecycle.json',
+    erd: 'orders.erd.json',
+    class: 'payments.class.json',
+    tree: 'payment-platform.tree.json',
+    timeline: 'payment-incident.timeline.json',
+    waterfall: 'checkout-request.waterfall.json',
+  };
+  const before = new Set(fs.readdirSync(tmp));
+  for (const [type, file] of Object.entries(examples)) {
+    const input = path.join(skillRoot, 'examples', file);
+    const combined = run(['validate', type, input, '--json', '--with-layout']);
+    assert.equal(combined.status, 0, `${type}: ${combined.stderr || combined.stdout}`);
+    const { layout, ...verdict } = JSON.parse(combined.stdout);
+    const separate = run(['validate', type, input, '--layout-json']);
+    assert.equal(separate.status, 0, `${type}: ${separate.stderr || separate.stdout}`);
+    assert.deepEqual(layout, JSON.parse(separate.stdout), `${type}: layout must match --layout-json`);
+    if (type === 'architecture') {
+      const plain = run(['validate', type, input, '--json']);
+      assert.equal(plain.status, 0, plain.stderr);
+      assert.deepEqual(verdict, JSON.parse(plain.stdout), 'the verdict must match validate --json');
+    } else {
+      assert.equal(verdict.ok, true, type);
+      assert.equal(verdict.nextAction.command, 'finalize', type);
+    }
+  }
+  assert.deepEqual(new Set(fs.readdirSync(tmp)), before);
+});
+
+test('cli: validate --with-layout starts the renderer and the artifact check once and fails closed without a layout report', () => {
+  const input = path.join(skillRoot, 'examples/agent-tool-call.workflow.json');
+  const wrapper = path.join(tmp, 'validate-with-layout-spawns.mjs');
+  const log = path.join(tmp, 'validate-with-layout-spawns.log');
+  fs.writeFileSync(wrapper, `
+import childProcess from 'node:child_process';
+import fs from 'node:fs';
+import { syncBuiltinESMExports } from 'node:module';
+const original = childProcess.spawnSync;
+childProcess.spawnSync = (executable, childArgs, options) => {
+  fs.appendFileSync(${JSON.stringify(log)}, String(childArgs?.[0]) + '\\n');
+  if (process.env.DROP_LAYOUT_REPORT && options?.env) {
+    const { ARCHIFY_LAYOUT_REPORT_PATH, ...env } = options.env;
+    options = { ...options, env };
+  }
+  return original(executable, childArgs, options);
+};
+syncBuiltinESMExports();
+process.argv = [process.execPath, ${JSON.stringify(cli)}, 'validate', 'workflow', ${JSON.stringify(input)}, '--json', '--with-layout'];
+await import(${JSON.stringify(pathToFileURL(cli).href)});
+`);
+  const passing = spawnSync(process.execPath, [wrapper], { cwd: skillRoot, encoding: 'utf8' });
+  assert.equal(passing.status, 0, passing.stderr || passing.stdout);
+  assert.equal(JSON.parse(passing.stdout).layout.diagram_type, 'workflow');
+  const children = fs.readFileSync(log, 'utf8').trim().split('\n').map((entry) => path.basename(entry));
+  assert.deepEqual(children, ['render-workflow.mjs', 'check-render-output.mjs']);
+
+  const missing = spawnSync(process.execPath, [wrapper], { cwd: skillRoot, encoding: 'utf8', env: { ...process.env, DROP_LAYOUT_REPORT: '1' } });
+  assert.equal(missing.status, 1, missing.stderr || missing.stdout);
+  const receipt = JSON.parse(missing.stdout);
+  assert.equal(receipt.ok, false);
+  assert.equal(receipt.stage, 'render');
+  assert.equal(receipt.diagnostics[0].code, 'validate/layout-report-unavailable');
+  assert.equal(receipt.layout, undefined);
+});
+
+test('cli: validate --with-layout requires --json, excludes --layout-json and explainer, and keeps failure receipts', () => {
+  const input = path.join(skillRoot, 'examples/agent-tool-call.workflow.json');
+  for (const [args, pattern] of [
+    [['validate', 'workflow', input, '--with-layout'], /--with-layout requires --json/],
+    [['validate', 'workflow', input, '--json', '--with-layout', '--layout-json'], /cannot be combined with --layout-json/],
+    [['validate', 'explainer', path.join(skillRoot, 'examples/delivery.explainer.json'), '--json', '--with-layout'], /explainer has no layout report/],
+  ]) {
+    const result = run(args);
+    assert.equal(result.status, 2, `${args.join(' ')}\n${result.stderr}\n${result.stdout}`);
+    assert.match(`${result.stdout}${result.stderr}`, pattern);
+  }
+
+  const invalid = path.join(tmp, 'with-layout-invalid.workflow.json');
+  fs.writeFileSync(invalid, JSON.stringify({ ...JSON.parse(fs.readFileSync(input, 'utf8')), nodes: [] }));
+  const expected = run(['validate', 'workflow', invalid, '--json']);
+  const result = run(['validate', 'workflow', invalid, '--json', '--with-layout']);
+  assert.notEqual(expected.status, 0, 'fixture must fail validation');
+  assert.equal(result.status, expected.status, result.stderr || result.stdout);
+  assert.deepEqual(JSON.parse(result.stdout), JSON.parse(expected.stdout));
+});
+
 test('cli: validate, deliver, and inspect keep argument failures machine-readable with --json', () => {
   const workflow = path.join(skillRoot, 'examples/agent-tool-call.workflow.json');
   const architecture = path.join(skillRoot, 'examples/web-app.architecture.json');

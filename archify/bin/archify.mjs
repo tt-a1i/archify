@@ -2218,7 +2218,7 @@ const COMMAND_USAGE = {
   patch: 'explainer <artifact.html> <panel-id> <replacement-file> <output.html> [--json] [--quality standard|showcase] [--repo-root path]',
   finalize: '<type> <input.json> <output.html> [--json] [--browser-check] [--receipt path] [--out-dir <dir>] [--quality standard|showcase] [--repo-root path] [--candidate-sha256 hex]',
   preview: '<type> <input.json> [output.html] [--no-open] [--quality standard|showcase] [--repo-root path]',
-  validate: '<type> <input.json> [--json] [--layout-json] [--quality standard|showcase] [--repo-root path]',
+  validate: '<type> <input.json> [--json [--with-layout]] [--layout-json] [--quality standard|showcase] [--repo-root path]',
   'export-svg': '<type> <input.json> <output.svg|stem> [--theme both|light|dark] [--preset name] [--animate-flow] [--json] [--quality standard|showcase] [--repo-root path]',
   pr: ['preflight [--repo-root path] [--base ref] [--head ref] [--init dir] [--mode ask|on-demand|proactive] [--target body|comment] [--global-rules path] [--json]', 'validate <manifest.json> [--repo-root path] [--json]', 'build <manifest.json> --out-dir <dir> [--repo-root path] [--platform github|gitlab|generic] [--no-html] [--animate-flow] [--quality standard|showcase] [--json]', 'attach <pr-number-or-url|gitlab-mr-url> --manifest <build-receipt.json> [--target body|comment] [--repo owner/name] [--allow-stale] [--dry-run] [--json]'],
   migrate: 'workflow <old.json> <new.json> --to-schema 2 [--output portable.html] [--json] [--repo-root path]',
@@ -7109,7 +7109,7 @@ async function commandValidate(args, invocation = {}) {
   args = repoArgs.rest;
   const quality = qualityArgs.quality;
   const repoRoot = repoArgs.repoRoot;
-  const knownOptions = new Set(['--json', '--layout-json']);
+  const knownOptions = new Set(['--json', '--layout-json', '--with-layout']);
   const unknown = args.filter((arg) => arg.startsWith('--') && !knownOptions.has(arg));
   if (unknown.length) rejectCliArgument(`Unknown ${invokingCommand} option "${unknown[0]}".`, {
     code: 'cli/unknown-option',
@@ -7118,6 +7118,7 @@ async function commandValidate(args, invocation = {}) {
   });
   const json = args.includes('--json');
   const layoutJson = args.includes('--layout-json');
+  const withLayout = args.includes('--with-layout');
   const rest = args.filter((arg) => !knownOptions.has(arg));
   const [type, input] = rest;
   if (!type || !input || rest.length !== 2) rejectCliArgument(usage(), {
@@ -7125,6 +7126,25 @@ async function commandValidate(args, invocation = {}) {
     supportedFixes: [`use: archify ${invokingCommand} <type> <input.json> [options]`],
   });
   const renderer = rendererPath(type);
+  // --with-layout adds the --layout-json report to a passing --json verdict,
+  // so a caller that needs both pays for one render (#1420).
+  if (withLayout && (layoutJson || !json)) rejectCliArgument(
+    layoutJson
+      ? `--with-layout adds the layout to the --json verdict; it cannot be combined with --layout-json.`
+      : `--with-layout requires --json.`,
+    {
+      code: 'cli/unsupported-option',
+      subject: { command: invokingCommand, option: '--with-layout' },
+      supportedFixes: layoutJson
+        ? ['use --json --with-layout for the verdict and layout together', 'use --layout-json alone for the layout only']
+        : ['add --json'],
+    },
+  );
+  if (withLayout && type === 'explainer') rejectCliArgument('--with-layout is supported for native diagram types; explainer has no layout report.', {
+    code: 'cli/unsupported-option',
+    subject: { command: invokingCommand, option: '--with-layout', type },
+    supportedFixes: ['remove --with-layout for explainer documents'],
+  });
 
   const inputPath = path.resolve(input);
   let specification;
@@ -7194,6 +7214,7 @@ async function commandValidate(args, invocation = {}) {
   const temporary = createOwnedTempDirectory('archify-validate-');
   const tmp = temporary.path;
   const out = path.join(tmp, `${type}.html`);
+  const layoutReportPath = withLayout ? path.join(tmp, 'layout.json') : null;
   let exitCode = 0;
   let report = () => {};
 
@@ -7207,7 +7228,11 @@ async function commandValidate(args, invocation = {}) {
     }
     const render = runNode([renderer, snapshot, out], {
       stdio: 'pipe',
-      env: { ...rendererEnv(quality, repoRoot, true), ...(preparedBundlePath ? { ARCHIFY_EXPLAINER_PREPARED: preparedBundlePath, ARCHIFY_EXPLAINER_SNAPSHOT_INPUT: inputPath } : {}) },
+      env: {
+        ...rendererEnv(quality, repoRoot, true),
+        ...(preparedBundlePath ? { ARCHIFY_EXPLAINER_PREPARED: preparedBundlePath, ARCHIFY_EXPLAINER_SNAPSHOT_INPUT: inputPath } : {}),
+        ...(layoutReportPath ? { ARCHIFY_LAYOUT_REPORT_PATH: layoutReportPath } : {}),
+      },
     });
     if (render.status !== 0) {
       const failure = rendererFailure(render);
@@ -7265,7 +7290,33 @@ async function commandValidate(args, invocation = {}) {
       } else {
         const result = JSON.parse(check.stdout);
         const engineeringProfile = engineeringProfileFromArtifact(fs.readFileSync(out));
-        if (json) {
+        let layout;
+        if (layoutReportPath) {
+          try {
+            layout = JSON.parse(fs.readFileSync(layoutReportPath, 'utf8'));
+          } catch (error) {
+            exitCode = 1;
+            report = () => reportFailure({
+              json,
+              stage: 'render',
+              type,
+              input: path.resolve(input),
+              error: `The renderer did not record a readable layout report: ${error.message}`,
+              diagnostics: [{
+                code: 'validate/layout-report-unavailable',
+                severity: 'error',
+                message: `The renderer did not record a readable layout report: ${error.message}`,
+                subject: { type },
+                evidence: { reason: error.code || error.name },
+                supportedFixes: ['run validate <type> <input.json> --layout-json for the layout alone', 'report the renderer failure'],
+              }],
+              status: 1,
+            });
+          }
+        }
+        if (exitCode !== 0) {
+          // A missing layout report replaces the verdict with its failure.
+        } else if (json) {
           const candidate = {
             path: path.resolve(input),
             ...artifactIdentity(specification),
@@ -7297,6 +7348,7 @@ async function commandValidate(args, invocation = {}) {
             composition: result.composition,
             ...(engineeringProfile ? { engineeringProfile } : {}),
             ...(localeWarnings.length ? { diagnostics: localeWarnings } : {}),
+            ...(layout ? { layout } : {}),
           };
           report = () => console.log(JSON.stringify(receipt, null, 2));
         } else {

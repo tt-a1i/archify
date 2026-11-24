@@ -1181,17 +1181,19 @@ ${renderLegend()}
       </svg>`;
 }
 
+const svg = renderSvg();
 if (process.argv.includes('--layout-json')) {
-  console.log(JSON.stringify(layoutReportFromSvg(renderSvg(), 'lifecycle'), null, 2));
+  console.log(JSON.stringify(layoutReportFromSvg(svg, 'lifecycle'), null, 2));
 } else {
   writeDiagram({
     outPath,
     template,
     diagramType: 'lifecycle',
     meta: lifecycle.meta,
-    svg: renderSvg(),
+    svg,
     cards: lifecycle.cards,
     sourceEvidence,
     diagram: lifecycle,
+    layoutReport: () => layoutReportFromSvg(svg, 'lifecycle'),
   });
 }

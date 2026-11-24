@@ -450,5 +450,6 @@ if (layoutJsonMode) {
     svg: renderSvg(),
     cards: wf.cards,
     sourceEvidence,
+    layoutReport: buildLayoutReport,
   });
 }

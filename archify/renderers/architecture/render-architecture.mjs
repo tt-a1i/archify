@@ -1897,5 +1897,6 @@ if (layoutJsonMode) {
     cards: arch.cards,
     sourceEvidence,
     diagram: arch,
+    layoutReport: buildLayoutReport,
   });
 }
