@@ -414,7 +414,7 @@ Architecture 示例：[`Web App`](examples/web-app.html) · [`Archify Pipeline`]
 <summary>这些体验背后的工程能力</summary>
 
 
-- **用布局判断代替通用自动布局** —— Agent 根据故事选择层级、留白、线路和强调关系；共享的自动端点会确定性展开，不再让多支箭头堆在同一个中点。
+- **布局判断为主，按需自动摆放** —— Agent 根据故事选择层级、留白、线路和强调关系。架构图可以开启 `layout.mode: "auto"`，按组件关系自动摆放，你写定的位置和线路保持不变。共享的自动端点会确定性展开，不再让多支箭头堆在同一个中点。
 - **Typed JSON IR** —— 每种 Renderer 模式都有 Schema 和可复现的源文件。
 - **原子交付前校验** —— Schema、布局、HTML/SVG、线路和标签到其他路径的净空检查必须全部通过，Showcase 成品才会替换上一份可信结果。
 - **失败也有结构化修复回执** —— `validate --json` 和 `deliver --json` 会返回稳定规则码、准确对象、测量证据和真正支持的修复旋钮，不再让 Agent 从 Node 堆栈或自由文本里猜。
@@ -515,7 +515,7 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 - [路线图](ROADMAP.md)
 - [自动生成的 Proof Lab](https://archify.si/zh/gallery)
 
-自动 Mermaid Parser、通用自动布局、托管分享服务和 WYSIWYG 编辑器目前都不在产品范围内。
+自动 Mermaid Parser、托管分享服务和 WYSIWYG 编辑器目前都不在产品范围内。自动摆放（`layout.mode: "auto"`）只适用于架构图，其他图型使用 Agent 编写的布局。
 
 ## 社区交流
 

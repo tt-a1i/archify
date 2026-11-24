@@ -258,7 +258,7 @@ node bin/archify.mjs validate workflow examples/agent-tool-call.workflow.json --
 - [스키마 참고](archify/schemas/README.md) · [Skill과 렌더러 계약](archify/SKILL.md) · [예제](archify/examples/) · [Agent 작성 가이드](docs/authoring-cookbook.md)
 - [변경 이력](CHANGELOG.md) · [로드맵](ROADMAP.md) · [생성된 Proof Lab](https://tt-a1i.github.io/archify/gallery.html)
 
-자동 Mermaid 파싱, 범용 자동 레이아웃, 호스팅 공유, WYSIWYG 편집기는 현재 범위에 포함되지 않습니다.
+자동 Mermaid 파싱, 호스팅 공유, WYSIWYG 편집기는 현재 범위에 포함되지 않습니다. 자동 배치(`layout.mode: "auto"`)는 아키텍처 다이어그램에만 적용되며, 다른 유형은 에이전트가 작성한 레이아웃을 사용합니다.
 
 <a id="community"></a>
 

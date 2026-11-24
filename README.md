@@ -413,7 +413,7 @@ Architecture examples: [`web-app`](examples/web-app.html) · [`Archify pipeline`
 <summary>The engineering behind the experience</summary>
 
 
-- **Layout judgment over generic auto-layout** — the agent chooses hierarchy, spacing, routes, and emphasis; shared automatic endpoints spread deterministically instead of piling arrows on one midpoint.
+- **Layout judgment, with automatic placement when you want it** — the agent chooses hierarchy, spacing, routes, and emphasis. Architecture diagrams can opt into `layout.mode: "auto"`, which places components from their relationships and keeps any positions and routes you author fixed, and shared automatic endpoints spread deterministically instead of piling arrows on one midpoint.
 - **Typed JSON IR** — every renderer-backed mode has a schema and reproducible source.
 - **Atomic validation before delivery** — schema, layout, HTML/SVG, route, and label-to-route clearance checks must all pass before a showcase artifact replaces the last known good output.
 - **Failures come with a repair receipt** — `validate --json` and `deliver --json` return stable rule codes, the exact subject, measured evidence, and only supported repair controls instead of a Node stack or an unstructured retry guess.
@@ -511,7 +511,7 @@ The complete generation and viewer contract lives in [`archify/SKILL.md`](archif
 - [Roadmap](ROADMAP.md)
 - [Generated Proof Lab](https://archify.si/gallery.html)
 
-Automatic Mermaid parsing, general-purpose auto-layout, hosted sharing, and WYSIWYG editing are intentionally outside the current scope.
+Automatic Mermaid parsing, hosted sharing, and WYSIWYG editing are intentionally outside the current scope. Automatic placement (`layout.mode: "auto"`) covers Architecture diagrams only; other types use the layout the agent authors.
 
 ## Community
 
