@@ -6,6 +6,10 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 > Development identity: `v3.3.2-dev.1`. Not a stable release.
 
+### Fixed
+
+- **Sequence WebM playback (#1416).** Record messages and participant pulses in Live order and fit the complete sequence into the requested export.
+
 ## [3.3.1] — 2026-11-24
 
 ### Changed
