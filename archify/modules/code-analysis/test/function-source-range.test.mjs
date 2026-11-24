@@ -6,8 +6,9 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
-import ts from 'typescript';
+import ts from '../vendor/typescript.cjs';
 import { measureFunctions } from '../extract/ts/functions.mjs';
+import { REVISION } from '../extract/ts/index.mjs';
 import { extractFacts, loadConfig } from '../lib/analysis.mjs';
 import { buildGraph } from '../lib/analysis.mjs';
 import { buildAtlas } from '../overlay/atlas.mjs';
@@ -79,7 +80,7 @@ test('same names stay separate, bodiless overloads are omitted, and dynamic call
   try {
     const { facts } = extractFacts(dir, { language: 'ts', config: loadConfig(null) });
     assert.deepEqual(schemaErrors('raw-facts', facts), []);
-    assert.equal(facts.repository.adapterRevision, 23);
+    assert.equal(facts.repository.adapterRevision, REVISION);
     const named = facts.functions.filter(fn => fn.name === 'run');
     assert.equal(named.length, 2);
     assert.deepEqual(named.map(fn => fn.line), [1, 2]);
@@ -92,6 +93,11 @@ test('same names stay separate, bodiless overloads are omitted, and dynamic call
     assert.equal(shown[7].column, 1);
     assert.equal(shown[7].endColumn, text.split('\n')[0].length + 1);
     const legacy = structuredClone(facts);
+    legacy.repository.adapterRevision = 23;
+    legacy.callModel = 'js-ts-lexical-v5';
+    delete legacy.languageScope;
+    for (const fn of legacy.functions) delete fn.syntaxKind;
+    assert.deepEqual(schemaErrors('raw-facts', legacy), [], 'revision 23 facts from dev predate SDK and syntax-kind provenance');
     for (const fn of legacy.functions) delete fn.sourceRange;
     assert.ok(schemaErrors('raw-facts', legacy).some(error => error.path === '/functions/0/sourceRange'),
       'revision 23 must reject functions without a captured range');

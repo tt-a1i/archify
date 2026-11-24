@@ -50,6 +50,10 @@
             "swiss"
           ]
         },
+        "feedback_links": {
+          "type": "boolean",
+          "description": "false hides the feedback and GitHub star links in the page footer."
+        },
         "repository": {
           "$ref": "common.schema.json#/$defs/repository"
         }

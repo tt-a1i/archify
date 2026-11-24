@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Review architecture",
+    "output": "layout.html",
+    "quality_profile": "showcase",
+    "viewBox": [
+      900,
+      900
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "components": [
+    {
+      "id": "n0",
+      "label": "Origin",
+      "type": "backend",
+      "size": [
+        150,
+        66
+      ],
+      "pos": [
+        710,
+        64
+      ]
+    },
+    {
+      "id": "n1",
+      "label": "Destination",
+      "type": "backend",
+      "size": [
+        150,
+        66
+      ],
+      "pos": [
+        42,
+        780
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e0",
+      "to": "n1",
+      "route": "straight",
+      "from": "n0"
+    }
+  ],
+  "boundaries": []
+}

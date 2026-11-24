@@ -2190,10 +2190,10 @@ function invalidProvenance(artifactPath, sidecar, reason, evidence = {}) {
 }
 
 const COMMAND_USAGE = {
-  start: '<repo-root> [--ir <architecture.json>] [--locale en|zh-CN] [--out <dir>] [--pr <URL-or-number>] [--repository OWNER/REPO] [--scope path] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
+  start: '<repo-root> [--ir <architecture.json>] [--locale en|zh-CN] [--out <dir>] [--pr <URL-or-number> [--repository OWNER/REPO] | --base <commit> --head <commit>] [--scope path] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
   'code-analysis': [
-    'prepare <repo-root> --out <dir> [--ir <architecture.json>] [--locale en|zh-CN] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
-    'serve <repo-root> --out <dir> [--ir <architecture.json>] [--locale en|zh-CN] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
+    'prepare <repo-root> --out <dir> [--ir <architecture.json>] [--locale en|zh-CN] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase] [--base <commit> --head <commit>] [--scope path]',
+    'serve <repo-root> --out <dir> [--ir <architecture.json>] [--locale en|zh-CN] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase] [--base <commit> --head <commit>] [--scope path]',
     'check <repo-root> [--language ts|py|java|go|rust] [--config file] [--ir <architecture.json> [--map file]] [--baseline file] [--compare findings.json] [--out dir] [--fail-on error|warning|info|never] [--new-only] [--update-baseline | --accept id | --revoke id] [--reason text] [--json]',
     'verify-change <analysis-dir> --task <task.json> [--checks <checks.json> | --checks-template]',
     'drift <git-repo> --base <full-sha> --head <full-sha> --ir <architecture.json> --out <new-directory> [--map file] [--config file] [--from-report <original-drift.json>] [--locale en|zh-CN] [--json]',
@@ -2219,6 +2219,8 @@ const COMMAND_USAGE = {
   finalize: '<type> <input.json> <output.html> [--json] [--browser-check] [--receipt path] [--out-dir <dir>] [--quality standard|showcase] [--repo-root path] [--candidate-sha256 hex]',
   preview: '<type> <input.json> [output.html] [--no-open] [--quality standard|showcase] [--repo-root path]',
   validate: '<type> <input.json> [--json] [--layout-json] [--quality standard|showcase] [--repo-root path]',
+  'export-svg': '<type> <input.json> <output.svg|stem> [--theme both|light|dark] [--preset name] [--animate-flow] [--json] [--quality standard|showcase] [--repo-root path]',
+  pr: ['preflight [--repo-root path] [--base ref] [--head ref] [--init dir] [--mode ask|on-demand|proactive] [--target body|comment] [--global-rules path] [--json]', 'validate <manifest.json> [--repo-root path] [--json]', 'build <manifest.json> --out-dir <dir> [--repo-root path] [--platform github|gitlab|generic] [--no-html] [--animate-flow] [--quality standard|showcase] [--json]', 'attach <pr-number-or-url|gitlab-mr-url> --manifest <build-receipt.json> [--target body|comment] [--repo owner/name] [--allow-stale] [--dry-run] [--json]'],
   migrate: 'workflow <old.json> <new.json> --to-schema 2 [--output portable.html] [--json] [--repo-root path]',
   inspect: '<type> <input.json>',
   check: '<output.html> [--json] [--require-provenance]',
@@ -4313,6 +4315,60 @@ function commandRender(args) {
   if (result.status !== 0) exitFrom(result);
 }
 
+async function commandExportSvg(args) {
+  const qualityArgs = extractQualityArgs(args);
+  const repoArgs = extractRepoRootArgs(qualityArgs.rest);
+  const positional = [];
+  let theme = 'both';
+  let preset;
+  let animateFlow = false;
+  let json = false;
+  const rest = repoArgs.rest;
+  for (let index = 0; index < rest.length; index += 1) {
+    const arg = rest[index];
+    if (arg === '--json') json = true;
+    else if (arg === '--animate-flow') animateFlow = true;
+    else if (arg === '--theme' || arg === '--preset') {
+      const value = rest[index + 1];
+      if (value === undefined || value.startsWith('--')) {
+        rejectCliArgument(`${arg} requires a value.`, { code: 'cli/missing-option-value', subject: { command: 'export-svg', option: arg } });
+      }
+      if (arg === '--theme') theme = value; else preset = value;
+      index += 1;
+    } else if (arg.startsWith('--theme=')) theme = arg.slice('--theme='.length);
+    else if (arg.startsWith('--preset=')) preset = arg.slice('--preset='.length);
+    else if (arg.startsWith('--')) {
+      rejectCliArgument(`Unknown export-svg option "${arg}".`, { code: 'cli/unsupported-option', subject: { command: 'export-svg', option: arg } });
+    } else positional.push(arg);
+  }
+  const [type, input, output] = positional;
+  if (!type || !input || !output || positional.length > 3) {
+    rejectCliArgument(`export-svg expects <type> <input.json> <output.svg|stem>.\n\n${usage()}`, { code: 'cli/invalid-arguments', subject: { command: 'export-svg' } });
+  }
+  const { exportSvgArtifacts, SvgExportError } = await import('../renderers/shared/svg-export.mjs');
+  try {
+    const receipt = await exportSvgArtifacts({ type, input, output, theme, preset, animateFlow, env: rendererEnv(qualityArgs.quality, repoArgs.repoRoot) });
+    if (json) console.log(JSON.stringify(receipt, null, 2));
+    else for (const entry of receipt.outputs) console.log(entry.path);
+  } catch (error) {
+    if (!(error instanceof SvgExportError)) throw error;
+    const diagnostics = error.diagnostics.length
+      ? error.diagnostics
+      : [diagnostic({ code: error.code || 'export/failed', message: error.message, subject: { command: 'export-svg', type } })];
+    reportArtifactFailure({
+      command: 'export-svg',
+      json,
+      stage: error.stage || 'export',
+      type,
+      input: path.resolve(input),
+      output: path.resolve(output),
+      error: error.message,
+      diagnostics,
+      status: error.stage === 'arguments' ? 2 : 1,
+    });
+  }
+}
+
 function reportArtifactFailure({ command, json, stage, type, input, output, error, diagnostics = [], status = 1, checker, receiptId, provenance, update }) {
   const receipt = {
     schemaVersion: 1,
@@ -6064,6 +6120,12 @@ async function commandFinalize(rawArgs) {
     for (const entry of result.summary.diagnostics || []) {
       if (entry.severity === 'warning') console.error(`warning [${entry.code}] ${entry.message}`);
     }
+    const offer = result.summary.codeAnalysisOffer;
+    if (offer) {
+      const { nodeCommand } = await import('../modules/code-analysis/lib/task-command.mjs');
+      const installNotice = offer.dependencies === 'missing' ? ' (analysis components are missing; reinstall Archify first)' : '';
+      console.log(`Architecture Diagnosis available (not run)${installNotice}: ${nodeCommand(offer.start.argv.slice(1))}`);
+    }
     if (result.summary.update?.noticeRequired) console.log(result.summary.update.noticeText);
   }
   process.exitCode = result.exitCode;
@@ -7064,14 +7126,6 @@ async function commandValidate(args, invocation = {}) {
   });
   const renderer = rendererPath(type);
 
-  if (layoutJson && !['architecture', 'workflow'].includes(type)) {
-    rejectCliArgument('--layout-json is currently supported for architecture and workflow diagrams only.', {
-      code: 'cli/unsupported-option',
-      subject: { option: '--layout-json', type },
-      supportedFixes: ['remove --layout-json or use an architecture or workflow diagram'],
-    });
-  }
-
   const inputPath = path.resolve(input);
   let specification;
   let explainerBundle;
@@ -7297,7 +7351,7 @@ try {
       break;
     case 'start': {
       if (!args.length || args[0] === '--help' || args[0] === '-h') {
-        console.log('Usage: archify start <repo-root> [--ir <architecture.json>] [--locale en|zh-CN] [--out <dir>] [--pr <URL-or-number>] [--repository OWNER/REPO] [--scope path] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]');
+        console.log('Usage: archify start <repo-root> [--ir <architecture.json>] [--locale en|zh-CN] [--out <dir>] [--pr <URL-or-number> [--repository OWNER/REPO] | --base <commit> --head <commit>] [--scope path] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]');
         break;
       }
       const { startAnalysisView } = await import('../modules/code-analysis/bin/serve.mjs');
@@ -7349,6 +7403,12 @@ try {
     case 'validate':
       await commandValidate(args);
       break;
+    case 'export-svg':
+      await commandExportSvg(args);
+      break;
+    case 'pr':
+      await (await import('../pr/cli.mjs')).commandPr(args, { rejectCliArgument, usage });
+      break;
     case 'migrate':
       await commandMigrate(args);
       break;
@@ -7357,7 +7417,7 @@ try {
         rejectCliArgument('inspect is currently supported for architecture diagrams only.', {
           code: 'cli/unsupported-option',
           subject: { command: 'inspect', type: args[0] },
-          supportedFixes: ['use an architecture diagram', 'use validate <type> <input.json> --layout-json for workflow diagrams'],
+          supportedFixes: ['use an architecture diagram', 'use validate <type> <input.json> --layout-json for other diagram types'],
         });
       }
       await commandValidate([...args, '--layout-json'], { command: 'inspect' });
@@ -7391,7 +7451,7 @@ try {
   }
 } catch (error) {
   if (!error.archifyArgument) throw error;
-  if (['validate', 'deliver', 'finalize', 'inspect', 'patch'].includes(command) && args.includes('--json')) {
+  if (['validate', 'deliver', 'finalize', 'inspect', 'patch', 'export-svg', 'pr'].includes(command) && args.includes('--json')) {
     reportArtifactArgumentFailure(command, error);
   } else {
     fail(error.message);

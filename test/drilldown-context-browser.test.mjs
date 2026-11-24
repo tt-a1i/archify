@@ -32,7 +32,7 @@ test('local sibling navigation preserves reader context, authored overrides and 
     await run('document.fonts.ready.then(() => true)');
   };
   const child = path.join(root, 'drilldown-integrations.html');
-  fs.copyFileSync(path.join(skillRoot, 'examples/drilldown-integrations.html'), child);
+  fs.copyFileSync(path.join(skillRoot, '..', 'examples/drilldown-integrations.html'), child);
   const parent = path.join(root, 'drilldown-platform.html');
   for (const authored of ['', '?theme=light&embed=0&present=0', '#focus=gateway', '?theme=light&embed=0&present=0#focus=gateway']) {
     const spec = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/drilldown-platform.architecture.json')));

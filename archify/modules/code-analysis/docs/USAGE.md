@@ -27,10 +27,48 @@ This layer performs no new extraction or repository traversal. Reading is bounde
 
 In PR mode, short file/function addition and removal counts follow the original module labels, with detailed counts available on hover. Change badges (+/−/◇) open the captured source; grey dashed spikes show merge-base complexity alongside the current spikes. Removed functions can be marked against a surviving file; deleted files/modules remain in the change list. These annotations do not appear in ordinary repository analysis. A same-metric source edit can have a change badge without implying increased complexity or changed behavior.
 
+## Offline review of two local commits
+
+Use exact Git commit IDs to generate a self-contained review without contacting GitHub:
+
+```sh
+node bin/archify.mjs code-analysis prepare /path/to/repo \
+  --base <40-character-base> --head <40-character-head> --language ts \
+  --out out/pinned-review
+```
+
+Provision the Code Analysis dependencies and language tools beforehand. Git objects
+needed by the selected scope must be available locally. Missing commit or tree
+objects produce a diagnostic, and a failed run keeps the last good report.
+The reader compares the selected base directly with head. To match GitHub's PR
+comparison, resolve and pass its merge-base yourself. A dirty checkout, Git
+branch moves and untracked files do not change the selected commits or evidence.
+For a large repository, use `--scope <repo-directory>` to select a subtree.
+Git uses 50% similarity to detect renames; moves across the scope boundary
+appear as additions or removals, and Git may skip expensive similarity searches
+when more than 1000 unmatched paths remain.
+
+Open `out/pinned-review/analysis/repo.analysis.html` directly in a browser.
+**Review commits** shows the full Git identities. **Files** in Atlas lists
+changed files, and a rename links both saved paths. Source buttons are available
+for captured text. Changed files outside the analysis selection may still have
+a preview if they are regular UTF-8 files (up to 128 KiB per file and 4 MiB
+per side for supplemental previews). These previews do not expand analysis coverage. **Architecture assessment**
+links observed dependency changes to source. For JS/TS, add an existing
+`--ir architecture.json` and optional `--map overlay-map.json` to compare
+authored component relations using the same static analysis as `drift`.
+Select a relation to highlight its components or open its import evidence.
+Uncertain ownership, resolution and parsing remain visible in the relation.
+
+**Download review .md** exports both commits, changed paths, recorded
+dependency changes, source coordinates and coverage. The export omits source
+text. The HTML includes captured source excerpts and tasks. Share it with
+people who may read that source. You can also use the same pinned options with
+`archify start` or `code-analysis serve`.
+
 From the `archify/` package directory inside the Archify repository:
 
 ```sh
-npm ci
 npm start -- "/path/to/project" --locale zh-CN
 ```
 
@@ -60,9 +98,9 @@ Language extraction has its own prerequisites:
 
 | Adapter | Required tools and source scope |
 | --- | --- |
-| `ts` | Node.js and the module's installed TypeScript parser dependencies. |
+| `ts` | Node.js; the module's bundled TypeScript parser. |
 | `py` | Node only; transplanted Pyright parser, Python 3.14 syntax by default. Set `python.targetVersion` to 3.8–3.14. |
-| `java` | Node.js and the installed `java-parser` dependency; no JDK or project build. |
+| `java` | Node.js; the module's bundled `java-parser` dependency; no JDK or project build. |
 | `go` | Go 1.18+ and a root `go.mod`; see [Go scope and tooling](GO.md). |
 | `rust` | Cargo/rustc 1.71+, a root `Cargo.toml` and the locked helper dependencies; see [Rust scope and tooling](RUST.md). |
 | `c`, `cpp` | An existing `compile_commands.json`, Python clang bindings and libclang; see [C/C++ scope and tooling](C_CPP.md). |
@@ -96,7 +134,7 @@ Deliver the analysis HTML with one or two scoped conclusions; tasks may be given
 
 The reader follows explicit `--locale`, then `meta.locale`: `zh-CN` uses Chinese, `en` and unrecognized locales use English. Source text, symbol names, rule identifiers, imported diagnostics and exported task evidence retain their original language. The first screen summarizes error-level diagnostics, file cycles, module dependency loops and configured layer rules. A zero is scoped to checks that ran; a rule that did not run is labelled as unchecked. Information-level signals remain available through finding filters. Select a priority card title to see its measurements and source location directly in the finding. The copy icon on the card copies the AI task without opening the finding; a check mark confirms success briefly without adding a status message. The **Copy architecture brief** icon shares the bounded hotspot and structural orientation with the headless receipt; its order is not inferred business importance.
 
-Atlas shows the relationship map and the four labelled repository totals in the right sidebar. **Map** and **Files** are short tabs. Map stays selected by default. Files replaces the map with a searchable captured-file list; it does not add a third column or a lower scrolling region. Hover a tab for its explanation, or use Left/Right and Home/End while a tab is focused. Choosing a file replaces the current finding and highlights its owner module when you return to Map; choosing a module/finding or clearing the selection replaces the file. The right panel previews and downloads its path, module and captured function names/lines as Markdown. This is navigation context from the saved analysis, without source content or complete diagnostic/task evidence; use a finding's source evidence and task actions for those. No fresh source or external-tool verification is implied. The complexity distribution, the scrollable module list, the dependency records and the legend are visible without expanding anything. When you leave a finding in the standalone report, Atlas restores the previous selection, zoom, tab and search. Use **Hide analysis** to free space for the star map and the left-edge grip to bring the reader back.
+Atlas shows the relationship map and the four labelled repository totals in the right sidebar. **Map** and **Files** are short tabs. Map stays selected by default. Files replaces the map with a searchable captured-file list; it does not add a third column or a lower scrolling region. Hover a tab for its explanation, or use Left/Right and Home/End while a tab is focused. Choosing a file replaces the current finding and highlights its owner module when you return to Map; choosing a module/finding or clearing the selection replaces the file. The right panel previews and downloads its path, module and captured function names/lines as Markdown. This is navigation context from the saved analysis, without source content or complete diagnostic/task evidence; use a finding's source evidence and task actions for those. No fresh source or external-tool verification is implied. The complexity distribution, the scrollable module list, the dependency records and the legend are visible without expanding anything. Selecting a module smoothly expands its outer arc and dims unrelated modules; inspecting a function retains the selected module. When you leave a finding in the standalone report, Atlas restores the previous selection, zoom, tab and search. Use **Hide analysis** to free space for the star map and the left-edge grip to bring the reader back.
 
 After edits, the prominent comparison reports **no longer detected**, **new** and changed evidence. Missing findings do not prove fixes. Configuration, grouping, model or coverage changes make results non-comparable and show the reason. Verify source changes and project tests before claiming an improvement.
 
@@ -193,7 +231,9 @@ Run `check` without a diagram (or pass `--ir architecture.json [--map overlay-ma
 node bin/archify.mjs code-analysis check /path/to/repo --language ts --out out/first-look --json
 ```
 
-Choose `--language` when the repository contains more than one language; without it, `check` stops with `extract/adapter-ambiguous` and lists per-adapter file counts (`evidence.counts`) so the dominant language is visible on first contact. Each run analyzes one language and reports the others under `coverage.otherLanguages`.
+Archify selects an adapter automatically when it is the only eligible choice. In a mixed tree, the leading adapter must account for at least 90% of files matched by eligible adapters. Go or Rust also needs a regular `go.mod` or `Cargo.toml`, respectively, at the analysis root. A C or C++ lead still requires a choice because source counts cannot tell which files have unique compilation commands. The [Java detection rules](JAVA.md) still apply, and the C++ adapter also covers C when both match.
+
+When Archify needs a choice, `extract/adapter-ambiguous` reports the source counts and corresponding `--language` flags. An explicit `--language` takes precedence. Each run reports the other languages and their file counts in `coverage.otherLanguages`.
 
 Start from the JSON receipt, not the full finding list:
 
@@ -322,7 +362,7 @@ How cycles are graded:
 | `coupling/cycle`: a component that only closes through deferred, conditional or type-only edges | warning |
 | Rust file and module cycles | info: files of one crate compile together, and mutual `use` is ordinary there |
 
-**Upgrading.** Before rule version 2, file cycles were warnings and module and Java cycles were info. `check` fails on warnings by default, so a project whose only cycles were module-level or Java cycles passed and will now fail. When `check` fails without `--baseline`, its summary prints the exact command for this project (language and config included). To adopt the new levels without blocking CI on existing cycles, record them once and commit the file:
+**Upgrading.** Before rule version 2, file cycles were warnings and module and Java cycles were info. `check` fails on warnings by default, so a project whose only cycles were module-level or Java cycles passed and will now fail. When `check` fails without `--baseline`, its receipt includes the exact command for this project (language and config included). To adopt the new levels without blocking CI on existing cycles, record them once and commit the file:
 
 ```sh
 node bin/archify.mjs code-analysis check "/path/to/project" --baseline analysis-baseline.json --update-baseline --reason "existing cycle, tracked in <issue>"
@@ -478,7 +518,7 @@ node bin/archify.mjs code-analysis check "/path/to/project" --baseline analysis-
 | `--update-baseline [--reason text]` | Write the baseline instead of checking. |
 | `--json` | Print a machine-readable receipt instead of the summary. |
 
-Exit codes: `0` passed, `1` the gate failed, `2` the analysis could not run (the diagnostic says why). A failing run without `--baseline` ends with the command that records today's findings in `analysis-baseline.json` (also in the `--json` receipt as `gate.adopt`), for a first run or after a rule became stricter. The printed summary lists failing findings as `path:line` with their ids, the comparison counts, and stale baseline entries.
+Exit codes: `0` passed, `1` the gate failed, `2` the analysis could not run (the diagnostic says why). A failing run without `--baseline` offers the command that records today's findings in `analysis-baseline.json`, for a first run or after a rule became stricter. If the baseline or drill-down command contains control characters, the summary points to the exact command in the `--json` receipt under `gate.adopt` or `investigation.drillDown`. The printed summary lists failing findings as `path:line` with their ids, the comparison counts, and stale baseline entries.
 
 
 ## Config files
@@ -569,7 +609,7 @@ Changed or unavailable entry facts and entry parse errors return exit 1. A usabl
 
 ### Investigate a changed source file
 
-With analyzer dependencies already installed, capture two JS/TS roots using the
+Capture two JS/TS roots using the
 current extractor and one analysis configuration:
 
 ```sh
@@ -596,7 +636,7 @@ JSON inventory and a semantic diff are not provided by this mode.
 
 Open a priority finding or a component's finding, read the captured code excerpt, then click **Copy task for AI**. One click prepares the complete brief and copies it, without requiring you to open its preview. Paste it into the coding AI working on this project. **Task preview and download** provides the full preview, **Copy AI task**, **Download .md** and **Check again**. Copy and download refresh the task first when the local service is available. If clipboard access is unavailable, the preview opens and selects the text for manual copying.
 
-The first `serve`, `check` or `task` run initializes the analysis module's missing dependencies using its package lock. Running a task does not itself connect to an AI recipient: the current UI reports copying or downloading, not sending or starting a refactor.
+Parser and schema packages are bundled in `vendor/`, so `serve`, `check` and `task` install nothing. Running a task does not itself connect to an AI recipient: the current UI reports copying or downloading, not sending or starting a refactor.
 
 An offline report exports the captured snapshot and labels it as not checked against current source. Changed, missing, and unverifiable evidence is called out in both the preview and exported brief; ask your coding AI to read the current files before editing. An expired page or a rejected server request requires retry or re-analysis. Export does not apply a patch or execute project checks.
 

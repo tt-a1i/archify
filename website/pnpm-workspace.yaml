@@ -1,0 +1,7 @@
+# Website-only dependency updates use the website CI jobs.
+packages:
+  - '.'
+
+allowBuilds:
+  esbuild: true
+  fsevents: true

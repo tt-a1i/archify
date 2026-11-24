@@ -129,8 +129,10 @@ test('a public story attaches once, follows native appearance and retains source
   const scrub=await evaluate('(()=>{const range=document.querySelector(".story-panel input");range.dispatchEvent(new Event("pointerdown"));range.value=9;range.dispatchEvent(new Event("input"));range.dispatchEvent(new Event("change"));return Archify.story.state().time;})()');assert.equal(scrub,9);
   const png=await evaluate('(async()=>{const task=Archify.story.exportPNG({time:9});document.querySelector("[data-preset-value=classic]").click();if(document.documentElement.dataset.theme!=="light")document.querySelector("#btn-theme").click();const image=await createImageBitmap(await task),canvas=document.createElement("canvas");canvas.width=canvas.height=1;canvas.getContext("2d").drawImage(image,0,0);const pixel=[...canvas.getContext("2d").getImageData(0,0,1,1).data];return {width:image.width,height:image.height,pixel};})()',true);
   assert.equal(png.width,1920);assert.equal(png.height,1080);assert.ok(Math.max(...png.pixel.slice(0,3))<70,'export retains the dark appearance selected when it started');
+  // Cross the quarter-second audio block boundary and retain a partial tail.
+  const videoSeconds=.35;
   const video=await evaluate(`(async()=>{
-    const blob=await Archify.story.exportVideo({start:0,seconds:.5,format:'webm'}),url=URL.createObjectURL(blob),video=document.createElement('video');
+    const blob=await Archify.story.exportVideo({start:0,seconds:${videoSeconds}}),url=URL.createObjectURL(blob),video=document.createElement('video');
     try{
       video.muted=true;video.src=url;
       await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error('Story video decode timed out')),5000);video.onloadeddata=()=>{clearTimeout(timer);resolve();};video.onerror=()=>{clearTimeout(timer);reject(Error('Story video could not be decoded'));};});
@@ -138,14 +140,15 @@ test('a public story attaches once, follows native appearance and retains source
       for(const track of stream.getTracks())track.stop();
       const bytes=new Uint8Array(await blob.arrayBuffer());let binary='';
       for(let at=0;at<bytes.length;at+=32768)binary+=String.fromCharCode(...bytes.subarray(at,at+32768));
-      return {width:video.videoWidth,height:video.videoHeight,duration:video.duration,audioTracks,base64:btoa(binary)};
+      return {type:blob.type,width:video.videoWidth,height:video.videoHeight,duration:video.duration,audioTracks,base64:btoa(binary)};
     }finally{video.removeAttribute('src');video.load();URL.revokeObjectURL(url);}
   })()`,true);
-  assert.equal(video.width,1920);assert.equal(video.height,1080);assert.ok(Math.abs(video.duration-.5)<.05,'export contains the requested video interval');
+  assert.equal(video.type,'video/webm','the default export produces WebM');
+  assert.equal(video.width,1920);assert.equal(video.height,1080);assert.ok(Math.abs(video.duration-videoSeconds)<.05,'export contains the requested video interval');
   assert.equal(video.audioTracks,1,'the playable video retains its audio track');
   if(ffmpegBin){
     const file=path.join(dir,'story.webm');fs.writeFileSync(file,Buffer.from(video.base64,'base64'));
-    decodeAudio(file,.5,'the audio timeline',.05);
+    decodeAudio(file,videoSeconds,'the audio timeline',.05);
   }
   await evaluate('Archify.exportMenu.run("svg")',true);assert.equal(await evaluate('document.documentElement.dataset.lastExportCanonical'),'true');
   assert.deepEqual(await evaluate('[...document.querySelectorAll("#export-menu [data-format]")].map(button=>[button.dataset.format,button.textContent,button.hidden,button.disabled])'),exportsBefore);
@@ -166,7 +169,7 @@ test('a public story attaches once, follows native appearance and retains source
   await evaluate('Archify.story.setView("story")',true);
   assert.deepEqual(await evaluate(`(${motionState})(document.querySelector('.story-panel iframe').contentWindow)`),reducedPolicy,'interactive Story playback keeps its original reduced-motion policy');
   const rendered=await evaluate(`(async()=>{
-    let result;await Archify.story.exportVideo({format:'webm',seconds:.1,onProgress:()=>{
+    let result;await Archify.story.exportVideo({format:'webm',seconds:.05,onProgress:()=>{
       if(result)return;const win=document.querySelector('.story-render-frame').contentWindow,start=win.Story.shots[1].start;
       Object.defineProperty(win.document,'hidden',{configurable:true,get:()=>true});win.document.dispatchEvent(new win.Event('visibilitychange'));
       result={first:win.Story.seek(start+.1).camera,next:win.Story.seek(start+.8).camera,wash:win.document.querySelector('.transition-light').style.opacity,
@@ -261,7 +264,7 @@ test('flowless guides stay out of the story opening clock',{
 },async t=>{
   const dir=fs.mkdtempSync(path.join(os.tmpdir(),'archify-story-opening-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
   const cli=path.join(skill,'bin/archify.mjs');
-  const waterfall=fs.readFileSync(path.join(skill,'examples/waterfall-checkout-request-rendered.html'),'utf8');
+  const waterfall=fs.readFileSync(path.join(skill,'../examples/waterfall-checkout-request-rendered.html'),'utf8');
   const svgEnd=waterfall.indexOf('</svg>',waterfall.indexOf('data-waterfall-ui'));
   // A late card plus one long unanimated guide crosses the 6s opening only when that guide is counted.
   const extended=waterfall.slice(0,svgEnd)+'<g id="node-late" data-node-id="late" data-node-label="Late span"><rect x="20" y="250" width="40" height="14" data-animate="node" style="--step:20"/></g><path data-edge-from="request" data-edge-to="late" data-edge-key="9" d="M 20 260 H 620" fill="none" stroke="#888"/>'+waterfall.slice(svgEnd);
@@ -287,7 +290,7 @@ test('flowless guides stay out of the story opening clock',{
   const stretched=await attach('stretched',extended);
   assert.equal(stretched.rate,1,'a long flowless guide does not speed up the opening');
   assert.equal(stretched.span,stretched.wireStart);
-  const traced=await attach('workflow',fs.readFileSync(path.join(skill,'examples/workflow-agent-tool-call-rendered.html'),'utf8'));
+  const traced=await attach('workflow',fs.readFileSync(path.join(skill,'../examples/workflow-agent-tool-call-rendered.html'),'utf8'));
   assert.ok(Number.isFinite(traced.rate)&&traced.rate>=1,'native transfers keep a finite opening rate');
   assert.ok(traced.span>traced.wireStart,'native transfers still extend the opening clock');
   assert.deepEqual(errors,[]);
@@ -298,7 +301,7 @@ test('story snapshots preserve appearance across styles, cascade capabilities an
   timeout:120000,skip:chrome?false:'Set ARCHIFY_CHROME for story snapshot compatibility.'
 },async t=>{
   const dir=fs.mkdtempSync(path.join(os.tmpdir(),'archify-story-snapshot-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
-  const cli=path.join(skill,'bin/archify.mjs'),input=path.join(skill,'examples/workflow-agent-tool-call-rendered.html'),brief=path.join(dir,'brief.json'),output=path.join(dir,'story.html');
+  const cli=path.join(skill,'bin/archify.mjs'),input=path.join(skill,'../examples/workflow-agent-tool-call-rendered.html'),brief=path.join(dir,'brief.json'),output=path.join(dir,'story.html');
   const facts=JSON.parse(execFileSync(process.execPath,[cli,'story','scan',input,'--json'],{encoding:'utf8'}));
   fs.writeFileSync(brief,JSON.stringify({version:2,title:'Snapshot compatibility',intro:'Establish the source.',outro:'Return to the whole graph.',scenes:[{title:'Inspect',points:[{anchor:facts.nodes[0].id,title:'Selected node',text:'Read the original node and its context.'}]}]}));
   execFileSync(process.execPath,[cli,'story','attach',input,brief,output,'--json']);
@@ -337,7 +340,7 @@ test('Story keeps WebM as the default and explicit MP4 preserves the file bounda
   timeout:120000,skip:chrome?false:'Set ARCHIFY_CHROME for story MP4 export.'
 },async t=>{
   const dir=fs.mkdtempSync(path.join(os.tmpdir(),'archify-story-mp4-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
-  const cli=path.join(skill,'bin/archify.mjs'),input=path.join(skill,'examples/workflow-agent-tool-call-rendered.html'),brief=path.join(dir,'brief.json'),output=path.join(dir,'story.html');
+  const cli=path.join(skill,'bin/archify.mjs'),input=path.join(skill,'../examples/workflow-agent-tool-call-rendered.html'),brief=path.join(dir,'brief.json'),output=path.join(dir,'story.html');
   fs.writeFileSync(brief,JSON.stringify({version:2,title:'Follow a tool call',intro:'A request enters the agent.',outro:'The result returns to the caller.',scenes:[{title:'Execute',points:[{anchor:'tool',title:'Use the tool',text:'The runtime executes the selected call.'}]}]}));
   const scan=JSON.parse(execFileSync(process.execPath,[cli,'story','scan',input,'--json'],{encoding:'utf8'}));
   const plan=JSON.parse(fs.readFileSync(brief));plan.scenes[0].points[0].anchor=scan.nodes[0].id;fs.writeFileSync(brief,JSON.stringify(plan));
@@ -347,8 +350,6 @@ test('Story keeps WebM as the default and explicit MP4 preserves the file bounda
   const evaluate=async expression=>{const r=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true,userGesture:true});assert.equal(r.exceptionDetails,undefined,r.exceptionDetails?.exception?.description);return r.result.value;};
   const loaded=browser.cdp.waitFor('Page.loadEventFired',session);await send('Page.navigate',{url:pathToFileURL(output).href});await loaded;
   assert.equal(await evaluate('Archify.story.defaults.format'),'webm');
-  const defaultType=await evaluate('(async()=>{const blob=await Archify.story.exportVideo({seconds:.1});return blob.type;})()');
-  assert.equal(defaultType,'video/webm');
   const pickers=await evaluate(`(async()=>{const options=[];window.showSaveFilePicker=async value=>{options.push(value);throw new DOMException('Canceled','AbortError');};for(const format of ['webm','mp4'])document.querySelector('[data-story-format="'+format+'"]').click();await new Promise(resolve=>setTimeout(resolve,0));return options;})()`);
   assert.deepEqual(pickers.map(picker=>picker.suggestedName.split('.').at(-1)),['webm','mp4']);
   assert.deepEqual(pickers.map(picker=>picker.types[0].accept),[{'video/webm':['.webm']},{'video/mp4':['.mp4']}]);

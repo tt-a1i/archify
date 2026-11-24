@@ -1,10 +1,13 @@
 import path from 'node:path';
-import ts from 'typescript';
+import bundledTs from '../../vendor/typescript.cjs';
 import { fail } from '../shared/diagnostics.mjs';
+import { decodeTypeScriptText } from '../../core/index.mjs';
 
 // Config and module resolution share captured in-root inputs. Outside inputs
 // (including installed config packages) are memoized and checked before return.
-export function snapshotHost(root, { contents, names, assertFileUnchanged }, { capturedOnly = false } = {}) {
+export function snapshotHostTools(ts) {
+
+function snapshotHost(root, { contents, names, assertFileUnchanged }, { capturedOnly = false } = {}) {
   const canonical = file => {
     const absolute = path.resolve(file);
     return ts.sys.useCaseSensitiveFileNames ? absolute : absolute.toLowerCase();
@@ -12,10 +15,21 @@ export function snapshotHost(root, { contents, names, assertFileUnchanged }, { c
   const files = new Set(names.map(name => canonical(path.join(root, name))));
   const bytes = new Map([...contents].map(([name, data]) => [canonical(path.join(root, name)), data]));
   const directories = new Set([canonical(root)]);
+  const children = new Map();
+  const entry = dir => {
+    const key = canonical(dir);
+    if (!children.has(key)) children.set(key, { files: new Set(), directories: new Set() });
+    return children.get(key);
+  };
+  entry(root);
   for (const name of names) {
+    const absolute = path.join(root, name);
+    entry(path.dirname(absolute)).files.add(path.basename(absolute));
     let dir = path.dirname(path.join(root, name));
     while (!directories.has(canonical(dir))) {
       directories.add(canonical(dir));
+      entry(path.dirname(dir)).directories.add(path.basename(dir));
+      entry(dir);
       dir = path.dirname(dir);
     }
   }
@@ -39,7 +53,7 @@ export function snapshotHost(root, { contents, names, assertFileUnchanged }, { c
   const readFile = file => {
     if (captured(file)) {
       const data = bytes.get(canonical(file));
-      if (data !== undefined) return decodeText(data);
+      if (data !== undefined) return decodeTypeScriptText(data);
       if (!files.has(canonical(file))) return undefined;
       // Unusual config extensions are pinned on their first live read.
     }
@@ -64,9 +78,14 @@ export function snapshotHost(root, { contents, names, assertFileUnchanged }, { c
       return text;
     },
     realpath: file => captured(file) ? path.resolve(file) : live('realpath', file),
-    // Analysis selects its own files; tsconfig include/exclude discovery is not
-    // an input to compiler options. Avoid a second live filesystem traversal.
-    readDirectory: () => [],
+    // Let TypeScript apply its own include/exclude rules to the frozen inventory.
+    readDirectory(dir, extensions, excludes, includes, depth) {
+      return ts.matchFiles(dir, extensions, excludes, includes, ts.sys.useCaseSensitiveFileNames,
+        root, depth, current => {
+          const found = children.get(canonical(current));
+          return { files: [...(found?.files || [])], directories: [...(found?.directories || [])] };
+        }, file => path.resolve(file));
+    },
     assertUnchanged() {
       for (const file of uncaptured) assertFileUnchanged(path.relative(root, file).split(path.sep).join('/'));
       for (const { method, file, value } of observed.values()) {
@@ -81,12 +100,7 @@ export function snapshotHost(root, { contents, names, assertFileUnchanged }, { c
   };
 }
 
-function decodeText(data) {
-  if (data[0] === 0xff && data[1] === 0xfe) return data.subarray(2).toString('utf16le');
-  if (data[0] === 0xfe && data[1] === 0xff) {
-    const bytes = Buffer.from(data.subarray(2));
-    for (let i = 0; i + 1 < bytes.length; i += 2) [bytes[i], bytes[i + 1]] = [bytes[i + 1], bytes[i]];
-    return bytes.toString('utf16le');
-  }
-  return data.toString('utf8').replace(/^\uFEFF/, '');
+return { snapshotHost };
 }
+
+export const { snapshotHost } = snapshotHostTools(bundledTs);

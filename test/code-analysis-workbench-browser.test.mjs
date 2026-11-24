@@ -311,7 +311,12 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
   })()`);
   await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
   await run(`(() => {
-    window.__importLabels = [];
+    window.__importLabels = []; window.__importCurves = []; window.__importLeaders = [];
+    const proto = CanvasRenderingContext2D.prototype;
+    const moveTo = proto.moveTo, lineTo = proto.lineTo, bezier = proto.bezierCurveTo;
+    proto.moveTo = function (x, y) { this.__lastMove = [x, y]; return moveTo.apply(this, arguments); };
+    proto.lineTo = function (x, y) { if (this.lineWidth === 1 && this.__lastMove) window.__importLeaders.push(this.__lastMove); return lineTo.apply(this, arguments); };
+    proto.bezierCurveTo = function (a, b, c, d, x, y) { if (this.__lastMove) window.__importCurves.push([this.__lastMove, [x, y]]); return bezier.apply(this, arguments); };
     const fillText = CanvasRenderingContext2D.prototype.fillText;
     CanvasRenderingContext2D.prototype.fillText = function (text, ...args) {
       if (text === '①' || text === '②') window.__importLabels.push(text);
@@ -322,6 +327,11 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
   const paths = () => run("Array.from(document.querySelectorAll('.atlas-import-paths dd'), item => item.textContent)");
   assert.deepEqual(await paths(), ['src/alpha/a.ts', 'src/beta/b.ts'], 'the selected import lists both full paths in order');
   assert.deepEqual(await run("[...new Set(window.__importLabels)]"), ['①', '②']);
+  assert.equal(await run(`(() => {
+    const leaders = window.__importLeaders.slice(-2);
+    const near = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]) < 0.01;
+    return leaders.length === 2 && window.__importCurves.some(curve => near(leaders[0], curve[0]) && near(leaders[1], curve[1]));
+  })()`), true, 'both numbered leaders meet the focused dependency curve endpoints');
   await run("document.querySelector('.atlas-imports select').focus()");
   for (const type of ['keyDown', 'keyUp']) {
     await send('Input.dispatchKeyEvent', { type, key: 'ArrowDown', code: 'ArrowDown', windowsVirtualKeyCode: 40 });

@@ -14,16 +14,10 @@
   "scripts": {
     "build:python": "node scripts/build-python.mjs",
     "check:python": "node scripts/build-python.mjs --check && tsc -p extract/py/tsconfig.json",
-    "pretest": "npm run check:python",
+    "build:vendor": "node scripts/build-vendor.mjs",
+    "check:vendor": "node scripts/build-vendor.mjs --check",
+    "pretest": "npm run check:python && npm run check:vendor",
     "test": "node --test test/*.test.mjs"
-  },
-  "dependencies": {
-    "@xmldom/xmldom": "0.9.12",
-    "ajv": "^8.17.1",
-    "ajv-draft-04": "^1.0.0",
-    "ajv-formats": "^3.0.1",
-    "java-parser": "3.0.1",
-    "typescript": "^5.6.0"
   },
   "repository": {
     "type": "git",
@@ -37,6 +31,12 @@
   ],
   "devDependencies": {
     "@types/node": "^18.19.130",
-    "esbuild": "0.28.2"
+    "@xmldom/xmldom": "0.9.12",
+    "ajv": "^8.17.1",
+    "ajv-draft-04": "^1.0.0",
+    "ajv-formats": "^3.0.1",
+    "esbuild": "0.28.2",
+    "java-parser": "3.0.1",
+    "typescript": "5.9.3"
   }
 }

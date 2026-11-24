@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
-import ts from 'typescript';
+import ts from '../vendor/typescript.cjs';
 import { extractFacts } from '../lib/analysis.mjs';
 import { buildQuestion } from '../lib/explain.mjs';
 import { measureFunctions } from '../extract/ts/functions.mjs';
@@ -97,13 +97,17 @@ test('optional node observation preserves all default function measurements and 
 
 test('explicit call models carry binding coverage independently of extraction revision', (t) => {
   const args = fixture(t, 'function declared() {}\nconst arrow = () => {};\nfunction chosen() { declared(); arrow()(); }');
-  assert.equal(args.facts.callModel, 'js-ts-lexical-v5');
+  assert.equal(args.facts.callModel, 'js-ts-lexical-v6');
   args.facts.repository.adapterRevision += 1;
   const current = buildQuestion(args).calls;
   assert.equal(current.coverage, 'available');
   assert.equal(current.provenance.callModel, args.facts.callModel);
-  assert.equal(current.bindingCoverage, 'declarations-const-initializers-and-stable-explicit-exports-through-captured-value-paths');
+  assert.equal(current.bindingCoverage, 'declarations-const-initializers-stable-explicit-exports-and-static-commonjs-require');
   assert.equal(current.records.filter((r) => r.fact.resolution === 'same-file-function-initializer').length, 1);
+  const v5 = structuredClone(args.facts); v5.callModel = 'js-ts-lexical-v5'; v5.repository.adapterRevision = 22;
+  const previous = buildQuestion({ ...args, facts: v5 }).calls;
+  assert.equal(previous.coverage, 'available');
+  assert.equal(previous.bindingCoverage, 'declarations-const-initializers-and-stable-explicit-exports-through-captured-value-paths');
   const v1 = structuredClone(args.facts); v1.callModel = 'js-ts-lexical-v1'; v1.repository.adapterRevision = 8;
   const compatible = buildQuestion({ ...args, facts: v1 }).calls;
   assert.equal(compatible.coverage, 'available');
@@ -134,4 +138,17 @@ test('forwarding source freshness is required before navigating to the captured 
  assert.equal(changed.targetNavigation.location,null);
  fs.rmSync(path.join(args.root,'api.mjs'));
  assert.equal(buildQuestion(args).calls.records[0].targetNavigation.reason,'forwarding-path-missing');
+});
+
+test('CommonJS target navigation requires its captured implementation to stay fresh', t => {
+  const args = fixture(t, "const { f } = require('./target.cjs'); function chosen() { f(); }", 'entry.cjs');
+  fs.writeFileSync(path.join(args.root, 'target.cjs'), 'function f() {} module.exports.f = f;');
+  args.facts = extractFacts(args.root, { language: 'ts' }).facts;
+  const current = buildQuestion(args).calls.records.find(record => record.fact.resolution === 'commonjs-function');
+  assert.equal(current.targetNavigation.status, 'valid');
+  assert.deepEqual(current.targetNavigation.location, { file: 'target.cjs', name: 'f', line: 1, column: 1 });
+  fs.appendFileSync(path.join(args.root, 'target.cjs'), '\n// changed');
+  const stale = buildQuestion(args).calls.records.find(record => record.fact.resolution === 'commonjs-function');
+  assert.equal(stale.targetNavigation.status, 'changed');
+  assert.equal(stale.targetNavigation.location, null);
 });

@@ -43,6 +43,10 @@
         "animation": {
           "$ref": "common.schema.json#/$defs/animation"
         },
+        "feedback_links": {
+          "type": "boolean",
+          "description": "false hides the page footer with feedback and GitHub star links."
+        },
         "visual_preset": {
           "$ref": "common.schema.json#/$defs/visualPreset"
         },
@@ -154,6 +158,12 @@
           "id": {
             "$ref": "common.schema.json#/$defs/id"
           },
+          "change": {
+            "$ref": "common.schema.json#/$defs/changeStatus"
+          },
+          "emphasis": {
+            "$ref": "common.schema.json#/$defs/emphasis"
+          },
           "label": {
             "type": "string",
             "minLength": 1
@@ -220,6 +230,12 @@
         "properties": {
           "id": {
             "$ref": "common.schema.json#/$defs/id"
+          },
+          "change": {
+            "$ref": "common.schema.json#/$defs/changeStatus"
+          },
+          "emphasis": {
+            "$ref": "common.schema.json#/$defs/emphasis"
           },
           "from": {
             "$ref": "common.schema.json#/$defs/id"
@@ -296,6 +312,13 @@
         "name"
       ],
       "properties": {
+        "change": {
+          "$ref": "common.schema.json#/$defs/changeStatus"
+        },
+        "previousType": {
+          "type": "string",
+          "minLength": 1
+        },
         "name": {
           "type": "string",
           "minLength": 1
@@ -310,6 +333,22 @@
         "static": {
           "type": "boolean"
         }
+      },
+      "if": {
+        "required": [
+          "previousType"
+        ],
+        "properties": {
+          "previousType": {}
+        }
+      },
+      "then": {
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "type": {}
+        }
       }
     },
     "method": {
@@ -319,6 +358,9 @@
         "name"
       ],
       "properties": {
+        "change": {
+          "$ref": "common.schema.json#/$defs/changeStatus"
+        },
         "name": {
           "type": "string",
           "minLength": 1

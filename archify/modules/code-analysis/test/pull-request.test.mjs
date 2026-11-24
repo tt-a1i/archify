@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { execFileSync } from 'node:child_process';
-import { pathToFileURL } from 'node:url';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { test } from 'node:test';
 import { parsePullRequest, preparePullRequest, normalizeScope } from '../lib/pull-request.mjs';
 import { materializeTree } from '../lib/git-sources.mjs';
@@ -26,8 +26,12 @@ function fixture(t) {
   write('b.ts','export function b(){return 1;}\n');
   write('added.ts','export function added(){return 2;}\n');
   fs.unlinkSync(path.join(root,'removed.ts'));
+  const sdkManifest = 'node_modules/typescript/package.json';
+  fs.mkdirSync(path.dirname(path.join(root, sdkManifest)), { recursive: true });
+  write(sdkManifest, JSON.stringify({ name: 'typescript', version: '99.0.0' }));
+  git(root, ['add', '-f', sdkManifest]);
   const head=commit();
-  const files=[{filename:'a.ts',status:'modified'},{filename:'b.ts',status:'modified'},{filename:'added.ts',status:'added'},{filename:'removed.ts',status:'removed'}];
+  const files=[{filename:'a.ts',status:'modified'},{filename:'b.ts',status:'modified'},{filename:'added.ts',status:'added'},{filename:'removed.ts',status:'removed'},{filename:sdkManifest,status:'added'}];
   const meta={number:42,title:'native PR flow',state:'open',changed_files:files.length,base:{sha:base,ref:'main'},head:{sha:head},updated_at:'2026-11-14T05:02:16Z'};
   let fail=false;
   const fetchJSON=async route=>{if(fail)throw Error('simulated capture failure');return route.includes('/files?')?files:route.includes('/compare/')?{merge_base_commit:{sha:base}}:meta;};
@@ -38,7 +42,9 @@ function fixture(t) {
 
 test('PR options reuse native grammar and reject ambiguous sources',()=>{
   assert.equal(parseArgs(['repo','--out','out','--pr','42']).options['--pr'],'42');
-  assert.throws(()=>parseArgs(['repo','--out','out','--repository','a/b']),/require --pr/);
+  assert.throws(()=>parseArgs(['repo','--out','out','--repository','a/b']),/requires --pr/);
+  assert.throws(() => parseArgs(['repo', '--out', 'out', '--base', '123']), /provided together/);
+  assert.throws(() => parseArgs(['repo', '--out', 'out', '--base', '123', '--head', '456', '--pr', '42']), /either/);
   assert.deepEqual(parsePullRequest('https://github.com/a/b/pull/42'),{repository:'a/b',number:42,url:'https://github.com/a/b/pull/42'});
   for(const value of ['https://elsewhere.test/a/b/pull/42','https://github.com/a/b/pull/42?token=secret','42; echo test'])assert.throws(()=>parsePullRequest(value));
   for(const scope of ['../outside','/absolute','src/../outside','src\\file','.git/objects'])assert.throws(()=>normalizeScope(scope));
@@ -93,4 +99,64 @@ test('live PR analysis verifies tasks against captured head, retains merge-base 
   const last=fs.readFileSync(path.join(view.out,'analysis/repo.analysis.html'),'utf8');
   f.fail();const failed=await post('/analyze',null,true);assert.equal(failed.status,500);
   assert.equal(fs.readFileSync(path.join(view.out,'analysis/repo.analysis.html'),'utf8'),last);
+});
+
+test('pinned CLI reviews an exact base and head with renamed source and preserves the last complete report', t => {
+  const f = fixture(t);
+  const source = fs.readFileSync(path.join(f.root, 'b.ts'), 'utf8');
+  git(f.root, ['mv', 'b.ts', 'renamed source.ts']);
+  fs.writeFileSync(path.join(f.root, 'notes.md'), '# Captured note\n');
+  const commit = message => {
+    git(f.root, ['add', '.']);
+    git(f.root, ['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-m', message]);
+    return git(f.root, ['rev-parse', 'HEAD']);
+  };
+  const head = commit('Rename');
+  fs.writeFileSync(path.join(f.root, 'renamed source.ts'), 'uncommitted content\n');
+  const out = path.join(f.dir, 'pinned');
+  const cli = fileURLToPath(new URL('../../../bin/archify.mjs', import.meta.url));
+  const invoke = (repo, base, head) => {
+    const result = spawnSync(process.execPath, [cli, 'code-analysis', 'prepare', repo, '--base', base, '--head', head,
+      '--language', 'ts', '--out', out], { encoding: 'utf8', windowsHide: true, timeout: 90000 });
+    assert.ifError(result.error);
+    return { status: result.status, receipt: JSON.parse(result.stdout) };
+  };
+  const result = invoke(f.root, f.head, head);
+  assert.equal(result.status, 0, JSON.stringify(result.receipt));
+  const original = fs.readFileSync(result.receipt.html, 'utf8');
+  const { pullRequest: pr, snippets } = payload(original);
+  assert.equal(pr.local, true);
+  assert.equal(pr.baseSHA, f.head);
+  assert.equal(pr.headSHA, head);
+  assert.deepEqual(pr.changedFiles.slice().sort((a, b) => a.status.localeCompare(b.status)), [
+    { path: 'notes.md', previousPath: null, status: 'added', additions: null, deletions: null },
+    { path: 'renamed source.ts', previousPath: 'b.ts', status: 'renamed', additions: null, deletions: null },
+  ]);
+  assert.deepEqual(snippets['notes.md'].lines, ['# Captured note']);
+  assert.equal(pr.beforeSources['b.ts'].lines.join('\n') + '\n', source);
+  assert.equal(snippets['renamed source.ts'].lines.join('\n') + '\n', source);
+  assert.ok(pr.impact.records.some(record => record.kind === 'dependency-removed' && record.from === 'a.ts' && record.to === 'b.ts'));
+  assert.match(pr.markdown, /b\.ts → renamed source\.ts/);
+  assert.ok(pr.markdown.includes(f.head) && pr.markdown.includes(head));
+  assert.doesNotMatch(pr.markdown, /export function/);
+  assert.match(result.receipt.resume.command, new RegExp('--base ' + f.head + ' --head ' + head));
+  assert.equal(fs.readFileSync(path.join(f.root, 'renamed source.ts'), 'utf8'), 'uncommitted content\n');
+
+  const missingCommit = invoke(f.root, f.head, 'a'.repeat(40));
+  assert.equal(missingCommit.status, 2);
+  assert.equal(missingCommit.receipt.diagnostics[0].code, 'pr/local-object-missing');
+  assert.equal(missingCommit.receipt.diagnostics[0].subject.side, 'head');
+
+  const partial = path.join(f.dir, 'partial');
+  git(f.root, ['config', 'uploadpack.allowFilter', 'true']);
+  git(f.dir, ['clone', '--no-checkout', '--no-local', '--filter=blob:none', pathToFileURL(f.root).href, partial]);
+  const oid = git(f.root, ['rev-parse', f.head + ':b.ts']);
+  assert.throws(() => git(partial, ['cat-file', '-e', oid]), 'precondition: source is promised but missing');
+  const missingBlob = invoke(partial, f.head, head);
+  assert.equal(missingBlob.status, 2);
+  assert.equal(missingBlob.receipt.diagnostics[0].code, 'pr/local-object-missing');
+  assert.equal(missingBlob.receipt.diagnostics[0].subject.side, 'base');
+  assert.throws(() => git(partial, ['cat-file', '-e', oid]), 'no automatic fetch happened');
+  assert.equal(fs.readFileSync(result.receipt.html, 'utf8'), original);
+  assert.equal(fs.readdirSync(out).some(name => name.startsWith('analysis.next-')), false);
 });

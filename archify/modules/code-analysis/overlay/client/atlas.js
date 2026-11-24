@@ -255,7 +255,8 @@
       k += gap;
     });
     geometryTarget = { w: w, h: h, dpr: dpr, cx: w / 2, cy: h / 2, R: R, slot: 2 * Math.PI / slots, ang: ang, span: span, fileSpan: fileSpan,
-      tick: R * 0.04, spike0: R * 1.06, spikeMax: R * 0.36, arc: R * 1.48, label: R * 1.53 };
+      tick: R * 0.04, spike0: R * 1.06, spikeMax: R * 0.36, arc: R * 1.48, label: R * 1.53,
+      focusWeights: M.map(function (m, mi) { return mi === selected ? 1 : 0; }) };
     geometryKey = key;
     if (old && old.w === w && old.h === h && old.dpr === dpr && !motion.matches) {
       geometryFrom = old; anim.focus = performance.now();
@@ -268,11 +269,32 @@
     geo = Object.assign({}, to, {
       ang: Float64Array.from(to.ang, function (value, i) { return from.ang[i] + (value - from.ang[i]) * ease; }),
       span: to.span.map(function (value, i) { return value.map(function (angle, j) { return from.span[i][j] + (angle - from.span[i][j]) * ease; }); }),
-      fileSpan: to.fileSpan.map(function (value, i) { return from.fileSpan[i] + (value - from.fileSpan[i]) * ease; })
+      fileSpan: to.fileSpan.map(function (value, i) { return from.fileSpan[i] + (value - from.fileSpan[i]) * ease; }),
+      focusWeights: to.focusWeights.map(function (value, i) { return from.focusWeights[i] + (value - from.focusWeights[i]) * ease; })
     });
     if (p === 1) { geo = to; geometryFrom = null; anim.focus = 0; }
   }
-  function pt(a, r) { return [geo.cx + r * Math.cos(a), geo.cy + r * Math.sin(a)]; }
+  function focusWeight(mi) { return mi == null || !geo.focusWeights ? 0 : geo.focusWeights[mi] || 0; }
+  function focusRadius(r, mi) {
+    var weight = focusWeight(mi);
+    if (!weight) return r;
+    var measure = canvas.getContext('2d');
+    measure.font = LABEL_FONT;
+    var labelWidth = M[mi] ? measure.measureText(shortLabel(M[mi].label)).width : 0;
+    var half = Math.min(geo.w, geo.h) / 2 - labelWidth - 12;
+    return r + Math.max(0, Math.min(geo.R * 0.16, half - r)) * weight;
+  }
+  // One module-wide offset keeps every spike length proportional to its complexity.
+  function focusSpikeRadius(r, mi) {
+    var weight = focusWeight(mi);
+    if (!weight) return r;
+    var half = Math.min(geo.w, geo.h) / 2 - 12;
+    var shift = Math.max(0, Math.min(geo.R * 0.16, half - geo.spike0 - geo.spikeMax));
+    return r + shift * weight;
+  }
+  function px(a, r) { return [geo.cx + r * Math.cos(a), geo.cy + r * Math.sin(a)]; }
+  function pt(a, r, mi) { return px(a, focusRadius(r, mi)); }
+  function ptSpike(a, r, mi) { return px(a, focusSpikeRadius(r, mi)); }
 
   function mid(mi) { return (geo.span[mi][0] + geo.span[mi][1]) / 2; }
   function spikeLen(cx) { return geo.spikeMax * (0.06 + 0.94 * Math.min(cx, 26) / 26); }
@@ -284,9 +306,9 @@
   // centre; one inside a module stays near the rim.
   function curvePoints(a, b) {
     var ma = F[a][1], mb = F[b][1], R = geo.R * 0.985;
-    var p0 = pt(geo.ang[a], R), p3 = pt(geo.ang[b], R);
-    if (ma === mb) return [p0, pt(geo.ang[a], geo.R * 0.8), pt(geo.ang[b], geo.R * 0.8), p3];
-    return [p0, pt(mid(ma), geo.R * 0.42), pt(mid(mb), geo.R * 0.42), p3];
+    var p0 = pt(geo.ang[a], R, ma), p3 = pt(geo.ang[b], R, mb);
+    if (ma === mb) return [p0, pt(geo.ang[a], geo.R * 0.8, ma), pt(geo.ang[b], geo.R * 0.8, mb), p3];
+    return [p0, pt(mid(ma), geo.R * 0.42, ma), pt(mid(mb), geo.R * 0.42, mb), p3];
   }
   function curve(ctx, a, b) {
     var c = curvePoints(a, b);
@@ -317,8 +339,8 @@
     return sel;
   }
   function drawImportEndpoints(ctx, t, edge) {
-    var ends = edge.map(function (file) { return pt(geo.ang[file], geo.R * 0.985); });
-    var labels = edge.map(function (file) { return pt(geo.ang[file], Math.max(0, geo.R * 0.985 - 17)); });
+    var ends = edge.map(function (file) { return pt(geo.ang[file], geo.R * 0.985, F[file][1]); });
+    var labels = edge.map(function (file) { return pt(geo.ang[file], Math.max(0, geo.R * 0.985 - 17), F[file][1]); });
     if (Math.hypot(labels[0][0] - labels[1][0], labels[0][1] - labels[1][1]) < 22) {
       var step = labels[0][1] <= labels[1][1] ? 11 : -11;
       labels[0][1] -= step;
@@ -488,7 +510,7 @@
     }
     // files
     F.forEach(function (f, i) {
-      var a = geo.ang[i], p0 = pt(a, geo.R), p1 = pt(a, geo.R + geo.tick), on = !dimmed || inSel(sel, i);
+      var a = geo.ang[i], p0 = pt(a, geo.R, f[1]), p1 = pt(a, geo.R + geo.tick, f[1]), on = !dimmed || inSel(sel, i);
       marks.push({ type: 'file', index: i, p0: p0, p1: p1 });
       ctx.beginPath(); ctx.moveTo(p0[0], p0[1]); ctx.lineTo(p1[0], p1[1]);
       ctx.strokeStyle = sel.files[i] ? sel.tone : hue(f[1], t, on ? 0.95 : 0.2); ctx.lineWidth = sel.files[i] ? 2.4 : 1.3; ctx.stroke();
@@ -497,12 +519,12 @@
     // longer for more importing modules.
     if (focusM !== -1) Object.keys(surface[focusM].files).forEach(function (k) {
       var i = Number(k), n = Object.keys(surface[focusM].files[k]).length, a = geo.ang[i];
-      var q0 = pt(a, geo.R * 0.985), q1 = pt(a, geo.R * (0.985 - Math.min(0.12, 0.025 + 0.012 * n)));
+      var q0 = pt(a, geo.R * 0.985, F[i][1]), q1 = pt(a, geo.R * (0.985 - Math.min(0.12, 0.025 + 0.012 * n)), F[i][1]);
       ctx.beginPath(); ctx.moveTo(q0[0], q0[1]); ctx.lineTo(q1[0], q1[1]); ctx.strokeStyle = t.text; ctx.lineWidth = 2.6; ctx.stroke();
     });
     // Entry files of a selected internal-imports finding: a ring on the tick.
     Object.keys(sel.entries).forEach(function (k) {
-      var p = pt(geo.ang[Number(k)], geo.R + geo.tick + 5);
+      var p = pt(geo.ang[Number(k)], geo.R + geo.tick + 5, F[Number(k)][1]);
       ctx.beginPath(); ctx.arc(p[0], p[1], 4, 0, 2 * Math.PI); ctx.strokeStyle = t.text; ctx.lineWidth = 1.6; ctx.stroke();
     });
     // functions as spikes; reported ones carry a dot in their severity colour
@@ -510,7 +532,7 @@
     FN.forEach(function (fn, i) {
       var a = fnAngle(i), len = spikeLen(fn[3]), hit = fn[6] !== -1 ? FD[fn[6]] : null;
       var on = !dimmed || inSel(sel, fn[0]) || sel.fns[i];
-      var p0 = pt(a, geo.spike0), p1 = pt(a, geo.spike0 + len);
+      var p0 = ptSpike(a, geo.spike0, F[fn[0]][1]), p1 = ptSpike(a, geo.spike0 + len, F[fn[0]][1]);
       marks.push({ type: 'function', index: i, p0: p0, p1: p1 });
       ctx.beginPath(); ctx.moveTo(p0[0], p0[1]); ctx.lineTo(p1[0], p1[1]);
       ctx.strokeStyle = hit ? TONE[hit.severity] || TONE.info : t.muted;
@@ -528,9 +550,9 @@
     M.forEach(function (m, mi) {
       var on = !dimmed || sel.modules[mi] || sel.arcs[mi] || F.some(function (f, i) { return f[1] === mi && sel.files[i]; });
       var hub = hubOf[mi] != null || sel.arcs[mi];
-      ctx.beginPath(); ctx.arc(geo.cx, geo.cy, geo.arc, geo.span[mi][0], Math.max(geo.span[mi][1], geo.span[mi][0] + 0.004));
+      ctx.beginPath(); ctx.arc(geo.cx, geo.cy, focusRadius(geo.arc, mi), geo.span[mi][0], Math.max(geo.span[mi][1], geo.span[mi][0] + 0.004));
       ctx.strokeStyle = hue(mi, t, on ? 1 : 0.25); ctx.lineWidth = hub ? 5 : 2; ctx.lineCap = 'butt'; ctx.stroke();
-      var a = mid(mi), deg = (a * 180 / Math.PI + 360) % 360, flip = deg > 90 && deg < 270, p = pt(a, geo.label);
+      var a = mid(mi), deg = (a * 180 / Math.PI + 360) % 360, flip = deg > 90 && deg < 270, p = pt(a, geo.label, mi);
       // A module too narrow for its own label is named only when selected or hovered.
       var named = (geo.span[mi][1] - geo.span[mi][0]) * geo.arc >= (pr ? 16 : 12) || sel.modules[mi] || state.focusModule === mi;
       if (!named) return;
@@ -540,7 +562,7 @@
       if(pr&&((geo.span[mi][1]-geo.span[mi][0])*geo.arc>=32||sel.modules[mi])) {
         var brief=prModuleBrief(mi);
         ctx.font=PR_BRIEF_FONT;
-        var room=Math.min(geo.w,geo.h)/2-geo.label-12;
+        var room=Math.min(geo.w,geo.h)/2-focusRadius(geo.label,mi)-12;
         if(ctx.measureText(brief).width>room+1)brief=room>=ctx.measureText('◇').width?'◇':'';
         if(brief!=='◇'){ctx.fillStyle=hue(mi,t,on?0.85:0.3);ctx.fillText(brief,0,16);}
       }
@@ -553,11 +575,11 @@
   function drawHover(ctx, t) {
     var h = state.hover; if (!h) return;
     ctx.save(); ctx.strokeStyle = t.text; ctx.lineWidth = 2;
-    if (h.type === 'function') { var a = fnAngle(h.index), p0 = pt(a, geo.spike0), p1 = pt(a, geo.spike0 + spikeLen(FN[h.index][3])); ctx.beginPath(); ctx.moveTo(p0[0], p0[1]); ctx.lineTo(p1[0], p1[1]); ctx.stroke(); }
-    if (h.type === 'file') { var q0 = pt(geo.ang[h.index], geo.R - 2), q1 = pt(geo.ang[h.index], geo.R + geo.tick + 2); ctx.beginPath(); ctx.moveTo(q0[0], q0[1]); ctx.lineTo(q1[0], q1[1]); ctx.stroke(); }
+    if (h.type === 'function') { var a = fnAngle(h.index), p0 = ptSpike(a, geo.spike0, F[FN[h.index][0]][1]), p1 = ptSpike(a, geo.spike0 + spikeLen(FN[h.index][3]), F[FN[h.index][0]][1]); ctx.beginPath(); ctx.moveTo(p0[0], p0[1]); ctx.lineTo(p1[0], p1[1]); ctx.stroke(); }
+    if (h.type === 'file') { var q0 = pt(geo.ang[h.index], geo.R - 2, F[h.index][1]), q1 = pt(geo.ang[h.index], geo.R + geo.tick + 2, F[h.index][1]); ctx.beginPath(); ctx.moveTo(q0[0], q0[1]); ctx.lineTo(q1[0], q1[1]); ctx.stroke(); }
     if (h.type === 'module') {
-      ctx.lineWidth = 7; ctx.globalAlpha = 0.35; ctx.beginPath(); ctx.arc(geo.cx, geo.cy, geo.arc, geo.span[h.index][0], geo.span[h.index][1]); ctx.stroke();
-      var a = mid(h.index), deg = (a * 180 / Math.PI + 360) % 360, flip = deg > 90 && deg < 270, p = pt(a, geo.label);
+      ctx.lineWidth = 7; ctx.globalAlpha = 0.35; ctx.beginPath(); ctx.arc(geo.cx, geo.cy, focusRadius(geo.arc, h.index), geo.span[h.index][0], geo.span[h.index][1]); ctx.stroke();
+      var a = mid(h.index), deg = (a * 180 / Math.PI + 360) % 360, flip = deg > 90 && deg < 270, p = pt(a, geo.label, h.index);
       ctx.globalAlpha = 1; ctx.font = LABEL_FONT; ctx.textBaseline = 'middle'; ctx.fillStyle = t.text;
       ctx.translate(p[0], p[1]); ctx.rotate(flip ? a + Math.PI : a); ctx.textAlign = flip ? 'right' : 'left';
       ctx.fillText(shortLabel(M[h.index].label), 0, 0);
@@ -585,12 +607,12 @@
     for (var mi = 0; mi < M.length; mi++) {
       var delta = Math.atan2(Math.sin(a - mid(mi)), Math.cos(a - mid(mi)));
       var half = (geo.span[mi][1] - geo.span[mi][0]) / 2;
-      if (Math.abs(r - geo.arc) <= 5 && Math.abs(delta) <= half + 0.01) return { type: 'module', index: mi };
+      if (Math.abs(r - focusRadius(geo.arc, mi)) <= 5 && Math.abs(delta) <= half + 0.01) return { type: 'module', index: mi };
       // Labels extend radially outwards on both halves of the circle. Do not
       // treat the empty area outside an entire sector as a clickable label.
       var along = dx * Math.cos(mid(mi)) + dy * Math.sin(mid(mi));
       var across = -dx * Math.sin(mid(mi)) + dy * Math.cos(mid(mi));
-      var labelStart = geo.label;
+      var labelStart = focusRadius(geo.label, mi);
       var named = (geo.span[mi][1] - geo.span[mi][0]) * geo.arc >= (pr ? 16 : 12) || state.focusModule === mi || selected.modules[mi];
       if (named && Math.abs(across) <= 7 && along >= labelStart - 4 && along <= labelStart + measure.measureText(shortLabel(M[mi].label)).width + 4) return { type: 'module', index: mi };
     }
@@ -625,7 +647,7 @@
     else select(F[h.type === 'function' ? FN[h.index][0] : h.index][1], -1);
   });
   canvas.addEventListener('wheel', function (e) {
-    if (panel.hidden || !expansionEnabled || state.focusModule === -1 || e.ctrlKey || !e.deltaY) return;
+    if (panel.hidden || !expansionEnabled || state.focusModule < 0 || state.focusModule >= M.length || e.ctrlKey || !e.deltaY) return;
     var delta = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? stage.clientHeight : 1);
     var zoom = Math.max(0.65, Math.min(3.8, focusZoom * Math.exp(-Math.max(-180, Math.min(180, delta)) * 0.002)));
     e.preventDefault();
@@ -703,7 +725,7 @@
       var change = changedFiles[changedSelection];
       return '<div class="selected"><h4>' + esc(changedLabel(change)) + '</h4><p>' + esc(tr(change.status)) +
         '</p><div class="atlas-change-actions">' + ['base', 'head'].map(function (snapshot) {
-          var label = tr(snapshot === 'base' ? 'Open merge-base source' : 'Open PR head source');
+          var label = tr(pr.local ? (snapshot === 'base' ? 'Open pinned base source' : 'Open pinned head source') : (snapshot === 'base' ? 'Open merge-base source' : 'Open PR head source'));
           return '<button type="button" data-atlas-change-source="' + snapshot + '"' +
             (changedSource(change, snapshot) ? '' : ' disabled') + '>' + esc(label) + '</button>';
         }).join('') + '<button type="button" class="atlas-change-download">' + esc(tr('Download .md')) + '</button></div></div>';
@@ -731,12 +753,12 @@
     return '<div class="note">' + tr("Hover the circle for names. Click a module arc to focus it, a dotted spike or a finding below to light it up.") + '</div>';
   }
   function prSummary() {
-    var h = '<section class="pr-summary"><div class="k">' + esc(pr.simulation ? tr('PR analysis · local simulation') : tr('PR #{number}', {number:pr.number})) + '</div>';
+    var h = '<section class="pr-summary"><div class="k">' + esc(pr.local ? tr('Pinned local review') : pr.simulation ? tr('PR analysis · local simulation') : tr('PR #{number}', {number:pr.number})) + '</div>';
     h += '<p class="note"><code>' + esc(pr.baseSHA.slice(0,8)) + ' → ' + esc(pr.headSHA.slice(0,8)) + '</code> · ' + esc(pr.scope) + '</p><dl class="pr-totals">';
     [['files','files'],['dependencies','file dependencies'],['functions','functions'],['modules','modules']].forEach(function(item) {
       h += '<div><dt>' + esc(tr(item[1])) + '</dt><dd>' + fmt(pr.before[item[0]]) + ' → <b>' + fmt(pr.after[item[0]]) + '</b></dd></div>';
     });
-    h += '</dl><div class="k">' + esc(tr('Complexity distribution · function counts')) + '</div><p class="note">' + esc(tr('Grey: merge-base · green: PR head')) + '</p><div class="pr-distribution" role="img" aria-label="' + esc(tr('Complexity distribution · function counts')) + '">';
+    h += '</dl><div class="k">' + esc(tr('Complexity distribution · function counts')) + '</div><p class="note">' + esc(tr(pr.local ? 'Grey: pinned base · green: pinned head' : 'Grey: merge-base · green: PR head')) + '</p><div class="pr-distribution" role="img" aria-label="' + esc(tr('Complexity distribution · function counts')) + '">';
     var d=pr.distribution, max=Math.max.apply(Math,d.before.concat(d.after,1));
     d.labels.forEach(function(label,i) { h += '<div class="pr-band"><span>' + esc(label) + '</span><span class="pr-tracks"><i style="width:' + 100*d.before[i]/max + '%"></i><b style="width:' + 100*d.after[i]/max + '%"></b></span><span>' + d.before[i] + ' → ' + d.after[i] + '</span></div>'; });
     h += '</div><p class="note">' + esc(tr('Green +: added · amber ◇: changed · red dashed curve: removed dependency. Removed objects remain in the change list.')) + '</p><p class="note">' + esc(tr('Grey dashed spikes: merge-base complexity · red −: removed function. Click a marker for source; hover a module for counts.')) + '</p>';
@@ -765,18 +787,22 @@
         p=along(curvePoints(a,b),0.5);
       } else {
         if(fi==null||change.kind==='file'&&change.status==='removed')return;
-        var angle=geo.ang[fi],radius=geo.R-7;
-        if(change.kind==='function') {
-        var fn=prFunctions.get(JSON.stringify([change.path,change.name]));
-        if(change.status!=='removed'&&fn==null)return;
-        angle=fn==null?geo.ang[fi]:fnAngle(fn);
-        radius=geo.spike0+spikeLen((change.after||change.before).complexity)+8;
-        if(change.before) {
-          var start=pt(angle,geo.spike0),old=pt(angle,geo.spike0+spikeLen(change.before.complexity)),dx=-Math.sin(angle)*2,dy=Math.cos(angle)*2;
-          ctx.strokeStyle=change.status==='removed'?tone:t.muted;ctx.lineWidth=1.2;ctx.setLineDash([2,3]);ctx.beginPath();ctx.moveTo(start[0]+dx,start[1]+dy);ctx.lineTo(old[0]+dx,old[1]+dy);ctx.stroke();ctx.setLineDash([]);
+        var mi = F[fi][1], angle = geo.ang[fi];
+        if (change.kind === 'function') {
+          var fn = prFunctions.get(JSON.stringify([change.path,change.name]));
+          if (change.status !== 'removed' && fn == null) return;
+          if (fn != null) angle = fnAngle(fn);
+          var radius = geo.spike0 + spikeLen((change.after || change.before).complexity) + 8;
+          p = ptSpike(angle, radius, mi);
+          if (change.before) {
+            var start = ptSpike(angle, geo.spike0, mi);
+            var old = ptSpike(angle, geo.spike0 + spikeLen(change.before.complexity), mi);
+            var dx = -Math.sin(angle) * 2, dy = Math.cos(angle) * 2;
+            ctx.strokeStyle=change.status==='removed'?tone:t.muted;ctx.lineWidth=1.2;ctx.setLineDash([2,3]);ctx.beginPath();ctx.moveTo(start[0]+dx,start[1]+dy);ctx.lineTo(old[0]+dx,old[1]+dy);ctx.stroke();ctx.setLineDash([]);
+          }
+        } else {
+          p = pt(angle, geo.R - 7, mi);
         }
-        }
-        p=pt(angle,radius);
       }
       if(prMarkerHits.some(function(other){return Math.hypot(p[0]-other.x,p[1]-other.y)<10;}))return;
       ctx.fillStyle=t.bg;ctx.beginPath();ctx.arc(p[0],p[1],5.5,0,Math.PI*2);ctx.fill();ctx.fillStyle=tone;
@@ -827,7 +853,7 @@
           tr('Repository: ') + literal(pr.repository) + '\n' + tr('Status: ') + literal(change.status) + '\n\n' +
           ['base', 'head'].map(function (side) {
             var pin = side === 'base' ? pr.baseSHA : pr.headSHA;
-            return '- ' + tr(side === 'base' ? 'Merge-base' : 'PR head') + ' ' + pin + ' · ' +
+            return '- ' + tr(pr.local ? (side === 'base' ? 'Pinned base' : 'Pinned head') : (side === 'base' ? 'Merge-base' : 'PR head')) + ' ' + pin + ' · ' +
               (pair[side] ? literal(prefix + pair[side]) + (changedSource(change, side) ? '' : ' (' + tr('Source was not captured') + ')') : tr('File absent on this side'));
           }).join('\n') + '\n\n' + tr('This context identifies the saved file and commits. Verify the cited source before drawing conclusions.') + '\n';
         downloadMarkdown(markdown, 'pr-file-review.md');
@@ -908,7 +934,7 @@
       window.__archifyShowFinding(ev.dataset.id, 'atlas', function () {
         if (!standalone) showView('atlas');
         window.__archifyAtlas.restoreSelection(selection);
-        side.querySelector('.atlas-evidence')?.focus({ preventScroll: true });
+        requestAnimationFrame(function () { side.querySelector('.atlas-evidence')?.focus({ preventScroll: true }); });
       });
     });
   }

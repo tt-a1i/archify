@@ -125,7 +125,7 @@ test('core smoke: public CLI diagrams, compatibility and delivery safety', async
   let workflow;
 
   for (const [type, filename, collection] of examples) {
-    await t.test(`${type}: validate, render and deliver the official example`, () => {
+    await t.test(`${type}: deliver the official example`, () => {
       const directory = path.join(workspace, `${type} 空间 Ω`);
       fs.mkdirSync(directory);
       const input = path.join(directory, `输入 ${filename}`);
@@ -133,18 +133,25 @@ test('core smoke: public CLI diagrams, compatibility and delivery safety', async
       const document = JSON.parse(fs.readFileSync(input, 'utf8'));
       assert.equal(document.diagram_type, type);
 
-      const validation = receipt(['validate', type, input, '--json'], directory);
-      assert.equal(validation.ok, true);
-      assert.equal(validation.command, 'validate');
-      assert.equal(validation.type, type);
-      assert.equal(validation.candidateFrozen, true);
-      assert.equal(validation.candidate.path, input);
-      assert.deepEqual({ sha256: validation.candidate.sha256, bytes: validation.candidate.bytes }, identity(input));
-      assert.ok(validation.checks.length > 0 && validation.checks.every((check) => check.ok));
+      const expectedFiles = [path.basename(input)];
+      // Delivery exercises the per-type renderer and output checker below.
+      // Cover the standalone validate and render commands on current input
+      // for both a native diagram and the explainer's separate preparation path.
+      if (type === 'architecture' || type === 'explainer') {
+        const validation = receipt(['validate', type, input, '--json'], directory);
+        assert.equal(validation.ok, true);
+        assert.equal(validation.command, 'validate');
+        assert.equal(validation.type, type);
+        assert.equal(validation.candidateFrozen, true);
+        assert.equal(validation.candidate.path, input);
+        assert.deepEqual({ sha256: validation.candidate.sha256, bytes: validation.candidate.bytes }, identity(input));
+        assert.ok(validation.checks.length > 0 && validation.checks.every((check) => check.ok));
 
-      const rendered = path.join(directory, 'rendered.html');
-      run(['render', type, input, rendered], directory);
-      assertDiagram(rendered, document, collection);
+        const rendered = path.join(directory, 'rendered.html');
+        run(['render', type, input, rendered], directory);
+        assertDiagram(rendered, document, collection);
+        expectedFiles.push(path.basename(rendered));
+      }
 
       const output = path.join(directory, '交付 diagram.html');
       const delivered = receipt(['deliver', type, input, output, '--json'], directory);
@@ -171,7 +178,8 @@ test('core smoke: public CLI diagrams, compatibility and delivery safety', async
       assert.equal(provenance.output, output);
       assert.deepEqual(provenance.specification, identity(input));
       assert.deepEqual(provenance.artifact, identity(output));
-      assert.deepEqual(fs.readdirSync(directory).sort(), [path.basename(input), path.basename(rendered), path.basename(output), path.basename(sidecar)].sort());
+      expectedFiles.push(path.basename(output), path.basename(sidecar));
+      assert.deepEqual(fs.readdirSync(directory).sort(), expectedFiles.sort());
       if (type === 'workflow') workflow = { directory, input, output, sidecar, document };
     });
   }

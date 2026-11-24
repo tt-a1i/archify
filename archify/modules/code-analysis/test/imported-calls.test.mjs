@@ -203,7 +203,7 @@ test('default references follow ordinary same-module functions and local default
  const imported=args.facts.calls.filter(c=>c.file==='entry.mjs'&&c.target);
  assert.deepEqual(imported.map(c=>c.target),[{file:'plain.mjs',name:'later',line:1,column:23},{file:'alias.mjs',name:'earlier',line:1,column:1}]);
  assert.equal(args.facts.calls.filter(c=>c.file==='entry.mjs'&&c.resolution==='unresolved').length,1);
- const q=buildQuestion(args);assert.equal(q.calls.bindingCoverage,'declarations-const-initializers-and-stable-explicit-exports-through-captured-value-paths');assert.ok(q.calls.records.every(r=>r.targetNavigation.status==='valid'));
+ const q=buildQuestion(args);assert.equal(q.calls.bindingCoverage,'declarations-const-initializers-stable-explicit-exports-and-static-commonjs-require');assert.ok(q.calls.records.every(r=>r.targetNavigation.status==='valid'));
 });
 
 test('default references do not claim a function overwritten by assignments, destructuring, loops or opaque eval',t=>{
@@ -240,7 +240,7 @@ test('changed ordinary function default references recover foreign callers in fr
 
 // Expectations follow the authored tsconfig paths and explicit export syntax,
 // independently of the extractor's import-edge implementation.
-const aliasConfig = JSON.stringify({ compilerOptions: { baseUrl: '.', paths: { '@local/*': ['src/*'] } } });
+const aliasConfig = JSON.stringify({ compilerOptions: { allowJs: true, baseUrl: '.', paths: { '@local/*': ['src/*'] } } });
 test('captured configured aliases bind ordinary exports with independent lexical shadow checks', t => {
   const args = fixture(t, {
     'tsconfig.json': aliasConfig,

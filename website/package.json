@@ -28,5 +28,6 @@
     "@types/react-dom": "^19.3.0",
     "parse5": "^8.0.1",
     "typescript": "~6.0.3"
-  }
+  },
+  "packageManager": "pnpm@12.21.0"
 }

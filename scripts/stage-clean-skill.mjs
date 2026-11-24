@@ -35,6 +35,8 @@ const EXCLUDED_FILES = new Set([
   'archify/package-lock.json',
   'archify/scripts/generate-brand-marks.mjs',
   'archify/scripts/generate-validators.mjs',
+  'archify/modules/code-analysis/scripts/build-python.mjs',
+  'archify/modules/code-analysis/scripts/build-vendor.mjs',
 ]);
 const EXCLUDED_SEGMENTS = new Set([
   '.DS_Store',
@@ -100,6 +102,7 @@ function excluded(relative) {
   if (EXCLUDED_FILES.has(relative)) return true;
   const insideSkill = relative.slice('archify/'.length);
   if (insideSkill === 'test' || insideSkill.startsWith('test/')) return true;
+  if (insideSkill.startsWith('modules/code-analysis/test/')) return true;
   return insideSkill.split('/').some((segment) => (
     EXCLUDED_SEGMENTS.has(segment) || segment.startsWith('.validator-check-')
   ));

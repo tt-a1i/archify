@@ -80,7 +80,7 @@ chooses one primary locale for the Viewer; follow an explicit primary-language
 request, then prompt order or conversation dominance.
 
 Bundled Viewer catalogs are enrolled in `locales/manifest.json`: currently
-`en`, `zh-CN`, `zh-TW`, `es`, `ko`, and `ar`. For these, `meta.locale` alone selects the full
+`en`, `zh-CN`, `zh-TW`, `es`, `ko`, `ar`, and `ru`. For these, `meta.locale` alone selects the full
 catalog. Tags match case-insensitively (`zh-cn` selects `zh-CN`), but region
 and script variants are distinct: `zh-Hant`, `es-MX`, or `ko-KR` select no
 bundled catalog.
@@ -234,9 +234,10 @@ semantic authoring choice, not a spacing repair. In workflow v2, let the compile
 allocate its measured mask before applying a diagnosed `labelAt`,
 `labelDx`/`labelDy`, or `labelSegment`. Apply one diagnosed geometry control at
 a time unless several edges share a constrained channel. In that case, plan the smallest coupled change from measured geometry and
-validate it together. Architecture/workflow provide layout evidence through
-`validate <type> <candidate.json> --layout-json`; for other types, use validation
-diagnostics and the rendered SVG geometry.
+validate it together. Architecture, workflow, sequence, dataflow, and lifecycle
+provide layout evidence through `validate <type> <candidate.json> --layout-json`
+(sequence/dataflow/lifecycle report node boxes and edge route points); for other
+types, use validation diagnostics and the rendered SVG geometry.
 Before adding manual routes, check whether unnecessary agent-added controls
 disable automatic port spread; preserve user-required route intent. Use the
 measured clearance rules above rather than guessing coordinates.
@@ -249,6 +250,10 @@ A measurable rejected layout also returns these fields, with `ok: false`,
 `contract: "archify-architecture-layout-v1"`, diagnostics, and exit 1. This is
 repair evidence, not artifact acceptance; it writes no HTML. Malformed input or
 an implementation failure retains the ordinary failure receipt without layout.
+Every native diagram type accepts `validate <type> <input.json> --layout-json`;
+each report carries `ok`, `diagram_type`, `viewBox`, and the measured element
+geometry for that type (nodes and edge routes for workflow, sequence, dataflow,
+and lifecycle; entities, types, segments, or bars for the remaining types).
 
 Use the measured failing side for `layout/boundary-out-of-bounds`. Left/top
 negative coordinates need an inward move; increasing viewBox width/height only

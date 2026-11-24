@@ -51,7 +51,10 @@ export function analysisContext({ graph, config = {}, facts = null, active = RUL
   // Imported report transport is provenance; source adapters record their own
   // settings and coverage. It must not change the internal analyzer's context.
   const { schema_version: _ignored, external: _external, ...settings } = config || {};
+  if (graph?.repository?.language !== 'ts') delete settings.typescript;
   const goBuild = graph?.repository?.language === 'go' ? facts?.languageScope?.build : null;
+  const tsProjects = graph?.repository?.language === 'ts' ? facts?.languageScope?.projects : null;
+  const tsSdks = graph?.repository?.language === 'ts' ? facts?.languageScope?.sdks : null;
   const cppBuild = ['c', 'cpp'].includes(graph?.repository?.language) ? facts?.languageScope?.build : null;
   return {
     analyzer: { name: PACKAGE.name, version: PACKAGE.version },
@@ -64,6 +67,8 @@ export function analysisContext({ graph, config = {}, facts = null, active = RUL
     configDigest: sha256(JSON.stringify(graph?.grouping?.typescript ? { settings, moduleGrouping: graph.grouping.typescript } : settings)),
     ruleVersions: Object.fromEntries(active.filter((r) => !suppressed.has(r.code)).map((r) => [r.code, r.version ?? 1]).sort(([a], [b]) => compareText(a, b))),
     ...(duplicates ? { duplicates: duplicates.analysis } : {}),
+    ...(tsProjects ? { tsProjects } : {}),
+    ...(tsSdks ? { tsSdks } : {}),
     ...(goBuild ? { goBuildScope: {
       goos: goBuild.goos, goarch: goBuild.goarch, cgo: goBuild.cgo, tests: goBuild.tests,
       tags: [...new Set(goBuild.tags || [])].sort(compareText),

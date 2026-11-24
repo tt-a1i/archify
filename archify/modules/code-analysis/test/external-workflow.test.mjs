@@ -12,7 +12,7 @@ import { extractFacts, buildGraph, evaluateGraph, loadConfig } from '../lib/anal
 import { RULES } from '../evaluate/index.mjs';
 import { schemaErrors } from '../schemas/index.mjs';
 import { startAnalysisView } from '../bin/serve.mjs';
-import { formatText } from '../bin/check.mjs';
+import { formatText, runCheck } from '../bin/check.mjs';
 import { buildTask, renderTaskMarkdown } from '../lib/task.mjs';
 import { ARCHIFY_AVAILABLE } from './helpers.mjs';
 
@@ -65,14 +65,20 @@ function fixture(t) {
     return JSON.parse(result.stdout);
   };
   const check = (extra = [], expected = 0) => cli(CHECK, [root, ...args, ...extra], expected);
-  return { dir, root, files, reports, config, configFile, out, baseline, args, cli, check, manifest };
+  // Prepare real comparison artifacts with the same check command. The runs
+  // that assert comparison results use the subprocess and its actual exit code.
+  const prepareComparison = async () => {
+    const { exitCode } = await runCheck([root, ...args, '--out', out, '--fail-on', 'never']);
+    assert.equal(exitCode, 0);
+  };
+  return { dir, root, files, reports, config, configFile, out, baseline, args, cli, check, manifest, prepareComparison };
 }
 
-test('external workflow: default TypeScript settings remain comparable with pre-C++ findings', (t) => {
+test('external workflow: default TypeScript settings remain comparable with pre-C++ findings', async (t) => {
   const f = fixture(t);
   const originalInclude = ['**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}', '**/*.py', '**/*.java', '**/*.go', '**/*.rs'];
   write(f.configFile, { ...f.config, include: originalInclude });
-  f.check(['--out', f.out, '--fail-on', 'never']);
+  await f.prepareComparison();
   delete f.config.include;
   write(f.configFile, f.config);
   const after = f.check(['--compare', path.join(f.out, 'findings.json'), '--new-only', '--fail-on', 'warning']);
@@ -124,7 +130,7 @@ test('external workflow: evaluateGraph validates combined findings and records c
   );
 });
 
-test('verified ESLint comparison keeps existing locations and gates a genuinely new repeated warning', (t) => {
+test('verified ESLint comparison keeps existing locations and gates a genuinely new repeated warning', async (t) => {
   const f = fixture(t);
   const block = '{ const unused = 1; }\n';
   const gap = `// ${'separator '.repeat(16)}\n`;
@@ -141,7 +147,7 @@ test('verified ESLint comparison keeps existing locations and gates a genuinely 
     write(manifest, f.manifest('eslint'));
   };
   writeEslint(original, [1, 3]);
-  f.check(['--out', f.out, '--fail-on', 'never']);
+  await f.prepareComparison();
   const compare = ['--compare', path.join(f.out, 'findings.json'), '--new-only', '--fail-on', 'warning'];
 
   fs.writeFileSync(file, original + '\n');
@@ -176,7 +182,7 @@ test('verified ESLint comparison keeps existing locations and gates a genuinely 
     current.filter(finding => !oldIds.has(finding.id)).map(finding => finding.id));
 });
 
-test('verified ESLint comparison keeps a warning on an empty line after a nearby edit', (t) => {
+test('verified ESLint comparison keeps a warning on an empty line after a nearby edit', async (t) => {
   const f = fixture(t);
   const writeEslint = (source) => {
     fs.writeFileSync(path.join(f.root, 'src/main.ts'), source);
@@ -186,7 +192,7 @@ test('verified ESLint comparison keeps a warning on an empty line after a nearby
     write(path.join(f.root, 'reports/eslint.manifest.json'), f.manifest('eslint'));
   };
   writeEslint('export const first = 1;\n\n\nexport const last = 2;\n');
-  f.check(['--out', f.out, '--fail-on', 'never']);
+  await f.prepareComparison();
   writeEslint('export const first = 1;\n\n\n\nexport const last = 2;\n');
   const out = path.join(f.dir, 'empty-line-comparison');
   const previous = path.join(f.out, 'findings.json');
@@ -221,9 +227,8 @@ test('external workflow: warning defaults preserve CLI gates and require re-revi
   assert.equal(after.diagnostics[0].id, original.id);
   assert.deepEqual(after.diagnostics[0].evidenceDigest, original.evidenceDigest);
   assert.ok(after.analysis.external.every(source => source.severityPolicy === 'warning'));
-  f.check(['--fail-on', 'error']);
-
-  f.check(['--out', f.out, '--baseline', f.baseline, '--compare', path.join(sourceOut, 'findings.json')], 1);
+  const errorGate = f.check(['--out', f.out, '--baseline', f.baseline, '--compare', path.join(sourceOut, 'findings.json'), '--fail-on', 'error']);
+  assert.equal(errorGate.counts.warning, 1, 'the error gate passes despite the warning that still needs review');
   const reviewed = read(path.join(f.out, 'review.json'));
   assert.equal(reviewed.findings[original.id].status, 'accepted-changed');
   assert.equal(reviewed.findings[original.id].since, 'evidence-changed');

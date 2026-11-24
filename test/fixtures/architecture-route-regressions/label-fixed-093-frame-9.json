@@ -1,0 +1,158 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "layout": {
+    "mode": "auto"
+  },
+  "meta": {
+    "title": "Fixed 93",
+    "output": "out.html",
+    "legend": {
+      "mode": "hidden"
+    },
+    "viewBox": [
+      585,
+      308
+    ],
+    "quality_profile": "showcase"
+  },
+  "components": [
+    {
+      "id": "n0",
+      "type": "backend",
+      "label": "Service 1",
+      "size": [
+        120,
+        52
+      ],
+      "pos": [
+        44,
+        72
+      ]
+    },
+    {
+      "id": "n1",
+      "type": "messagebus",
+      "label": "Service 2",
+      "size": [
+        142,
+        52
+      ],
+      "pos": [
+        225,
+        79
+      ]
+    },
+    {
+      "id": "n2",
+      "type": "external",
+      "label": "Service 3",
+      "size": [
+        142,
+        52
+      ],
+      "pos": [
+        412,
+        68
+      ]
+    },
+    {
+      "id": "n3",
+      "type": "messagebus",
+      "label": "Service 4",
+      "size": [
+        120,
+        72
+      ],
+      "pos": [
+        44,
+        199
+      ]
+    },
+    {
+      "id": "n4",
+      "type": "database",
+      "label": "Service 5",
+      "size": [
+        142,
+        72
+      ],
+      "pos": [
+        228,
+        186
+      ]
+    },
+    {
+      "id": "n5",
+      "type": "external",
+      "label": "Service 6",
+      "size": [
+        142,
+        60
+      ],
+      "pos": [
+        402,
+        197
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e0",
+      "from": "n0",
+      "to": "n1",
+      "label": "Sync 1"
+    },
+    {
+      "id": "e1",
+      "from": "n1",
+      "to": "n2",
+      "label": "Send job 2"
+    },
+    {
+      "id": "e2",
+      "from": "n2",
+      "to": "n3"
+    },
+    {
+      "id": "e3",
+      "from": "n3",
+      "to": "n4",
+      "width": 8
+    },
+    {
+      "id": "e4",
+      "from": "n4",
+      "to": "n5",
+      "label": "Commit records 5"
+    },
+    {
+      "id": "e5",
+      "from": "n0",
+      "to": "n4",
+      "label": "Send job 6"
+    },
+    {
+      "id": "e6",
+      "from": "n0",
+      "to": "n2"
+    },
+    {
+      "id": "e7",
+      "from": "n1",
+      "to": "n4",
+      "label": "Commit records 8"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Processing",
+      "wraps": [
+        "n0",
+        "n1"
+      ],
+      "pad": 24
+    }
+  ]
+}

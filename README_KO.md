@@ -93,9 +93,36 @@ Archify로 한 페이지로 답해 줘: API P99가 80 ms에서 600 ms로 올랐�
 
 [Proof Lab](https://tt-a1i.github.io/archify/gallery.html)에는 저장소에 포함된 시나리오와 JSON 소스, 검증 결과가 있습니다.
 
+### 저장소 진단하기
+
+<sub>CODE ANALYSIS · Skill에 내장, 추가 설치 없음</sub>
+
+| 의존성 별 지도 | 같은 분석의 3D 모델 |
+|---|---|
+| [![Atlas 별 지도: 모듈이 원을 따라 놓이고 파일 의존성이 그 안을 가로지르며, 사이드 패널에 발견 사항과 결합도가 표시됨](docs/assets/code-analysis-views/atlas.png)](archify/modules/code-analysis/docs/USAGE.md) | [![Atlas 3D: 가장 많이 의존되는 모듈이 줄기가 되고, 다른 모듈은 의존 계층 높이에서 가지를 뻗음](docs/assets/code-analysis-views/atlas-3d.png)](archify/modules/code-analysis/docs/USAGE.md) |
+
+**아키텍처 진단**은 저장소를 읽고 코드가 실제로 어떻게 연결되어 있는지 보여줍니다. 순환 의존성, 결합이 지나친 모듈, 복잡도 핫스팟, 레이어 규칙 위반을 근거 소스 링크와 에이전트에게 그대로 넘길 수 있는 수정 작업과 함께 보여줍니다. 아키텍처 다이어그램과 함께 쓰면 각 컴포넌트에 문제 개수가 표시됩니다. JS/TS, Python, Java, Go, Rust, C, C++를 지원하며 결과는 오프라인으로 열 수 있는 HTML 파일 하나입니다.
+
+```text
+Use archify Code Analysis on this repository: show module coupling, dependency cycles and hotspots.
+```
+
+[Code Analysis 가이드](archify/modules/code-analysis/docs/USAGE.md)
+
+### 스토리나 PR로 설명하기
+
+<sub>STORY · PR 워크스루</sub>
+
+- **Story 영상.** 에이전트에게 요청하면 어떤 다이어그램에도 안내 스토리를 추가할 수 있습니다. 페이지에 타임라인과 자막이 있는 Story 모드가 생기고, **Export → Story video**로 1080p, 60 fps 영상(WebM 또는 MP4)을 내보낼 수 있습니다. 여러 다이어그램을 하나의 스테이지 페이지나 영상으로 엮을 수도 있습니다. [Story 작성 가이드](archify/references/story-authoring.md)
+- **PR 워크스루.** 에이전트에게 PR이나 브랜치 설명을 요청하면 Archify가 변경 사항을 다이어그램 위에 직접 표시하고, 라이트/다크 다이어그램을 GitHub PR이나 GitLab MR에 첨부할 수 있습니다. 선택형 `archify-pr` Skill은 PR을 준비할 때 실질적인 변경이 있을 때만 제안합니다. [PR 리뷰](archify/references/pr-review.md)
+
+```text
+Use archify to add a guided story to this diagram and export it as a video.
+```
+
 ## 빠른 시작
 
-**현재 개발 버전:** `v3.2.1-dev.1` (안정 릴리스가 아닙니다). [변경 이력](CHANGELOG.md#unreleased)을 확인하세요.
+**현재 개발 버전:** `v3.3.2-dev.1` (안정 릴리스가 아닙니다). [변경 이력](CHANGELOG.md#unreleased)을 확인하세요.
 
 ### 1. 설치
 
@@ -121,6 +148,8 @@ npx -y skills@latest add https://archify.si --skill archify --agent cursor --glo
 npx -y skills@latest add https://archify.si --skill archify --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes
 ```
 
+선택형 PR 컴패니언 Skill(저장소 소스 설치 전용, 기본 설치는 계속 `archify`만): `archify`를 설치한 뒤 `npx -y skills@latest add tt-a1i/archify --skill archify-pr --agent cursor --global --copy --yes`를 실행하면 PR 변경 워크스루를 추가할 수 있습니다. 문서, 잠금 파일, 포맷팅 같은 작은 변경에는 조용히 있고 실질적인 diff에만 다이어그램을 제안합니다. 에이전트 전역 규칙 파일에 `[archify pr: on-demand]`를 추가하면 제안을 완전히 끌 수 있습니다.
+
 <details>
 <summary>다른 설치 방법과 업데이트 확인 동작</summary>
 
@@ -138,6 +167,12 @@ Archify는 선택적 업데이트 알림을 위해 고정된 stable manifest를 
 
 ```text
 Archify로 그려 줘: Browser -> API -> Redis cache -> PostgreSQL fallback.
+```
+
+Archify에 내장된 **아키텍처 진단**은 저장소의 의존성을 방사형 별 지도와 회전할 수 있는 3D 모델로 보여줍니다. 기존 아키텍처 다이어그램의 구성 요소별로 발견 사항의 개수를 표시하며, 순환 의존성이나 다이어그램에 빠진 의존성을 선택하면 관련 소스 코드를 확인할 수 있습니다. 저장소를 바탕으로 만든 아키텍처 다이어그램을 전달하면 Archify가 요약 끝에 진단으로 할 수 있는 일을 알려 주고, 다이어그램 오른쪽 위에도 설명을 여는 버튼이 표시됩니다. 진단은 사용자가 동의할 때만 시작합니다. 별도로 설치할 필요가 없습니다. 자세한 내용은 [Code Analysis 사용 가이드](archify/modules/code-analysis/docs/USAGE.md)를 참고하세요.
+
+```text
+Use archify Code Analysis on this repository: show module coupling, dependency cycles and hotspots.
 ```
 
 ### 3. 대화로 다듬기
@@ -203,6 +238,7 @@ node bin/archify.mjs validate workflow examples/agent-tool-call.workflow.json --
 | 역할 하나 또는 둘 비교 | `L` 또는 `LENS` |
 | 개요 지도 열기 | `M` 또는 `MAP` |
 | 프레젠테이션 모드 | `F` |
+| 안내 스토리 재생 또는 영상 내보내기(스토리가 있는 다이어그램) | 모션 컨트롤 → `Story` · Export → `Story video` |
 | 시각 스타일, 테마, 내보내기 | `S` / `T` / `E` |
 | 확대/축소 및 초기화 | `+` / `-` / `0` |
 

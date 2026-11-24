@@ -95,7 +95,7 @@ test('ERD renders the bundled Arabic cardinality legend and preserves authored n
 
 test('ERD empty translations preserve locale-only artifacts byte for byte', t => {
   const directory = workspace(t);
-  for (const locale of ['en', 'zh-CN', 'zh-TW', 'es', 'ko', 'ar']) {
+  for (const locale of ['en', 'zh-CN', 'zh-TW', 'es', 'ko', 'ar', 'ru']) {
     const baseline = run(directory, fixture(undefined, locale));
     assert.equal(baseline.status, 0, baseline.stderr);
     const before = html(directory);

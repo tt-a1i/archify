@@ -1,5 +1,6 @@
-// Re-render every bundled example from its JSON IR. Installed skills keep HTML
-// beside the JSON examples; the development script passes the golden directory.
+// Re-render every bundled example from its JSON IR. Installed skills ship only the
+// JSON inputs; `archify examples` writes HTML beside them on demand, and the
+// development script passes the repository's golden examples directory.
 
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
@@ -24,7 +25,11 @@ const TARGETS = [
   ['timeline', 'payment-incident.timeline.json', 'timeline-payment-incident-rendered.html'],
   ['timeline', 'archify-dev-activity.timeline.json', 'timeline-archify-dev-activity-rendered.html'],
   ['waterfall', 'checkout-request.waterfall.json', 'waterfall-checkout-request-rendered.html'],
-  ['waterfall', 'example-rebuild.waterfall.json', 'waterfall-example-rebuild-rendered.html'],
+  ['waterfall', 'example-rebuild.waterfall.json', 'waterfall-example-rebuild-rendered.html'],  ['architecture', 'drilldown-overview.architecture.json', 'drilldown-overview.html'],
+  ['architecture', 'drilldown-platform.architecture.json', 'drilldown-platform.html'],
+  ['architecture', 'drilldown-integrations.architecture.json', 'drilldown-integrations.html'],
+  ['dataflow', 'drilldown-api.dataflow.json', 'drilldown-api-dataflow.html'],
+  ['sequence', 'drilldown-api.sequence.json', 'drilldown-api-sequence.html'],
 ];
 
 for (const [mode, input, output] of TARGETS) {

@@ -12,8 +12,10 @@ import {
   writeDiagram,
 } from '../shared/cli.mjs';
 import { throwDiagnosticProblems } from '../shared/diagnostics.mjs';
+import { legendFootprint, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
 import { nodeTextFit } from '../shared/text-fit.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
+import { changeEdgeAttrs, changeLegendEntries, changeNodeAttrs, changeReviewFor, isChangeMarked, nodeChangeBadgePos, renderChangeBadge, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
 import { asArray, roundedPath, routePointsValue } from '../shared/geometry.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -196,11 +198,19 @@ const measured = new Map(asArray(tree.nodes).map((node) => {
   const isRoot = node.id === authoredRoot.id;
   const labelFont = isRoot ? layout.rootLabelFont : layout.labelFont;
   const labelAdvance = labelFont * ADVANCE * 1.06;
+  const stacked = stackOf.has(node.id);
+  // Verified source badges occupy the top-right 18px of a card. Give sourced
+  // nodes a separate header so centred and wrapped labels never sit under it;
+  // diagrams without sources retain their existing geometry.
+  const evidenceHeader = sourceEvidence?.nodes?.[node.id]?.length ? 18 : 0;
+  const changeMinW = isChangeMarked(node) && down && node.parent !== undefined && !stacked
+    ? (evidenceHeader ? 136 : 112)
+    : 0;
   // Text wraps between words, never inside one: the longest single word may
   // widen a node past nodeMaxW (up to half again), and only a word longer
   // than that is split.
   const longestWord = Math.max(...String(node.label).split(/\s+/).map((word) => textUnits(word) * labelAdvance));
-  const floor = Math.max(layout.nodeW, Math.ceil(longestWord + layout.padX * 2 + 2));
+  const floor = Math.max(layout.nodeW, changeMinW, Math.ceil(longestWord + layout.padX * 2 + 2));
   const cap = Math.ceil(Math.min(layout.nodeMaxW * 1.5, Math.max(floor, layout.nodeMaxW)));
   const linesAt = (width) => ({
     label: wrapText(node.label, labelFont * 1.06, width - layout.padX * 2),
@@ -208,7 +218,6 @@ const measured = new Map(asArray(tree.nodes).map((node) => {
   });
   const natural = Math.ceil(Math.max(textUnits(node.label) * labelAdvance, node.sublabel ? textUnits(node.sublabel) * layout.sublabelFont * ADVANCE : 0) + layout.padX * 2 + 2);
   // A stacked list shares one width anyway, so its entries are not balanced.
-  const stacked = stackOf.has(node.id);
   let width = Math.min(cap, Math.max(floor, natural));
   const target = linesAt(width);
   for (let candidate = floor; !stacked && candidate < width; candidate += 4) {
@@ -220,10 +229,6 @@ const measured = new Map(asArray(tree.nodes).map((node) => {
   }
   const { label: labelLines, sublabel: sublabelLines } = linesAt(width);
   const contentHeight = labelLines.length * layout.labelLine + (sublabelLines.length ? 4 + sublabelLines.length * layout.sublabelLine : 0);
-  // Verified source badges occupy the top-right 18px of a card. Give sourced
-  // nodes a separate header so centred and wrapped labels never sit under it;
-  // diagrams without sources retain their existing geometry.
-  const evidenceHeader = sourceEvidence?.nodes?.[node.id]?.length ? 18 : 0;
   return [node.id, { ...node, isRoot, labelFont, labelLines, sublabelLines, width, height: Math.ceil(layout.padY * 2 + evidenceHeader + contentHeight), contentHeight, evidenceHeader, depth: depthOf.get(node.id), stacked }];
 }));
 
@@ -368,10 +373,6 @@ function centerOf(id) {
 }
 
 const all = asArray(tree.nodes).map((node) => placed.get(node.id));
-const viewBox = authoredCanvas ? tree.meta.viewBox : [
-  Math.max(320, Math.ceil(Math.max(...all.map((node) => node.x + node.width)) + layout.margin + (down ? 0 : layout.toggleR + 4))),
-  Math.max(240, Math.ceil(Math.max(...all.map((node) => node.y + node.height)) + layout.margin + (down ? layout.toggleR + 4 : 0))),
-];
 
 // ---- Edges ---------------------------------------------------------------------
 // One elbow per parent-child link: out of the parent's toggle side, across at
@@ -415,8 +416,21 @@ const edges = all.filter((node) => node.parent !== undefined).map((node, index) 
   from: node.parent,
   to: node.id,
   index,
+  ...(node.change === 'added' || node.change === 'removed' ? { change: node.change } : {}),
   points: edgePoints(placed.get(node.parent), node),
 }));
+
+const changeReview = changeReviewFor({ nodes: all, edges });
+const legendEntries = changeLegendEntries(changeReview, tree.meta?.legend, locale);
+const autoWidth = Math.max(320, Math.ceil(Math.max(...all.map((node) => node.x + node.width)) + layout.margin + (down ? 0 : layout.toggleR + 4)));
+const contentBottom = Math.ceil(Math.max(...all.map((node) => node.y + node.height)) + (down ? layout.toggleR + 4 : 0));
+const legendFoot = legendEntries.length
+  ? legendFootprint(legendEntries, { width: Math.max(1, (authoredCanvas ? tree.meta.viewBox[0] : autoWidth) - layout.margin * 2), fontSize: 11 })
+  : null;
+const viewBox = authoredCanvas ? tree.meta.viewBox : [
+  autoWidth,
+  Math.max(240, Math.ceil(contentBottom + layout.margin + (legendFoot ? 34 + legendFoot.extraHeight : 0))),
+];
 
 function ancestorsOf(id) {
   const chain = [];
@@ -443,6 +457,7 @@ function descendantCount(id) {
 
 function buildLayoutReport() {
   return {
+    ok: true,
     diagram_type: 'tree',
     direction,
     viewBox,
@@ -503,7 +518,8 @@ function renderNode(node) {
     : '';
   const [sx, sy] = node.stacked || !down ? [node.x, node.y + node.height / 2] : [node.x + node.width / 2, node.y];
   const socket = node.isRoot ? '' : `<circle cx="${sx}" cy="${sy}" r="2.6" class="tree-socket" stroke-width="1.4"/>`;
-  return `        <g ${focusNodeAttrs(node.id, node.label, passport, locale)} data-tree-depth="${node.depth}"${treeAttrs(node.id)} class="${hueClass(node.id)}">
+  const changeBadge = renderChangeBadge(node, nodeChangeBadgePos(node, { rx: 10, rightInset: node.evidenceHeader ? 30 : 0 }));
+  return `        <g ${focusNodeAttrs(node.id, node.label, passport, locale)}${changeNodeAttrs(changeReview, node)} data-tree-depth="${node.depth}"${treeAttrs(node.id)} class="${hueClass(node.id)}">
           ${focusNodeTitle(node.label, passport)}
           ${stack}
           <rect x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="10" class="c-mask"/>
@@ -511,7 +527,7 @@ function renderNode(node) {
           ${accent}
           ${socket}
           <text data-node-label="" x="${cx}" class="t-primary tree-label" font-size="${node.labelFont}" font-weight="${node.isRoot ? 750 : leaf ? 560 : 700}" text-anchor="${anchor}">${label}</text>
-          ${sublabel ? `<text data-detail="context" x="${cx}" class="t-muted tree-sublabel" font-size="${layout.sublabelFont}" text-anchor="${anchor}">${sublabel}</text>` : ''}
+          ${sublabel ? `<text data-detail="context" x="${cx}" class="t-muted tree-sublabel" font-size="${layout.sublabelFont}" text-anchor="${anchor}">${sublabel}</text>` : ''}${changeBadge ? `\n          ${changeBadge}` : ''}
         </g>`.replace(/[ \t]+$/gm, '');
 }
 
@@ -543,7 +559,7 @@ function renderEdge(edge) {
   // subtree every link shares its branch's hue.
   const hued = edge.from !== authoredRoot.id;
   const d = roundedPath(edge.points, 10);
-  return `        <path ${focusEdgeAttrs(edge.from, edge.to, undefined, edge.index)}${treeAttrs(edge.to)} data-composition-points="${routePointsValue(edge.points)}" d="${d}" class="a-default tree-edge${hued ? ` tree-edge-hued ${hueClass(edge.to)}` : ' tree-edge-trunk'}"${animateAttr(tree.meta, 'edge', placed.get(edge.to).depth)} stroke-width="${hued ? 1.5 : 1.8}"/>`;
+  return `        <path ${focusEdgeAttrs(edge.from, edge.to, undefined, edge.index)}${changeEdgeAttrs(changeReview, edge)}${treeAttrs(edge.to)} data-composition-points="${routePointsValue(edge.points)}" d="${d}" class="a-default tree-edge${hued ? ` tree-edge-hued ${hueClass(edge.to)}` : ' tree-edge-trunk'}"${animateAttr(tree.meta, 'edge', placed.get(edge.to).depth)} stroke-width="${hued ? 1.5 : 1.8}"/>`;
 }
 
 function renderSvg() {
@@ -587,7 +603,14 @@ ${['root', ...SUBTREE_HUES].map((hue) => hue === 'root'
           svg[data-tree-ui] [data-tree-expand-all] { cursor: pointer; outline: none; }
           svg[data-tree-ui] [data-tree-expand-all] rect { fill: var(--mask); stroke: var(--lane-stroke); }
           svg[data-tree-ui] [data-tree-expand-all]:is(:hover, :focus-visible) rect { stroke: var(--arrow-emphasis); stroke-width: 2; }
-          svg[data-tree-ui]:not([data-tree-any-collapsed]) [data-tree-expand-all] { display: none; }
+          svg[data-tree-ui]:not([data-tree-any-collapsed]) [data-tree-expand-all] { display: none; }${changeReview.active ? `
+          svg[data-tree-ui] [data-node-id][data-change="added"] > :is(.tree-root, .tree-branch, .tree-leaf) { stroke: var(--backend-stroke); stroke-width: 2.4; }
+          svg[data-tree-ui] [data-node-id][data-change="modified"] > :is(.tree-root, .tree-branch, .tree-leaf) { stroke: var(--cloud-stroke); stroke-width: 2.4; }
+          svg[data-tree-ui] [data-node-id][data-change="removed"] > :is(.tree-root, .tree-branch, .tree-leaf) { stroke: var(--security-stroke); stroke-width: 1.6; stroke-dasharray: 5,4; }
+          svg[data-tree-ui] path.tree-edge[data-edge-from][data-change="added"] { stroke: var(--backend-stroke); stroke-width: 2.4; }
+          svg[data-tree-ui] path.tree-edge[data-edge-from][data-change="modified"] { stroke: var(--cloud-stroke); stroke-width: 2.4; }
+          svg[data-tree-ui] path.tree-edge[data-edge-from][data-change="removed"] { stroke: var(--security-stroke); stroke-width: 1.6; stroke-dasharray: 5,4; }` : ''}
+          svg[data-tree-ui] [data-node-id][data-emphasis] > :is(.tree-root, .tree-branch, .tree-leaf) { stroke-width: 3.2; }
         </style>
 
         <!-- Background Grid -->
@@ -606,7 +629,7 @@ ${all.map(renderToggle).filter(Boolean).join('\n')}
         <g data-tree-expand-all="" role="button" tabindex="0" aria-label="${expandAll}">
           <rect x="${layout.margin}" y="18" width="${Math.ceil(textUnits(expandAll) * 10.5 * ADVANCE + 24)}" height="24" rx="12" stroke-width="1.2"/>
           <text x="${layout.margin + 12}" y="34" class="t-primary" font-size="10.5" font-weight="650">${expandAll}</text>
-        </g>
+        </g>${legendEntries.length ? `\n\n        <!-- Legend -->\n${renderResolvedLegend({ entries: legendEntries, locale, layout: { x: layout.margin, baselineY: viewBox[1] - 16, width: viewBox[0] - layout.margin * 2, fontSize: 11, minTitleY: contentBottom + 8, diagramType: 'tree' }, renderSwatch: renderChangeLegendSwatch })}` : ''}
       </svg>`;
 }
 

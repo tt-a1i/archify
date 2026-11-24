@@ -1,8 +1,8 @@
 # Archify
 
-> Turn any idea, everyday plan, concept, workflow, Mermaid draft, or codebase into a polished interactive HTML diagram (ten diagram types: architecture, workflow, sequence, dataflow, lifecycle, ERD, class, tree, timeline, waterfall) or a 4-style one-page explainer — zero diagram syntax, layout-checked, offline HTML. Free and open source (Apache-2.0).
+> Turn any idea, everyday plan, concept, workflow, Mermaid draft, or codebase into a polished interactive HTML diagram (ten diagram types: architecture, workflow, sequence, dataflow, lifecycle, ERD, class, tree, timeline, waterfall) or a 4-style one-page explainer, plus built-in Architecture Diagnosis for codebases and 1080p Story video export — zero diagram syntax, layout-checked, offline HTML. Free and open source (Apache-2.0).
 
-Version: 3.2.1-dev.1
+Version: 3.3.2-dev.1
 Repository: https://github.com/tt-a1i/archify
 Website: https://archify.si
 

@@ -2,17 +2,17 @@
   "schemaVersion": 1,
   "skillId": "archify",
   "channel": "stable",
-  "version": "3.2.0",
-  "publishedAt": "2026-10-19T00:20:11Z",
+  "version": "3.3.1",
+  "publishedAt": "2026-11-24T14:01:27Z",
   "source": {
     "repository": "https://github.com/tt-a1i/archify",
-    "ref": "v3.2.0",
-    "treeSha": "39069dd190f574064fe410aa3af1b6dfd98a522c"
+    "ref": "v3.3.1",
+    "treeSha": "193c697e93622c9a306567d0d84c7b23a15f2e24"
   },
   "artifact": {
-    "sha256": "70e210265c59f24dcbdf2a502ff671104b5454e7ee7d3554aecd86bad32384f5"
+    "sha256": "b92b4d55446966fd74e5338a45d6de9a7a1b194420cd5eb14d2cdc39f1053b80"
   },
-  "summary": "Adds one-page answers with cited sources, interactive diagrams and image/PDF export, plus clearer node indexes, update notices and portability fixes.",
-  "releaseNotes": "https://github.com/tt-a1i/archify/releases/tag/v3.2.0",
+  "summary": "Polishes automatic Architecture layout, spine labels, crossing reduction, and Classic styling, and deduplicates cited Explainer files.",
+  "releaseNotes": "https://github.com/tt-a1i/archify/releases/tag/v3.3.1",
   "severity": "normal"
 }

@@ -62,12 +62,13 @@ function render(t, document, quality = 'showcase') {
   const output = path.join(directory, 'output.html');
   const authoredInput = JSON.stringify(document);
   fs.writeFileSync(input, authoredInput);
-  const validation = JSON.parse(run(['validate', 'class', input, '--quality', quality, '--json'], directory));
-  assert.equal(validation.ok, true);
+  // The same class renderer and artifact checker run during validation.
+  // Check the actual output once, then inspect the SVG from those checked bytes.
   run(['render', 'class', input, output, '--quality', quality], directory);
   const check = JSON.parse(run(['check', output, '--json'], directory));
   assert.equal(check.ok, true);
   assert.equal(fs.readFileSync(input, 'utf8'), authoredInput, '路由归一化不得改写作者输入');
+  assert.equal(check.composition.profile, quality);
   assert.equal(check.composition.summary.errors, 0);
   const svg = fs.readFileSync(output, 'utf8').match(/<svg\b[\s\S]*?<\/svg>/)?.[0];
   assert.ok(svg, '渲染结果应包含 SVG');

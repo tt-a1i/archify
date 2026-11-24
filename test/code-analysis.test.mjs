@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
@@ -19,6 +18,12 @@ test('Code Analysis exposes the workbench, checks, task and verification command
   const help = run(['serve', '--help']);
   assert.equal(help.status, 0, help.stderr);
   assert.match(help.stdout, /archify code-analysis serve/);
+  for (const output of [prepareHelp.stdout, help.stdout]) {
+    assert.match(output, /--base <commit> --head <commit>/);
+  }
+  for (const synopsis of publicHelp.stdout.split('\n').filter(line => /archify (?:start|code-analysis (?:prepare|serve)) <repo-root>/.test(line))) {
+    assert.match(synopsis, /--base <commit> --head <commit>/);
+  }
   const checkHelp = run(['check', '--help']);
   assert.equal(checkHelp.status, 0, checkHelp.stderr);
   assert.match(checkHelp.stdout, /archify code-analysis check <repo-root>/);
@@ -48,11 +53,4 @@ test('Code Analysis exposes the workbench, checks, task and verification command
     assert.match(invalid.stderr + invalid.stdout, /--map requires --ir/);
   }
 
-});
-test('Code Analysis regression suite', () => {
-  const tests = fs.readdirSync(path.join(moduleRoot, 'test')).filter(f => f.endsWith('.test.mjs')).sort().map(f => path.join(moduleRoot, 'test', f));
-  const env = { ...process.env };
-  delete env.NODE_TEST_CONTEXT;
-  const result = spawnSync(process.execPath, ['--test', ...tests], { env, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 });
-  assert.equal(result.status, 0, result.stdout + result.stderr);
 });

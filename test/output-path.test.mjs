@@ -28,9 +28,7 @@ function copyInstalledSkill(target) {
     recursive: true,
     filter(source) {
       const relative = path.relative(skillRoot, source);
-      // The parallel archive exclusion test writes short-lived markers in the checkout.
-      return !relative.startsWith('.package-negative-')
-        && relative !== 'node_modules'
+      return relative !== 'node_modules'
         && !relative.startsWith(`node_modules${path.sep}`)
         && relative !== 'test'
         && !relative.startsWith(`test${path.sep}`);

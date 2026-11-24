@@ -65,6 +65,23 @@ Adding `--base-root` with a required `--entry` prepares a fresh before/after sou
 comparison, including separate call and module-reading references and explicit
 coverage limits. See [change questions](docs/FUNCTION-ANALYSIS.md#change-questions).
 
+JS/TS analysis defaults to `typescript.sdk: "bundled"`. The bundled compiler
+follows project configs and references without executing code from the analyzed
+checkout. For a trusted project, set `typescript.sdk` to `"auto"` to discover
+installed SDKs, or specify a validated TypeScript package directory. Both opt-ins
+execute code from the selected TypeScript package in the Archify process.
+Set `typescript.requireProjectSdk: true` with an opt-in to reject bundled fallback.
+A capture can use different SDKs for different subprojects in `"auto"` mode.
+`raw-facts.json`, check receipts and findings record SDK provenance and project
+ownership. See [project SDK and configuration](docs/TECH-GUIDE.md#project-sdk-and-configuration).
+All sources selected by Archify are analyzed: files outside configured Programs
+enter inferred projects. A config `exclude` changes project membership, while
+Archify's own include/exclude controls capture. The [alignment ledger](docs/TS-UPSTREAM-LEDGER.md)
+separates official engine comparisons, migrated observations and remaining product differences.
+Shared Program members remain available for call analysis even when their facts
+belong to another default project; each source is still recorded once. See the
+[ts-pattern acceptance](docs/TS-REAL-PROJECT-ACCEPTANCE.md) for the verified improvement.
+
 Optional [C6 duplicate detection](docs/USAGE.md#duplicate-code-c6-optional) uses a
 separately installed jscpd 5.4.3 executable for all six languages. They use five
 analysis adapters: `ts` covers JavaScript and TypeScript, alongside `py`, `java`,
@@ -78,9 +95,11 @@ From the `archify/` package directory:
 node bin/archify.mjs code-analysis serve /path/to/repo --ir architecture.json --out out/analysis --language py
 ```
 
-The first run installs the module's Node parser and schema dependencies
-(including typescript, java-parser and Ajv with SARIF draft/format support) into `modules/code-analysis/node_modules`; `npm ci` in
-`archify/` does the same through its `postinstall`. Open the URL the command
+The module's Node parser and schema packages (typescript, java-parser, xmldom
+and Ajv with SARIF draft/format support) ship pre-bundled in
+`modules/code-analysis/vendor/`, so no install step is needed; maintainers
+regenerate them by running `pnpm run build:vendor` from `archify/modules/code-analysis/`
+after changing those pinned versions. Open the URL the command
 prints and keep the process running. Options:
 `--language ts|py|java|go|rust` (choose explicitly for a mixed-language root), `--map overlay-map.json`
 (`{"componentId": ["moduleId", …]}` when the IR's `sources` do not say which

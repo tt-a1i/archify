@@ -210,6 +210,7 @@ async function checkPinnedFiles(t, diagram) {
     // Once the reader settles, its Back control stays on screen.
     assert.equal(await read('(async () => {const b=document.querySelector(".source-back");let p=null;for(let i=0;i<60;i++){await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));const r=b.getBoundingClientRect(),k=r.left+","+r.top;if(k===p)break;p=k;}' +
       'const r=b.getBoundingClientRect();return r.left>=0&&r.right<=document.documentElement.clientWidth;})()'), true, 'the source Back control must stay on screen');
+    if (!diagram) assert.equal(await read("(() => { const pane = document.querySelector('#bauify-code').getBoundingClientRect(); const shell = document.querySelector('.analysis-reader-shell').getBoundingClientRect(); return pane.right <= shell.right + 1; })()"), true, 'the standalone column must contain the whole source pane');
   };
   const assertFilesRestored = async side => {
     assert.equal(await read('document.getElementById("bauify-code").hidden'), true);
