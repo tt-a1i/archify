@@ -459,7 +459,7 @@ if (svgBlocks.length === 1) {
   });
   const cardinalityPorts = svgAttrs['data-erd-ui'] ? coincidentCardinalityPorts(arrows) : [];
   const relationshipLabels = collectRelationshipLabelMasks(beforeLegend, arrows);
-  const labelArrowheadMasks = architecture ? collectLabelArrowheadMasks(relationshipLabels, arrows) : [];
+  const labelArrowheadMasks = architecture ? collectLabelArrowheadMasks(relationshipLabels, arrows, beforeLegend) : [];
   const labelOwnership = architecture ? collectLabelOwnership(relationshipLabels, arrows) : [];
   const leadingSpace = collectArchitectureLeadingSpace({
     svgAttrs, fragment: beforeLegend, nodeRects, frames: compositionFrames,
@@ -865,13 +865,23 @@ function collectLabelOwnership(labels, arrows) {
   });
 }
 
-function collectLabelArrowheadMasks(labels, arrows) {
+function collectLabelArrowheadMasks(labels, arrows, svg) {
+  const boundedScales = new Map();
+  for (const [tag] of svg.matchAll(/<marker\b[^>]*>/g)) {
+    const attrs = parseAttrs(tag);
+    if (!/^arrowhead-bounded-\d+$/.test(attrs.id) || attrs.markerUnits !== 'userSpaceOnUse'
+        || attrs.viewBox !== '0 0 10 7') continue;
+    const scale = numberAttr(attrs, 'markerWidth') / 10;
+    if (scale > 0 && Math.abs(numberAttr(attrs, 'markerHeight') - 7 * scale) < 0.0001) {
+      boundedScales.set(`url(#${attrs.id})`, scale);
+    }
+  }
   const markers = arrows.flatMap(arrow => {
     if (!/^url\(#arrowhead(?:-[\w-]+)?\)$/.test(arrow.markerEnd)) return [];
     const end = arrow.visiblePaths.at(-1)?.segments.at(-1);
     if (!end) return [];
     const marker = arrowheadTriangle(end.end, end.control || end.start,
-      arrow.width || (arrow.variant === 'emphasis' ? 1.8 : 1.5));
+      boundedScales.get(arrow.markerEnd) ?? (arrow.width || (arrow.variant === 'emphasis' ? 1.8 : 1.5)));
     return [{ arrow, marker }];
   });
   return labels.flatMap(({ rect, label, relation }) => markers.flatMap(({ arrow, marker }) => (

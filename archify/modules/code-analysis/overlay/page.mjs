@@ -11,6 +11,7 @@ import { buildGraph, evaluateGraph, extractFacts, loadBaseline, loadPrevious, re
 import { reviewFindings } from '../lib/review.mjs';
 import { verificationContext } from '../lib/verification-context.mjs';
 import { buildOverlay } from './inject.mjs';
+import { driftResolutionInputs } from '../lib/architecture-drift.mjs';
 import { buildPullRequestView } from './pull-request.mjs';
 
 // Stage 4: delivered HTML + authored IR + graph → a new HTML with the analysis layer.
@@ -52,7 +53,7 @@ export function writeAnalysisView(dir, overlay, review) {
 // `html` is the page Archify delivered for `ir`; it is read, never modified.
 // `baseline` (file) marks accepted findings; `previous` (a findings.json from
 // an earlier run) adds a comparison. Both are recorded in review.json.
-export function analyzeRepository({ root, ir = null, html = null, out, locale = null, language = null, config = null, map = null, irSnapshot = null, baseline = null, previous = null, resume = null, openAnalysis = false, source = null, pullRequest = null }) {
+export function analyzeRepository({ root, ir = null, html = null, out, locale = null, language = null, config = null, map = null, irSnapshot = null, baseline = null, previous = null, resume = null, openAnalysis = false, source = null, pullRequest = null, captureDriftInputs = false }) {
   const absRoot = path.resolve(root);
   const irPath = ir ? path.resolve(ir) : null;
   const htmlPath = html ? path.resolve(html) : null;
@@ -62,8 +63,11 @@ export function analyzeRepository({ root, ir = null, html = null, out, locale = 
   if (path.resolve(dir, 'repo.analysis.html') === htmlPath) fail('cli/out-invalid', 'The analysis output must not overwrite the delivered HTML.', { supportedFixes: ['use a different --out directory'] });
   if (map && !irPath) fail('cli/input-invalid', '--map requires --ir.', { supportedFixes: ['provide the authored architecture IR or omit --map'] });
   fs.mkdirSync(dir, { recursive: true });
+  let resolutionInputs;
+  const onCapture = captureDriftInputs || (pullRequest?.pr.local && irPath && language === 'ts')
+    ? ({ reads }) => { resolutionInputs = driftResolutionInputs(absRoot, reads); } : undefined;
   const { adapter, facts, config: cfg, otherLanguages } = extractFacts(absRoot, {
-    language, config, capturedOnly: source?.sourceKind === 'git-tree',
+    language, config, capturedOnly: source?.sourceKind === 'git-tree', onCapture,
   });
   if (source) {
     facts.repository = { ...facts.repository, ...source };
@@ -79,7 +83,9 @@ export function analyzeRepository({ root, ir = null, html = null, out, locale = 
   const review = reviewFindings(findings.diagnostics, { baseline: loadBaseline(baseline), previous: prior, analysis: findings.analysis, files: [...facts.files, ...(findings.externalEvidence || [])].map((f) => f.path) });
   const irDoc = irSnapshot ?? (irPath ? readJsonInput(irPath, 'analysis --ir') : null);
   const mapDoc = map ? readJsonInput(map, 'analysis --map') : null;
-  if (pullRequest) pullRequest = buildPullRequestView({ ...pullRequest, facts, graph, findings, review, base: path.join(dir, 'base') });
+  if (captureDriftInputs && resolutionInputs) fs.writeFileSync(path.join(dir, 'resolution-inputs.json'), stableJson([...resolutionInputs]));
+  if (pullRequest) pullRequest = buildPullRequestView({ ...pullRequest, facts, graph, findings, review,
+    ir: irDoc, map: mapDoc, resolutionInputs, locale, base: path.join(dir, 'base') });
   const context = { schema_version: 1, mode: irPath ? 'diagram' : 'standalone', ir: irDoc, map: mapDoc, run: { ...(pullRequest ? { pullRequest } : {}), locale: locale || irDoc?.meta?.locale || 'en', openAnalysis: !irPath || openAnalysis, ...(resume ? { resume } : {}), suppressed: cfg.ignore || [], exclude: cfg.exclude || [], otherLanguages, boundaries: cfg.boundaries || null } };
   fs.writeFileSync(path.join(dir, 'view-context.json'), stableJson(context));
   const run = { ...context.run, rules: findings.rules, duplicates: findings.analysis?.duplicates || null, external: findings.analysis?.external || [], review, verification: verificationContext(prior, findings, review) };

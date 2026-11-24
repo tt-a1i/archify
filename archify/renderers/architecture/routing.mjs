@@ -32,8 +32,11 @@ import { changeEdgeLabelExtraWidth } from '../shared/change-marks.mjs';
 import { prepareCrossingPath, visibleCrossings } from '../shared/route-crossings.mjs';
 
 function labelDistance(points, rect, limit) {
-  return Math.min(...points.slice(1).map((end, index) =>
-    segmentRectClearanceWithin({ start: points[index], end }, rect, limit)));
+  let distance = Infinity;
+  for (let index = 1; index < points.length; index += 1) {
+    distance = Math.min(distance, segmentRectClearanceWithin({ start: points[index - 1], end: points[index] }, rect, Math.min(limit, distance)));
+  }
+  return distance;
 }
 
 function labelFollowsRoute(rect, points, others) {
@@ -71,6 +74,31 @@ export function parallelFrameRunLength(points, borders, clearance = 8) {
 export const READABLE_PORT_GAP = 22;
 export const MIN_PARALLEL_DEPARTURE = 48;
 export const READABLE_FRAME_GAP = 12;
+const AUTOMATIC_PORT_CORNER_GUTTER = 16;
+
+function portLaneLimits(box, axis) {
+  const [start, size] = axis ? [box.y, box.height] : [box.x, box.width];
+  const inset = Math.min(AUTOMATIC_PORT_CORNER_GUTTER, size / 2);
+  return [start + inset, start + size - inset];
+}
+
+function facingSides(from, to) {
+  if (from.x + from.width <= to.x) return { fromSide: 'right', toSide: 'left', axis: 1 };
+  if (to.x + to.width <= from.x) return { fromSide: 'left', toSide: 'right', axis: 1 };
+  if (from.y + from.height <= to.y) return { fromSide: 'bottom', toSide: 'top', axis: 0 };
+  if (to.y + to.height <= from.y) return { fromSide: 'top', toSide: 'bottom', axis: 0 };
+  return null;
+}
+
+export function facingPortCorridor(from, to) {
+  const facing = facingSides(from, to);
+  if (!facing) return null;
+  const { axis } = facing;
+  const [fromLow, fromHigh] = portLaneLimits(from, axis);
+  const [toLow, toHigh] = portLaneLimits(to, axis);
+  return { ...facing, low: Math.max(fromLow, toLow), high: Math.min(fromHigh, toHigh),
+    offset: (fromLow + fromHigh - toLow - toHigh) / 2 };
+}
 
 function reciprocalPair(left, right) {
   return left.from === right.to && left.to === right.from;
@@ -139,7 +167,7 @@ export function* closeReciprocalLanes(points, otherPoints) {
 // Use the same architecture route preferences for rendering and placement checks.
 export function createArchitectureRouter(components, connections, {
   frames = [], fixedCanvas = false, automaticPlacement = false, acceptSimplification,
-  readablePorts = false, spreadLanes = false, frameClearance = 0, separateRuns = false,
+  readablePorts = false, spreadLanes = false, frameClearance = 0, separateRuns = false, sideFor = null,
 } = {}) {
   return createRouter(components, connections, {
     distinctAutomaticPorts: true,
@@ -150,6 +178,7 @@ export function createArchitectureRouter(components, connections, {
     spreadLanes,
     frameClearance,
     separateRuns,
+    sideFor,
     acceptSimplification,
     // Intrinsic canvases can use one outward stub without shrinking their text.
     readabilityBottomMargin: fixedCanvas ? 0 : 24,
@@ -538,7 +567,6 @@ export function createRouter(components, connections = [], {
       .map((points) => points.slice(1, -1));
   }
 
-  const AUTOMATIC_PORT_CORNER_GUTTER = 16;
 
   function alignFacingPorts(conn, from, to, start, end, fromSide, toSide, ports) {
     return alignAutomaticFacingPorts(conn, from, to, start, end, fromSide, toSide, ports, {
@@ -1259,38 +1287,16 @@ export function createRouter(components, connections = [], {
       for (const rect of [...components.values(), ...frames, ...reservedLabels.map((entry) => entry.rect)]) {
         scenePoints.push([rect.x, rect.y], [rect.x + rect.width, rect.y + rect.height]);
       }
-      const bounds = {
-        left: Math.min(...scenePoints.map(([x]) => x)), right: Math.max(...scenePoints.map(([x]) => x)),
-        top: Math.min(...scenePoints.map(([, y]) => y)),
-        bottom: Math.max(...scenePoints.map(([, y]) => y)),
-      };
+      // A loop, not Math.min(...points): large scenes exceed the argument limit.
+      const bounds = { left: Infinity, right: -Infinity, top: Infinity, bottom: -Infinity };
+      for (const [x, y] of scenePoints) {
+        if (x < bounds.left) bounds.left = x;
+        if (x > bounds.right) bounds.right = x;
+        if (y < bounds.top) bounds.top = y;
+        if (y > bounds.bottom) bounds.bottom = y;
+      }
       const withinScene = ([x, y]) => x >= bounds.left && x <= bounds.right && y >= bounds.top && y <= bounds.bottom;
       const jointlyImproved = new Set();
-      const endpointSlotsClear = (candidateRoutes, others, sidesOf) => {
-        const entries = [...others, ...candidateRoutes];
-        for (const candidate of candidateRoutes) {
-          const sides = sidesOf(candidate.conn);
-          for (const [componentId, side, point] of [
-            [candidate.conn.from, sides.fromSide, candidate.points[0]],
-            [candidate.conn.to, sides.toSide, candidate.points.at(-1)],
-          ]) {
-            const coordinate = side === 'left' || side === 'right' ? 1 : 0;
-            for (const other of entries) {
-              if (other.conn === candidate.conn) continue;
-              const otherSides = sidesOf(other.conn);
-              for (const [otherId, otherSide, otherPoint] of [
-                [other.conn.from, otherSides.fromSide, other.points[0]],
-                [other.conn.to, otherSides.toSide, other.points.at(-1)],
-              ]) {
-                if (componentId === otherId && side === otherSide
-                    && Math.abs(point[coordinate] - otherPoint[coordinate])
-                      < portSpacing(candidate.conn, other.conn) - 0.0001) return false;
-              }
-            }
-          }
-        }
-        return true;
-      };
       const labelClears = (rect, owner, entries, labels, inBounds = withinScene) => {
         if (!rect) return !owner.label;
         if (!inBounds([rect.x, rect.y])
@@ -2305,6 +2311,468 @@ export function createRouter(components, connections = [], {
       .map(other => [conn, other.conn]));
   }
 
+  function endpointSlotsClear(candidateRoutes, others, sidesOf, previous) {
+    const entries = [...others, ...candidateRoutes];
+    for (const candidate of candidateRoutes) {
+      const sides = sidesOf(candidate.conn);
+      for (const [componentId, side, point, field, index] of [
+        [candidate.conn.from, sides.fromSide, candidate.points[0], 'fromSide', 0],
+        [candidate.conn.to, sides.toSide, candidate.points.at(-1), 'toSide', -1],
+      ]) {
+        const prior = previous?.points.at(index);
+        if (prior && previous.sides[field] === side && point[0] === prior[0] && point[1] === prior[1]) continue;
+        const coordinate = side === 'left' || side === 'right' ? 1 : 0;
+        for (const other of entries) {
+          if (other.conn === candidate.conn) continue;
+          const otherSides = sidesOf(other.conn);
+          for (const [otherId, otherSide, otherPoint] of [
+            [other.conn.from, otherSides.fromSide, other.points[0]],
+            [other.conn.to, otherSides.toSide, other.points.at(-1)],
+          ]) {
+            if (componentId === otherId && side === otherSide
+                && Math.abs(point[coordinate] - otherPoint[coordinate])
+                  < portSpacing(candidate.conn, other.conn) - 0.0001) return false;
+          }
+        }
+      }
+    }
+    return true;
+  }
+
+  const shortJogPx = 28;
+  const jogs = points => points.slice(3).flatMap((d, offset) => {
+    const [a, b, c] = points.slice(offset, offset + 3);
+    const axis = a[0] === b[0] ? 1 : 0;
+    return b[axis] === c[axis] && c[1 - axis] === d[1 - axis]
+      && (b[axis] - a[axis]) * (d[axis] - c[axis]) > 0
+      && Math.abs(c[1 - axis] - b[1 - axis]) < shortJogPx ? [{ offset, axis }] : [];
+  });
+
+  // Work on the finished plan. Changing a port during the greedy pass can
+  // steal a later route's corridor or change an authored route's fallback.
+  function simplifyFinishedRoutes(viewBox, borders, accept, detachedLabels) {
+    const entries = routedEntries();
+    const withLane = (point, axis, lane) => axis ? [point[0], lane] : [lane, point[1]];
+    const frameRuns = points => borders.flatMap(border => [...closeParallelRuns(points, [border.start, border.end], 8)]
+      .filter(run => run.overlap >= 8));
+    let compositions = 48;
+    for (const entry of entries) {
+      const { conn, points } = entry;
+      if (!compositions) break;
+      if (conn.from === conn.to || hasAuthoredRouteGeometry(conn) || hasAuthoredLabelPlacement(conn)
+          || [conn.fromSide, conn.toSide].some(side => side && side !== 'auto')) continue;
+      const runs = frameRuns(points);
+      const detached = points.length === 2 ? detachedLabels?.get(conn) : null;
+      if (detachedLabels ? !detached : points.length <= 2 && !runs.length) continue;
+      const wiggles = jogs(points);
+      const oldSides = selectedSides.get(conn);
+      const from = components.get(conn.from);
+      const to = components.get(conn.to);
+      const candidates = [];
+      const add = (points, sides = oldSides) => candidates.push({ points: normalizeRoutePoints(points), sides });
+      const facing = facingPortCorridor(from, to);
+      const others = entries.filter(other => other !== entry);
+      if (facing) {
+        const { fromSide, toSide, axis, low, high } = facing;
+        if (low <= high) {
+          const start = anchor(from, fromSide);
+          const end = anchor(to, toSide);
+          const mid = (low + high) / 2;
+          const lanes = [mid, start[axis], end[axis], points[0][axis], points.at(-1)[axis],
+            (low + mid) / 2, (mid + high) / 2, low, high];
+          // Include the edges of occupied slots and card shadows. A clear
+          // lane can sit between a spread port and the edge of the overlap.
+          const cuts = [];
+          for (const other of others) {
+            const sides = selectedSides.get(other.conn);
+            for (const [id, side, point] of [[other.conn.from, sides.fromSide, other.points[0]],
+              [other.conn.to, sides.toSide, other.points.at(-1)]]) {
+              if ((id === conn.from && side === fromSide) || (id === conn.to && side === toSide)) {
+                const spacing = portSpacing(conn, other.conn);
+                cuts.push(point[axis] - spacing, point[axis] + spacing);
+              }
+            }
+          }
+          const min = Math.min(start[1 - axis], end[1 - axis]);
+          const max = Math.max(start[1 - axis], end[1 - axis]);
+          for (const box of components.values()) {
+            if (box === from || box === to) continue;
+            const [start, size, edge, span] = axis
+              ? [box.x, box.width, box.y, box.height] : [box.y, box.height, box.x, box.width];
+            if (start <= max + 2 && start + size >= min - 2) cuts.push(edge - 3, edge + span + 3);
+          }
+          lanes.push(...cuts.filter(lane => lane > low && lane < high)
+            .sort((a, b) => Math.abs(a - mid) - Math.abs(b - mid) || a - b).slice(0, 12));
+          if (detached) {
+            const center = axis ? detached.y + detached.height / 2 : detached.x + detached.width / 2;
+            lanes.sort((a, b) => Math.abs(a - center) - Math.abs(b - center));
+          }
+          for (const lane of new Set(lanes.map(value => Math.max(low, Math.min(high, value))))) {
+            add([withLane(start, axis, lane), withLane(end, axis, lane)], { fromSide, toSide });
+          }
+        }
+      }
+      for (const { offset, axis } of wiggles) {
+        const [a, , , d] = points.slice(offset, offset + 4);
+        for (const lane of [a[1 - axis], d[1 - axis]]) {
+          add([...points.slice(0, offset), withLane(a, 1 - axis, lane),
+            withLane(d, 1 - axis, lane), ...points.slice(offset + 4)]);
+        }
+      }
+      for (const { index, across, separation, gap } of runs) {
+        const border = points[index][across] - separation;
+        for (const lane of [border - READABLE_FRAME_GAP, border + READABLE_FRAME_GAP, border - gap, border + gap]) {
+          add(points.map((point, i) => i === index || i === index + 1 ? withLane(point, across, lane) : point));
+        }
+      }
+      if (points.length >= 4) {
+        // The earlier elbow sweep uses provisional label reservations. Retry
+        // the natural elbows against the final masks and occupied ports.
+        for (const axis of [0, 1]) {
+          const fromSide = axis ? (to.cy < from.cy ? 'top' : 'bottom') : (to.cx < from.cx ? 'left' : 'right');
+          const toSide = axis ? (to.cx < from.cx ? 'right' : 'left') : (to.cy < from.cy ? 'bottom' : 'top');
+          const start = anchor(from, fromSide);
+          const end = anchor(to, toSide);
+          const ports = (point, box, side, across, previous, oldSide) => [...new Set([
+            point[across], ...(side === oldSide ? [previous[across]] : []), ...portLaneLimits(box, across),
+          ])].map(lane => withLane(point, across, lane));
+          for (const first of ports(start, from, fromSide, 1 - axis, points[0], oldSides.fromSide)) {
+            for (const last of ports(end, to, toSide, axis, points.at(-1), oldSides.toSide)) {
+              add([first, withLane(first, axis, last[axis]), last], { fromSide, toSide });
+            }
+          }
+        }
+      }
+      if (!candidates.length) continue;
+      const oldBudget = routeBudgetMetrics({ routedRelations: [entry] });
+      const oldLength = routeLength(points);
+      const approach = path => routeLength(path.slice(-2));
+      const minApproach = Math.min(approach(points), runs.length ? microSegmentPx : Math.max(16, 9 * relationshipStroke(conn)));
+      let crossings;
+      const seen = new Set();
+      let attempts = 8;
+      for (const { points: next, sides } of candidates) {
+        if (!attempts || !compositions) break;
+        const { fromSide, toSide } = sides;
+        const key = JSON.stringify(next);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        if (next.length < 2 || next.length > points.length || frameRuns(next).length
+            || approach(next) < minApproach || (!runs.length && routeLength(next) > oldLength + 0.0001)
+            || jogs(next).length > wiggles.length
+            || !next.every(([x, y]) => x >= 0 && y >= 0 && x <= viewBox[0] && y <= viewBox[1])
+            || !portHasCornerClearance(from, fromSide, next[0]) || !portHasCornerClearance(to, toSide, next.at(-1))
+            || !endpointSlotsClear([{ conn, points: next }], others,
+              other => other === conn ? sides : selectedSides.get(other), { points, sides: oldSides })
+            || !routeIsClear(conn, { points: next }, { from, to, ...sides }, others, [])) continue;
+        const nextBudget = routeBudgetMetrics({ routedRelations: [{ points: next }] });
+        crossings ??= others.map(other => crossingPoints(points, other));
+        if (nextBudget.routesOverSuggestedStretch > oldBudget.routesOverSuggestedStretch
+            || others.some((other, index) => crossingPoints(next, other, crossings[index] + 1) > crossings[index]
+              || [...closeParallelRuns(next, other.points, 3)].some(run => run.overlap >= 8))) continue;
+        attempts -= 1;
+        compositions -= 1;
+        const routed = { points: next, d: roundedPath(next, 8) };
+        if (!accept(conn, routed, sides, runs.length > 0, Boolean(detached))) continue;
+        cachePath(conn, routed, sides);
+        entry.points = next;
+        break;
+      }
+    }
+  }
+
+  // Compare finished geometry with the complete scene. Each accepted change
+  // removes a counted signal or a jog, without adding bends or crossing
+  // previously uncrossed pairs. A pair can exchange space before either
+  // route is installed.
+  function repairFinishedRoutes(viewBox, borders, accept) {
+    const entries = routedEntries();
+    const movable = entry => entry.conn.from !== entry.conn.to
+      && !hasAuthoredRouteGeometry(entry.conn) && !hasAuthoredLabelPlacement(entry.conn)
+      && [entry.conn.fromSide, entry.conn.toSide].every(side => !side || side === 'auto');
+    const crossing = (a, b) => crossingPoints(a.points, b, 1);
+    const budget = entry => routeBudgetMetrics({ routedRelations: [entry] });
+    const budgets = new Map(entries.map(entry => [entry.conn, budget(entry)]));
+    const crossingPeers = entry => entries.filter(peer => peer !== entry && crossing(entry, peer));
+    const flagged = entries.filter(entry => {
+      if (!movable(entry)) return false;
+      const { routesOverSuggestedBends, routesOverSuggestedStretch } = budgets.get(entry.conn);
+      return routesOverSuggestedBends || routesOverSuggestedStretch || crossingPeers(entry).length;
+    });
+    if (!flagged.length) return;
+
+    const terminal = points => routeLength(points.slice(-2));
+    const axisOf = side => Number(side === 'left' || side === 'right');
+    const onLane = (port, axis, lane) => axis ? [port[0], lane] : [lane, port[1]];
+    let probes = 12_000;
+    let compositions = 40;
+    function alternatives(entry, peers, limit, joint) {
+      const { conn, points: before } = entry;
+      const oldSides = selectedSides.get(conn);
+      const { routesOverSuggestedBends: bends, routesOverSuggestedStretch: stretch } = budgets.get(conn);
+      const crossed = new Set(peers.filter(peer => crossing(entry, peer)));
+      const minimumApproach = Math.min(terminal(before), Math.max(16, 9 * relationshipStroke(conn)));
+      const oldLength = routeLength(before);
+      const maxPoints = before.length;
+      const oldJogs = jogs(before).length;
+      const fromBox = components.get(conn.from);
+      const toBox = components.get(conn.to);
+      const inferred = inferredSides(conn);
+      // Keep an obstacle bypass on its inferred faces when those faces
+      // cannot connect by a cheap bridge. A shortcut through different
+      // faces would discard the route the obstacle search was meant to find.
+      const keepEndpointSides = before.length >= 6
+        && oldSides.fromSide === inferred.fromSide && oldSides.toSide === inferred.toSide
+        && !routeClearsComponents(conn,
+          routedForGeometryWithoutGrid(conn, [], connectionGeometry(conn, oldSides)).points, 2, []);
+      const seen = new Set([JSON.stringify(before)]);
+      const candidates = [];
+      function consider(raw, sides, from, to) {
+        if (!limit || !probes) return;
+        limit -= 1;
+        probes -= 1;
+        const points = normalizeRoutePoints(raw);
+        if (points.length < 2 || points.length > maxPoints || terminal(points) < minimumApproach
+          || points.slice(1).some((end, index) => end[0] !== points[index][0] && end[1] !== points[index][1])
+          || points.some(([x, y]) => x < 0 || y < 0 || x > viewBox[0] || y > viewBox[1])) return;
+        if (!joint && !crossed.size && !stretch && !(keepEndpointSides && oldJogs) && points.length > 4) return;
+        const length = routeLength(points);
+        const metrics = budget({ points });
+        const bendGain = bends - metrics.routesOverSuggestedBends;
+        const stretchGain = stretch - metrics.routesOverSuggestedStretch;
+        const jogGain = oldJogs - jogs(points).length;
+        if (bendGain < 0 || stretchGain < 0 || jogGain < 0 || parallelFrameRunLength(points, borders)) return;
+        const key = JSON.stringify(points);
+        if (seen.has(key)) return;
+        seen.add(key);
+        const next = { conn, points, sides };
+        if (!portHasCornerClearance(from, sides.fromSide, points[0])
+          || !portHasCornerClearance(to, sides.toSide, points.at(-1))
+          || !endpointSlotsClear([next], peers, other => other === conn ? sides : selectedSides.get(other), { points: before, sides: oldSides })
+          || !routeIsClear(conn, next, { from, to, ...sides }, peers, [])) return;
+        let removed = crossed.size;
+        for (const peer of peers) {
+          if (!crossing(next, peer)) continue;
+          if (!crossed.has(peer)) return;
+          removed -= 1;
+        }
+        const gain = bendGain + stretchGain + removed;
+        const shorterJog = keepEndpointSides && jogGain > 0 && length <= oldLength + 0.0001;
+        if (!gain && ((!joint && !shorterJog) || length > oldLength + interiorSegmentPx)) return;
+        candidates.push({ ...next, metrics, gain, length });
+      }
+      function ports(box, side, axis, preferred, oldPort) {
+        const [low, high] = portLaneLimits(box, axis);
+        const values = [preferred[axis], oldPort[axis], low, high, (low + high) / 2];
+        for (const { conn: other, field, sideField } of incidentEndpoints.get(box.id) || []) {
+          if (other === conn || selectedSides.get(other)[sideField] !== side) continue;
+          const value = pathCache.get(other).points.at(field === 'from' ? 0 : -1)[axis];
+          const gap = portSpacing(conn, other);
+          values.push(value - gap, value + gap);
+        }
+        return [...new Set(values.filter(value => value >= low && value <= high))].slice(0, 8);
+      }
+      for (let index = 1; index + 1 < before.length; index += 1) {
+        const first = before[index - 1];
+        const last = before[index];
+        const axis = Number(first[1] === last[1]);
+        const lane = first[axis];
+        // Sliding a whole leg keeps the neighbouring legs perpendicular.
+        const offsets = [-READABLE_FRAME_GAP, -4, 4, READABLE_FRAME_GAP];
+        const cuts = [before[index - 2]?.[axis], before[index + 1][axis], ...offsets.map(offset => lane + offset)];
+        for (const cut of cuts) {
+          if (cut === undefined) continue;
+          consider(before.map((point, i) => i === index - 1 || i === index ? onLane(point, axis, cut) : point),
+            oldSides, fromBox, toBox);
+        }
+      }
+      if (keepEndpointSides && before.length === 6 && !joint && (stretch || crossed.size)) {
+        const axis = axisOf(oldSides.fromSide);
+        const bypass = before[2][axis];
+        // Keep the clear bypass corridor and move the contacts toward it.
+        // The original turn stations still leave room to clear the blocker.
+        if (axis === axisOf(oldSides.toSide) && bypass === before[3][axis]) {
+          const nearBypass = (box, port) => {
+            const [low, high] = portLaneLimits(box, axis);
+            const clamp = lane => Math.min(high, Math.max(low, lane));
+            const near = clamp(bypass);
+            const readable = clamp(bypass + Math.sign(port[axis] - bypass) * shortJogPx);
+            return [...new Set([port[axis], near, readable, (port[axis] + readable) / 2])];
+          };
+          for (const source of nearBypass(fromBox, before[0])) {
+            for (const target of nearBypass(toBox, before.at(-1))) {
+              consider([onLane(before[0], axis, source), onLane(before[1], axis, source),
+                before[2], before[3], onLane(before[4], axis, target), onLane(before[5], axis, target)],
+              oldSides, fromBox, toBox);
+            }
+          }
+        }
+      }
+      for (const sides of candidateSidePairs(conn)) {
+        if (!limit || !probes) break;
+        if (keepEndpointSides && (sides.fromSide !== oldSides.fromSide || sides.toSide !== oldSides.toSide)) continue;
+        const { from, to, start, end, fromSide, toSide } = connectionGeometry(conn, sides);
+        const sourceAxis = axisOf(fromSide);
+        const targetAxis = axisOf(toSide);
+        const along = 1 - sourceAxis;
+        const starts = ports(from, fromSide, sourceAxis, start, before[0]);
+        const ends = ports(to, toSide, targetAxis, end, before.at(-1));
+        if (sourceAxis === targetAxis) {
+          const [low, high] = portLaneLimits(to, targetAxis);
+          for (const lane of starts) if (lane >= low && lane <= high) {
+            consider([onLane(start, sourceAxis, lane), onLane(end, targetAxis, lane)], sides, from, to);
+          }
+        }
+        const launch = outwardStub(start, fromSide, interiorSegmentPx);
+        const land = outwardStub(end, toSide, Math.max(interiorSegmentPx, minimumApproach));
+        const channels = [...new Set([(start[along] + end[along]) / 2, launch[along], land[along],
+          ...before.map(point => point[along])])];
+        // Start with the geometry chosen by the ordinary router, then look
+        // beyond its first bridge without reopening the full obstacle grid.
+        consider(routedForGeometryWithoutGrid(conn, peers, { from, to, start, end, ...sides }).points, sides, from, to);
+        for (const source of starts) for (const target of ends) {
+          const first = onLane(start, sourceAxis, source);
+          const last = onLane(end, targetAxis, target);
+          if (sourceAxis !== targetAxis) {
+            consider([first, onLane(first, along, last[along]), last], sides, from, to);
+            if (maxPoints >= 5 && (crossed.size || stretch || joint)) {
+              const firstStub = outwardStub(first, fromSide, interiorSegmentPx);
+              const lastStub = outwardStub(last, toSide, Math.max(interiorSegmentPx, minimumApproach));
+              for (const distance of [0, interiorSegmentPx]) {
+                const firstTurn = outwardStub(firstStub, fromSide, distance);
+                const lastTurn = outwardStub(lastStub, toSide, distance);
+                consider([first, firstTurn, onLane(firstTurn, sourceAxis, lastTurn[sourceAxis]), lastTurn, last], sides, from, to);
+              }
+            }
+          } else {
+            for (const channel of channels) {
+              consider([first, onLane(first, along, channel), onLane(last, along, channel), last], sides, from, to);
+            }
+          }
+        }
+      }
+      return candidates.sort((a, b) => b.gain - a.gain || a.points.length - b.points.length || a.length - b.length);
+    }
+
+    function install(candidates) {
+      if (!compositions) return false;
+      compositions -= 1;
+      const changes = candidates.map(({ conn, points, sides }) => ({ conn, sides, routed: { points, d: roundedPath(points, 8) } }));
+      if (!accept(changes)) return false;
+      for (const [index, { conn, sides, routed }] of changes.entries()) {
+        cachePath(conn, routed, sides);
+        entries.find(entry => entry.conn === conn).points = routed.points;
+        budgets.set(conn, candidates[index].metrics);
+      }
+      return true;
+    }
+
+    for (const entry of flagged) {
+      if (!compositions || !probes) break;
+      const peers = entries.filter(peer => peer !== entry);
+      const { routesOverSuggestedBends, routesOverSuggestedStretch } = budgets.get(entry.conn);
+      if (!routesOverSuggestedBends && !routesOverSuggestedStretch && !peers.some(peer => crossing(entry, peer))) continue;
+      for (const candidate of alternatives(entry, peers, 1550, false).slice(0, 5)) {
+        if (install([candidate])) break;
+      }
+    }
+    let pairProbes = 6;
+    for (const entry of flagged) {
+      for (const peer of crossingPeers(entry)) {
+        if (!pairProbes || !compositions || !probes) return;
+        if (!movable(peer) || flagged.indexOf(peer) < flagged.indexOf(entry)) continue;
+        pairProbes -= 1;
+        const others = entries.filter(other => other !== entry && other !== peer);
+        const first = alternatives(entry, others, 950, true).slice(0, 12);
+        const second = alternatives(peer, others, 950, true).slice(0, 12);
+        pairs: for (const a of first) for (const b of second) {
+          const sidesOf = conn => conn === a.conn ? a.sides : conn === b.conn ? b.sides : selectedSides.get(conn);
+          if (crossing(a, b) || routeOverlapsResolved(a.conn, a.points, [b])
+            || routeOverlapsResolved(b.conn, b.points, [a]) || !endpointSlotsClear([a, b], others, sidesOf)) continue;
+          if (install([a, b])) break pairs;
+        }
+      }
+    }
+  }
+
+  function routedForGeometryWithoutGrid(conn, peers, geometry) {
+    allowGridSearch = false;
+    try {
+      return routedForGeometry(conn, peers, geometry);
+    } finally {
+      allowGridSearch = true;
+    }
+  }
+
+  // Keep the current plan unless a bounded search can expose a masked
+  // approach or find room for a blocked label within the route budgets.
+  function repairMaskedApproach(conn, [width, height], accept, blockedLabel = false) {
+    if (hasAuthoredRouteGeometry(conn) || hasAuthoredLabelPlacement(conn)
+        || [conn.fromSide, conn.toSide].some(side => side && side !== 'auto')) return false;
+    const current = pathFor(conn);
+    if (current.points.length !== 4 && !(blockedLabel && current.points.length >= 2)) return false;
+    const sides = selectedSides.get(conn);
+    const from = components.get(conn.from);
+    const to = components.get(conn.to);
+    const others = routedEntries().filter(entry => entry.conn !== conn);
+    const crossingCounts = others.map(other => crossingPoints(current.points, other));
+    const budget = routeBudgetMetrics({ routedRelations: [current] });
+    const currentLength = routeLength(current.points);
+    const candidates = [];
+    const verticalFace = side => side === 'top' || side === 'bottom';
+    const withLane = (point, axis, lane) => axis ? [point[0], lane] : [lane, point[1]];
+    const add = (points, fromSide, toSide) => {
+      candidates.push({ points, sides: { fromSide, toSide }, length: routeLength(points) });
+    };
+
+    const first = current.points[0];
+    const last = current.points.at(-1);
+    if (sides.fromSide !== sides.toSide && verticalFace(sides.fromSide) === verticalFace(sides.toSide)) {
+      const axis = verticalFace(sides.fromSide) ? 0 : 1;
+      for (const lane of new Set([last[axis], first[axis]])) {
+        add([withLane(first, axis, lane), withLane(last, axis, lane)], sides.fromSide, sides.toSide);
+      }
+    }
+    // An outside lane can expose a label that cannot fit inside the facing
+    // corridor. Test the near lane at the same bend count as the dogleg.
+    for (const side of SIDE_ORDER) {
+      const axis = verticalFace(side) ? 0 : 1;
+      const start = anchor(from, side);
+      const end = anchor(to, side);
+      const outward = side === 'top' || side === 'left' ? -1 : 1;
+      const lane = (outward < 0 ? Math.min : Math.max)(start[1 - axis], end[1 - axis])
+        + outward * AUTOMATIC_PORT_CORNER_GUTTER;
+      for (const fromLane of [start[axis], ...portLaneLimits(from, axis)]) {
+        for (const toLane of [end[axis], ...portLaneLimits(to, axis)]) {
+          const source = withLane(start, axis, fromLane);
+          const target = withLane(end, axis, toLane);
+          add([source, withLane(source, 1 - axis, lane), withLane(target, 1 - axis, lane), target], side, side);
+        }
+      }
+    }
+    let remainingCompositions = 8;
+    for (const { points, sides, length } of candidates.sort((a, b) => a.length - b.length)) {
+      const { fromSide, toSide } = sides;
+      const nextBudget = routeBudgetMetrics({ routedRelations: [{ points }] });
+      const next = { conn, points };
+      if (points.some(([x, y]) => x < 0 || y < 0 || x > width || y > height)
+          || nextBudget.routesOverSuggestedBends > budget.routesOverSuggestedBends
+          || nextBudget.routesOverSuggestedStretch > budget.routesOverSuggestedStretch
+          || !portHasCornerClearance(from, fromSide, points[0])
+          || !portHasCornerClearance(to, toSide, points.at(-1))
+          || !endpointSlotsClear([next], others, other => selectedSides.get(other))
+          || !routeIsClear(conn, next, { from, to, ...sides }, others, [])
+          || others.some((other, index) => crossingPoints(points, other) > crossingCounts[index])) continue;
+      if (!remainingCompositions) break;
+      remainingCompositions -= 1;
+      const routed = { points, d: roundedPath(points, 8) };
+      if (!accept(routed, sides, length < currentLength)) continue;
+      cachePath(conn, routed, sides);
+      return true;
+    }
+    return false;
+  }
+
   function planIsClear([right, bottom], { checkProvisionalLabels = true } = {}) {
     const entries = routedEntries();
     const labels = checkProvisionalLabels ? reservedLabels : [];
@@ -2328,5 +2796,5 @@ export function createRouter(components, connections = [], {
     return { ...planningMetrics };
   }
 
-  return { ports: automaticPorts, pathFor, connectionSides, inferredSides, connectionEndpointSide, routingMetrics, crossingPairs, planIsClear };
+  return { ports: automaticPorts, pathFor, connectionSides, inferredSides, connectionEndpointSide, routingMetrics, crossingPairs, planIsClear, repairMaskedApproach, simplifyFinishedRoutes, repairFinishedRoutes };
 }

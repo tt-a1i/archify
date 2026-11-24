@@ -1,3 +1,5 @@
+import { horizontalLabelClearance } from './routing.mjs';
+
 const before = [-1, 0];
 const above = [0, -1];
 const after = [1, 0];
@@ -77,6 +79,51 @@ function findParallelPaths(items, edges, neighbors) {
   return { paths, core };
 }
 
+function labelRankOffsets(sites, occupied, edges, vertical, pitch) {
+  // The vertical pitch already leaves at least 42px for a 14px label.
+  // Account for the transposed packing coordinates when the island rotates.
+  const axis = vertical ? 1 : 0;
+  const size = vertical ? 'height' : 'width';
+  const slots = new Map();
+  let first = 0;
+  let last = 0;
+  for (const site of sites.values()) {
+    first = Math.min(first, site[axis]);
+    last = Math.max(last, site[axis]);
+  }
+  for (const edge of edges) {
+    if (!edge.label) continue;
+    const from = sites.get(edge.from);
+    const to = sites.get(edge.to);
+    const lane = from[1 - axis];
+    if (lane !== to[1 - axis] || from[axis] === to[axis]) continue;
+    const left = Math.min(from[axis], to[axis]);
+    const right = Math.max(from[axis], to[axis]);
+    const gap = (right - left) * pitch - (edge.from[size] + edge.to[size]) / 2;
+    const deficit = horizontalLabelClearance(edge) - gap;
+    if (deficit <= 0) continue;
+    let clear = true;
+    for (let rank = left + 1; rank < right && clear; rank += 1) {
+      clear = !occupied.has(vertical ? `${lane}:${rank}` : `${rank}:${lane}`);
+    }
+    if (!clear) continue;
+    if (!slots.has(right)) slots.set(right, []);
+    slots.get(right).push({ left, deficit });
+  }
+
+  const offsets = new Map();
+  let shift = 0;
+  for (let rank = first; rank <= last; rank += 1) {
+    // Share any space already inserted between the endpoints. Keep ranks
+    // in order and put the remaining deficit immediately before the target rank.
+    for (const { left, deficit } of slots.get(rank) ?? []) {
+      shift = Math.max(shift, offsets.get(left) + deficit);
+    }
+    offsets.set(rank, shift);
+  }
+  return offsets;
+}
+
 export function layOutParallelPaths(items, edges, neighbors, vertical) {
   if (items.length < 4 || items.length > 64 || items.some((item) => item.children)) return;
   const result = findParallelPaths(items, edges, neighbors);
@@ -144,13 +191,14 @@ export function layOutParallelPaths(items, edges, neighbors, vertical) {
   const height = Math.max(...items.map((item) => item.height));
   const xGap = vertical ? 42 : 60;
   const yGap = vertical ? 56 : 62;
+  const offsets = labelRankOffsets(sites, occupied, edges, vertical, vertical ? height + yGap : width + xGap);
   let left = 0;
   let top = 0;
   let right = 0;
   let bottom = 0;
   for (const [item, [x, y]] of sites) {
-    item.x = x * (width + xGap) - item.width / 2;
-    item.y = y * (height + yGap) - item.height / 2;
+    item.x = x * (width + xGap) - item.width / 2 + (vertical ? 0 : offsets.get(x));
+    item.y = y * (height + yGap) - item.height / 2 + (vertical ? offsets.get(y) : 0);
     left = Math.min(left, item.x);
     top = Math.min(top, item.y);
     right = Math.max(right, item.x + item.width);

@@ -121,7 +121,9 @@ export function alignDiagram({ ir, graph, map = null, facts = null, findings = [
 }
 
 export function buildOverlay({ ir, graph, html, map, facts = null, findings = [], findingsDocument = null, sourceRoot = null, run = {} }) {
-  if (!ir) html = standaloneShell({ locale: run.locale, title: run.pullRequest ? run.pullRequest.repository + ' · ' + (run.pullRequest.simulation ? createTranslator(messagesFor(run.locale))('PR analysis · local simulation') : '#' + run.pullRequest.number) : path.basename(sourceRoot || graph.repository.root || 'Repository') });
+  const pr = run.pullRequest;
+  const tr = createTranslator(messagesFor(run.locale));
+  if (!ir) html = standaloneShell({ locale: run.locale, title: pr ? pr.repository + ' · ' + (pr.local ? tr('Pinned local review') : pr.simulation ? tr('PR analysis · local simulation') : '#' + pr.number) : path.basename(sourceRoot || graph.repository.root || 'Repository') });
   if (ir && (!html.includes('data-node-id=') || !html.includes('class="toolbar"'))) {
     fail('overlay/not-archify-html', 'The HTML does not look like an Archify architecture artifact.', {
       evidence: { hasNodes: html.includes('data-node-id='), hasToolbar: html.includes('class="toolbar"') },
@@ -134,7 +136,7 @@ export function buildOverlay({ ir, graph, html, map, facts = null, findings = []
     generator: 'bauify',
     ui: { mode: ir ? 'diagram' : 'standalone', locale: analysisLocale(run.locale || ir?.meta?.locale), messages: messagesFor(run.locale || ir?.meta?.locale), resume: run.resume || null, openByDefault: run.openAnalysis === true },
     repository: graph.repository,
-    pullRequest: run.pullRequest || null,
+    pullRequest: pr ? Object.fromEntries(Object.entries(pr).filter(([key]) => key !== 'headSources')) : null,
     unresolved: graph.unresolved,
     excluded: graph.excluded,
     totals: { modules: graph.modules.length, edges: graph.edges.length, files: facts ? facts.files.length : null, findings: findings.length },
@@ -147,7 +149,7 @@ export function buildOverlay({ ir, graph, html, map, facts = null, findings = []
     verification: run.verification || null,
     tasks: facts && findingsDocument ? buildTaskPayloads({ findings: findingsDocument, facts, review: run.review }) : {},
     overview: buildOverview({ findings: listed, graph, facts, unmapped: ir ? unmapped : [], ambiguousModules, run, diagram: Boolean(ir) }),
-    snippets: sourceRoot ? collectSnippets(findings, sourceRoot, components.concat(unmapped.filter((m) => listed.some((f) => (f.moduleIds || []).includes(m.id))), { fileList: [...(run.pullRequest?.changedFiles || []).map(file => ({ path: file.path })), ...(run.pullRequest?.impact?.records || []).flatMap(record => record.locations.map(item => ({ path: item.file })))] }), facts, findingsDocument?.externalEvidence, run.pullRequest) : {},
+    snippets: sourceRoot ? collectSnippets(findings, sourceRoot, components.concat(unmapped.filter((m) => listed.some((f) => (f.moduleIds || []).includes(m.id))), { fileList: [...(run.pullRequest?.changedFiles || []).map(file => ({ path: file.path })), ...(run.pullRequest?.impact?.records || []).flatMap(record => record.locations.map(item => ({ path: item.file }))), ...(pr?.componentDrift?.edges || []).flatMap(edge => [...edge.base, ...edge.head])] }), facts, findingsDocument?.externalEvidence, run.pullRequest) : {},
   };
 
   payload.architectureBrief = architectureHandoff({ overview: payload.overview, repository: graph.repository, locale: run.locale || ir?.meta?.locale, diagram: Boolean(ir) });
@@ -372,7 +374,7 @@ function aggregate(edges, side, owner, owners) {
 // page can show the cited line with the whole file around it to scroll
 // through. Include listed component files as well as cited evidence files.
 function collectSnippets(findings, sourceRoot, components, facts, externalEvidence = [], pullRequest = null) {
-  const captured = new Map([...externalEvidence, ...(facts?.files || [])].filter(f => typeof f.sourceText === 'string').map(f => [f.path, f.sourceText]));
+  const captured = new Map([...(pullRequest?.headSources || []), ...externalEvidence, ...(facts?.files || [])].filter(f => typeof f.sourceText === 'string').map(f => [f.path, f.sourceText]));
   const wanted = new Set(components.flatMap((c) => (c.fileList || []).map((f) => f.path)));
   for (const f of findings) {
     const ev = f.evidence || {};
@@ -383,7 +385,7 @@ function collectSnippets(findings, sourceRoot, components, facts, externalEviden
     if (f.subject && f.subject.file) wanted.add(f.subject.file);
     for (const location of f.external?.locations || []) if (location.file) wanted.add(location.file);
   }
-  const out = {};
+  const out = Object.create(null);
   for (const file of [...wanted].sort()) {
     let text = captured.get(file);
     // New working-tree facts must never fall back to mutable source files.
