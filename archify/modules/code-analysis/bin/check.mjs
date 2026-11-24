@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DiagnosticError, fail, receipt } from '../core/index.mjs';
+import { withAnalysisOutput, writeCheckOutputs } from '../lib/output.mjs';
 import { baselineCommand, taskCommand } from '../lib/task-command.mjs';
 
 export const USAGE = `Usage:
@@ -59,10 +60,9 @@ export function parseCheckArgs(argv) {
 
 export async function runCheck(argv) {
   const { repo, options } = parseCheckArgs(argv);
-  const { extractFacts, buildGraph, evaluateGraph, loadBaseline, saveBaseline, loadPrevious, readJsonInput, stableJson, reviewSummary } = await import('../lib/analysis.mjs');
-  const { reviewFindings, baselineFrom, acceptFinding, revokeFinding, isOpen } = await import('../lib/review.mjs');
-  const { buildOverview, findingWhere } = await import('../overlay/overview.mjs');
-  const { alignDiagram, findingModules } = await import('../overlay/inject.mjs');
+  const out = options['--out'] ? path.resolve(options['--out']) : null;
+  const { extractFacts, buildGraph, evaluateGraph, loadBaseline, saveBaseline, loadPrevious, readJsonInput } = await import('../lib/analysis.mjs');
+  const { baselineFrom, acceptFinding, revokeFinding } = await import('../lib/review.mjs');
 
   const root = path.resolve(repo);
   const baselineFile = options['--baseline'] ? path.resolve(options['--baseline']) : null;
@@ -96,11 +96,9 @@ export async function runCheck(argv) {
       }
     }
   }
-  const out = options['--out'] ? path.resolve(options['--out']) : null;
-  const previousFile = options['--compare'] ? path.resolve(options['--compare']) : out ? path.join(out, 'findings.json') : null;
-  if (options['--compare'] && !fs.existsSync(previousFile)) fail('cli/input-invalid', `Not a file: ${options['--compare']}`, { subject: { option: '--compare' }, supportedFixes: ['pass the findings.json of an earlier run'] });
-  // An explicit --compare must be readable; the automatic one in --out is optional.
-  const previous = loadPrevious(previousFile, { strict: Boolean(options['--compare']) });
+  const compare = options['--compare'] ? path.resolve(options['--compare']) : null;
+  if (compare && !fs.existsSync(compare)) fail('cli/input-invalid', `Not a file: ${options['--compare']}`, { subject: { option: '--compare' }, supportedFixes: ['pass the findings.json of an earlier run'] });
+  const explicitPrevious = compare ? loadPrevious(compare, { strict: true }) : null;
 
   const { facts, config, otherLanguages } = extractFacts(root, { language: options['--language'] || null, config: options['--config'] || null });
   const graph = buildGraph(facts, config);
@@ -121,6 +119,16 @@ export async function runCheck(argv) {
     return { exitCode: 0, receipt: receipt('ok', { command: 'check', action: 'update-baseline', baseline: baselineFile, entries: doc.accepted.length, kept, added: doc.accepted.length - kept, dropped: existing ? existing.accepted.length - kept : 0 }) };
   }
 
+  const finish = lock => finishCheck({ root, out, options, irDoc, mapDoc, baselineFile, explicitPrevious, facts, config, otherLanguages, graph, findings, lock });
+  return out ? withAnalysisOutput(out, finish) : finish(null);
+}
+
+async function finishCheck({ root, out, options, irDoc, mapDoc, baselineFile, explicitPrevious, facts, config, otherLanguages, graph, findings, lock }) {
+  const { loadBaseline, loadPrevious, stableJson, reviewSummary } = await import('../lib/analysis.mjs');
+  const { reviewFindings, isOpen } = await import('../lib/review.mjs');
+  const { buildOverview, findingWhere } = await import('../overlay/overview.mjs');
+  const { alignDiagram, findingModules } = await import('../overlay/inject.mjs');
+  const previous = explicitPrevious || (out ? loadPrevious(path.join(out, 'findings.json')) : null);
   const review = reviewFindings(findings.diagnostics, { baseline: loadBaseline(baselineFile), previous, analysis: findings.analysis, files: [...facts.files, ...(findings.externalEvidence || [])].map((f) => f.path) });
   if (options['--new-only'] && review.comparison && (findings.analysis.external?.length || previous?.analysis?.external?.length) && review.comparison.comparable !== true) {
     fail('external/comparison-unverified', 'New-only gating requires comparable external reports.', { evidence: { reasons: review.comparison.reasons }, supportedFixes: ['provide matching tool versions, rule configuration, complete scan scope and source-bound reports', 'run a full check without --new-only to inspect the available diagnostics'] });
@@ -133,11 +141,6 @@ export async function runCheck(argv) {
     : findings.diagnostics.map((d) => ({ ...d, ...(review.findings[d.id] ? { review: review.findings[d.id] } : {}), moduleIds: findingModules(d, fileModule), componentIds: [] }));
   const overview = buildOverview({ findings: listed, graph, facts, unmapped: alignment ? alignment.unmapped : [], ambiguousModules: alignment ? alignment.ambiguousModules : [], run, diagram: Boolean(alignment) });
 
-  if (out) {
-    fs.mkdirSync(out, { recursive: true });
-    for (const [name, doc] of [['raw-facts', facts], ['module-graph', graph], ['findings', findings], ['review', review], ['overview', overview]]) fs.writeFileSync(path.join(out, `${name}.json`), stableJson(doc));
-  }
-
   const failOn = options['--fail-on'];
   const newOnly = Boolean(options['--new-only']);
   const failing = failOn === 'never' ? [] : findings.diagnostics.filter((d) => SEVERITY[d.severity] <= SEVERITY[failOn]
@@ -146,7 +149,7 @@ export async function runCheck(argv) {
     // finding counts as new: a missing artifact must not pass the gate.
     && (!newOnly || !review.comparison || review.findings[d.id]?.since === 'new'));
   const status = failing.length ? 'failed' : 'ok';
-  return {
+  const result = {
     exitCode: failing.length ? 1 : 0,
     receipt: receipt(status, {
       command: 'check', root, out,
@@ -211,6 +214,13 @@ export async function runCheck(argv) {
       },
     }),
   };
+  if (lock) {
+    // The implicit comparison reads findings.json. Publish it last, after
+    // every other artifact and the CLI receipt are ready.
+    const documents = [['raw-facts', facts], ['module-graph', graph], ['review', review], ['overview', overview], ['findings', findings]];
+    writeCheckOutputs(out, lock, documents.map(([name, doc]) => [`${name}.json`, stableJson(doc)]));
+  }
+  return result;
 }
 
 export { findingWhere as where } from '../overlay/overview.mjs';
