@@ -2,17 +2,17 @@
   "schemaVersion": 1,
   "skillId": "archify",
   "channel": "stable",
-  "version": "3.3.0",
-  "publishedAt": "2026-11-22T17:32:23Z",
+  "version": "3.3.1",
+  "publishedAt": "2026-11-24T14:01:27Z",
   "source": {
     "repository": "https://github.com/tt-a1i/archify",
-    "ref": "v3.3.0",
-    "treeSha": "d3e9c89dd9510a64c1114d685b68ebf1887f135e"
+    "ref": "v3.3.1",
+    "treeSha": "193c697e93622c9a306567d0d84c7b23a15f2e24"
   },
   "artifact": {
-    "sha256": "00e4ff53267aee7dabf22ed333360cd3e380db20271a50264ae146ee25cf2538"
+    "sha256": "b92b4d55446966fd74e5338a45d6de9a7a1b194420cd5eb14d2cdc39f1053b80"
   },
-  "summary": "Adds Code Analysis & Architecture Diagnosis, Story walkthroughs and 1080p video, PR walkthroughs, automatic architecture placement, and lighter installs.",
-  "releaseNotes": "https://github.com/tt-a1i/archify/releases/tag/v3.3.0",
+  "summary": "Polishes automatic Architecture layout, spine labels, crossing reduction, and Classic styling, and deduplicates cited Explainer files.",
+  "releaseNotes": "https://github.com/tt-a1i/archify/releases/tag/v3.3.1",
   "severity": "normal"
 }
