@@ -972,3 +972,141 @@ export function* directLinkCandidates({ boxes, routes }) {
     }
   }
 }
+
+export function* pendantSubtreeCandidates({ boxes, routes, titles }) {
+  const neighbors = new Map([...boxes.keys()].map(id => [id, new Set()]));
+  const outgoing = new Map([...boxes.keys()].map(id => [id, new Set()]));
+  for (const { relation: { from, to } } of routes) {
+    if (from === to) continue;
+    neighbors.get(from).add(to);
+    neighbors.get(to).add(from);
+    outgoing.get(from).add(to);
+  }
+  const frames = titles.boundaries;
+  const scopeOf = id => frames.map(frame => Number(frame.wraps.includes(id))).join('');
+  const contentRight = Math.max(...[...boxes.values()].map(box => box.x + box.width));
+  const contentBottom = Math.max(...[...boxes.values()].map(box => box.y + box.height));
+  const seenBridges = new Set();
+  const seenMoves = new Set();
+
+  for (const { relation: { from: anchorId, to: rootId } } of routes) {
+    if (anchorId === rootId) continue;
+    const bridgeKey = `${anchorId}->${rootId}`;
+    if (seenBridges.has(bridgeKey)) continue;
+    seenBridges.add(bridgeKey);
+
+    const subtree = new Set([rootId]);
+    const queue = [rootId];
+    let isBridge = true;
+    for (const current of queue) {
+      for (const next of neighbors.get(current)) {
+        if ((current === rootId && next === anchorId) || (current === anchorId && next === rootId)) continue;
+        if (next === anchorId) {
+          isBridge = false;
+          break;
+        }
+        if (!subtree.has(next)) {
+          subtree.add(next);
+          queue.push(next);
+        }
+      }
+      if (!isBridge || subtree.size > 6) break;
+    }
+    const fanOutChildren = [...outgoing.get(rootId)].filter(id => subtree.has(id)).length;
+    if (!isBridge || subtree.size < 3 || subtree.size > 6 || subtree.size > boxes.size - 2
+        || fanOutChildren < 2 || frames.length) continue;
+    const rootScope = scopeOf(rootId);
+    const inner = [...subtree].map(id => boxes.get(id));
+    if (inner.some(box => box.pos || scopeOf(box.id) !== rootScope)) continue;
+
+    const anchor = boxes.get(anchorId);
+    const root = boxes.get(rootId);
+    if (Math.abs(root.cx - anchor.cx) < 48 || Math.abs(root.cy - anchor.cy) < 48) continue;
+
+    const links = routes.filter(({ relation: r }) =>
+      (r.from === anchorId && r.to === rootId) || (r.from === rootId && r.to === anchorId));
+    const others = [...boxes.values()].filter(box => !subtree.has(box.id));
+    const minBridgeGapX = Math.max(72, ...links.map(({ relation }) => horizontalLabelClearance(relation)));
+    const gap = 28;
+
+    const subTop = Math.min(...inner.map(member => member.y));
+    const subBottom = Math.max(...inner.map(member => member.y + member.height));
+    const subHeight = subBottom - subTop;
+    const side = Math.sign(root.cx - anchor.cx) || 1;
+    const sideBlockers = others.filter(other => side > 0
+      ? other.x + other.width > anchor.x + anchor.width + 24
+      : other.x < anchor.x - 24);
+    const firstSideBlockerTop = sideBlockers.length ? Math.min(...sideBlockers.map(other => other.y)) : Infinity;
+    const upperPocketRootCy = subTop > 200 && firstSideBlockerTop - 36 - subHeight >= 40
+      ? root.cy + (firstSideBlockerTop - 36 - subBottom)
+      : null;
+
+    const shifts = [];
+    for (const targetCy of [
+      anchor.cy,
+      ...(upperPocketRootCy !== null ? [upperPocketRootCy] : []),
+      ...(root.cy > anchor.cy + 80 ? [anchor.cy - anchor.height - 68, anchor.cy - 96] : []),
+    ]) {
+      const dy = targetCy - root.cy;
+      const dxCandidates = new Set([0]);
+      if (side > 0) {
+        const minRootX = targetCy === anchor.cy ? anchor.x + anchor.width + minBridgeGapX : anchor.x + anchor.width + 72;
+        let minShiftForOthers = -Infinity;
+        for (const member of inner) {
+          const top = member.y + dy;
+          const bottom = top + member.height;
+          for (const other of others) {
+            if (other.y + other.height + gap <= top || bottom + gap <= other.y) continue;
+            if (other.cx <= member.cx + 80) {
+              minShiftForOthers = Math.max(minShiftForOthers, other.x + other.width + 44 - member.x);
+            }
+          }
+        }
+        const pulledDx = Math.max(minRootX - root.x, minShiftForOthers);
+        if (Number.isFinite(pulledDx)) dxCandidates.add(pulledDx);
+        if (minShiftForOthers > 0) dxCandidates.add(minShiftForOthers);
+      } else {
+        const maxRootX = targetCy === anchor.cy ? anchor.x - root.width - minBridgeGapX : anchor.x - root.width - 72;
+        let maxShiftForOthers = Infinity;
+        for (const member of inner) {
+          const top = member.y + dy;
+          const bottom = top + member.height;
+          for (const other of others) {
+            if (other.y + other.height + gap <= top || bottom + gap <= other.y) continue;
+            if (other.cx >= member.cx - 80) {
+              maxShiftForOthers = Math.min(maxShiftForOthers, other.x - 44 - member.width - member.x);
+            }
+          }
+        }
+        const pulledDx = Math.min(maxRootX - root.x, maxShiftForOthers);
+        if (Number.isFinite(pulledDx)) dxCandidates.add(pulledDx);
+        if (maxShiftForOthers < 0) dxCandidates.add(maxShiftForOthers);
+      }
+      for (const dx of dxCandidates) shifts.push([dx, dy]);
+    }
+    {
+      const dx = anchor.cx - root.cx;
+      shifts.push([dx, 0]);
+      const vSide = Math.sign(root.cy - anchor.cy) || 1;
+      const targetRootY = vSide > 0 ? anchor.y + anchor.height + 72 : anchor.y - root.height - 72;
+      shifts.push([dx, targetRootY - root.y]);
+    }
+
+    for (const [dx, dy] of shifts) {
+      if (Math.abs(dx) + Math.abs(dy) < 48) continue;
+      const changed = inner.map(member => move(member, member.x + dx, member.y + dy));
+      if (changed.some((member, index) => member.x < 40 || member.y < 40
+          || member.x + member.width > contentRight + 48.0001
+          || member.y + member.height > contentBottom + 0.0001
+          || others.some(other => rectsOverlap(other, member, gap))
+          || frames.some(frame => !frame.wraps.includes(member.id) && rectsOverlap(frame, member, 12)
+            && !rectsOverlap(frame, inner[index], 12)))) continue;
+      const key = JSON.stringify(changed.map(({ id, x, y }) => [id, Math.round(x), Math.round(y)]));
+      if (seenMoves.has(key)) continue;
+      seenMoves.add(key);
+      const moved = new Map(boxes);
+      for (const member of changed) moved.set(member.id, member);
+      yield { boxes: moved };
+    }
+  }
+}

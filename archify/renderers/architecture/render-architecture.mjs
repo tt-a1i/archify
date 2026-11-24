@@ -17,7 +17,7 @@ import { denseTerminalCandidates, junctionBends, junctionCandidates } from './ju
 import { frameLanePlacements } from './frame-lane-placement.mjs';
 import { facingLabelSpacingCandidate, labelBesideStraightShaft, sideCardPortPreferences } from './label-spacing-placement.mjs';
 import { placeCrossedLeaf, placeCrossedSinks, facingFramePlacements } from './crossed-leaf-placement.mjs';
-import { blockedLinkCount, centeredFanOutCandidates, chainReflowCandidates, compositionImbalance, crossingPlacementCandidates, directLinkCandidates, foldedChain, frameAttachmentCandidates, frameEnclosureCandidates, groupMoveCanPreserveRoutes, groupMovePreservesRoutes, measuredCrossingPairs, nearAlignmentCandidates, routeSpanMeasures, sharedNeighborCandidates, sharedSinkColumnCandidates, strongestLayerOrder, terminalBranchCandidates } from './automatic-placement-candidates.mjs';
+import { blockedLinkCount, centeredFanOutCandidates, chainReflowCandidates, compositionImbalance, crossingPlacementCandidates, directLinkCandidates, foldedChain, frameAttachmentCandidates, frameEnclosureCandidates, groupMoveCanPreserveRoutes, groupMovePreservesRoutes, measuredCrossingPairs, nearAlignmentCandidates, pendantSubtreeCandidates, routeSpanMeasures, sharedNeighborCandidates, sharedSinkColumnCandidates, strongestLayerOrder, terminalBranchCandidates } from './automatic-placement-candidates.mjs';
 import {
   closeReciprocalLanes, createArchitectureRouter, connectionLabelBoxAt, parallelFrameRunLength,
   MIN_PARALLEL_DEPARTURE, parallelRunMeasures, READABLE_FRAME_GAP, READABLE_PORT_GAP,
@@ -1745,17 +1745,202 @@ function balanceFanOutPlacement(initial, ordinary) {
   return balanced;
 }
 
-const compactedComposition = compactJunctions(reserveFacingLabelSpace(improveFrameLanes(
+function harmonizeColumnWidths(finished) {
+  const { next: initial } = finished;
+  if (!automaticComposition || !whollyInferred || components.size < 2 || components.size > 24
+      || connections.some(conn => conn.fromSide !== undefined || conn.toSide !== undefined)) return finished;
+  const authoredSizedIds = new Set(asArray(arch.components).filter(c => c.size).map(c => c.id));
+  const comfortableWidthFor = box => {
+    if (authoredSizedIds.has(box.id)) return box.width;
+    const sublabelFont = scalableComponentText.test(box.sublabel ?? '')
+      ? componentTextFit.sublabelScalable : componentTextFit.sublabelPreferred;
+    return Math.min(256, Math.ceil(Math.max(
+      128, box.width, minimumNodeTextWidth(box.sublabel, sublabelFont) + 18,
+    ) / 8) * 8);
+  };
+  const sorted = [...initial.boxes.values()].sort((a, b) => a.cx - b.cx || a.y - b.y);
+  const columns = [];
+  for (const box of sorted) {
+    const column = columns.at(-1);
+    if (column && Math.abs(box.cx - column.cx) <= 6) {
+      column.ids.push(box.id);
+      column.cx = column.ids.reduce((sum, id) => sum + initial.boxes.get(id).cx, 0) / column.ids.length;
+    } else {
+      columns.push({ cx: box.cx, ids: [box.id] });
+    }
+  }
+  const eligibleColumns = columns.filter(column => column.ids.length >= 2
+    || column.ids.some(id => comfortableWidthFor(initial.boxes.get(id)) > initial.boxes.get(id).width));
+  if (!eligibleColumns.length) return finished;
+
+  const frames = initial.titles.boundaries;
+  const widenColumn = (baseBoxes, ids, targetColWidth) => {
+    const colSet = new Set(ids);
+    const group = ids.map(id => baseBoxes.get(id));
+    const others = [...baseBoxes.values()].filter(box => !colSet.has(box.id));
+    const maxColWidth = targetColWidth ?? Math.max(...group.map(comfortableWidthFor));
+    const updates = [];
+    const peerNudges = new Map();
+    for (const box of group) {
+      if (authoredSizedIds.has(box.id) || box.width >= maxColWidth) continue;
+      const desired = Math.min(maxColWidth, comfortableWidthFor(box) + 64);
+      let limit = Math.min(desired, 2 * (box.cx - layout.margin));
+      for (const other of others) {
+        if (other.y + other.height + 12 <= box.y || box.y + box.height + 12 <= other.y) continue;
+        const currentOther = peerNudges.get(other.id) ?? other;
+        let available = 2 * (Math.abs(currentOther.cx - box.cx) - currentOther.width / 2 - 28);
+        if (ids.length >= 2 && available < desired && desired - available <= 40) {
+          const dir = currentOther.cx < box.cx ? -1 : 1;
+          const shift = Math.ceil((desired - available) / 2);
+          const nx = currentOther.x + dir * shift;
+          const nudged = { ...currentOther, x: nx, cx: nx + currentOther.width / 2 };
+          if (nx >= layout.margin
+              && ![...baseBoxes.values()].some(peer => peer.id !== other.id && !colSet.has(peer.id) && rectsOverlap(peer, nudged, 28))
+              && !frames.some(frame => !frame.wraps.includes(other.id) && rectsOverlap(frame, nudged, 12))) {
+            peerNudges.set(other.id, nudged);
+            available = desired;
+          }
+        }
+        limit = Math.min(limit, available);
+      }
+      for (const frame of frames) {
+        if (frame.wraps.includes(box.id)) continue;
+        if (frame.y + frame.height + 12 <= box.y || box.y + box.height + 12 <= frame.y) continue;
+        if (box.cx <= frame.x) limit = Math.min(limit, 2 * (frame.x - box.cx - 12));
+        else if (box.cx >= frame.x + frame.width) limit = Math.min(limit, 2 * (box.cx - frame.x - frame.width - 12));
+      }
+      const width = Math.floor(limit / 8) * 8;
+      if (width > box.width) updates.push({ ...box, x: box.cx - width / 2, width });
+    }
+    return updates.length ? [...updates, ...peerNudges.values()] : [];
+  };
+
+  const tryMoved = (currentFinished, moved) => {
+    const cur = currentFinished.next;
+    const base = currentFinished.crossings ? currentFinished : measureCandidateScene(cur);
+    const oldCorridors = corridorMeasures(cur);
+    const oldDebt = spacingDebt(cur);
+    const oldLabels = new Map(cur.labels.map(label => [label.relation, label]));
+    const labelSlots = new Set(cur.routes.filter(route => labelBesideStraightShaft(route, oldLabels.get(route.relation)))
+      .map(route => route.relation));
+    const bounds = boundsFor(moved);
+    if (frameEnclosures(moved, bounds).length) return null;
+    const proposal = evaluateCandidateScene(moved, {
+      bounds, routingOptions: { separateRuns: true }, checkDesktopFloor: true, checkEnclosures: true,
+      checkLabels: candidateLabelCheck(cur),
+    });
+    const { next, crossings, budget, bends, avoidable, isValid } = proposal;
+    const corridors = corridorMeasures(next);
+    const newLabels = new Map(next.labels.map(label => [label.relation, label]));
+    if (crossings.length > base.crossings.length || addsCrossings(base.crossings, crossings)
+        || bends > base.bends || avoidable > base.avoidable
+        || exceedsRouteBudget(base.budget, budget)
+        || spacingDebt(next).portDebt > oldDebt.portDebt + 0.0001
+        || corridors.border > oldCorridors.border + 0.0001
+        || next.routes.some((route, index) => (cur.routes[index].points.length === 2 && route.points.length > 2)
+          || (labelSlots.has(route.relation) && !labelBesideStraightShaft(route, newLabels.get(route.relation))))
+        || !isValid()) return null;
+    return proposal;
+  };
+
+  const draft = new Map(initial.boxes);
+  let changedCount = 0;
+  for (const { ids } of eligibleColumns) {
+    const updates = widenColumn(draft, ids);
+    if (!updates.length) continue;
+    changedCount += 1;
+    for (const box of updates) draft.set(box.id, box);
+  }
+  if (!changedCount) return finished;
+  if (changedCount > 1) {
+    const combined = tryMoved(finished, draft);
+    if (combined) return combined;
+  }
+  let current = finished;
+  for (const { ids } of eligibleColumns) {
+    const tiers = [...new Set(ids.flatMap(id => {
+      const box = current.next.boxes.get(id);
+      return [comfortableWidthFor(box), box.width];
+    }))].sort((a, b) => b - a);
+    for (const tier of tiers) {
+      const updates = widenColumn(current.next.boxes, ids, tier);
+      if (!updates.length) continue;
+      const moved = new Map(current.next.boxes);
+      for (const box of updates) moved.set(box.id, box);
+      const accepted = tryMoved(current, moved);
+      if (accepted) {
+        current = accepted;
+        break;
+      }
+    }
+  }
+  return current;
+}
+
+function compactLateralSubtrees(initial) {
+  if (!automaticComposition || !whollyInferred || components.size > 16 || connections.length > 24
+      || connections.some(conn => conn.fromSide !== undefined || conn.toSide !== undefined)) return initial;
+  let current = initial;
+  for (let step = 0; step < 2; step += 1) {
+    const proposals = [];
+    for (const proposal of pendantSubtreeCandidates(current)) {
+      proposals.push(proposal);
+      if (proposals.length === 8) break;
+    }
+    if (!proposals.length) break;
+    const baseline = measureCandidateScene(current);
+    const oldCorridors = corridorMeasures(current);
+    const oldLabels = new Map(current.labels.map(label => [label.relation, label]));
+    const labelSlots = new Set(current.routes.filter(route => labelBesideStraightShaft(route, oldLabels.get(route.relation)))
+      .map(route => route.relation));
+    const checkLabels = candidateLabelCheck(current);
+    let best = current;
+    let bestRouter;
+    let bestScore = [baseline.crossings.length, baseline.bends, baseline.spans.length];
+    for (const { boxes: moved } of proposals) {
+      const boxes = refitBoxesToMargin(moved, boundsFor(moved));
+      const bounds = boundsFor(boxes);
+      if (frameEnclosures(boxes, bounds).length) continue;
+      const { candidate, next, crossings, budget, spans, bends, avoidable, area, isValid } = evaluateCandidateScene(boxes, {
+        bounds, routingOptions: { separateRuns: true }, checkDesktopFloor: true, checkEnclosures: true, checkLabels,
+      });
+      const corridors = corridorMeasures(next);
+      const newLabels = new Map(next.labels.map(label => [label.relation, label]));
+      const score = [crossings.length, bends, spans.length];
+      const maxArea = baseline.area * (bends < baseline.bends ? 1.04 : 1.0001);
+      if (crossings.length > baseline.crossings.length || addsCrossings(baseline.crossings, crossings)
+          || bends > baseline.bends || avoidable > baseline.avoidable
+          || spans.length > baseline.spans.length - 32 || area > maxArea
+          || spans.spans.some((span, i) => span.length > baseline.spans.spans[i].length + 64)
+          || exceedsRouteBudget(baseline.budget, budget)
+          || corridors.border > oldCorridors.border + 0.0001
+          || next.routes.some((route, i) => (current.routes[i].points.length === 2 && route.points.length > 2)
+            || (labelSlots.has(route.relation) && !labelBesideStraightShaft(route, newLabels.get(route.relation))))
+          || !betterScore(score, bestScore) || !isValid()) continue;
+      best = next;
+      bestRouter = candidate;
+      bestScore = score;
+    }
+    if (!bestRouter) break;
+    router = bestRouter;
+    for (const [id, box] of best.boxes) components.set(id, box);
+    current = best;
+  }
+  return current;
+}
+
+const compactedComposition = compactLateralSubtrees(compactJunctions(reserveFacingLabelSpace(improveFrameLanes(
   alignNearlyFacingCards(simplifyFinishedComposition(placedComposition)),
-)));
+))));
 const structuredReflow = reflowSmallDiagrams(compactedComposition);
 const directReflow = reflowSmallDiagrams(structuredReflow, { direct: true });
 // Keep a coordinated column or fold intact. A direct shortcut only protects
 // the links it straightened and the number of remaining blocked links.
-const { next: composition, candidate: compositionRouter } = structuredReflow === compactedComposition
+const settledComposition = structuredReflow === compactedComposition
   ? balanceFanOutPlacement(directReflow,
     reduceDenseCrossings(directReflow, directReflow !== structuredReflow ? structuredReflow : undefined))
   : { next: directReflow, candidate: router };
+const { next: composition, candidate: compositionRouter } = harmonizeColumnWidths(settledComposition);
 router = compositionRouter;
 for (const [id, box] of composition.boxes) components.set(id, box);
 const {

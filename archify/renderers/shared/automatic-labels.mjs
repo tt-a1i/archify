@@ -264,6 +264,74 @@ export function placeAutomaticLabels({
     return best;
   }
 
+  // A close parallel of another relationship on one side (a reciprocal
+  // pair) makes a label on that side read as the neighbour's: prefer the
+  // far side.
+  const parallelDistance = (relationIndex, a, b, axis) => {
+    const across = 1 - axis;
+    const [low, high] = [Math.min(a[axis], b[axis]), Math.max(a[axis], b[axis])];
+    let nearest = null;
+    for (const other of segments) {
+      if (other.relationIndex === relationIndex) continue;
+      if (Math.abs(other.start[across] - other.end[across]) > 0.0001) continue;
+      const distance = other.start[across] - a[across];
+      if (Math.abs(distance) < 0.0001 || Math.abs(distance) > 36) continue;
+      const overlap = Math.min(high, Math.max(other.start[axis], other.end[axis]))
+        - Math.max(low, Math.min(other.start[axis], other.end[axis]));
+      if (overlap <= 0) continue;
+      if (nearest === null || Math.abs(distance) < Math.abs(nearest)) nearest = distance;
+    }
+    return nearest;
+  };
+  const parallelOnLowSide = (relationIndex, a, b, axis) => {
+    const nearest = parallelDistance(relationIndex, a, b, axis);
+    return nearest !== null && nearest < 0;
+  };
+
+  // Keep labels on the same side of a multi-step vertical spine when one
+  // side fits strictly more of its labels without collision.
+  const preferRightSpine = new Set();
+  if (repairOwnership && !onlyProtectedEndpoints) {
+    const verticalEntries = [];
+    for (const [index, label] of placed.entries()) {
+      const own = segments.filter(segment => segment.relationIndex === label.relationIndex);
+      if (own.length !== 1) continue;
+      const { start: a, end: b } = own[0];
+      if (Math.abs(a[0] - b[0]) >= 0.0001 || Math.abs(a[1] - b[1]) < label.height + 16) continue;
+      if (parallelDistance(label.relationIndex, a, b, 1) !== null) continue;
+      verticalEntries.push({ index, label, x: a[0], y: (a[1] + b[1]) / 2 + 3 });
+    }
+    verticalEntries.sort((left, right) => left.x - right.x);
+    const spines = [];
+    for (const entry of verticalEntries) {
+      const spine = spines.at(-1);
+      if (spine && Math.abs(entry.x - spine.x) <= 24) {
+        spine.entries.push(entry);
+        spine.x = spine.entries.reduce((sum, item) => sum + item.x, 0) / spine.entries.length;
+      } else {
+        spines.push({ x: entry.x, entries: [entry] });
+      }
+    }
+    const staticClear = rect => (
+      allowsPlacement(rect) && inside(rect) && rect.y + rect.height <= placementBottom
+      && !obstacles.some(obstacle => rectsOverlap(rect, obstacle, 2))
+      && !masksRoute(rect) && !coversRouteStroke(rect)
+      && !coversEndpoint(rect) && !touchesBorder(rect) && keepsOwner(rect)
+    );
+    for (const { entries } of spines) {
+      if (entries.length < 2) continue;
+      let leftCount = 0;
+      let rightCount = 0;
+      for (const { label, x, y } of entries) {
+        if (staticClear(rectAt(label, x - label.width / 2 - 6, y))) leftCount += 1;
+        if (staticClear(rectAt(label, x + label.width / 2 + 6, y))) rightCount += 1;
+      }
+      if (rightCount > leftCount) {
+        for (const { label } of entries) preferRightSpine.add(label.relationIndex);
+      }
+    }
+  }
+
   // An opted-in grid layout runs parallel lines through shared gaps. Rank
   // every position along all of the label's own segments: beside the line
   // first, then centred on its own line (the plate interrupts only that
@@ -271,35 +339,16 @@ export function placeAutomaticLabels({
   const gridCandidates = (label) => {
     const fractions = [0.5, 0.25, 0.75, 0.375, 0.625, 0.125, 0.875];
     const ranked = [];
-    // A close parallel of another relationship on one side (a reciprocal
-    // pair) makes a label on that side read as the neighbour's: prefer the
-    // far side.
-    const parallelOnLowSide = (a, b, axis) => {
-      const across = 1 - axis;
-      const [low, high] = [Math.min(a[axis], b[axis]), Math.max(a[axis], b[axis])];
-      let nearest = null;
-      for (const other of segments) {
-        if (other.relationIndex === label.relationIndex) continue;
-        if (Math.abs(other.start[across] - other.end[across]) > 0.0001) continue;
-        const distance = other.start[across] - a[across];
-        if (Math.abs(distance) < 0.0001 || Math.abs(distance) > 36) continue;
-        const overlap = Math.min(high, Math.max(other.start[axis], other.end[axis]))
-          - Math.max(low, Math.min(other.start[axis], other.end[axis]));
-        if (overlap <= 0) continue;
-        if (nearest === null || Math.abs(distance) < Math.abs(nearest)) nearest = distance;
-      }
-      return nearest !== null && nearest < 0;
-    };
     for (const { start: a, end: b } of segments.filter(segment => segment.relationIndex === label.relationIndex)) {
       if (Math.abs(a[1] - b[1]) < 0.0001 && Math.abs(a[0] - b[0]) >= label.width + 16) {
-        const [above, below] = parallelOnLowSide(a, b, 0) ? [1, 0] : [0, 1];
+        const [above, below] = parallelOnLowSide(label.relationIndex, a, b, 0) ? [1, 0] : [0, 1];
         for (const fraction of fractions) {
           const x = a[0] + (b[0] - a[0]) * fraction;
           if (Math.min(Math.abs(x - a[0]), Math.abs(x - b[0])) < label.width / 2 + 6) continue;
           ranked.push([above, x, a[1] - 10], [below, x, a[1] + 20], [2, x, a[1] + 3], [3, x, a[1] - 18], [3, x, a[1] + 28]);
         }
       } else if (Math.abs(a[0] - b[0]) < 0.0001 && Math.abs(a[1] - b[1]) >= label.height + 16) {
-        const leftFirst = !parallelOnLowSide(a, b, 1);
+        const leftFirst = !parallelOnLowSide(label.relationIndex, a, b, 1) && !preferRightSpine.has(label.relationIndex);
         for (const fraction of fractions) {
           const y = a[1] + (b[1] - a[1]) * fraction;
           if (Math.min(Math.abs(y - a[1]), Math.abs(y - b[1])) < label.height / 2 + 6) continue;
@@ -332,7 +381,20 @@ export function placeAutomaticLabels({
     // not a reason to restyle the diagram. New placements leave extra space.
     // The grid ranking already starts from the preferred position, so it
     // also re-ranks labels whose default spot is merely valid.
-    if (!rerank && !needsPlacement(label, index) && !coversOwnShaft?.(label)) return;
+    if (!rerank && !needsPlacement(label, index) && !coversOwnShaft?.(label)) {
+      if (repairOwnership && !onlyProtectedEndpoints) {
+        const own = segments.filter(segment => segment.relationIndex === label.relationIndex);
+        if (own.length === 1) {
+          const { start: a, end: b } = own[0];
+          if (Math.abs(a[1] - b[1]) < 0.0001 && label.y + label.height <= a[1]
+              && parallelOnLowSide(label.relationIndex, a, b, 0)) {
+            const outer = rectAt(label, label.lx, a[1] + 16);
+            if (clear(outer, index)) placed[index] = outer;
+          }
+        }
+      }
+      return;
+    }
     if (preferRouteMidpoint) {
       const replacement = searchOwnedBand(label, index, segments.filter(segment => segment.relationIndex === label.relationIndex));
       if (replacement) placed[index] = replacement;
@@ -356,10 +418,16 @@ export function placeAutomaticLabels({
       // Extra endpoint padding can hide a valid outer slot for a reciprocal
       // pair and make the planner send its other arrow around both nodes.
       if (Math.abs(a[1] - b[1]) < 0.0001 && Math.abs(a[0] - b[0]) >= label.width + 4) {
+        const belowFirst = repairOwnership && !onlyProtectedEndpoints && parallelOnLowSide(label.relationIndex, a, b, 0);
         candidates = [0.5, 0.25, 0.75, 0.125, 0.875].flatMap(fraction => {
           const x = a[0] + (b[0] - a[0]) * fraction;
           if (Math.min(Math.abs(x - a[0]), Math.abs(x - b[0])) < 8) return [];
-          return [
+          return belowFirst ? [
+            [x, a[1] + 20],
+            [x, a[1] - 10],
+            [x, a[1] + 28],
+            [x, a[1] - 18],
+          ] : [
             [x, a[1] - 10],
             [x, a[1] + 20],
             [x, a[1] - 18],
@@ -367,10 +435,17 @@ export function placeAutomaticLabels({
           ];
         });
       } else if (Math.abs(a[0] - b[0]) < 0.0001 && Math.abs(a[1] - b[1]) >= label.height + 16) {
+        const rightFirst = repairOwnership && !onlyProtectedEndpoints
+          && (parallelOnLowSide(label.relationIndex, a, b, 1) || preferRightSpine.has(label.relationIndex));
         candidates = [0.5, 0.25, 0.75, 0.125, 0.875].flatMap(fraction => {
           const y = a[1] + (b[1] - a[1]) * fraction;
           if (Math.min(Math.abs(y - a[1]), Math.abs(y - b[1])) < 8) return [];
-          return [
+          return rightFirst ? [
+            [a[0] + label.width / 2 + 6, y + 3],
+            [a[0] - label.width / 2 - 6, y + 3],
+            [a[0] + label.width / 2 + 14, y + 3],
+            [a[0] - label.width / 2 - 14, y + 3],
+          ] : [
             [a[0] - label.width / 2 - 6, y + 3],
             [a[0] + label.width / 2 + 6, y + 3],
             [a[0] - label.width / 2 - 14, y + 3],
