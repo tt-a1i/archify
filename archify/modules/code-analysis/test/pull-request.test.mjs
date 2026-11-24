@@ -160,3 +160,10 @@ test('pinned CLI reviews an exact base and head with renamed source and preserve
   assert.equal(fs.readFileSync(result.receipt.html, 'utf8'), original);
   assert.equal(fs.readdirSync(out).some(name => name.startsWith('analysis.next-')), false);
 });
+
+
+test('pinned reviews reject a scope absent from both trees', async t => {
+  const f = fixture(t);
+  await assert.rejects(preparePullRequest({ root: f.root, out: path.join(f.dir, 'bad-scope'), scope: 'not-a-directory', local: { base: f.base, head: f.head } }),
+    error => error.diagnostics?.some(diagnostic => diagnostic.code === 'pr/scope-invalid'));
+});

@@ -62,7 +62,7 @@ export async function materializeTree({ cache, sha, scope, target, blobSource = 
       fail('pr/tree-path-unsupported', 'A Git tree path cannot be safely materialized on this system.');
     }
     names.add(folded);
-    if (type !== 'blob' || !/^100(?:644|755)$/.test(mode)) { skipped.push({ path: relative, mode, type }); continue; }
+    if (type !== 'blob' || !/^100(?:644|755)$/.test(mode)) { skipped.push({ path: relative, mode, type, oid }); continue; }
     records.push({ path: relative, filename, oid, mode });
   }
   // cat-file's partial-clone fallback fetches one missing blob at a time.

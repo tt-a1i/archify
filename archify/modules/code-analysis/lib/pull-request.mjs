@@ -173,6 +173,9 @@ async function prepareLocalPullRequest({ root, out, local, scope }) {
         });
       }
     }
+    if (scope !== '.' && Object.values(manifests).every(manifest => !manifest.files.length && !manifest.skipped.length)) {
+      fail('pr/scope-invalid', 'The analysis scope has no entries in either pinned commit.', { evidence: { scope } });
+    }
     const changedFiles = await localFiles(root, local.base, local.head, scope);
     return { pr, scope, directory, roots, manifests, changedFiles, sourceGitRoot: root,
       source: side => ({ root: scope, revision: local[side], baseRevision: local.base, sourceKind: 'git-tree', url: null }) };
