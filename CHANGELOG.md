@@ -4,7 +4,21 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 ## [Unreleased]
 
-> Development identity: `v3.3.1-dev.1`. Not a stable release.
+## [3.3.1] — 2026-11-24
+
+### Changed
+- **Automatic Architecture layout, label ownership, and visual polish (#1473).**
+  - Inferred vertical columns (`layout.mode: "auto"`, up to 24 unpinned cards) harmonize card widths to flush left/right edges with comfortable sublabel breathing room.
+  - Unframed 1-bridge lateral pendant subtrees compact and lift into open vertical space alongside the main spine instead of trailing in lower corners.
+  - Multi-step vertical spines keep relationship labels on the cleaner side, reciprocal horizontal shafts place labels on their outer sides instead of between parallel lines, and parallel/vertical chain corridors reserve space for relationship labels.
+  - Dense unpinned graphs (9–12 cards) and framed topologies reduce avoidable crossings, fan-out hubs balance across recipients, shortcuts straighten past clear corridors, and blocked sink slots compact cleanly.
+  - Classic and Signal-Flow cards use `10px` corner radii, softened Classic light-mode semantic fills and strokes, borderless `6px` pill masks on edge labels, and unified `--arrow-security` / `--arrow-dashed` palette variables across strokes, markers, and labels.
+- **Explainer repeated-file deduplication (#1426, #1470).** Store each cited source file once per Explainer page rather than repeating identical file payloads across multiple citations.
+- **DeepSeek Harness 1.2.0 alignment (#1464, #1466, #1467).** Recorded and synchronized published `archify-dsh` `1.2.0` (bundling Archify `3.3.0` for DSH `0.2.2-rc.5`).
+
+### Release follow-up
+- The stable update manifest (`docs/skill-updates/archify/stable.json`) remains on `v3.3.0` until the `v3.3.1` GitHub Release is published and its `archify.zip` digest is verified.
+- The separately versioned DSH plugin (`integrations/deepseek-harness/release.json`, currently `1.2.0`) is explicitly deferred and remains on `1.2.0` until the next DSH bundle cycle.
 
 ## [3.3.0] — 2026-11-23
 

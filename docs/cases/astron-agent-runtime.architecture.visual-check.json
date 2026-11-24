@@ -8,8 +8,8 @@
   "provenance": "unknown",
   "artifact": {
     "path": "docs/cases/astron-agent-runtime.architecture.html",
-    "sha256": "d42ca27aea4fbb5df886fdf57ad044c375f7e6475ebececf1039c6d2e0beef69",
-    "bytes": 953721
+    "sha256": "a021f9a2d2a32b0fadef5ce477ce6437a19c03e0ba8a66d0836f12f974ba204a",
+    "bytes": 953715
   },
   "state": {
     "detail": "read",
@@ -54,7 +54,7 @@
         "minimumProjectedNodeTextPx": 8.809090909090909,
         "minimumProjectedNonEdgeTextPx": 8.809090909090909,
         "minimumProjectedEdgeTextPx": 9.787878787878787,
-        "minimumProjectedNodeText": "Go · 空间隔离 · 配额",
+        "minimumProjectedNodeText": "Go \u00b7 \u7a7a\u95f4\u9694\u79bb \u00b7 \u914d\u989d",
         "minimumProjectedNodeTextDetail": "context",
         "minimumProjectedNodeTextOwner": {
           "kind": "node",
@@ -104,7 +104,7 @@
         "minimumProjectedNodeTextPx": 9,
         "minimumProjectedNonEdgeTextPx": 9,
         "minimumProjectedEdgeTextPx": 10,
-        "minimumProjectedNodeText": "Go · 空间隔离 · 配额",
+        "minimumProjectedNodeText": "Go \u00b7 \u7a7a\u95f4\u9694\u79bb \u00b7 \u914d\u989d",
         "minimumProjectedNodeTextDetail": "context",
         "minimumProjectedNodeTextOwner": {
           "kind": "node",
@@ -154,7 +154,7 @@
         "minimumProjectedNodeTextPx": 9,
         "minimumProjectedNonEdgeTextPx": 9,
         "minimumProjectedEdgeTextPx": 10,
-        "minimumProjectedNodeText": "Go · 空间隔离 · 配额",
+        "minimumProjectedNodeText": "Go \u00b7 \u7a7a\u95f4\u9694\u79bb \u00b7 \u914d\u989d",
         "minimumProjectedNodeTextDetail": "context",
         "minimumProjectedNodeTextOwner": {
           "kind": "node",
@@ -204,7 +204,7 @@
         "minimumProjectedNodeTextPx": 9,
         "minimumProjectedNonEdgeTextPx": 9,
         "minimumProjectedEdgeTextPx": 10,
-        "minimumProjectedNodeText": "Go · 空间隔离 · 配额",
+        "minimumProjectedNodeText": "Go \u00b7 \u7a7a\u95f4\u9694\u79bb \u00b7 \u914d\u989d",
         "minimumProjectedNodeTextDetail": "context",
         "minimumProjectedNodeTextOwner": {
           "kind": "node",
@@ -307,7 +307,7 @@
         "minimumProjectedNodeTextPx": 8.809090909090909,
         "minimumProjectedNonEdgeTextPx": 8.809090909090909,
         "minimumProjectedEdgeTextPx": 9.787878787878787,
-        "minimumProjectedNodeText": "Go · 空间隔离 · 配额",
+        "minimumProjectedNodeText": "Go \u00b7 \u7a7a\u95f4\u9694\u79bb \u00b7 \u914d\u989d",
         "minimumProjectedNodeTextDetail": "context",
         "minimumProjectedNodeTextOwner": {
           "kind": "node",
@@ -357,7 +357,7 @@
         "minimumProjectedNodeTextPx": 9,
         "minimumProjectedNonEdgeTextPx": 9,
         "minimumProjectedEdgeTextPx": 10,
-        "minimumProjectedNodeText": "Go · 空间隔离 · 配额",
+        "minimumProjectedNodeText": "Go \u00b7 \u7a7a\u95f4\u9694\u79bb \u00b7 \u914d\u989d",
         "minimumProjectedNodeTextDetail": "context",
         "minimumProjectedNodeTextOwner": {
           "kind": "node",
@@ -407,7 +407,7 @@
         "minimumProjectedNodeTextPx": 9,
         "minimumProjectedNonEdgeTextPx": 9,
         "minimumProjectedEdgeTextPx": 10,
-        "minimumProjectedNodeText": "Go · 空间隔离 · 配额",
+        "minimumProjectedNodeText": "Go \u00b7 \u7a7a\u95f4\u9694\u79bb \u00b7 \u914d\u989d",
         "minimumProjectedNodeTextDetail": "context",
         "minimumProjectedNodeTextOwner": {
           "kind": "node",
@@ -457,7 +457,7 @@
         "minimumProjectedNodeTextPx": 9,
         "minimumProjectedNonEdgeTextPx": 9,
         "minimumProjectedEdgeTextPx": 10,
-        "minimumProjectedNodeText": "Go · 空间隔离 · 配额",
+        "minimumProjectedNodeText": "Go \u00b7 \u7a7a\u95f4\u9694\u79bb \u00b7 \u914d\u989d",
         "minimumProjectedNodeTextDetail": "context",
         "minimumProjectedNodeTextOwner": {
           "kind": "node",
@@ -512,7 +512,7 @@
         "minimumProjectedNodeTextPx": 8.809090909090909,
         "minimumProjectedNonEdgeTextPx": 8.809090909090909,
         "minimumProjectedEdgeTextPx": 9.787878787878787,
-        "minimumProjectedNodeText": "Go · 空间隔离 · 配额",
+        "minimumProjectedNodeText": "Go \u00b7 \u7a7a\u95f4\u9694\u79bb \u00b7 \u914d\u989d",
         "minimumProjectedNodeTextDetail": "context",
         "minimumProjectedNodeTextOwner": {
           "kind": "node",
@@ -562,7 +562,7 @@
         "minimumProjectedNodeTextPx": 9,
         "minimumProjectedNonEdgeTextPx": 9,
         "minimumProjectedEdgeTextPx": 10,
-        "minimumProjectedNodeText": "Go · 空间隔离 · 配额",
+        "minimumProjectedNodeText": "Go \u00b7 \u7a7a\u95f4\u9694\u79bb \u00b7 \u914d\u989d",
         "minimumProjectedNodeTextDetail": "context",
         "minimumProjectedNodeTextOwner": {
           "kind": "node",
@@ -612,7 +612,7 @@
         "minimumProjectedNodeTextPx": 9,
         "minimumProjectedNonEdgeTextPx": 9,
         "minimumProjectedEdgeTextPx": 10,
-        "minimumProjectedNodeText": "Go · 空间隔离 · 配额",
+        "minimumProjectedNodeText": "Go \u00b7 \u7a7a\u95f4\u9694\u79bb \u00b7 \u914d\u989d",
         "minimumProjectedNodeTextDetail": "context",
         "minimumProjectedNodeTextOwner": {
           "kind": "node",
@@ -662,7 +662,7 @@
         "minimumProjectedNodeTextPx": 9,
         "minimumProjectedNonEdgeTextPx": 9,
         "minimumProjectedEdgeTextPx": 10,
-        "minimumProjectedNodeText": "Go · 空间隔离 · 配额",
+        "minimumProjectedNodeText": "Go \u00b7 \u7a7a\u95f4\u9694\u79bb \u00b7 \u914d\u989d",
         "minimumProjectedNodeTextDetail": "context",
         "minimumProjectedNodeTextOwner": {
           "kind": "node",
@@ -717,7 +717,7 @@
         "minimumProjectedNodeTextPx": 8.809090909090909,
         "minimumProjectedNonEdgeTextPx": 8.809090909090909,
         "minimumProjectedEdgeTextPx": 9.787878787878787,
-        "minimumProjectedNodeText": "Go · 空间隔离 · 配额",
+        "minimumProjectedNodeText": "Go \u00b7 \u7a7a\u95f4\u9694\u79bb \u00b7 \u914d\u989d",
         "minimumProjectedNodeTextDetail": "context",
         "minimumProjectedNodeTextOwner": {
           "kind": "node",
@@ -768,7 +768,7 @@
         "minimumProjectedNodeTextPx": 8.809090909090909,
         "minimumProjectedNonEdgeTextPx": 8.809090909090909,
         "minimumProjectedEdgeTextPx": 9.787878787878787,
-        "minimumProjectedNodeText": "Go · 空间隔离 · 配额",
+        "minimumProjectedNodeText": "Go \u00b7 \u7a7a\u95f4\u9694\u79bb \u00b7 \u914d\u989d",
         "minimumProjectedNodeTextDetail": "context",
         "minimumProjectedNodeTextOwner": {
           "kind": "node",
@@ -819,7 +819,7 @@
         "minimumProjectedNodeTextPx": 9,
         "minimumProjectedNonEdgeTextPx": 9,
         "minimumProjectedEdgeTextPx": 10,
-        "minimumProjectedNodeText": "Go · 空间隔离 · 配额",
+        "minimumProjectedNodeText": "Go \u00b7 \u7a7a\u95f4\u9694\u79bb \u00b7 \u914d\u989d",
         "minimumProjectedNodeTextDetail": "context",
         "minimumProjectedNodeTextOwner": {
           "kind": "node",
@@ -870,7 +870,7 @@
         "minimumProjectedNodeTextPx": 9,
         "minimumProjectedNonEdgeTextPx": 9,
         "minimumProjectedEdgeTextPx": 10,
-        "minimumProjectedNodeText": "Go · 空间隔离 · 配额",
+        "minimumProjectedNodeText": "Go \u00b7 \u7a7a\u95f4\u9694\u79bb \u00b7 \u914d\u989d",
         "minimumProjectedNodeTextDetail": "context",
         "minimumProjectedNodeTextOwner": {
           "kind": "node",
