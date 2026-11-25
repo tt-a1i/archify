@@ -29,7 +29,7 @@ test('atlas: Java initializer and nested names are not stable identities', (t) =
   const { facts } = extractFacts(dir, { language: 'java', config });
   const atlas = buildAtlas({ graph: buildGraph(facts, config), facts });
   for (const kind of ['<static initializer>', '<instance initializer>', '<locals>']) {
-    const matches = atlas.functions.filter(fn => fn[1].includes(kind));
+    const matches = atlas.functions.filter(fn => kind === '<locals>' ? fn[1].includes(kind) : fn[1].endsWith(kind));
     assert.ok(matches.length, `the real Java fixture contains ${kind}`);
     assert.ok(matches.every(fn => fn[9] === false), `${kind} is order-dependent`);
   }
