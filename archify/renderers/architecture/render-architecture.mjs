@@ -10,7 +10,7 @@ import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth, nodeT
 import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { declaredWideReadabilityBudget, minimumReadableSourceTextPx } from '../shared/desktop-readability.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
-import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeFrameAttrs, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeNodeAttrs, changeReviewFor, nodeChangeBadgePos, renderChangeBadge, renderChangeEdgePrefix, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
+import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeFrameAttrs, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeMarkerTone, changeNodeAttrs, changeFrameBadgeWidth, centredTextBox, changeReviewFor, reviewLegendEntries, frameChangeBadgePos, isChangeMarked, nodeChangeBadgePos, renderChangeBadge, renderChangeEdgePrefix, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
 import { gridLayout, resolveComponentPos, validateGridPlacement } from './grid.mjs';
 import { automaticComponentPositions, boundaryInsets } from './automatic-placement.mjs';
 import { denseTerminalCandidates, junctionBends, junctionCandidates } from './junction-placement.mjs';
@@ -145,6 +145,10 @@ function measureComponent(c, [w, h], positions = automaticPositions) {
 
 const components = new Map(sizedComponents.map(([c, size]) => [c.id, measureComponent(c, size)]));
 const enforcesBoundaryTitleComposition = Boolean(arch.meta?.quality_profile);
+// Change-marked reviews also keep routes off boundary titles (and their change
+// badge) even without a quality profile; unmarked diagrams keep legacy titles.
+const changeMarkedDiagram = [...asArray(arch.components), ...asArray(arch.connections), ...asArray(arch.boundaries)]
+  .some(isChangeMarked);
 const componentSteps = new Map();
 for (const [index, conn] of asArray(arch.connections).entries()) {
   if (!componentSteps.has(conn.from)) componentSteps.set(conn.from, index);
@@ -221,11 +225,11 @@ const changeReview = changeReviewFor({
 });
 
 const architectureLegendEntries = [
-  ...resolveLegend(
+  ...reviewLegendEntries(changeReview, resolveLegend(
     arch.meta?.legend,
     LEGEND_CATALOG,
     new Set([...components.values()].map((component) => component.type)),
-  ),
+  ), arch.meta?.legend, LEGEND_CATALOG.map((entry) => entry.kind)),
   ...changeLegendEntries(changeReview, arch.meta?.legend, arch.meta.locale),
 ];
 
@@ -315,17 +319,18 @@ function horizontalOverlap(left, right) {
 // text. Keep the left rail position when it is clear; otherwise slide the title
 // along its rail to the nearest clear position inside the frame.
 function slideTitleOffRoutes(boundary, title, placedTitles, {
-  titleRouteSegments, boxes, connectionLabels, allowBottomRail = whollyInferred,
+  titleRouteSegments, boxes, connectionLabels, allowBottomRail = whollyInferred || changeMarkedDiagram,
 }) {
-  if (!enforcesBoundaryTitleComposition) return;
+  if (!enforcesBoundaryTitleComposition && !changeMarkedDiagram) return;
+  const footprint = title.width + changeFrameBadgeWidth(boundary);
   const clear = (x, y = title.y) => {
-    const rect = { ...title, x, y };
+    const rect = { ...title, x, y, width: footprint };
     return !titleRouteSegments.some((segment) => segmentIntersectsRect(segment, rect, 2))
       && ![...placedTitles, ...boxes.values(), ...connectionLabels].some((other) => rectsOverlap(rect, other));
   };
   if (clear(title.x)) return;
   const left = boundary.x + layout.boundaryLabelFrameInset;
-  const right = boundary.x + boundary.width - layout.boundaryLabelFrameInset - title.width;
+  const right = boundary.x + boundary.width - layout.boundaryLabelFrameInset - footprint;
   const band = titleRouteSegments.filter(({ start, end }) => (
     Math.max(start[1], end[1]) >= title.y - 2 && Math.min(start[1], end[1]) <= title.y + title.height + 2
   ));
@@ -333,9 +338,9 @@ function slideTitleOffRoutes(boundary, title, placedTitles, {
     label.y < title.y + title.height && label.y + label.height > title.y
   ));
   const x = [right, ...band.flatMap(({ start, end }) => [
-    Math.max(start[0], end[0]) + 8, Math.min(start[0], end[0]) - 8 - title.width,
+    Math.max(start[0], end[0]) + 8, Math.min(start[0], end[0]) - 8 - footprint,
   ]), ...labelBlockers.flatMap((label) => [
-    label.x + label.width + 8, label.x - 8 - title.width,
+    label.x + label.width + 8, label.x - 8 - footprint,
   ])].filter((value) => value >= left && value <= right)
     .sort((a, b) => a - b)
     .find(value => clear(value));
@@ -2562,7 +2567,10 @@ function renderBoundaryFrame(b, index) {
 function renderBoundaryLabel(b, index) {
   const labelCls = b.kind === 'security-group' ? 't-security' : 't-cloud';
   const rx = b.kind === 'security-group' ? 8 : 12;
-  const badge = renderChangeBadge(b, nodeChangeBadgePos(b, { rx }));
+  const badge = renderChangeBadge(b, frameChangeBadgePos(b.title, {
+    maxRight: b.x + b.width - layout.boundaryLabelFrameInset,
+    fallback: nodeChangeBadgePos(b, { rx }),
+  }));
   return `        <g data-graph-role="structural-frame-label" data-composition-frame-id="${index}" data-composition-frame-kind="${esc(b.kind || 'boundary')}" data-composition-frame-label="${esc(b.label)}"${changeFrameAttrs(changeReview, b)}>
           <rect data-graph-role="structural-frame-label-mask" x="${b.title.x}" y="${b.title.y}" width="${b.title.width}" height="${b.title.height}" rx="3" class="c-mask"/>
           <text data-boundary-label="" x="${b.title.x + 4}" y="${b.title.y + b.title.baselineOffset}" class="${labelCls}" font-size="${b.title.fontSize}" font-weight="600">${esc(b.label)}</text>${badge ? `\n          ${badge}` : ''}
@@ -2571,12 +2579,12 @@ function renderBoundaryLabel(b, index) {
 
 function connectionMarker(conn, index, definitions) {
   const [, fallback] = arrowClassMap[conn.variant || 'default'] || arrowClassMap.default;
-  const marker = changeMarkerFor(conn, fallback);
+  const marker = changeMarkerFor(conn, fallback, changeReview);
   const stroke = routeStrokeWidth(conn);
   const scale = routeMarkerScale(pathFor(conn).points, stroke);
   if (scale === stroke) return marker;
   const id = `arrowhead-bounded-${index}`;
-  const tone = marker === 'arrowhead' ? 'default' : marker.slice('arrowhead-'.length);
+  const tone = changeMarkerTone(marker);
   definitions.push(`
           <marker id="${id}" markerUnits="userSpaceOnUse" viewBox="0 0 10 7" markerWidth="${10 * scale}" markerHeight="${7 * scale}" refX="9" refY="3.5" orient="auto">
             <polygon points="0 0, 10 3.5, 0 7" class="m-${tone}" />
@@ -2736,7 +2744,12 @@ function renderComponent(c) {
   let badgeY = c.y;
   if (compact && c.y >= 20) badgeY -= 9;
   else if (compact && c.y + c.height + 20 <= viewBox[1]) badgeY += c.height + 9;
-  const badgePosition = nodeChangeBadgePos({ ...c, y: badgeY }, { rx: 8, rightInset: brand ? 26 : 0 });
+  const textBoxes = [
+    centredTextBox(c.x + rows.title.x, c.y + rows.title.y, rows.title.font, c.label),
+    hasSub && centredTextBox(c.x + rows.sublabel.x, c.y + rows.sublabel.y, rows.sublabel.font, c.sublabel),
+    rows.tag && centredTextBox(c.x + rows.tag.x, c.y + rows.tag.y, rows.tag.font, c.tag),
+  ];
+  const badgePosition = nodeChangeBadgePos({ ...c, y: badgeY }, { rx: 8, rightInset: brand ? 26 : 0, avoid: badgeY === c.y ? textBoxes : null });
   const changeBadge = renderChangeBadge(c, badgePosition);
   const badge = changeBadge ? `\n          ${changeBadge}` : '';
   return wrapSingleChildAnchor(`        <g ${focusNodeAttrs(c.id, c.label, passport, arch.meta.locale)}${changeNodeAttrs(changeReview, c)}>
