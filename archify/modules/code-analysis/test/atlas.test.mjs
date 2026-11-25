@@ -3,6 +3,7 @@
 // lost or misattributed here is drawn wrong without any other check noticing.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import os from 'node:os';
 import { test } from 'node:test';
 import { buildGraph, evaluateGraph, extractFacts, loadConfig } from '../lib/analysis.mjs';
 import { buildAtlas, moduleLabels } from '../overlay/atlas.mjs';
@@ -19,6 +20,20 @@ function analyze(t) {
   const findings = evaluateGraph(graph, config, facts).diagnostics;
   return { facts, graph, findings, atlas: buildAtlas({ graph, facts, findings }) };
 }
+
+test('atlas: Java initializer and nested names are not stable identities', (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-atlas-java-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  fs.writeFileSync(path.join(dir, 'Demo.java'), 'class Demo { static { Runnable r = new Runnable() { public void run() {} }; } { int x = 1; } }\n');
+  const config = loadConfig(); config.include = ['**/*.java'];
+  const { facts } = extractFacts(dir, { language: 'java', config });
+  const atlas = buildAtlas({ graph: buildGraph(facts, config), facts });
+  for (const kind of ['<static initializer>', '<instance initializer>', '<locals>']) {
+    const matches = atlas.functions.filter(fn => fn[1].includes(kind));
+    assert.ok(matches.length, `the real Java fixture contains ${kind}`);
+    assert.ok(matches.every(fn => fn[9] === false), `${kind} is order-dependent`);
+  }
+});
 
 test('atlas: function identity includes the full Python definition when present', (t) => {
   const { facts, graph, findings } = analyze(t);
