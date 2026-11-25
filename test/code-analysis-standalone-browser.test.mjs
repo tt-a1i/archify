@@ -43,12 +43,21 @@ test('standalone workbench keeps Atlas alongside evidence, both locales/themes a
   })`);
   const viewport = (width, height) => send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: false });
   const motion = value => send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value }] });
-  const point = selector => run(`(() => {
+  const point = selector => run(`new Promise((resolve, reject) => {
     const node = document.querySelector(${JSON.stringify(selector)});
     node.scrollIntoView({ block: 'nearest' });
-    const r = node.getBoundingClientRect();
-    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-  })()`);
+    const deadline = Date.now() + 4000;
+    let stableSince = 0, previous;
+    function poll() {
+      const r = node.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
+      const hit = document.elementFromPoint(x, y), valid = r.width > 0 && r.height > 0 && node.contains(hit);
+      if (!valid || !previous || previous.x !== x || previous.y !== y) stableSince = Date.now();
+      else if (Date.now() - stableSince >= 250) return resolve({ x, y });
+      if (Date.now() >= deadline) return reject(new Error('Target is not stable and clickable: ' + ${JSON.stringify(selector)}));
+      previous = { x, y }; requestAnimationFrame(poll);
+    }
+    requestAnimationFrame(poll);
+  })`);
   const clickAt = async p => {
     for (const type of ['mousePressed', 'mouseReleased']) await send('Input.dispatchMouseEvent', { type, ...p, button: 'left', clickCount: 1 });
   };
