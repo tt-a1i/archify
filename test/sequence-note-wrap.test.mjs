@@ -50,14 +50,15 @@ function lifelines(html) {
 }
 
 function notes(html) {
-  return [...html.matchAll(/<text data-detail="context" x="([\d.]+)" y="([\d.]+)" class="[^"]*" font-size="7">([\s\S]*?)<\/text>/g)]
+  return [...html.matchAll(/<text data-detail="context" x="([\d.]+)" y="([\d.]+)" class="[^"]*" font-size="([\d.]+)">([\s\S]*?)<\/text>/g)]
     .map((match) => {
-      const tspans = [...match[3].matchAll(/<tspan x="([\d.]+)" dy="([\d.]+)">([^<]*)<\/tspan>/g)];
+      const tspans = [...match[4].matchAll(/<tspan x="([\d.]+)" dy="([\d.]+)">([^<]*)<\/tspan>/g)];
       return {
         x: Number(match[1]),
         y: Number(match[2]),
-        raw: match[3],
-        lines: tspans.length ? tspans.map((line) => line[3]) : [match[3]],
+        fontSize: Number(match[3]),
+        raw: match[4],
+        lines: tspans.length ? tspans.map((line) => line[3]) : [match[4]],
         tspanX: tspans.map((line) => Number(line[1])),
         dy: tspans.map((line) => Number(line[2])),
       };
@@ -83,7 +84,7 @@ test('the reported long note wraps inside its own lane and keeps every word', (t
   assert.equal(note.x, client + 19, 'the first line keeps its original position');
   assert.deepEqual(note.dy, note.lines.map((_, index) => (index ? 11 : 0)));
   for (const line of note.lines) {
-    assert.ok(note.x + minimumNodeTextWidth(line, 7) <= api - 11, `"${line}" stays clear of the API activation bar`);
+    assert.ok(note.x + minimumNodeTextWidth(line, note.fontSize) <= api - 11, `"${line}" stays clear of the API activation bar`);
   }
 });
 
@@ -101,7 +102,7 @@ test('long unbroken text breaks after URL punctuation and keeps every character'
     assert.match(line, /[/.\-?&=#_]$/, `"${line}" breaks after punctuation`);
   }
   for (const line of note.lines) {
-    assert.ok(client + 19 + minimumNodeTextWidth(line, 7) <= api - 11, `"${line}" fits its lane`);
+    assert.ok(client + 19 + minimumNodeTextWidth(line, note.fontSize) <= api - 11, `"${line}" fits its lane`);
   }
 });
 
@@ -140,7 +141,7 @@ test('mixed Chinese notes use partial lines before requiring a later reply', (t)
   assert.equal(note.lines.join('').replaceAll(' ', ''), text.replaceAll(' ', ''));
   assert.equal(note.y, 218, 'the authored message stays in place');
   for (const line of note.lines) {
-    assert.ok(note.x + minimumNodeTextWidth(line, 7) <= api - 11, `"${line}" clears the activation bar`);
+    assert.ok(note.x + minimumNodeTextWidth(line, note.fontSize) <= api - 11, `"${line}" clears the activation bar`);
   }
   assert.equal(run(t, 'validate', spec).result.status, 0, 'no extra reply spacing is required');
 });
@@ -172,7 +173,7 @@ test('a note on a message that skips participants stays in the left-most gap, in
     const [note] = notes(html);
     assert.equal(note.x, client + 19, `${from} → ${to} starts where notes always started`);
     for (const line of note.lines) {
-      assert.ok(note.x + minimumNodeTextWidth(line, 7) <= api - 11, `${from} → ${to}: "${line}" stays clear of the skipped API lifeline`);
+      assert.ok(note.x + minimumNodeTextWidth(line, note.fontSize) <= api - 11, `${from} → ${to}: "${line}" stays clear of the skipped API lifeline`);
     }
   }
 });
@@ -387,7 +388,7 @@ test('a widened automatic canvas wraps a late note using its final lane geometry
   assert.ok(note.lines.length > 1);
   assert.equal(note.lines.join(''), token);
   for (const line of note.lines) {
-    assert.ok(note.x + minimumNodeTextWidth(line, 7) <= lanes[2] - 11, `${line} clears the final next lifeline`);
+    assert.ok(note.x + minimumNodeTextWidth(line, note.fontSize) <= lanes[2] - 11, `${line} clears the final next lifeline`);
   }
   const lastBaseline = note.y + (note.lines.length - 1) * 11;
   const legendTitle = Number(html.match(/<text x="[\d.]+" y="([\d.]+)"[^>]*>Legend<\/text>/)[1]);
@@ -450,4 +451,41 @@ test('notes that fit their phase, or messages outside it, do not request a phase
     assert.equal(result.status, 0, result.stdout + result.stderr);
     assert.ok(!(JSON.parse(result.stdout).composition?.sequenceNoteBorders || []).some(d => d.code === 'sequence/note-segment-border'));
   }
+});
+
+test('notes read at 8.5px unless any note would wrap to more lines than at 7px', (t) => {
+  const roomy = notes(render(t, sequence({ messages: [
+    { from: 'client', to: 'api', y: 200, label: 'request', note: 'retry with backoff, then mark the order as pending review for the on-call team' },
+    { from: 'api', to: 'client', y: 380, label: 'reply', note: 'cached for 5 minutes' },
+  ] })));
+  assert.deepEqual(roomy.map((note) => note.fontSize), [8.5, 8.5], 'every note keeps its line count, so all read larger');
+  assert.ok(roomy[0].lines.length > 1);
+  assert.deepEqual(roomy[0].dy, roomy[0].lines.map((_, index) => (index ? 11 : 0)), 'the line advance keeps its original footprint');
+
+  const text = 'inner.run 成功或抛错都会 close；外层 init 失败发生在 try 之前。';
+  const tight = notes(render(t, sequence({
+    participants: ['client', 'api', 'db', 'cache', 'queue', 'worker', 'store'],
+    messages: [
+      { from: 'client', to: 'api', y: 200, label: 'request', note: text },
+      { from: 'api', to: 'client', y: 300, label: 'reply', note: 'cached for 5 minutes' },
+    ],
+  })));
+  assert.equal(tight[0].lines.length, 3, 'the tight note keeps its 7px wrap');
+  assert.deepEqual(tight.map((note) => note.fontSize), [7, 7], 'one size per diagram: the short note falls back too');
+});
+
+test('a single-line note falls back when the larger text reaches a later message label', (t) => {
+  const spec = sequence({ messages: [
+    { from: 'client', to: 'api', y: 200, label: 'request', note: 'a'.repeat(15) },
+    { from: 'api', to: 'db', y: 233, label: 'b'.repeat(20) },
+  ] });
+  spec.meta.column_fit = 'fixed';
+  const [note] = notes(render(t, spec));
+  assert.equal(note.lines.length, 1);
+  assert.equal(note.fontSize, 7);
+
+  spec.messages[1].y = 250;
+  const [clearNote] = notes(render(t, spec));
+  assert.equal(clearNote.lines.length, 1);
+  assert.equal(clearNote.fontSize, 8.5);
 });

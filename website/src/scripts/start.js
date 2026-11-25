@@ -111,8 +111,8 @@
         });
         var agentName = document.querySelector('[data-agent="' + agent + '"]').textContent;
         agentState.textContent = agentName + (language === 'zh' ? ' · 同一份 Skill' : ' · same Skill');
-        installCommand.textContent = 'npx -y skills@latest add https://archify.si --skill archify --agent ' + agent + ' --global --copy --yes';
-        projectCommand.textContent = 'npx -y skills@latest add https://archify.si --skill archify --agent ' + agent + ' --copy --yes';
+        installCommand.textContent = 'npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent ' + agent + ' --global --copy --yes';
+        projectCommand.textContent = 'npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent ' + agent + ' --copy --yes';
         title.textContent = copy.title;
         question.textContent = copy.question;
         prompt.textContent = currentPrompt();
