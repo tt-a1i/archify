@@ -289,7 +289,7 @@ npx skills use tt-a1i/archify@archify --agent codex
 
 The [agent switcher](https://archify.si/start.html?agent=cursor&type=architecture) covers `cursor`, `codex`, `claude-code`, `opencode`, and `github-copilot`.
 
-Archify may GET the fixed stable manifest solely to show an optional reminder; it never downloads or installs updates. Successful checks wait about 24 hours (±20%); active use retries failures after 6, then 24 hours. The server sees normal HTTP metadata (IP and time), but receives no version, Agent, project data, prompts, account/device ID, or ETag. You decide whether and when to update. Set `ARCHIFY_UPDATE_CHECK_DISABLED=1` to disable networking and reminder-state writes.
+Archify may GET the fixed stable manifest solely to show an optional reminder; it never downloads or installs updates. Successful checks wait about 24 hours (±20%); active use retries failures after 6, then 24 hours. The server sees normal HTTP metadata (IP and time), but receives no version, Agent, project data, prompts, account/device ID, or ETag. You decide whether and when to update. Set `ARCHIFY_UPDATE_CHECK_DISABLED=1` to disable networking and reminder-state writes. A slow check can finish in the background and show its reminder on the next delivery. When an update is known, delivered pages show a dismissible notice in the top bar on wide diagrams when space allows, and in the footer otherwise. The notice works offline and makes zero network requests. It includes a one-click copy button for an Agent update prompt and a release notes link. Pass `--no-update-notice` or set `ARCHIFY_UPDATE_NOTICE_DISABLED=1` to keep pages unchanged.
 
 </details>
 
