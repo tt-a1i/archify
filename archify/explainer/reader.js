@@ -298,7 +298,7 @@
       copyBoard.style.flexDirection = 'column';
       all('.board-spacer',copyBoard).forEach(spacer=>spacer.remove());
     }
-    clone.querySelectorAll('script,dialog,#toast,.skip-link,.tools,.ask-button,.ask-floating,.walk-bar,.walk-start,.interactive,.diagram-fit-status,.source-card').forEach(element=>element.remove());
+    clone.querySelectorAll('script,dialog,#toast,.skip-link,.tools,.ask-button,.ask-floating,.walk-bar,.walk-start,.interactive,.diagram-fit-status,.source-card,[data-archify-update-notice],[data-archify-update-notice-style]').forEach(element=>element.remove());
     clone.querySelectorAll('.reader-highlight').forEach(element=>element.classList.remove('reader-highlight'));
     clone.querySelectorAll('.focusing').forEach(element=>element.classList.remove('focusing'));
     // An exported image has no scroll interaction; retain the complete overview.
