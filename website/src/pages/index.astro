@@ -26,7 +26,7 @@ const diagramTypes = [
   ['timeline', 'Timeline', 'What happened, and when?'],
   ['waterfall', 'Waterfall', 'Where did the time go?'],
 ];
-const installCommand = 'npx -y skills@latest add https://archify.si --skill archify --agent claude-code --global --copy --yes';
+const installCommand = 'npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent claude-code --global --copy --yes';
 const { lang = 'en' } = Astro.props;
 ---
 <SiteLayout page="index" lang={lang} head={versioned(head)} css={css}>
@@ -285,7 +285,7 @@ const { lang = 'en' } = Astro.props;
           <li class="insight-item">
             <p class="insight-k" data-i18n="insight-3-k">PR walkthrough</p>
             <h3 data-i18n="insight-3-h">Show reviewers what a change touches.</h3>
-            <p data-i18n="insight-3-p">Changes are marked on the diagram itself and can be attached to a GitHub PR or GitLab MR. The optional archify-pr Skill only offers this for material diffs.</p>
+            <p data-i18n="insight-3-p">Changes are marked on the diagram itself and can be attached to a GitHub PR or GitLab MR. The archify-pr Skill, included in the default install, only offers this for material diffs.</p>
           </li>
         </ol>
       </div>

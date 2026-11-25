@@ -179,7 +179,7 @@ Use archify Code Analysis on this repository: show module coupling, dependency c
 <sub>STORY · PR WALKTHROUGH</sub>
 
 - **Story video.** Ask your agent to add a guided story to any diagram. The page gains a Story mode with a timeline and captions, and **Export → Story video** records it at 1080p, 60 fps (WebM or MP4). Several diagrams can also be choreographed into one stage page or video. [Story authoring](archify/references/story-authoring.md)
-- **PR walkthrough.** Ask your agent to explain a pull request or branch: Archify marks what changed directly on the diagram and can attach light and dark diagrams to a GitHub PR or GitLab MR. The optional `archify-pr` Skill offers this while you prepare a PR, and only for material diffs. [PR review](archify/references/pr-review.md)
+- **PR walkthrough.** Ask your agent to explain a pull request or branch: Archify marks what changed directly on the diagram and can attach light and dark diagrams to a GitHub PR or GitLab MR. The default install includes the `archify-pr` Skill, which offers this while you prepare a PR, and only for material diffs. [PR review](archify/references/pr-review.md)
 
 ```text
 Use archify to add a guided story to this diagram and export it as a video.
@@ -265,16 +265,16 @@ Or install without prompts. Pass one agent, or repeat `--agent` for every switch
 Cursor only:
 
 ```bash
-npx -y skills@latest add https://archify.si --skill archify --agent cursor --global --copy --yes
+npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent cursor --global --copy --yes
 ```
 
 Or, only if you want all five agents:
 
 ```bash
-npx -y skills@latest add https://archify.si --skill archify --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes
+npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes
 ```
 
-Optional PR companion (repository-source installs only; the default install stays `archify`): after installing `archify`, `npx -y skills@latest add tt-a1i/archify --skill archify-pr --agent cursor --global --copy --yes` adds PR change walkthroughs. It stays silent for docs, lockfiles, formatting and other small changes and offers a diagram only for material diffs; add `[archify pr: on-demand]` to your agent's global rules file to disable even those offers.
+The default install includes the `archify-pr` companion. It stays silent for docs, lockfiles, formatting and other small changes and offers a diagram only for material diffs while you prepare a PR. Add `[archify pr: on-demand]` to your agent's global rules file to disable those offers. To keep only `/archify`, remove the companion with `npx -y skills@latest remove archify-pr --agent cursor --global --yes` (omit `--global` for a project-only install). If you already have only `/archify`, add the companion with `npx -y skills@latest add https://archify.si --skill archify-pr --agent cursor --global --copy --yes`.
 
 <details>
 <summary>More installation options and update-check details</summary>

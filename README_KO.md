@@ -116,7 +116,7 @@ Use archify Code Analysis on this repository: show module coupling, dependency c
 <sub>STORY · PR 워크스루</sub>
 
 - **Story 영상.** 에이전트에게 요청하면 어떤 다이어그램에도 안내 스토리를 추가할 수 있습니다. 페이지에 타임라인과 자막이 있는 Story 모드가 생기고, **Export → Story video**로 1080p, 60 fps 영상(WebM 또는 MP4)을 내보낼 수 있습니다. 여러 다이어그램을 하나의 스테이지 페이지나 영상으로 엮을 수도 있습니다. [Story 작성 가이드](archify/references/story-authoring.md)
-- **PR 워크스루.** 에이전트에게 PR이나 브랜치 설명을 요청하면 Archify가 변경 사항을 다이어그램 위에 직접 표시하고, 라이트/다크 다이어그램을 GitHub PR이나 GitLab MR에 첨부할 수 있습니다. 선택형 `archify-pr` Skill은 PR을 준비할 때 실질적인 변경이 있을 때만 제안합니다. [PR 리뷰](archify/references/pr-review.md)
+- **PR 워크스루.** 에이전트에게 PR이나 브랜치 설명을 요청하면 Archify가 변경 사항을 다이어그램 위에 직접 표시하고, 라이트/다크 다이어그램을 GitHub PR이나 GitLab MR에 첨부할 수 있습니다. 기본 설치에 포함된 `archify-pr` Skill은 PR을 준비할 때 실질적인 변경이 있을 때만 제안합니다. [PR 리뷰](archify/references/pr-review.md)
 
 ```text
 Use archify to add a guided story to this diagram and export it as a video.
@@ -141,16 +141,16 @@ Install Archify for me by reading https://raw.githubusercontent.com/tt-a1i/archi
 Cursor에만 설치:
 
 ```bash
-npx -y skills@latest add https://archify.si --skill archify --agent cursor --global --copy --yes
+npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent cursor --global --copy --yes
 ```
 
 또는 다섯 에이전트가 모두 필요한 경우에만:
 
 ```bash
-npx -y skills@latest add https://archify.si --skill archify --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes
+npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes
 ```
 
-선택형 PR 컴패니언 Skill(저장소 소스 설치 전용, 기본 설치는 계속 `archify`만): `archify`를 설치한 뒤 `npx -y skills@latest add tt-a1i/archify --skill archify-pr --agent cursor --global --copy --yes`를 실행하면 PR 변경 워크스루를 추가할 수 있습니다. 문서, 잠금 파일, 포맷팅 같은 작은 변경에는 조용히 있고 실질적인 diff에만 다이어그램을 제안합니다. 에이전트 전역 규칙 파일에 `[archify pr: on-demand]`를 추가하면 제안을 완전히 끌 수 있습니다.
+기본 설치에는 `archify-pr` 컴패니언이 포함됩니다. 문서, 잠금 파일, 포맷팅 같은 작은 변경에는 조용히 있고, PR을 준비할 때 실질적인 diff가 있을 때만 다이어그램을 제안합니다. 에이전트 전역 규칙 파일에 `[archify pr: on-demand]`를 추가하면 제안을 끌 수 있습니다. `/archify`만 남기려면 `npx -y skills@latest remove archify-pr --agent cursor --global --yes`로 컴패니언을 제거하세요(프로젝트 전용 설치에서는 `--global`을 생략합니다). 이미 `/archify`만 설치되어 있다면 `npx -y skills@latest add https://archify.si --skill archify-pr --agent cursor --global --copy --yes`로 컴패니언을 추가하세요.
 
 <details>
 <summary>다른 설치 방법과 업데이트 확인 동작</summary>
