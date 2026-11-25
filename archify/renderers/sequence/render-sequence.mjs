@@ -9,7 +9,7 @@ import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from
 import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
 import { layoutReportFromSvg } from '../shared/layout-report.mjs';
-import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeFrameAttrs, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeNodeAttrs, changeReviewFor, nodeChangeBadgePos, renderChangeBadge, renderChangeEdgePrefix, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
+import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeFrameAttrs, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeNodeAttrs, changeReviewFor, frameChangeBadgePos, nodeChangeBadgePos, renderChangeBadge, renderChangeEdgePrefix, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
 import { DESKTOP_READER_DIAGRAM_WIDTH, MIN_PROJECTED_NODE_TEXT_PX, minimumReadableSourceTextPx } from '../shared/desktop-readability.mjs';
 
 const participantTextFit = {
@@ -183,8 +183,12 @@ function participantX(index) {
 // crosses an unrelated lifeline or activation bar (#676). Every character
 // stays visible, including in image exports: long unbroken text (a URL or
 // path) breaks after its punctuation, otherwise at any character.
-const NOTE_FONT_SIZE = 7;
+// 8.5px keeps notes above the reader's 7.5px legibility floor.
+const NOTE_FONT_SIZE = 8.5;
 const NOTE_LINE_HEIGHT = NOTE_FONT_SIZE + 4;
+// The first baseline sits far enough below the message line that the note's
+// ascent clears the arrow stroke and marker.
+const NOTE_BASELINE_OFFSET = 19.5;
 // The first line keeps its original position: 12px past the arrow start,
 // which sits 7px from the lifeline.
 const NOTE_ARROW_INSET = 7;
@@ -294,7 +298,7 @@ function noteLayout(message) {
     const x = participantX(gap) + NOTE_ARROW_INSET + NOTE_TEXT_INSET;
     const maxWidth = Math.max(1, participantX(gap + 1) - NOTE_LIFELINE_CLEARANCE - x);
     const lines = noteTextWidth(message.note) <= maxWidth ? [message.note] : wrapNoteText(message.note, maxWidth);
-    const baseline = message.y + 18;
+    const baseline = message.y + NOTE_BASELINE_OFFSET;
     result = {
       x,
       baseline,
@@ -302,7 +306,7 @@ function noteLayout(message) {
       width: Math.max(...lines.map(noteTextWidth)),
       // Include fallback-font ascent in the same bounds used for title clearance.
       top: baseline - NOTE_FONT_SIZE * 1.2,
-      bottom: message.y + 22 + (lines.length - 1) * NOTE_LINE_HEIGHT,
+      bottom: baseline + 4 + (lines.length - 1) * NOTE_LINE_HEIGHT,
     };
   }
   noteLayouts.set(message, result);
@@ -1005,12 +1009,11 @@ function renderSegment(segment, index) {
 
 function renderSegmentLabel(segment, index) {
   const label = segmentLabelBox(segment);
-  const badge = renderChangeBadge(segment, nodeChangeBadgePos({
-    x: 48,
-    y: segment.from,
-    width: viewBox[0] - 96,
-    height: segment.to - segment.from,
-  }, { rx: 10 }));
+  const frame = { x: 48, y: segment.from, width: viewBox[0] - 96, height: segment.to - segment.from };
+  const badge = renderChangeBadge(segment, frameChangeBadgePos(label, {
+    maxRight: frame.x + frame.width - 8,
+    fallback: nodeChangeBadgePos(frame, { rx: 10 }),
+  }));
   return `        <g data-graph-role="segment-label" data-segment-id="${index}"${changeFrameAttrs(changeReview, segmentFrame(segment))}>
           <rect x="${label.x}" y="${label.y}" width="${label.width}" height="${label.height}" rx="3" class="c-mask"/>
           <text x="${label.x + 6}" y="${label.y + 13}" class="t-muted" font-size="9" font-weight="600">${esc(segment.label)}</text>${badge ? `\n          ${badge}` : ''}

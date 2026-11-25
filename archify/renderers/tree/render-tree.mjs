@@ -604,13 +604,13 @@ ${['root', ...SUBTREE_HUES].map((hue) => hue === 'root'
           svg[data-tree-ui] [data-tree-expand-all] rect { fill: var(--mask); stroke: var(--lane-stroke); }
           svg[data-tree-ui] [data-tree-expand-all]:is(:hover, :focus-visible) rect { stroke: var(--arrow-emphasis); stroke-width: 2; }
           svg[data-tree-ui]:not([data-tree-any-collapsed]) [data-tree-expand-all] { display: none; }${changeReview.active ? `
-          svg[data-tree-ui] [data-node-id][data-change="added"] > :is(.tree-root, .tree-branch, .tree-leaf) { stroke: var(--backend-stroke); stroke-width: 2.4; }
-          svg[data-tree-ui] [data-node-id][data-change="modified"] > :is(.tree-root, .tree-branch, .tree-leaf) { stroke: var(--cloud-stroke); stroke-width: 2.4; }
+          svg[data-tree-ui] [data-node-id][data-change="added"] > :is(.tree-root, .tree-branch, .tree-leaf) { stroke: var(--backend-stroke); stroke-width: 1.75; }
+          svg[data-tree-ui] [data-node-id][data-change="modified"] > :is(.tree-root, .tree-branch, .tree-leaf) { stroke: var(--cloud-stroke); stroke-width: 1.75; }
           svg[data-tree-ui] [data-node-id][data-change="removed"] > :is(.tree-root, .tree-branch, .tree-leaf) { stroke: var(--security-stroke); stroke-width: 1.6; stroke-dasharray: 5,4; }
-          svg[data-tree-ui] path.tree-edge[data-edge-from][data-change="added"] { stroke: var(--backend-stroke); stroke-width: 2.4; }
-          svg[data-tree-ui] path.tree-edge[data-edge-from][data-change="modified"] { stroke: var(--cloud-stroke); stroke-width: 2.4; }
+          svg[data-tree-ui] path.tree-edge[data-edge-from][data-change="added"] { stroke: var(--backend-stroke); stroke-width: 1.75; }
+          svg[data-tree-ui] path.tree-edge[data-edge-from][data-change="modified"] { stroke: var(--cloud-stroke); stroke-width: 1.75; }
           svg[data-tree-ui] path.tree-edge[data-edge-from][data-change="removed"] { stroke: var(--security-stroke); stroke-width: 1.6; stroke-dasharray: 5,4; }` : ''}
-          svg[data-tree-ui] [data-node-id][data-emphasis] > :is(.tree-root, .tree-branch, .tree-leaf) { stroke-width: 3.2; }
+          svg[data-tree-ui] [data-node-id][data-emphasis] > :is(.tree-root, .tree-branch, .tree-leaf) { stroke-width: 2.4; }
         </style>
 
         <!-- Background Grid -->

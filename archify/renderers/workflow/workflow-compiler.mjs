@@ -31,7 +31,7 @@ import {
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth, nodeLabelLayout } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMarkFor, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
-import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeFrameAttrs, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeNodeAttrs, changeReviewFor, nodeChangeBadgePos, renderChangeBadge, renderChangeEdgePrefix, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
+import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeFrameAttrs, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeNodeAttrs, changeReviewFor, frameChangeBadgePos, frameTitleBox, nodeChangeBadgePos, renderChangeBadge, renderChangeEdgePrefix, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
 import { DESKTOP_READER_DIAGRAM_WIDTH, MIN_PROJECTED_NODE_TEXT_PX, minimumReadableSourceTextPx, predictedFixedWidthOverflow } from '../shared/desktop-readability.mjs';
 import {
   createMappedWorkflowCandidate,
@@ -5551,7 +5551,11 @@ function renderLane(lane, index) {
   const labelClass = lane.variant === 'exception' ? 't-security' : 't-muted';
   const prefix = lane.variant === 'exception' ? 'EX' : String(index + 1).padStart(2, '0');
   const changeAttrs = changeFrameAttrs(changeReview, laneFrame(workflow, lane));
-  const badge = renderChangeBadge(lane, nodeChangeBadgePos({ x: layout.laneX, y, width: renderedLaneWidth, height }, { rx: 10 }));
+  const laneRect = { x: layout.laneX, y, width: renderedLaneWidth, height };
+  const badge = renderChangeBadge(lane, frameChangeBadgePos(
+    frameTitleBox(layout.laneX + 14, y + 22, 10, `${prefix} / ${lane.label}`),
+    { maxRight: laneRect.x + laneRect.width - 8, fallback: nodeChangeBadgePos(laneRect, { rx: 10 }) },
+  ));
   return `        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-${index}"${changeAttrs} x="${layout.laneX}" y="${y}" width="${renderedLaneWidth}" height="${height}" rx="10" class="c-lane" stroke-width="1"/>${exception}
         <text${changeAttrs} x="${layout.laneX + 14}" y="${y + 22}" class="${labelClass}" font-size="10" font-weight="600">${prefix} / ${esc(lane.label)}</text>${badge ? `\n        ${badge}` : ''}`;
 }
@@ -5581,7 +5585,10 @@ function renderGroup(group, index) {
   const textClass = variantAccent(group.variant);
   const labelY = workflow.schema_version === 2 ? y + GROUP_LABEL_BASELINE_OFFSET : y + 14;
   const changeAttrs = changeFrameAttrs(changeReview, groupFrame(workflow, group));
-  const badge = renderChangeBadge(group, nodeChangeBadgePos({ x: span.x, y, width: span.width, height }, { rx: 9 }));
+  const badge = renderChangeBadge(group, frameChangeBadgePos(
+    frameTitleBox(span.x + 10, labelY, 7, group.label),
+    { maxRight: span.x + span.width - 6, fallback: nodeChangeBadgePos({ x: span.x, y, width: span.width, height }, { rx: 9 }) },
+  ));
   return `        <rect data-graph-role="structural-frame" data-composition-frame-kind="group" data-composition-frame-id="group-${index}"${changeAttrs} x="${span.x}" y="${y}" width="${span.width}" height="${height}" rx="9" class="${cls}" stroke-width="1"/>
         <text${changeAttrs} x="${span.x + 10}" y="${labelY}" class="${textClass}" font-size="7" font-weight="600">${esc(group.label)}</text>${badge ? `\n        ${badge}` : ''}`;
 }
