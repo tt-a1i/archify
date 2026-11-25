@@ -182,7 +182,7 @@ test('setup answers are readable without scripts and distinguish prerequisites f
     const base = new URL(attr(page.find(node => node.tagName === 'base'), 'href'), origin + `${prefix}agent-diagrams.html`);
     for (const [agent, directory] of [['claude-code', '.claude'], ['codex', '.agents']]) {
       assert.equal(page.filter(node => attr(node, 'id') === `setup-${agent}`).length, 1);
-      const command = `npx -y skills@latest add https://archify.si --skill archify --agent ${agent} --global --copy --yes`;
+      const command = `npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent ${agent} --global --copy --yes`;
       assert.ok(nodes(article).some(node => node.tagName === 'pre' && text(node).trim() === command), `${agent}: exact existing Start command is visible in SSR`);
       for (const location of [`~/${directory}/skills/`, `${directory}/skills/`]) assert.ok(visible.includes(location));
       const link = nodes(article).find(node => node.tagName === 'a' && attr(node, 'href')?.includes(`agent=${agent}#install`));

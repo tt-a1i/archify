@@ -53,7 +53,7 @@ The [installation reference](https://github.com/tt-a1i/archify/blob/main/README.
 
 For a global copied installation, run this in the terminal of the environment where you use Claude Code:
 
-<pre><code>npx -y skills@latest add https://archify.si --skill archify --agent claude-code --global --copy --yes</code></pre>
+<pre><code>npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent claude-code --global --copy --yes</code></pre>
 
 Claude Code uses `~/.claude/skills/` for global skills or `.claude/skills/` in the project. For a project-scoped installation instead, choose [Claude Code in Start](start.html?agent=claude-code#install) and use “This repository only” from the intended project directory.
 
@@ -63,7 +63,7 @@ Claude Code uses `~/.claude/skills/` for global skills or `.claude/skills/` in t
 
 For a global copied installation, run this in the terminal of the environment where you use Codex CLI:
 
-<pre><code>npx -y skills@latest add https://archify.si --skill archify --agent codex --global --copy --yes</code></pre>
+<pre><code>npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent codex --global --copy --yes</code></pre>
 
 Codex CLI uses `~/.agents/skills/` for global skills or `.agents/skills/` in the project. For a project-scoped installation instead, choose [Codex in Start](start.html?agent=codex#install) and use “This repository only” from the intended project directory.
 
