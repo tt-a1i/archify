@@ -43,6 +43,7 @@ function trackedEntries(repoRoot) {
     const separator = record.indexOf('\t');
     const metadata = separator === -1 ? [] : record.slice(0, separator).split(' ');
     const relative = separator === -1 ? '' : record.slice(separator + 1);
+    // path-contract-allow: git-path -- git ls-files emits repository-relative POSIX paths.
     if (metadata.length !== 3 || !relative.startsWith(COMPANION_PREFIX)) {
       throw new Error(`unexpected git ls-files record for archify-pr: ${record}`);
     }
