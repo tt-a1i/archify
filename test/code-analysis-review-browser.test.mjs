@@ -123,6 +123,13 @@ test('Java root build module survives an earlier-sorting source after re-analysi
     fs.writeFileSync(core, 'package app; class Core { Runnable b = new Runnable() { public void run() { int y = 2; } }; Runnable a = new Runnable() { public void run() { int x = 1; } }; }\n');
     await reload3d();
     assert.equal(await run('window.__archifyAtlas3d.view.saveSelection()'), null, '3D does not switch to a newly numbered Java anonymous method');
+    fs.writeFileSync(core, 'package app; class Core { static { System.out.println("start"); } }\n');
+    await reload3d();
+    const initializer = await run(`(() => { const atlas = JSON.parse(document.getElementById('bauify-atlas-data').textContent); const i = atlas.functions.findIndex(fn => fn[1].includes('<static initializer>')); if (i < 0) throw Error('initializer missing'); window.__archifyAtlas3d.view.select({ type: 'function', index: i }); return window.__archifyAtlas3d.view.saveSelection(); })()`);
+    assert.equal(initializer.stableName, false, 'the first Java initializer is order-dependent');
+    fs.writeFileSync(core, 'package app; class Core { static { System.out.println("start"); } static { System.out.println("start"); } }\n');
+    await reload3d();
+    assert.equal(await run('window.__archifyAtlas3d.view.saveSelection()'), null, 'an inserted identical initializer is not selected in place of the original');
   } else t.diagnostic('Java root 3D handoff requires WebGL and was not exercised');
 });
 test('Code Analysis marks baseline findings, re-analyzes without a restart, and keeps the last good result on failure', {
@@ -401,6 +408,13 @@ test('Code Analysis marks baseline findings, re-analyzes without a restart, and 
     const quotedAfter = await run('window.__archifyAtlas3d.view.saveSelection()');
     assert.equal(quotedAfter?.digest, quoted.digest, 'the explicitly named method survives a line shift');
     assert.equal(quotedAfter?.line, quoted.line + 1);
+    write('duplicate-names.mjs', '{ const repeated = () => 1; }\n{ const repeated = () => 1; }\n');
+    await refreshFromCurrentFocus();
+    const duplicate = await run(`(() => { const atlas = JSON.parse(document.getElementById('bauify-atlas-data').textContent); const i = atlas.functions.findIndex(fn => atlas.files[fn[0]][0] === 'duplicate-names.mjs' && fn[1] === 'repeated'); if (i < 0) throw Error('duplicate binding missing'); window.__archifyAtlas3d.view.select({ type: 'function', index: i }); return window.__archifyAtlas3d.view.saveSelection(); })()`);
+    assert.equal(duplicate.stableName, true);
+    assert.equal(duplicate.unique, false, 'identical stable bindings are ambiguous even when names match');
+    await refreshFromCurrentFocus();
+    assert.equal(await run('window.__archifyAtlas3d.view.saveSelection()'), null, 'an ambiguous stable binding is not restored');
     write('bindings.mjs', 'const onSave = () => 1;\n');
     await refreshFromCurrentFocus();
     await run(`(() => { const atlas = JSON.parse(document.getElementById('bauify-atlas-data').textContent); const i = atlas.functions.findIndex(fn => atlas.files[fn[0]][0] === 'bindings.mjs' && fn[1] === 'onSave'); if (i < 0) throw Error('binding missing'); window.__archifyAtlas3d.view.select({ type: 'function', index: i }); })()`);
