@@ -67,3 +67,24 @@ test('discovery archives preserve every canonical package file without wrappers'
     fs.rmSync(scratch, { recursive: true, force: true });
   }
 });
+
+test('companion staging rejects a symlinked source directory', (t) => {
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-companion-test-'));
+  t.after(() => fs.rmSync(scratch, { recursive: true, force: true }));
+  const repoRoot = path.join(scratch, 'repo');
+  const companion = path.join(repoRoot, 'archify-pr');
+  fs.mkdirSync(repoRoot);
+  fs.cpSync(path.join(repo, 'archify-pr'), companion, { recursive: true });
+  execFileSync('git', ['init', '--quiet'], { cwd: repoRoot });
+  execFileSync('git', ['add', '--', 'archify-pr'], { cwd: repoRoot });
+
+  const bin = path.join(companion, 'bin');
+  const movedBin = path.join(scratch, 'bin');
+  fs.renameSync(bin, movedBin);
+  fs.symlinkSync(movedBin, bin, process.platform === 'win32' ? 'junction' : 'dir');
+
+  assert.throws(
+    () => stageCleanCompanionSkill({ repoRoot, destination: path.join(scratch, 'staged') }),
+    /refusing to package path through symlink: archify-pr\/bin/,
+  );
+});

@@ -52,6 +52,31 @@ function trackedEntries(repoRoot) {
   });
 }
 
+function preflightSourceEntry(repoRoot, entry) {
+  const segments = entry.relative.split('/');
+  let source = repoRoot;
+  for (const [index, segment] of segments.entries()) {
+    source = path.join(source, segment);
+    const metadata = fs.lstatSync(source);
+    const traversed = segments.slice(0, index + 1).join('/');
+    const isLeaf = index === segments.length - 1;
+    if (metadata.isSymbolicLink()) {
+      if (isLeaf) throw new Error(`refusing to package tracked symlink: ${entry.relative}`);
+      throw new Error(`refusing to package path through symlink: ${traversed} (for ${entry.relative})`);
+    }
+    if (!isLeaf && !metadata.isDirectory()) {
+      throw new Error(`tracked package path has a non-directory ancestor: ${traversed}`);
+    }
+    if (isLeaf && !metadata.isFile()) {
+      throw new Error(`tracked package input is not a regular file: ${entry.relative}`);
+    }
+  }
+  if (!['100644', '100755'].includes(entry.mode)) {
+    throw new Error(`unsupported tracked package mode ${entry.mode}: ${entry.relative}`);
+  }
+  return { ...entry, source };
+}
+
 export function stageCleanCompanionSkill({ repoRoot = scriptRoot, destination, modeManifest = null }) {
   if (!destination) throw new Error('clean companion Skill staging requires a destination');
   const resolvedRoot = fs.realpathSync(path.resolve(repoRoot));
@@ -85,20 +110,16 @@ export function stageCleanCompanionSkill({ repoRoot = scriptRoot, destination, m
 
   const relativeInside = entries.map((entry) => entry.relative.slice(COMPANION_PREFIX.length));
   validatePortablePathSet(relativeInside, { profile: 'archive' });
+  const sourceEntries = entries.map((entry) => preflightSourceEntry(resolvedRoot, entry));
 
   fs.mkdirSync(resolvedDestination, { recursive: true, mode: 0o755 });
   const modes = {};
   let fileCount = 0;
-  for (const entry of entries) {
+  for (const entry of sourceEntries) {
     const inside = entry.relative.slice(COMPANION_PREFIX.length);
-    const source = path.join(resolvedRoot, ...entry.relative.split('/'));
     const target = path.join(resolvedDestination, ...inside.split('/'));
-    const stat = fs.lstatSync(source);
-    if (!stat.isFile() || stat.isSymbolicLink()) {
-      throw new Error(`companion package entry must be a regular file: ${entry.relative}`);
-    }
     fs.mkdirSync(path.dirname(target), { recursive: true, mode: 0o755 });
-    fs.copyFileSync(source, target);
+    fs.copyFileSync(entry.source, target);
     fs.chmodSync(target, entry.mode === '100755' ? 0o755 : 0o644);
     modes[inside] = entry.mode;
     fileCount += 1;

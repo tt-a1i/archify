@@ -272,7 +272,7 @@ Or, only if you want all five agents:
 npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes
 ```
 
-The default install includes the `archify-pr` companion. It stays silent for docs, lockfiles, formatting and other small changes and offers a diagram only for material diffs while you prepare a PR. Add `[archify pr: on-demand]` to your agent's global rules file to disable those offers. To keep only `/archify`, remove the companion with `npx -y skills@latest remove archify-pr --agent cursor --global --yes` (omit `--global` for a project-only install). If you already have only `/archify`, re-run the default install command or add the companion with `npx -y skills@latest add https://archify.si --skill archify-pr --agent cursor --global --copy --yes`.
+The default install includes the `archify-pr` companion. It stays silent for docs, lockfiles, formatting and other small changes and offers a diagram only for material diffs while you prepare a PR. Add `[archify pr: on-demand]` to your agent's global rules file to disable those offers. To keep only `/archify`, remove the companion with `npx -y skills@latest remove archify-pr --agent cursor --global --yes` (omit `--global` for a project-only install). If you already have only `/archify`, add the companion with `npx -y skills@latest add https://archify.si --skill archify-pr --agent cursor --global --copy --yes`.
 
 <details>
 <summary>More installation options and update-check details</summary>

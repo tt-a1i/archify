@@ -272,7 +272,7 @@ npx -y skills@latest add https://archify.si --skill archify --skill archify-pr -
 npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes
 ```
 
-默认安装已包含 `archify-pr` 同伴 Skill。它对文档、锁文件、格式化等小改动保持静默，只在你准备 PR 且存在实质性 diff 时询问是否加图。在 Agent 全局规则文件写入 `[archify pr: on-demand]` 可关闭这些主动询问。若只想保留 `/archify`，可运行 `npx -y skills@latest remove archify-pr --agent cursor --global --yes` 移除同伴 Skill（项目级安装去掉 `--global`）。如果目前只安装了 `/archify`，可重新运行默认安装命令，或执行 `npx -y skills@latest add https://archify.si --skill archify-pr --agent cursor --global --copy --yes` 补上同伴 Skill。
+默认安装已包含 `archify-pr` 同伴 Skill。它对文档、锁文件、格式化等小改动保持静默，只在你准备 PR 且存在实质性 diff 时询问是否加图。在 Agent 全局规则文件写入 `[archify pr: on-demand]` 可关闭这些主动询问。若只想保留 `/archify`，可运行 `npx -y skills@latest remove archify-pr --agent cursor --global --yes` 移除同伴 Skill（项目级安装去掉 `--global`）。如果目前只安装了 `/archify`，可执行 `npx -y skills@latest add https://archify.si --skill archify-pr --agent cursor --global --copy --yes` 补上同伴 Skill。
 
 <details>
 <summary>更多安装方式与更新检查说明</summary>

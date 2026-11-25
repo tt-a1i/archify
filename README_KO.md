@@ -148,7 +148,7 @@ npx -y skills@latest add https://archify.si --skill archify --skill archify-pr -
 npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes
 ```
 
-기본 설치에는 `archify-pr` 컴패니언이 포함됩니다. 문서, 잠금 파일, 포맷팅 같은 작은 변경에는 조용히 있고, PR을 준비할 때 실질적인 diff가 있을 때만 다이어그램을 제안합니다. 에이전트 전역 규칙 파일에 `[archify pr: on-demand]`를 추가하면 제안을 끌 수 있습니다. `/archify`만 남기려면 `npx -y skills@latest remove archify-pr --agent cursor --global --yes`로 컴패니언을 제거하세요(프로젝트 전용 설치에서는 `--global`을 생략합니다). 이미 `/archify`만 설치되어 있다면 기본 설치 명령을 다시 실행하거나 `npx -y skills@latest add https://archify.si --skill archify-pr --agent cursor --global --copy --yes`로 컴패니언을 추가하세요.
+기본 설치에는 `archify-pr` 컴패니언이 포함됩니다. 문서, 잠금 파일, 포맷팅 같은 작은 변경에는 조용히 있고, PR을 준비할 때 실질적인 diff가 있을 때만 다이어그램을 제안합니다. 에이전트 전역 규칙 파일에 `[archify pr: on-demand]`를 추가하면 제안을 끌 수 있습니다. `/archify`만 남기려면 `npx -y skills@latest remove archify-pr --agent cursor --global --yes`로 컴패니언을 제거하세요(프로젝트 전용 설치에서는 `--global`을 생략합니다). 이미 `/archify`만 설치되어 있다면 `npx -y skills@latest add https://archify.si --skill archify-pr --agent cursor --global --copy --yes`로 컴패니언을 추가하세요.
 
 <details>
 <summary>다른 설치 방법과 업데이트 확인 동작</summary>

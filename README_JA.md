@@ -246,7 +246,7 @@ npx -y skills@latest add https://archify.si --skill archify --skill archify-pr -
 npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes
 ```
 
-既定のインストールには `archify-pr` コンパニオンが含まれます。ドキュメント、ロックファイル、整形などの小さな変更では静かに待機し、PR の準備中で実質的な diff があるときだけ図を提案します。エージェントのグローバルルールファイルに `[archify pr: on-demand]` を書くと提案を止められます。`/archify` だけを残す場合は `npx -y skills@latest remove archify-pr --agent cursor --global --yes` でコンパニオンを削除できます（プロジェクトのみのインストールでは `--global` を省きます）。すでに `/archify` だけを入れている場合は、既定のインストールコマンドを再実行するか、`npx -y skills@latest add https://archify.si --skill archify-pr --agent cursor --global --copy --yes` でコンパニオンを追加できます。
+既定のインストールには `archify-pr` コンパニオンが含まれます。ドキュメント、ロックファイル、整形などの小さな変更では静かに待機し、PR の準備中で実質的な diff があるときだけ図を提案します。エージェントのグローバルルールファイルに `[archify pr: on-demand]` を書くと提案を止められます。`/archify` だけを残す場合は `npx -y skills@latest remove archify-pr --agent cursor --global --yes` でコンパニオンを削除できます（プロジェクトのみのインストールでは `--global` を省きます）。すでに `/archify` だけを入れている場合は、`npx -y skills@latest add https://archify.si --skill archify-pr --agent cursor --global --copy --yes` でコンパニオンを追加できます。
 
 <details>
 <summary>その他のインストール方法と更新チェックの詳細</summary>
