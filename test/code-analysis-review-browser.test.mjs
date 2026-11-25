@@ -393,6 +393,11 @@ test('Code Analysis marks baseline findings, re-analyzes without a restart, and 
     const after3d = await run('window.__archifyAtlas3d.view.saveSelection()');
     assert.equal(after3d?.name, before3d.name, '3D restores the unique function after a line shift');
     assert.equal(after3d?.line, before3d.line + 1);
+    const findingId = await run(`(() => { const atlas = JSON.parse(document.getElementById('bauify-atlas-data').textContent); const i = atlas.findings.findIndex(f => f.kind === 'function' && atlas.files[atlas.functions[f.fn][0]][0] === 'complex.mjs'); if (i < 0) throw Error('stable finding missing'); window.__archifyAtlas3d.view.select({ type: 'finding', index: i }); return atlas.findings[i].id; })()`);
+    await refreshFromCurrentFocus();
+    const restoredFinding = await run('window.__archifyAtlas3d.view.saveSelection()');
+    assert.equal(restoredFinding?.type, 'finding', 'a stable function-backed finding keeps its selection type');
+    assert.equal(restoredFinding?.id, findingId, 'a stable function-backed finding survives an unchanged run');
     write('quoted.mjs', "const handlers = { '<anonymous>'() { return 'fallback'; } };\n");
     await refreshFromCurrentFocus();
     const quoted = await run(`(() => {
@@ -438,6 +443,19 @@ test('Code Analysis marks baseline findings, re-analyzes without a restart, and 
     write('callbacks.mjs', 'app.use(() => 1);\napp.use(() => 1);\n');
     await refreshFromCurrentFocus();
     assert.equal(await run('window.__archifyAtlas3d.view.saveSelection()'), null, 'identical callbacks have no unique captured identity');
+    const complexCallback = 'app.use((x) => {' + Array.from({ length: 25 }, (_, i) => `if (x === ${i}) return ${i};`).join('') + 'return 0; });\n';
+    write('callbacks.mjs', complexCallback);
+    await refreshFromCurrentFocus();
+    await run(`(() => { const atlas = JSON.parse(document.getElementById('bauify-atlas-data').textContent); const i = atlas.findings.findIndex(f => f.kind === 'function' && atlas.files[atlas.functions[f.fn][0]][0] === 'callbacks.mjs'); if (i < 0) throw Error('callback finding missing'); window.__archifyAtlas3d.view.select({type: 'finding', index: i}); })()`);
+    write('callbacks.mjs', complexCallback.replace('return 0;', 'return -1;') + complexCallback);
+    await refreshFromCurrentFocus();
+    assert.equal(await run('window.__archifyAtlas3d.view.saveSelection()'), null, 'an inserted callback finding cannot inherit the selected finding identity');
+    write('named-bindings.mjs', 'const onSave = function handler() { return 1; };\n');
+    await refreshFromCurrentFocus();
+    await run(`(() => { const atlas = JSON.parse(document.getElementById('bauify-atlas-data').textContent); const i = atlas.functions.findIndex(fn => atlas.files[fn[0]][0] === 'named-bindings.mjs'); if (i < 0) throw Error('named expression missing'); window.__archifyAtlas3d.view.select({ type: 'function', index: i }); })()`);
+    write('named-bindings.mjs', 'const onCancel = function handler() { return 1; };\nconst onSave = function handler() { return 2; };\n');
+    await refreshFromCurrentFocus();
+    assert.equal(await run('window.__archifyAtlas3d.view.saveSelection()'), null, 'a copied named expression must not restore the wrong binding');
     assert.match(await run("document.querySelector('.analysis-refresh-status').textContent"), /selection is no longer available/);
   } else t.diagnostic('3D re-analysis handoff requires WebGL and was not exercised');
   await run("document.querySelector('.views-option[data-view=diagram]').click()");

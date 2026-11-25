@@ -155,7 +155,7 @@ export function buildAtlas({ graph, facts, findings = [], review = null }) {
       fn.definition ? fn.definition.sourceRange?.sha256 || null : fn.sourceRange?.sha256 || null,
       // Display names of callbacks and Java anonymous owners are numbered by
       // source order. A quoted JS method named <anonymous> is a real name.
-      !/<(?:callback of |anonymous(?:#\d+)?>|(?:static|instance) initializer>)/.test(/^(?:MethodDeclaration|GetAccessor|SetAccessor)$/.test(fn.syntaxKind || '') && fn.name && (fn.qualname || fn.name).endsWith(fn.name) ? (fn.qualname || fn.name).slice(0, -fn.name.length) : (fn.qualname || fn.name))])
+      fn.syntaxKind !== 'FunctionExpression' && !/<(?:callback of |anonymous(?:#\d+)?>|(?:static|instance) initializer>)/.test(/^(?:MethodDeclaration|GetAccessor|SetAccessor)$/.test(fn.syntaxKind || '') && fn.name && (fn.qualname || fn.name).endsWith(fn.name) ? (fn.qualname || fn.name).slice(0, -fn.name.length) : (fn.qualname || fn.name))])
     .sort((a, b) => a[0] - b[0] || a[2] - b[2] || compareText(a[1], b[1]));
   for (const [i, fn] of functions.entries()) if (fn[6] !== -1) listed[fn[6]].fn = i;
 
