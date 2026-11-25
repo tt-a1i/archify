@@ -1017,11 +1017,14 @@ function legendCatalog() {
   // The start marker and final ring remain meaningful in a change review.
   const entries = reviewLegendEntries(changeReview, resolveLegend(config, LEGEND_CATALOG, presentKinds), config,
     LEGEND_CATALOG.map((entry) => entry.kind).filter((kind) => kind !== 'start'));
-  if (config?.mode !== 'hidden' && config?.entries?.final?.visible !== false && [...states.values()].some(isFinal)) {
+  const changeEntries = changeLegendEntries(changeReview, config, lifecycle.meta.locale);
+  // The final ring explains other entries; on its own it would be legend chrome with nothing to explain.
+  if ((entries.length || changeEntries.length) && config?.mode !== 'hidden'
+    && config?.entries?.final?.visible !== false && [...states.values()].some(isFinal)) {
     const label = config?.entries?.final?.label || i18nText(lifecycle.meta.locale, 'legend.lifecycle.final');
     entries.push({ kind: 'final', label, interactive: false, present: true, swatchWidth: 16 });
   }
-  return [...entries, ...changeLegendEntries(changeReview, config, lifecycle.meta.locale)];
+  return [...entries, ...changeEntries];
 }
 const legendEntries = legendCatalog();
 const canvasWidth = Math.max(640, Math.ceil(geometry.contentRight + MARGIN_X));
