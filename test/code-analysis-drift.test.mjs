@@ -204,3 +204,44 @@ test('pinned diagram delivery disables updates without an ambient offline flag',
   assert.equal(fs.readFileSync(observed, 'utf8'), '1', 'the spawned delivery process itself receives the disabled update flag');
   assert.equal(fs.existsSync(requests), false, 'no fetch is attempted');
 });
+
+
+test('rejecting a nonexistent pinned scope preserves the previously delivered diagram and report', t => {
+  const f = driftFixture(t);
+  const cli = fileURLToPath(new URL('../archify/bin/archify.mjs', import.meta.url));
+  const out = path.join(f.dir, 'scope-retry');
+  const prepare = extra => spawnSync(process.execPath, [cli, 'code-analysis', 'prepare', f.repo, '--base', f.base, '--head', f.head, '--ir', f.ir, '--map', f.map, '--language', 'ts', '--out', out, ...extra], { encoding: 'utf8', timeout: 90000, env: { ...process.env, ARCHIFY_UPDATE_CHECK_DISABLED: '1' } });
+  const first = prepare([]);
+  assert.equal(first.status, 0, first.stdout + first.stderr);
+  const receipt = JSON.parse(first.stdout);
+  const diagram = fs.readFileSync(receipt.diagram);
+  const report = fs.readFileSync(receipt.html);
+  fs.writeFileSync(f.ir, JSON.stringify({ ...f.doc, meta: { ...f.doc.meta, title: 'Changed diagram title' } }));
+  const rejected = prepare(['--scope', 'missing-directory']);
+  assert.equal(rejected.status, 2, rejected.stdout + rejected.stderr);
+  assert.equal(JSON.parse(rejected.stdout).diagnostics[0].code, 'pr/scope-invalid');
+  assert.deepEqual(fs.readFileSync(receipt.diagram), diagram);
+  assert.deepEqual(fs.readFileSync(receipt.html), report);
+});
+
+
+test('a changed skipped link in an unrelated mapped component does not hide a complete new relation', t => {
+  const f = driftFixture(t);
+  const git = (...args) => { const p = spawnSync('git', ['-C', f.repo, ...args], { encoding: 'utf8' }); assert.equal(p.status, 0, p.stderr); return p.stdout.trim(); };
+  const target = path.join(f.dir, 'target');
+  fs.writeFileSync(target, '../app/main.ts'); const first = git('hash-object', '-w', target);
+  git('reset', '--hard', f.base); git('update-index', '--add', '--cacheinfo', '120000', first, 'src/ui/link'); git('commit', '-qm', 'base');
+  const base = git('rev-parse', 'HEAD');
+  fs.writeFileSync(target, '../lib/module.ts'); const second = git('hash-object', '-w', target);
+  f.write('src/app/main.ts', "import { db } from '../db/module.js';\nexport const app = db;\n");
+  git('add', 'src/app/main.ts'); git('update-index', '--cacheinfo', '120000', second, 'src/ui/link'); git('commit', '-qm', 'head');
+  const head = git('rev-parse', 'HEAD');
+  const cli = fileURLToPath(new URL('../archify/bin/archify.mjs', import.meta.url));
+  const result = spawnSync(process.execPath, [cli, 'code-analysis', 'prepare', f.repo, '--base', base, '--head', head, '--ir', f.ir, '--map', f.map, '--language', 'ts', '--out', path.join(f.dir, 'unrelated-review')], { encoding: 'utf8', timeout: 90000, env: { ...process.env, ARCHIFY_UPDATE_CHECK_DISABLED: '1' } });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const html = fs.readFileSync(JSON.parse(result.stdout).html, 'utf8');
+  const data = JSON.parse(html.match(/id="bauify-analysis">([\s\S]*?)<\/script>/u)[1]);
+  const edge = data.pullRequest.componentDrift.edges.find(item => item.from === 'app' && item.to === 'db');
+  assert.equal(edge.state, 'new-undeclared');
+  assert.ok(!edge.reasons.includes('skipped-tree-entries-changed'));
+});
