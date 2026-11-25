@@ -360,7 +360,9 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
     const details = document.querySelector('#bauify-atlas .atlas-side').getBoundingClientRect();
     return map.bottom <= details.top + 1 && map.height >= 200;
   })()`), true, 'the finding panel leaves the narrow map and import endpoints visible');
+  await run('window.__importLabelPoints = []');
   await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 667, deviceScaleFactor: 1, mobile: false });
+  await focusFunction('src/alpha/a.ts');
   await run('new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))');
   assert.equal(await run(`(() => {
     const canvas = document.querySelector('#bauify-atlas canvas'), box = canvas.getBoundingClientRect();
