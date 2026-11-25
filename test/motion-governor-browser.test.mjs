@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { once } from 'node:events';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { ChromeVisualBrowser, findChrome } from '../archify/bin/visual-check.mjs';
 
@@ -47,7 +48,14 @@ test('Motion Governor preserves mode, ownership, continuous Live flow and real c
   files.static = path.join(scratch, 'static.html');
   fs.writeFileSync(files.static, fs.readFileSync(files.architecture, 'utf8').replace(' data-animation="trace"', ''));
   const browser = new ChromeVisualBrowser(chrome);
-  t.after(() => browser.close());
+  t.after(async () => {
+    if (browser.child.exitCode === null && browser.child.signalCode === null) {
+      const exited = once(browser.child, 'exit', { signal: AbortSignal.timeout(5000) }).catch(() => {});
+      await browser.cdp.send('Browser.close').catch(() => {});
+      await exited;
+    }
+    await browser.close();
+  });
   await browser.sessionPromise;
   let session;
   let browserContextId;
