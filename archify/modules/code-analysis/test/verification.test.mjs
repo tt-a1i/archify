@@ -112,6 +112,27 @@ test('a pinned review with a missing base never falls back to an adjacent workin
   assert.equal(JSON.parse(result.stdout).diagnostics[0].code, 'verification/no-comparison');
 });
 
+test('verify-change accepts a legacy adjacent pair with matching generated provenance', t => {
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-legacy-verify-'));
+  t.after(() => fs.rmSync(scratch, { recursive: true, force: true }));
+  const dir = path.join(scratch, 'analysis'), previousDir = path.join(scratch, 'analysis.previous');
+  fs.mkdirSync(dir); fs.mkdirSync(previousDir);
+  const previous = JSON.parse(fs.readFileSync(new URL('./fixtures/tasks/findings.json', import.meta.url), 'utf8'));
+  const current = structuredClone(previous);
+  current.repository.snapshotId = '2'.repeat(64);
+  const task = JSON.parse(fs.readFileSync(new URL('./fixtures/tasks/complexity.task.json', import.meta.url), 'utf8'));
+  const context = { run: { resume: { command: 'archify serve /example/repo --out /example/out', shell: 'POSIX sh' } } };
+  fs.writeFileSync(path.join(previousDir, 'findings.json'), JSON.stringify(previous));
+  fs.writeFileSync(path.join(dir, 'findings.json'), JSON.stringify(current));
+  fs.writeFileSync(path.join(dir, 'raw-facts.json'), JSON.stringify({ files: [] }));
+  for (const folder of [dir, previousDir]) fs.writeFileSync(path.join(folder, 'view-context.json'), JSON.stringify(context));
+  const taskPath = path.join(scratch, 'task.json'); fs.writeFileSync(taskPath, JSON.stringify(task));
+  const cli = fileURLToPath(new URL('../../../bin/archify.mjs', import.meta.url));
+  const result = spawnSync(process.execPath, [cli, 'code-analysis', 'verify-change', dir, '--task', taskPath], { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.equal(JSON.parse(result.stdout).before.snapshotId, previous.repository.snapshotId);
+});
+
 
 test('task fingerprint is optional for current readers but rejected by an older strict schema', () => {
   const schema = JSON.parse(fs.readFileSync(new URL('../schemas/ai-task.schema.json', import.meta.url), 'utf8'));

@@ -83,7 +83,7 @@ export function analyzeRepository({ root, ir = null, html = null, out, locale = 
   fs.writeFileSync(path.join(dir, 'findings.json'), stableJson(findings));
   const prior = loadPrevious(previous);
   const review = reviewFindings(findings.diagnostics, { baseline: loadBaseline(baseline), previous: prior, analysis: findings.analysis, files: [...facts.files, ...(findings.externalEvidence || [])].map((f) => f.path) });
-  const history = retainBaselines ? retainVerificationBaselines(dir, path.dirname(previous), prior, findings, absRoot) : [];
+  const history = retainBaselines ? retainVerificationBaselines(dir, path.dirname(previous), prior, findings, absRoot, resume) : [];
   const irDoc = irSnapshot ?? (irPath ? readJsonInput(irPath, 'analysis --ir') : null);
   const mapDoc = map ? readJsonInput(map, 'analysis --map') : null;
   if (captureDriftInputs && resolutionInputs) fs.writeFileSync(path.join(dir, 'resolution-inputs.json'), stableJson([...resolutionInputs]));

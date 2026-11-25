@@ -11,6 +11,18 @@ const maxCaptures = 6;
 const maxBytes = 4 * 1024 * 1024;
 const ownerName = 'verification-owner.json';
 
+// Older captures predate ownership metadata. Their saved, generated resume
+// command binds the repository and output paths; never fall back when an
+// ownership record exists but is invalid or disagrees.
+function legacyResume(dir) {
+  try {
+    if (fs.existsSync(path.join(dir, ownerName))) return null;
+    const resume = JSON.parse(fs.readFileSync(path.join(dir, 'view-context.json'), 'utf8')).run.resume;
+    return typeof resume?.command === 'string' && resume.command && ['cmd.exe', 'POSIX sh'].includes(resume.shell) ? resume : null;
+  } catch { return null; }
+}
+function sameResume(a, b) { return Boolean(a && b && a.command === b.command && a.shell === b.shell); }
+
 function repositoryIdentity(root) {
   const resolved = fs.realpathSync.native(root);
   const canonical = process.platform === 'win32' ? resolved.toLowerCase() : resolved;
@@ -23,7 +35,7 @@ export function sameVerificationRepository(currentDir, previousDir) {
     const read = dir => JSON.parse(fs.readFileSync(path.join(dir, ownerName), 'utf8')).identity;
     const identity = read(currentDir);
     return /^[a-f0-9]{64}$/.test(identity) && identity === read(previousDir);
-  } catch { return false; }
+  } catch { return sameResume(legacyResume(currentDir), legacyResume(previousDir)); }
 }
 
 // An adjacent PR head is eligible only when both saved views identify the
@@ -68,10 +80,10 @@ function distinctCaptures(current, captures) {
 
 // Write inside the staged run. Unchanged runs occupy one slot, and a failed
 // scan never updates the published history.
-export function retainVerificationBaselines(dir, previousDir, previous, current, root) {
+export function retainVerificationBaselines(dir, previousDir, previous, current, root, resume = null) {
   const identity = repositoryIdentity(root);
   fs.writeFileSync(path.join(dir, ownerName), JSON.stringify({ identity }));
-  const same = sameVerificationRepository(dir, previousDir);
+  const same = sameVerificationRepository(dir, previousDir) || sameResume(resume, legacyResume(previousDir));
   const history = same ? readHistory(previousDir) : [];
   // Keep the earlier byte-exact representative for an existing task identity.
   // Checks exported against that capture must survive supplemental-only edits.

@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
-import { matchingPreviousPullRequest, retainVerificationBaselines, verificationContexts } from '../lib/verification-history.mjs';
+import { matchingPreviousPullRequest, retainVerificationBaselines, sameVerificationRepository, verificationContexts } from '../lib/verification-history.mjs';
 import { analysisDigest, taskAnalysisDigest } from '../lib/verification-context.mjs';
 import { evaluateVerification } from '../lib/verification.mjs';
 
@@ -160,4 +160,20 @@ test('a prior PR head is accepted only for the same verified PR and pins', t => 
   for (const change of [{ number: 43 }, { repository: 'other/repo' }, { scope: 'src' }, { baseSHA: '4'.repeat(40) }, { headSHA: '5'.repeat(40) }, { local: true }]) {
     assert.equal(matchingPreviousPullRequest(previousDir, current, { ...currentPR, ...change }), null);
   }
+});
+
+test('legacy captures require matching generated resume provenance and migrate safely', t => {
+  const directory = workspace(t), old = directory('old'), adjacent = directory('adjacent'), migrated = directory('migrated'), rejected = directory('rejected');
+  const resume = { command: 'archify serve /example/repo --out /example/out', shell: 'POSIX sh' };
+  const context = { run: { resume } };
+  fs.writeFileSync(path.join(old, 'view-context.json'), JSON.stringify(context));
+  fs.writeFileSync(path.join(adjacent, 'view-context.json'), JSON.stringify(context));
+  assert.equal(sameVerificationRepository(old, adjacent), true);
+  retainVerificationBaselines(migrated, old, capture(1), capture(2), testRoot, resume);
+  assert.deepEqual(savedIds(migrated), [snapshotId(1)]);
+  assert.deepEqual(retainVerificationBaselines(rejected, old, capture(1), capture(2), testRoot, { ...resume, command: 'other repo' }), []);
+  fs.writeFileSync(path.join(old, 'verification-owner.json'), '{"identity":"invalid"}');
+  assert.equal(sameVerificationRepository(old, adjacent), false, 'invalid explicit ownership cannot fall back to legacy metadata');
+  const invalid = directory('invalid');
+  assert.deepEqual(retainVerificationBaselines(invalid, old, capture(1), capture(2), testRoot, resume), []);
 });
