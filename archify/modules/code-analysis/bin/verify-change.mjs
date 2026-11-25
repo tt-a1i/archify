@@ -3,7 +3,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { DiagnosticError, fail, receipt } from '../core/index.mjs';
 import { loadPrevious, readJsonInput } from '../lib/analysis.mjs';
-import { verificationContexts } from '../lib/verification-history.mjs';
+import { reviewFindings } from '../lib/review.mjs';
+import { verificationContext } from '../lib/verification-context.mjs';
 import { evaluateVerification } from '../lib/verification.mjs';
 
 const usage = 'Usage: archify code-analysis verify-change <analysis-dir> --task <task.json> [--checks <checks.json> | --checks-template]';
@@ -14,8 +15,8 @@ const reanalyze = 'run analysis again in the same output directory and keep both
 const verificationFailures = {
   'no-comparison': ['analysis', 'No usable before and after analysis captures were found.', reanalyze],
   'invalid-task': ['task', 'The task does not have the expected format.', originalTask],
-  'wrong-task-snapshot': ['task', 'The task does not match a retained analysis capture.', originalTask],
-  'wrong-task-findings': ['task', 'The selected findings do not match the task baseline.', originalTask],
+  'wrong-task-snapshot': ['task', 'The task does not match the previous analysis.', originalTask],
+  'wrong-task-findings': ['task', 'The selected findings do not match the previous analysis.', originalTask],
   'wrong-task-id': ['task', 'The task ID does not match the selected findings.', originalTask],
   'invalid-checks': ['checks', 'The project check results do not have the expected format.', checksTemplate],
   'wrong-checks-snapshot': ['checks', 'The project check results do not match this task and analysis pair.', checksTemplate],
@@ -57,10 +58,13 @@ async function run([dir, ...args]) {
   }
   if (!options.has('--task') || (options.has('--checks') && options.has('--checks-template'))) invalidUsage();
   const current = loadPrevious(path.join(dir, 'findings.json'));
-  const previous = loadPrevious(path.join(dir, 'base/findings.json'))
-    || loadPrevious(path.join(dir, '..', 'analysis.previous', 'findings.json'));
-  const facts = current && readJsonInput(path.join(dir, 'raw-facts.json'), 'verify-change');
-  const result = await evaluateVerification(verificationContexts(dir, previous, current, facts), readInput(options.get('--task'), 'task'),
+  const previous = loadPrevious(path.join(dir, '..', 'analysis.previous', 'findings.json'));
+  const facts = current && previous && readJsonInput(path.join(dir, 'raw-facts.json'), 'verify-change');
+  const review = facts && reviewFindings(current.diagnostics, {
+    previous, analysis: current.analysis,
+    files: [...facts.files, ...(current.externalEvidence || [])].map((f) => f.path),
+  });
+  const result = await evaluateVerification(verificationContext(previous, current, review), readInput(options.get('--task'), 'task'),
     options.has('--checks') ? readInput(options.get('--checks'), 'checks') : undefined);
   if (result.error) {
     const [input, message, fix] = verificationFailures[result.error];

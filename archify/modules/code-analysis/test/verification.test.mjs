@@ -42,12 +42,6 @@ test('receipt distinguishes an unchanged external report from a detected source 
   assert.equal((await evaluateVerification(refreshed, task, checks)).error, 'wrong-checks-snapshot', 'report bytes can change even when source snapshot does not');
   assert.equal((await evaluateVerification(ctx, { ...task, source: { ...task.source, snapshotId: sha('0') } }, checks)).error, 'wrong-task-snapshot');
   assert.equal((await evaluateVerification(ctx, { ...task, findings: [{ ...diagnostics[1], external: { ...external, reviewDigest: sha('0') } }] })).error, 'wrong-task-findings');
-  assert.equal((await evaluateVerification([ctx, refreshed], task)).error, 'wrong-task-snapshot',
-    'legacy task JSON cannot silently choose between different reports for the same code snapshot');
-  const pinned = { ...task, source: { ...task.source, analysisSha256: ctx.before.analysisSha256 } };
-  const otherBefore = { ...refreshed, taskAnalysisSha256: sha('0'), before: { ...refreshed.before, analysisSha256: sha('0') } };
-  assert.deepEqual((await evaluateVerification([otherBefore, ctx], pinned)).receipt, result.receipt);
-  assert.equal((await evaluateVerification([otherBefore], pinned)).error, 'wrong-task-snapshot');
   const limited = verificationContext(previous, current, { comparison: { ...review.comparison,
     comparable: false, reasons: [{ code: 'config-changed' }], new: ['unaudited-addition'] } });
   const limitedResult = await evaluateVerification(limited, task);

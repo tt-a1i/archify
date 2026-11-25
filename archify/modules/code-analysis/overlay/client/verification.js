@@ -5,7 +5,7 @@
     'invalid-task': 'Invalid task or mismatched task findings.',
     'wrong-task-findings': 'Invalid task or mismatched task findings.',
     'wrong-task-id': 'The task ID does not match the selected findings.',
-    'wrong-task-snapshot': 'The task does not match a retained analysis capture.',
+    'wrong-task-snapshot': 'The task does not match the previous analysis.',
     'invalid-checks': 'Invalid project check results.',
     'wrong-checks-snapshot': 'Check results do not match this task and analysis pair.',
   };

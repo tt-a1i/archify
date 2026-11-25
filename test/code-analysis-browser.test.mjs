@@ -139,6 +139,18 @@ test('Code Analysis highlights exact duplicate characters and retains both locat
     await run("document.querySelector('#bauify-code .source-back').click()");
     assert.equal((await marks(section + ' pre')).length, 2, 'returning preserves both duplicate previews');
   }
+  // Re-analysis restoration must retain the second occurrence even when both
+  // ranges share the same file and line.
+  await run(`(() => {
+    const ref = document.querySelectorAll(${JSON.stringify(section + ' .ref')})[1];
+    const keys = ['data-file', 'data-line', 'data-range-start', 'data-range-end', 'data-match'];
+    window.__archifyRestoreReading({ reading: { kind: 'finding', id: 'REDU-0001' }, open: true,
+      sourceOpen: true, sourceRef: keys.map(key => ref.getAttribute(key)), scroll: 0 });
+  })()`);
+  assert.equal(await run("document.getElementById('bauify-code').hidden"), false);
+  assert.equal((await marks('#bauify-code pre'))[0].before, shortMarks[1].before, 'the second same-line occurrence is restored');
+  await run("document.querySelector('#bauify-code .source-back').click()");
+
   if (process.env.ARCHIFY_C6_HIGHLIGHT_SCREENSHOT) {
     const shot = await send('Page.captureScreenshot', { format: 'png' });
     fs.writeFileSync(process.env.ARCHIFY_C6_HIGHLIGHT_SCREENSHOT, Buffer.from(shot.data, 'base64'));

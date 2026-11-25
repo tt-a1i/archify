@@ -106,7 +106,6 @@
         "adapter": { "type": ["string", "null"] },
         "sourceKind": { "type": ["string", "null"] },
         "snapshotId": { "type": ["string", "null"] },
-        "analysisSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
         "configDigest": { "type": ["string", "null"] },
         "analyzer": { "type": ["object", "null"] },
           "gitHead": { "type": ["string", "null"], "description": "Contextual HEAD for working-tree; pinned source commit for git-tree." },

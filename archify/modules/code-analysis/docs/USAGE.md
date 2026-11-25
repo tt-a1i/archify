@@ -27,6 +27,45 @@ This layer performs no new extraction or repository traversal. Reading is bounde
 
 In PR mode, short file/function addition and removal counts follow the original module labels, with detailed counts available on hover. Change badges (+/−/◇) open the captured source; grey dashed spikes show merge-base complexity alongside the current spikes. Removed functions can be marked against a surviving file; deleted files/modules remain in the change list. These annotations do not appear in ordinary repository analysis. A same-metric source edit can have a change badge without implying increased complexity or changed behavior.
 
+## Offline review of two local commits
+
+Use exact Git commit IDs to generate a self-contained review without contacting GitHub:
+
+```sh
+node bin/archify.mjs code-analysis prepare /path/to/repo \
+  --base <40-character-base> --head <40-character-head> --language ts \
+  --out out/pinned-review
+```
+
+Provision the Code Analysis dependencies and language tools beforehand. Git objects
+needed by the selected scope must be available locally. Missing commit or tree
+objects produce a diagnostic, and a failed run keeps the last good report.
+The reader compares the selected base directly with head. To match GitHub's PR
+comparison, resolve and pass its merge-base yourself. A dirty checkout, Git
+branch moves and untracked files do not change the selected commits or evidence.
+For a large repository, use `--scope <repo-directory>` to select a subtree.
+Git uses 50% similarity to detect renames; moves across the scope boundary
+appear as additions or removals, and Git may skip expensive similarity searches
+when more than 1000 unmatched paths remain.
+
+Open `out/pinned-review/analysis/repo.analysis.html` directly in a browser.
+**Review commits** shows the full Git identities. **Files** in Atlas lists
+changed files, and a rename links both saved paths. Source buttons are available
+for captured text. Changed files outside the analysis selection may still have
+a preview if they are regular UTF-8 files (up to 128 KiB per file and 4 MiB
+per side for supplemental previews). These previews do not expand analysis coverage. **Architecture assessment**
+links observed dependency changes to source. For JS/TS, add an existing
+`--ir architecture.json` and optional `--map overlay-map.json` to compare
+authored component relations using the same static analysis as `drift`.
+Select a relation to highlight its components or open its import evidence.
+Uncertain ownership, resolution and parsing remain visible in the relation.
+
+**Download review .md** exports both commits, changed paths, recorded
+dependency changes, source coordinates and coverage. The export omits source
+text. The HTML includes captured source excerpts and tasks. Share it with
+people who may read that source. You can also use the same pinned options with
+`archify start` or `code-analysis serve`.
+
 From the `archify/` package directory inside the Archify repository:
 
 ```sh
@@ -102,12 +141,12 @@ After edits, the prominent comparison reports **no longer detected**, **new** an
 ## Verify a previous task after edits
 
 1. Open a finding's **Task preview and download**, then click **Download task JSON** before editing. Use the Markdown or copy action to hand the task to a developer or coding agent.
-2. Make the change, run the project's checks separately, and **Re-analyze** in the live workbench, or run `prepare` again with the same output directory. The live workspace reopens the same component or finding when available and keeps the Atlas Files search and selection. When a finding or file disappears, the latest report remains navigable.
+2. Make the change, run the project's checks separately, and **Re-analyze** in the live workbench, or run `prepare` again with the same output directory. Keep the immediately previous capture; running analysis again rotates the pair.
 3. Under **Verify a previous task**, select the task JSON and preview the analysis observations. To record your project checks, download the checks template, enter short check names and their statuses (`passed`, `failed`, `skipped`, or `not-run`), then load it and preview again. **Download verification JSON** exports the combined receipt. The prepared HTML works offline; these files are read in the browser and never sent to the local service.
 
 The receipt distinguishes observed finding changes from checks reported by the user. It does not run tests, verify their execution, or prove a fix. New findings are counted for the captured scope, not attributed to the task. Limited comparisons, missing evidence and unchanged imported reports are marked inconclusive where applicable. Refresh external reports with their original tools and settings before re-analysis; different bytes alone still do not prove the tool ran against the captured source. Do not put commands, logs or secrets into check names.
 
-For the same flow headlessly, point `verify-change` at the `analysis/` directory from `prepare` or `serve`. Both interfaces use the task’s original analysis capture. Reusing the output directory keeps up to six distinct earlier findings captures within a 4 MiB history budget, with the adjacent `analysis.previous/` capture still available. Identical captures share one slot. Earlier task JSON remains usable when its capture can be matched unambiguously. If an older capture has rotated out, point verification at an output directory that still contains it. As with other analysis artifacts, retained findings can include local evidence. Keep the output directory local. Example from the package directory:
+For the same flow headlessly, point `verify-change` at the `analysis/` directory from `prepare` or `serve`. It reads the adjacent `analysis.previous/` capture. Example from the package directory:
 
 ```sh
 node bin/archify.mjs code-analysis verify-change out/project-analysis/analysis --task task.json --checks-template > checks.json

@@ -182,17 +182,7 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
   assert.match(await run("document.querySelector('.comparison-banner').textContent"), /不代表已证实修复/);
   assert.match(await run("document.querySelector('.health-summary').textContent"), /无错误级/);
 
-  // A second re-analysis replaces the adjacent capture with the fixed revision.
-  // The old task still addresses the initial capture, in the CLI and in the report.
-  await open(prepare('zh-CN').html);
-  const current = JSON.parse(fs.readFileSync(path.join(analysisDir, 'findings.json')));
-  const immediate = JSON.parse(fs.readFileSync(path.join(out, 'analysis.previous', 'findings.json')));
-  assert.equal(current.repository.snapshotId, immediate.repository.snapshotId);
-  assert.notEqual(immediate.repository.snapshotId, task.source.snapshotId);
   const template = command('verify-change', analysisDir, '--task', taskFile, '--checks-template');
-  assert.equal(template.before.snapshotId, task.source.snapshotId);
-  assert.equal(template.before.analysisSha256, task.source.analysisSha256);
-  assert.equal(template.after.snapshotId, current.repository.snapshotId);
   const checks = path.join(dir, 'checks.json');
   fs.writeFileSync(checks, JSON.stringify({ ...template, checks: [{ name: '<img id="check-injection">', status: 'failed' }] }));
   const expectedReceipt = command('verify-change', analysisDir, '--task', taskFile, '--checks', checks);

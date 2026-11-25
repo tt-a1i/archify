@@ -26,6 +26,8 @@ test('Code Analysis marks baseline findings, re-analyzes without a restart, and 
   write('c.mjs', "import './d.mjs';\n");
   write('d.mjs', "import './c.mjs';\n");
   write('scratch.mjs', 'export const scratch = 1;\n');
+  fs.mkdirSync(path.join(root, 'a.b'));
+  fs.writeFileSync(path.join(root, 'a.b', 'index.mjs'), 'export const original = 1;\n');
 
   const ir = path.join(scratch, 'input.json');
   fs.writeFileSync(ir, JSON.stringify({ schema_version: 1, diagram_type: 'architecture', meta: { title: 'Review browser regression', output: 'architecture.html' },
@@ -139,6 +141,21 @@ test('Code Analysis marks baseline findings, re-analyzes without a restart, and 
   assert.equal(await run("document.querySelector('#bauify-detail .ai-task').dataset.taskId"), beforeFinding.id);
   assert.equal(await run("document.querySelector('#bauify-detail h3').textContent"), beforeFinding.title);
   assert.equal(await run("document.activeElement.matches('#bauify-detail .back')"), true);
+
+  // The generated ID changes when a later module has the same slug. The
+  // selection follows the stable grouping path instead of that generated ID.
+  await run(`(() => {
+    document.querySelector('.views-option[data-view=atlas]').click();
+    const atlas = JSON.parse(document.getElementById('bauify-atlas-data').textContent);
+    const module = atlas.modules.find(item => item.path === 'a.b');
+    window.__archifyAtlas.focusModule(module.id);
+  })()`);
+  fs.mkdirSync(path.join(root, 'a-b'));
+  fs.writeFileSync(path.join(root, 'a-b', 'index.mjs'), 'export const collision = 2;\n');
+  await refreshFromCurrentFocus();
+  assert.match(await run("document.querySelector('#bauify-atlas .atlas-selection').textContent"), /a\.b/, 'module selection survives an ID collision');
+  assert.doesNotMatch(await run("document.querySelector('.analysis-refresh-status').textContent"), /no longer available/);
+  await run("document.querySelector('.views-option[data-view=diagram]').click()");
 
   await run(`document.querySelector('.views-option[data-view=atlas]').click();
     document.getElementById('atlas-tab-files').click();

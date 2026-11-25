@@ -28,11 +28,10 @@ function fixtureRun(t) {
 const byCode = (findings, code) => findings.diagnostics.find((d) => d.code === code);
 const edit = (dir, rel, fn) => { const f = path.join(dir, rel); fs.writeFileSync(f, fn(fs.readFileSync(f, 'utf8'))); };
 
-// Python version and capture identity differ by machine; everything else must match.
+// Python version and snapshot differ by machine; everything else must match.
 function normalize(name, text) {
   if (name.endsWith('.md')) return text.replace(/\(python@[^)]*\)/g, '(python@X)').replace(/Snapshot: `[0-9a-f]{64}`/g, 'Snapshot: `X`');
-  return text.replace(/"python@[^"]*"/g, '"python@X"').replace(/"snapshotId": "[0-9a-f]{64}"/g, '"snapshotId": "X"')
-    .replace(/"analysisSha256": "[0-9a-f]{64}"/g, '"analysisSha256": "X"');
+  return text.replace(/"python@[^"]*"/g, '"python@X"').replace(/"snapshotId": "[0-9a-f]{64}"/g, '"snapshotId": "X"');
 }
 
 test('task fixtures: checked-in contract examples match a fresh generation', () => {

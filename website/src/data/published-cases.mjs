@@ -7,7 +7,7 @@ export const PUBLISHED_CASES = [
     artifact: 'cases/life/leave-plan.workflow.html',
     input: 'cases/life/leave-plan.workflow.json',
     title: '一年的年假怎么排',
-    description: '查看一份中文年假安排流程图：休假节点、剩余额度和规则提醒相互对应。此为示例计划，不代表真实日历或公司的休假政策。',
+    description: '查看一份基于 Archify 生成的中文年假安排可交互工作流图：清晰串联全年休假节点、调休组合、剩余额度与规则提醒，支持节点聚焦与链路追踪。此为示例计划，不代表真实日历或公司的休假政策。',
     language: 'zh-CN',
   },
   {
@@ -28,7 +28,7 @@ export const PUBLISHED_CASES = [
     artifact: 'cases/life/renting.sequence.html',
     input: 'cases/life/renting.sequence.json',
     title: '租一套房，一来一回都在这里',
-    description: '用中文时序图查看租客、中介和房东之间的看房、议价、签约、付款与交接步骤。金额和流程仅为示例。',
+    description: '用 Archify 中文可交互时序图完整梳理租客、中介与房东之间的看房、议价、合同核对、签约、付款与房屋交接全流程，支持点击聚焦单步交互与角色路径。金额和流程仅为示例。',
     language: 'zh-CN',
   },
   {
@@ -74,7 +74,7 @@ export const PUBLISHED_CASES = [
     artifact: 'cases/astron-agent-runtime.architecture.html',
     input: 'cases/astron-agent-runtime.architecture.json',
     title: 'Astron Agent 运行时架构',
-    description: '查看 Astron Agent 在固定提交 a77c92a 的运行时架构图：入口、服务职责与调用关系。这是依据源码编写并对齐的架构图，不是运行时采集的 trace。',
+    description: '查看 Astron Agent 在固定提交 a77c92a 的源码实证运行时架构图：完整呈现入口层、核心服务职责、状态存储与模块调用边界，支持节点聚焦与链路追踪。此图依据源码编写对齐，非运行时 trace。',
     language: 'zh-CN',
   },
 ];
