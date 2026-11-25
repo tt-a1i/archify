@@ -6,6 +6,10 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 > Development identity: `v3.3.2-dev.1`. Not a stable release.
 
+### Added
+
+- **In-page update notice (#1489).** When the local cache has an update reminder, `deliver` and `finalize` add a dismissible pill to the center of the top bar on wide diagram pages with room, or to the footer otherwise. The pill shows the new version, a one-click copy button for a localized Agent update prompt, and the official release notes. The notice works offline and makes zero network requests. It stays out of print, presentation, embeds, image exports, and browser evidence. Current, disabled, and opted-out deliveries (`--no-update-notice`, `ARCHIFY_UPDATE_NOTICE_DISABLED=1`) stay byte-identical.
+
 ### Changed
 
 - **Default install includes `archify-pr`.** The canonical `https://archify.si` install now publishes and installs both `/archify` and `/archify-pr`. The companion still offers a diagram only for material PR diffs; add `[archify pr: on-demand]` to disable those offers, or run `npx -y skills@latest remove archify-pr` to keep only the core Skill. The website Skill index change takes effect when this revision is deployed from `main`.

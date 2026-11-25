@@ -655,7 +655,7 @@ async function cacheRm(cacheDirectory, target, options) {
   });
 }
 
-async function prepareCacheDirectory(cacheDirectory) {
+async function prepareCacheDirectory(cacheDirectory, { create = true } = {}) {
   const absoluteTarget = path.resolve(cacheDirectory);
   const target = await canonicalizeTrustedDirectoryPrefix(absoluteTarget);
   const parsed = path.parse(target);
@@ -673,7 +673,7 @@ async function prepareCacheDirectory(cacheDirectory) {
     try {
       metadata = await fs.lstat(current, { bigint: true });
     } catch (error) {
-      if (error?.code !== 'ENOENT') throw error;
+      if (!create || error?.code !== 'ENOENT') throw error;
       try {
         await cacheMkdirWithToken(token, current, { mode: 0o700 }, []);
       } catch (mkdirError) {
@@ -1705,6 +1705,33 @@ async function runCli() {
     return setUpdatePreference({ eventKey: argumentsList[1], mode: 'ignore' });
   }
   return silent('invalid-arguments');
+}
+
+// Read-only view of the last committed check for the in-page delivery notice.
+// It never fetches, claims an operation, or changes backoff and preferences,
+// so it cannot race or replace the bounded network check that owns the cache.
+export async function readCachedUpdate({
+  releasePath = defaultReleasePath,
+  cacheDirectory = defaultCacheDirectory(),
+  now = Date.now,
+} = {}) {
+  if (updatesDisabled()) return silent('disabled');
+  let localRelease;
+  try {
+    localRelease = validateLocalRelease(await readJsonFile(releasePath, MAX_LOCAL_RELEASE_BYTES));
+  } catch {
+    return silent('invalid-local-release');
+  }
+  const nowMs = Number(now());
+  if (!Number.isFinite(nowMs)) return silent('invalid-clock');
+  const stateDirectory = versionCacheDirectory(cacheDirectory, localRelease.version);
+  try {
+    const prepared = await prepareCacheDirectory(stateDirectory, { create: false });
+    const state = await readState(prepared, localRelease.version);
+    return state.candidate ? resultForCandidate(localRelease, state, { nowMs }) : silent('cache-empty');
+  } catch (error) {
+    return silent(error?.code === 'ENOENT' ? 'cache-empty' : 'cache-unavailable');
+  }
 }
 
 export function isMainModule({
