@@ -11,18 +11,6 @@ const maxCaptures = 6;
 const maxBytes = 4 * 1024 * 1024;
 const ownerName = 'verification-owner.json';
 
-// Older captures predate ownership metadata. Their saved, generated resume
-// command binds the repository and output paths; never fall back when an
-// ownership record exists but is invalid or disagrees.
-function legacyResume(dir) {
-  try {
-    if (fs.existsSync(path.join(dir, ownerName))) return null;
-    const resume = JSON.parse(fs.readFileSync(path.join(dir, 'view-context.json'), 'utf8')).run.resume;
-    return typeof resume?.command === 'string' && resume.command && ['cmd.exe', 'POSIX sh'].includes(resume.shell) ? resume : null;
-  } catch { return null; }
-}
-function sameResume(a, b) { return Boolean(a && b && a.command === b.command && a.shell === b.shell); }
-
 function repositoryIdentity(root) {
   const resolved = fs.realpathSync.native(root);
   const canonical = process.platform === 'win32' ? resolved.toLowerCase() : resolved;
@@ -35,7 +23,7 @@ export function sameVerificationRepository(currentDir, previousDir) {
     const read = dir => JSON.parse(fs.readFileSync(path.join(dir, ownerName), 'utf8')).identity;
     const identity = read(currentDir);
     return /^[a-f0-9]{64}$/.test(identity) && identity === read(previousDir);
-  } catch { return sameResume(legacyResume(currentDir), legacyResume(previousDir)); }
+  } catch { return false; }
 }
 
 // An adjacent PR head is eligible only when both saved views identify the
@@ -45,7 +33,8 @@ export function matchingPreviousPullRequest(previousDir, current, currentPR) {
     const old = JSON.parse(fs.readFileSync(path.join(previousDir, 'view-context.json'), 'utf8')).run.pullRequest;
     const previous = loadPrevious(path.join(previousDir, 'findings.json'));
     if (!old || !currentPR || !previous || old.local || currentPR.local || !Number.isInteger(old.number) || old.number < 1
-      || old.number !== currentPR.number || typeof old.repository !== 'string' || old.repository !== currentPR.repository
+      || old.number !== currentPR.number || typeof old.repository !== 'string' || typeof currentPR.repository !== 'string'
+      || old.repository.toLowerCase() !== currentPR.repository.toLowerCase()
       || old.scope !== currentPR.scope || !/^[a-f0-9]{40}$/.test(old.baseSHA || '') || old.baseSHA !== currentPR.baseSHA
       || !/^[a-f0-9]{40}$/.test(old.headSHA || '') || !/^[a-f0-9]{40}$/.test(currentPR.headSHA || '')
       || previous.repository.revision !== old.headSHA || current.repository.revision !== currentPR.headSHA) return null;
@@ -80,10 +69,10 @@ function distinctCaptures(current, captures) {
 
 // Write inside the staged run. Unchanged runs occupy one slot, and a failed
 // scan never updates the published history.
-export function retainVerificationBaselines(dir, previousDir, previous, current, root, resume = null) {
+export function retainVerificationBaselines(dir, previousDir, previous, current, root) {
   const identity = repositoryIdentity(root);
   fs.writeFileSync(path.join(dir, ownerName), JSON.stringify({ identity }));
-  const same = sameVerificationRepository(dir, previousDir) || sameResume(resume, legacyResume(previousDir));
+  const same = sameVerificationRepository(dir, previousDir);
   const history = same ? readHistory(previousDir) : [];
   // Keep the earlier byte-exact representative for an existing task identity.
   // Checks exported against that capture must survive supplemental-only edits.

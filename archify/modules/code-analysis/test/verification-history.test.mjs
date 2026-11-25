@@ -157,23 +157,34 @@ test('a prior PR head is accepted only for the same verified PR and pins', t => 
   fs.writeFileSync(path.join(previousDir, 'findings.json'), JSON.stringify(previous));
   fs.writeFileSync(path.join(previousDir, 'view-context.json'), JSON.stringify({ run: { pullRequest: oldPR } }));
   assert.deepEqual(matchingPreviousPullRequest(previousDir, current, currentPR), previous);
+  assert.deepEqual(matchingPreviousPullRequest(previousDir, current, { ...currentPR, repository: 'Owner/Repo' }), previous, 'GitHub repository identity is case-insensitive');
   for (const change of [{ number: 43 }, { repository: 'other/repo' }, { scope: 'src' }, { baseSHA: '4'.repeat(40) }, { headSHA: '5'.repeat(40) }, { local: true }]) {
     assert.equal(matchingPreviousPullRequest(previousDir, current, { ...currentPR, ...change }), null);
   }
 });
 
-test('legacy captures require matching generated resume provenance and migrate safely', t => {
+test('legacy captures without ownership cannot be migrated by command alone', t => {
   const directory = workspace(t), old = directory('old'), adjacent = directory('adjacent'), migrated = directory('migrated'), rejected = directory('rejected');
   const resume = { command: 'archify serve /example/repo --out /example/out', shell: 'POSIX sh' };
   const context = { run: { resume } };
   fs.writeFileSync(path.join(old, 'view-context.json'), JSON.stringify(context));
   fs.writeFileSync(path.join(adjacent, 'view-context.json'), JSON.stringify(context));
-  assert.equal(sameVerificationRepository(old, adjacent), true);
-  retainVerificationBaselines(migrated, old, capture(1), capture(2), testRoot, resume);
-  assert.deepEqual(savedIds(migrated), [snapshotId(1)]);
+  assert.equal(sameVerificationRepository(old, adjacent), false);
+  assert.deepEqual(retainVerificationBaselines(migrated, old, capture(1), capture(2), testRoot, resume), []);
   assert.deepEqual(retainVerificationBaselines(rejected, old, capture(1), capture(2), testRoot, { ...resume, command: 'other repo' }), []);
   fs.writeFileSync(path.join(old, 'verification-owner.json'), '{"identity":"invalid"}');
   assert.equal(sameVerificationRepository(old, adjacent), false, 'invalid explicit ownership cannot fall back to legacy metadata');
   const invalid = directory('invalid');
   assert.deepEqual(retainVerificationBaselines(invalid, old, capture(1), capture(2), testRoot, resume), []);
+});
+
+test('a legacy resume command cannot establish repository continuity after replacement', t => {
+  const directory = workspace(t), repo = directory('repo'), old = directory('legacy'), next = directory('next');
+  const resume = { command: `archify serve ${repo} --out ${old}`, shell: 'POSIX sh' };
+  fs.writeFileSync(path.join(old, 'view-context.json'), JSON.stringify({ run: { resume } }));
+  fs.rmdirSync(repo); fs.mkdirSync(repo);
+  assert.deepEqual(retainVerificationBaselines(next, old, capture(1), capture(2), repo, resume), [], 'an unchanged command cannot prove a legacy capture belongs to the replacement checkout');
+  const oversized = { ...capture(1), externalEvidence: [{ path: 'large.py', sourceText: 'x'.repeat(5 * 1024 * 1024) }] };
+  const large = directory('large');
+  assert.deepEqual(retainVerificationBaselines(large, old, oversized, capture(2), repo, resume), [], 'oversized legacy findings cannot bypass the same ownership rule');
 });

@@ -112,7 +112,7 @@ test('a pinned review with a missing base never falls back to an adjacent workin
   assert.equal(JSON.parse(result.stdout).diagnostics[0].code, 'verification/no-comparison');
 });
 
-test('verify-change accepts a legacy adjacent pair with matching generated provenance', t => {
+test('verify-change rejects an unowned legacy adjacent pair even if its command matches', t => {
   const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-legacy-verify-'));
   t.after(() => fs.rmSync(scratch, { recursive: true, force: true }));
   const dir = path.join(scratch, 'analysis'), previousDir = path.join(scratch, 'analysis.previous');
@@ -129,8 +129,8 @@ test('verify-change accepts a legacy adjacent pair with matching generated prove
   const taskPath = path.join(scratch, 'task.json'); fs.writeFileSync(taskPath, JSON.stringify(task));
   const cli = fileURLToPath(new URL('../../../bin/archify.mjs', import.meta.url));
   const result = spawnSync(process.execPath, [cli, 'code-analysis', 'verify-change', dir, '--task', taskPath], { encoding: 'utf8' });
-  assert.equal(result.status, 0, result.stdout + result.stderr);
-  assert.equal(JSON.parse(result.stdout).before.snapshotId, previous.repository.snapshotId);
+  assert.equal(result.status, 2, result.stdout + result.stderr);
+  assert.equal(JSON.parse(result.stdout).diagnostics[0].code, 'verification/no-comparison');
 });
 
 
