@@ -186,9 +186,10 @@ function participantX(index) {
 // 8.5px keeps notes above the reader's 7.5px legibility floor.
 const NOTE_FONT_SIZE = 8.5;
 const NOTE_LINE_HEIGHT = NOTE_FONT_SIZE + 4;
-// The first baseline sits far enough below the message line that the note's
-// ascent clears the arrow stroke and marker.
-const NOTE_BASELINE_OFFSET = 19.5;
+// The first baseline keeps its position 18px below the message line; at 8.5px
+// the ascent still clears the arrow stroke and marker, and a one-line note
+// keeps its original bottom (message.y + 22), so spacing checks are unchanged.
+const NOTE_BASELINE_OFFSET = 18;
 // The first line keeps its original position: 12px past the arrow start,
 // which sits 7px from the lifeline.
 const NOTE_ARROW_INSET = 7;
@@ -306,7 +307,7 @@ function noteLayout(message) {
       width: Math.max(...lines.map(noteTextWidth)),
       // Include fallback-font ascent in the same bounds used for title clearance.
       top: baseline - NOTE_FONT_SIZE * 1.2,
-      bottom: baseline + 4 + (lines.length - 1) * NOTE_LINE_HEIGHT,
+      bottom: message.y + 22 + (lines.length - 1) * NOTE_LINE_HEIGHT,
     };
   }
   noteLayouts.set(message, result);
