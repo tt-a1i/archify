@@ -1791,6 +1791,9 @@
   window.__archifyShowFinding = function (id, parent, atlasReturn) {
     if (!findingById[id]) return;
     if (root.getAttribute('data-bauify') !== 'on') setOn(true);
+    // Each external Atlas entry owns a new return context; related findings
+    // use showFinding directly and keep the original context.
+    findingReturn = null;
     showFinding(id, parent, atlasReturn);
   };
   document.addEventListener('keydown', function (e) {

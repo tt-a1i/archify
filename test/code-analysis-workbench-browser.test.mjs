@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { once } from 'node:events';
 import { test } from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { ChromeVisualBrowser, findChrome } from '../archify/bin/visual-check.mjs';
@@ -44,7 +45,15 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
   assert.ok(fs.existsSync(first.html));
   assert.ok(!fs.readFileSync(first.diagram, 'utf8').includes('id="bauify-analysis"'), 'the original diagram is not overlaid');
 
-  const browser = new ChromeVisualBrowser(chrome); t.after(() => browser.close());
+  const browser = new ChromeVisualBrowser(chrome);
+  t.after(async () => {
+    if (browser.child.exitCode === null && browser.child.signalCode === null) {
+      const exited = once(browser.child, 'exit', { signal: AbortSignal.timeout(5000) }).catch(() => {});
+      await browser.cdp.send('Browser.close').catch(() => {});
+      await exited;
+    }
+    await browser.close();
+  });
   const session = await browser.sessionPromise;
   const send = (method, params = {}) => browser.cdp.send(method, params, session);
   const run = async expression => {
@@ -319,7 +328,11 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
     proto.bezierCurveTo = function (a, b, c, d, x, y) { if (this.__lastMove) window.__importCurves.push([this.__lastMove, [x, y]]); return bezier.apply(this, arguments); };
     const fillText = CanvasRenderingContext2D.prototype.fillText;
     CanvasRenderingContext2D.prototype.fillText = function (text, ...args) {
-      if (text === '①' || text === '②') window.__importLabels.push(text);
+      if (text === '①' || text === '②') {
+        window.__importLabels.push(text);
+        const point = new DOMPoint(args[0], args[1]).matrixTransform(this.getTransform());
+        (window.__importLabelPoints ||= []).push({ text, x: point.x, y: point.y, width: this.canvas.width, height: this.canvas.height });
+      }
       return fillText.call(this, text, ...args);
     };
   })()`);
@@ -349,7 +362,15 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
   })()`), true, 'the finding panel leaves the narrow map and import endpoints visible');
   await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 667, deviceScaleFactor: 1, mobile: false });
   await run('new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))');
-  assert.equal(await run("getComputedStyle(document.querySelector('#bauify-atlas .atlas-focus')).display"), 'none', 'the redundant focus pill cannot cover numbered endpoints on a short narrow viewport');
+  assert.equal(await run(`(() => {
+    const canvas = document.querySelector('#bauify-atlas canvas'), box = canvas.getBoundingClientRect();
+    const points = (window.__importLabelPoints || []).slice(-2);
+    return points.length === 2 && points.map(p => p.text).join('') === '①②' && points.every(p => {
+      const x = box.left + p.x / p.width * box.width, y = box.top + p.y / p.height * box.height;
+      const hit = document.elementFromPoint(x, y);
+      return x >= box.left && x <= box.right && y >= box.top && y <= box.bottom && x >= 0 && x < innerWidth && y >= 0 && y < innerHeight && (hit === canvas || canvas.contains(hit));
+    });
+  })()`), true, 'both numbered endpoints are visible and unobstructed on a short narrow viewport');
   await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: false });
   assert.equal(await run(`(() => {
     const paths = document.querySelector('.atlas-import-paths');

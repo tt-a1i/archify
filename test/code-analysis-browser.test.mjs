@@ -890,6 +890,8 @@ test('Code Analysis Atlas draws the analyzed tree, focuses a module and hands a 
   // Escape in 3D must not activate the hidden Classic finding's Atlas return.
   await run("document.querySelector('#bauify-atlas .atlas-evidence').click(); document.querySelector('.views-option[data-view=atlas3d]').click(); document.querySelector('.views-option[data-view=atlas3d]').focus(); document.activeElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))");
   assert.equal(await run("document.documentElement.getAttribute('data-bauify-views')"), 'atlas3d', 'Escape does not restore the hidden Classic finding over the active 3D view');
+  await run(`window.__archifyShowFinding(${JSON.stringify(atlas.findings[complex].id)}); document.querySelector('#bauify-detail h3').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))`);
+  assert.equal(await run("document.documentElement.hasAttribute('data-bauify-views')"), false, 'a 3D evidence entry does not inherit an earlier 2D Atlas return');
   await run("document.querySelector('.views-option[data-view=atlas]').click()");
 
   // A component opened after an Atlas finding is a new navigation context.
