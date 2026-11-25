@@ -7,7 +7,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import test from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-import { checkForUpdate, setUpdatePreference } from '../archify/scripts/check-update.mjs';
+import { checkForUpdate, readCachedUpdate, setUpdatePreference } from '../archify/scripts/check-update.mjs';
 import { startDeliveryUpdateCheck } from '../archify/bin/delivery-update.mjs';
 import { runFinalize } from '../archify/bin/finalize.mjs';
 
@@ -370,6 +370,11 @@ test('a slow but reachable manifest is cached by the background refresh for the 
   await server.request();
   server.respond();
   assert.deepEqual(await refreshExit(refresh), { code: 0, signal: null });
+
+  const cached = await readCachedUpdate(testFixture);
+  assert.equal(cached.status, 'update_available');
+  assert.equal(cached.latestVersion, available);
+  assert.equal(cached.noticeRequired, true);
 
   const second = await startDeliveryUpdateCheck({ env: slowEnv, deadlineMs: 2_000 });
   assert.equal(second.status, 'update_available');

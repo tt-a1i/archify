@@ -655,7 +655,7 @@ async function cacheRm(cacheDirectory, target, options) {
   });
 }
 
-async function prepareCacheDirectory(cacheDirectory) {
+async function prepareCacheDirectory(cacheDirectory, { create = true } = {}) {
   const absoluteTarget = path.resolve(cacheDirectory);
   const target = await canonicalizeTrustedDirectoryPrefix(absoluteTarget);
   const parsed = path.parse(target);
@@ -673,7 +673,7 @@ async function prepareCacheDirectory(cacheDirectory) {
     try {
       metadata = await fs.lstat(current, { bigint: true });
     } catch (error) {
-      if (error?.code !== 'ENOENT') throw error;
+      if (!create || error?.code !== 'ENOENT') throw error;
       try {
         await cacheMkdirWithToken(token, current, { mode: 0o700 }, []);
       } catch (mkdirError) {
@@ -1724,19 +1724,13 @@ export async function readCachedUpdate({
   }
   const nowMs = Number(now());
   if (!Number.isFinite(nowMs)) return silent('invalid-clock');
-  let stateDirectory = versionCacheDirectory(cacheDirectory, localRelease.version);
+  const stateDirectory = versionCacheDirectory(cacheDirectory, localRelease.version);
   try {
-    // Do not create cache directories just to discover that nothing was checked.
-    await fs.lstat(stateDirectory);
-  } catch {
-    return silent('cache-empty');
-  }
-  try {
-    stateDirectory = await prepareCacheDirectory(stateDirectory);
-    const state = await readState(stateDirectory, localRelease.version);
+    const prepared = await prepareCacheDirectory(stateDirectory, { create: false });
+    const state = await readState(prepared, localRelease.version);
     return state.candidate ? resultForCandidate(localRelease, state, { nowMs }) : silent('cache-empty');
-  } catch {
-    return silent('cache-unavailable');
+  } catch (error) {
+    return silent(error?.code === 'ENOENT' ? 'cache-empty' : 'cache-unavailable');
   }
 }
 

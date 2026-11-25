@@ -8,7 +8,7 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 ### Added
 
-- **In-page update notice.** When the installed Archify is outdated and the reminder is not snoozed or ignored, `deliver` and `finalize` add a small dismissible footer line with both versions and the official release-notes link. It is read from the local update cache, sends nothing when the page is opened, and is hidden in print, presentation, Viewer exports, and browser evidence. Current, disabled, or opted-out deliveries (`--no-update-notice`, `ARCHIFY_UPDATE_NOTICE_DISABLED=1`) stay byte-identical.
+- **In-page update notice (#1489).** When the local cache has an update reminder, `deliver` and `finalize` add a dismissible pill to the center of the top bar on wide diagram pages with room, or to the footer otherwise. The pill shows the new version, a one-click copy button for a localized Agent update prompt, and the official release notes. The notice works offline and makes zero network requests. It stays out of print, presentation, embeds, image exports, and browser evidence. Current, disabled, and opted-out deliveries (`--no-update-notice`, `ARCHIFY_UPDATE_NOTICE_DISABLED=1`) stay byte-identical.
 
 ### Changed
 

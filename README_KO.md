@@ -161,7 +161,7 @@ npx -y skills@latest add https://archify.si --skill archify --skill archify-pr -
 npx skills use tt-a1i/archify@archify --agent codex
 ```
 
-Archify는 선택적 업데이트 알림을 위해 고정된 stable manifest를 GET할 수 있지만, 업데이트를 다운로드하거나 설치하지는 않습니다. `ARCHIFY_UPDATE_CHECK_DISABLED=1`을 설정하면 네트워크 요청과 알림 상태 저장을 모두 끌 수 있습니다. 업데이트가 확인된 경우 전달된 페이지 끝에도 두 버전과 릴리스 노트를 알려 주는 작은 닫기 가능한 줄이 표시되며, 페이지를 열어도 아무것도 전송되지 않습니다. `--no-update-notice`를 전달하거나 `ARCHIFY_UPDATE_NOTICE_DISABLED=1`을 설정하면 페이지가 바뀌지 않습니다.
+Archify는 선택적 업데이트 알림을 위해 고정된 stable manifest를 GET할 수 있지만, 업데이트를 다운로드하거나 설치하지는 않습니다. `ARCHIFY_UPDATE_CHECK_DISABLED=1`을 설정하면 네트워크 요청과 알림 상태 저장을 모두 끌 수 있습니다. 느린 확인은 백그라운드에서 완료되어 다음 전달 시 알림을 표시할 수 있습니다. 업데이트가 확인되면 공간이 충분한 넓은 다이어그램의 상단 바에 닫을 수 있는 알림을 표시하고, 그 외에는 푸터에 표시합니다. 알림은 오프라인으로 작동하며 네트워크 요청을 보내지 않습니다. Agent용 업데이트 프롬프트를 한 번에 복사하는 버튼과 릴리스 노트 링크가 있습니다. `--no-update-notice`를 전달하거나 `ARCHIFY_UPDATE_NOTICE_DISABLED=1`을 설정하면 페이지가 바뀌지 않습니다.
 
 </details>
 

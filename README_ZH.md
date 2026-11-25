@@ -287,7 +287,7 @@ npx skills use tt-a1i/archify@archify --agent codex
 
 DeepSeek Harness（社区集成、显式启用）：运行 `dsh plugin --profile web add @tt-a1i/archify-dsh@1.2.0`；参见[兼容范围、限制与安全说明](integrations/deepseek-harness/README.md)。[Agent 切换器](https://archify.si/zh/start?agent=cursor&type=architecture)为 `cursor`、`codex`、`claude-code`、`opencode` 和 `github-copilot` 生成命令。
 
-安装后的 Skill 包含一个低频、失败静默的发布检查，它最多只显示可选更新提醒，绝不会自行下载或安装更新。一次成功检查后，下次网络请求通常约在 24 小时（±20%）后发出；检查失败后，活跃使用可能在首次 6 小时、后续 24 小时退避到期时重试。请求只访问 `https://archify.si/skill-updates/archify/stable.json`。服务端会自然获得 IP、请求时间和常规 HTTP 元数据；检查器不会发送本地版本、Agent、项目数据、用户输入、账户/设备标识，也不会保存或回传 ETag。是否更新以及何时更新始终由你决定。如需完全关闭检查（包括网络请求和提醒状态写入），请在 Agent 环境中设置 `ARCHIFY_UPDATE_CHECK_DISABLED=1`。已知有新版本时，交付的页面末尾也会显示一行可关闭的小提示，写明当前版本、新版本和发布说明链接；打开页面不会发出任何请求。传 `--no-update-notice` 或设置 `ARCHIFY_UPDATE_NOTICE_DISABLED=1` 可让页面保持不变。
+安装后的 Skill 包含一个低频、失败静默的发布检查，它最多只显示可选更新提醒，绝不会自行下载或安装更新。一次成功检查后，下次网络请求通常约在 24 小时（±20%）后发出；检查失败后，活跃使用可能在首次 6 小时、后续 24 小时退避到期时重试。请求只访问 `https://archify.si/skill-updates/archify/stable.json`。服务端会自然获得 IP、请求时间和常规 HTTP 元数据；检查器不会发送本地版本、Agent、项目数据、用户输入、账户/设备标识，也不会保存或回传 ETag。是否更新以及何时更新始终由你决定。如需完全关闭检查（包括网络请求和提醒状态写入），请在 Agent 环境中设置 `ARCHIFY_UPDATE_CHECK_DISABLED=1`。网络较慢时，检查可在后台完成，并在下次交付时显示提醒。已知有新版本时，如果图表页面够宽且顶部有足够空间，提醒会显示在顶部栏中央，其他情况则显示在页脚。提醒可以关闭，支持离线使用，不发出任何网络请求。你可以一键复制发给 Agent 的更新指令，或打开发布说明。传 `--no-update-notice` 或设置 `ARCHIFY_UPDATE_NOTICE_DISABLED=1` 可让页面保持不变。
 
 </details>
 
