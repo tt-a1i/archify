@@ -188,6 +188,7 @@ export async function runSessionAnalysis({ root, ir, doc, locale, delivered, out
       pullRequest: capture ? { pr: capture.pr, scope: capture.scope, changedFiles: capture.changedFiles, manifests: capture.manifests, sourceRoot: capture.roots.head, baseSourceRoot: capture.roots.base, sourceGitRoot: capture.sourceGitRoot } : null,
       map: options['--map'] ? path.resolve(options['--map']) : null, baseline: fs.existsSync(baselineFile) ? baselineFile : null,
       previous: capture ? path.join(next, 'base/findings.json') : path.join(analysisDir, 'findings.json'),
+      retainBaselines: !capture,
     }, { offline });
   } catch (error) {
     fs.rmSync(next, { recursive: true, force: true });

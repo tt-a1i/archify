@@ -7,6 +7,8 @@ import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { evaluateVerification } from '../lib/verification.mjs';
 import { verificationContext } from '../lib/verification-context.mjs';
+import { schemaErrors } from '../schemas/index.mjs';
+import { Ajv2020 } from '../vendor/deps.cjs';
 
 test('receipt distinguishes an unchanged external report from a detected source fix and cannot transfer check results to a different analysis', async () => {
   const sha = (char) => char.repeat(64);
@@ -42,6 +44,12 @@ test('receipt distinguishes an unchanged external report from a detected source 
   assert.equal((await evaluateVerification(refreshed, task, checks)).error, 'wrong-checks-snapshot', 'report bytes can change even when source snapshot does not');
   assert.equal((await evaluateVerification(ctx, { ...task, source: { ...task.source, snapshotId: sha('0') } }, checks)).error, 'wrong-task-snapshot');
   assert.equal((await evaluateVerification(ctx, { ...task, findings: [{ ...diagnostics[1], external: { ...external, reviewDigest: sha('0') } }] })).error, 'wrong-task-findings');
+  assert.equal((await evaluateVerification([ctx, refreshed], task)).error, 'wrong-task-snapshot',
+    'legacy task JSON cannot silently choose between different reports for the same code snapshot');
+  const pinned = { ...task, source: { ...task.source, analysisSha256: ctx.before.analysisSha256 } };
+  const otherBefore = { ...refreshed, taskAnalysisSha256: sha('0'), before: { ...refreshed.before, analysisSha256: sha('0') } };
+  assert.deepEqual((await evaluateVerification([otherBefore, ctx], pinned)).receipt, result.receipt);
+  assert.equal((await evaluateVerification([otherBefore], pinned)).error, 'wrong-task-snapshot');
   const limited = verificationContext(previous, current, { comparison: { ...review.comparison,
     comparable: false, reasons: [{ code: 'config-changed' }], new: ['unaudited-addition'] } });
   const limitedResult = await evaluateVerification(limited, task);
@@ -81,4 +89,40 @@ test('verify-change returns exit 2 and separates missing comparisons from malfor
   const diagnostic = verify();
   assert.equal(diagnostic.code, 'cli/input-not-json');
   assert.equal(diagnostic.subject.input, 'task');
+});
+
+
+test('a pinned review with a missing base never falls back to an adjacent working-tree capture', t => {
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-pinned-verify-'));
+  t.after(() => fs.rmSync(scratch, { recursive: true, force: true }));
+  const dir = path.join(scratch, 'analysis'), previousDir = path.join(scratch, 'analysis.previous');
+  fs.mkdirSync(dir); fs.mkdirSync(previousDir);
+  const findings = fs.readFileSync(new URL('./fixtures/tasks/findings.json', import.meta.url));
+  fs.writeFileSync(path.join(dir, 'findings.json'), findings);
+  fs.writeFileSync(path.join(previousDir, 'findings.json'), findings);
+  fs.writeFileSync(path.join(dir, 'raw-facts.json'), JSON.stringify({ files: [] }));
+  fs.writeFileSync(path.join(dir, 'view-context.json'), JSON.stringify({ run: { pullRequest: { local: true } } }));
+  const identity = JSON.stringify({ identity: 'a'.repeat(64) });
+  fs.writeFileSync(path.join(dir, 'verification-owner.json'), identity);
+  fs.writeFileSync(path.join(previousDir, 'verification-owner.json'), identity);
+  const task = path.join(scratch, 'task.json'); fs.writeFileSync(task, '{}');
+  const cli = fileURLToPath(new URL('../../../bin/archify.mjs', import.meta.url));
+  const result = spawnSync(process.execPath, [cli, 'code-analysis', 'verify-change', dir, '--task', task], { encoding: 'utf8' });
+  assert.equal(result.status, 2, result.stdout + result.stderr);
+  assert.equal(JSON.parse(result.stdout).diagnostics[0].code, 'verification/no-comparison');
+});
+
+
+test('task fingerprint is optional for current readers but rejected by an older strict schema', () => {
+  const schema = JSON.parse(fs.readFileSync(new URL('../schemas/ai-task.schema.json', import.meta.url), 'utf8'));
+  const task = JSON.parse(fs.readFileSync(new URL('./fixtures/tasks/complexity.task.json', import.meta.url), 'utf8'));
+  assert.deepEqual(schemaErrors('ai-task', task), []);
+  const legacyTask = structuredClone(task);
+  delete legacyTask.source.analysisSha256;
+  assert.deepEqual(schemaErrors('ai-task', legacyTask), []);
+  delete schema.properties.source.properties.analysisSha256;
+  const oldValidate = new Ajv2020({ allErrors: true, strict: true, strictRequired: false }).compile(schema);
+  assert.equal(oldValidate(legacyTask), true);
+  assert.equal(oldValidate(task), false);
+  assert.ok(oldValidate.errors.some(error => error.instancePath === '/source' && error.params.additionalProperty === 'analysisSha256'));
 });
