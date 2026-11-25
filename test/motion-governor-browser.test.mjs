@@ -339,6 +339,7 @@ test('Motion Governor preserves mode, ownership, continuous Live flow and real c
     assert.ok(result.elapsed >= duration && result.elapsed < duration + 2200, 'recording uses the requested duration');
     assert.ok(result.last > duration * 0.61, 'the final authored message remains animated near the end of the timeline');
     assert.ok(new Set(result.pulses.map(pulse => pulse.id)).size >= 2, 'sender and receiver participants pulse during the recording');
+    assert.ok(result.pulses.some(pulse => pulse.id === 'trace'), 'the receive-only trace participant pulses when the message arrives');
   });
 
   await t.test('settled Live node glow preserves Classic card depth across themes', async () => {
