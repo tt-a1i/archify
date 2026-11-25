@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { parse } from 'parse5';
+import { siteTarget } from '../scripts/site-target.mjs';
 
 // The website no longer carries a payment section. Guard against a page that
 // still links to the removed #support anchor or embeds the payment QR codes;
@@ -9,10 +10,11 @@ import { parse } from 'parse5';
 const nodes = node => [node, ...(node.childNodes || []).flatMap(nodes)];
 const attr = (node, name) => node.attrs?.find(item => item.name === name)?.value;
 const pages = ['index', 'gallery', 'guide', 'start', 'community'];
+const output = new URL(`${siteTarget().outDir}/`, new URL('../', import.meta.url));
 
 function readPage(lang, page) {
   const file = page === 'index' ? (lang === 'zh' ? 'zh.html' : 'index.html') : `${lang === 'zh' ? 'zh/' : ''}${page}.html`;
-  return { file, dom: parse(fs.readFileSync(new URL(`../dist/${file}`, import.meta.url), 'utf8')) };
+  return { file, dom: parse(fs.readFileSync(new URL(file, output), 'utf8')) };
 }
 
 test('built pages have no payment section, QR codes or links to it', () => {

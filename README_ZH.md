@@ -12,6 +12,8 @@
 
 <p align="center">从一个想法、一个问题或一份计划开始。把它描述给 AI Agent，Archify 就能生成可以探索、修改和分享的交互式 HTML。从旅行行程、知识地图到复杂系统，你都可以继续扩展，做成自己需要的样子。</p>
 
+<p align="center"><strong>10 种原生图型 · 4 种风格的一页式解答 · 架构诊断 · Story 演练与 1080p 视频 · PR / MR 变更图解</strong></p>
+
 <p align="center">看看社区正在创造什么，也想想你还能用它做些什么。</p>
 
 <p align="center">
@@ -32,7 +34,7 @@
   <a href="https://github.com/tt-a1i/archify/stargazers"><img src="https://img.shields.io/github/stars/tt-a1i/archify?style=flat-square&amp;color=E5B650&amp;logo=github&amp;label=Stars" alt="GitHub stars" /></a>
   <a href="https://skills.sh/tt-a1i/archify/archify"><img src="https://img.shields.io/badge/installs-130K%2B-0EA5E9?style=flat-square" alt="130K+ installs on skills.sh" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-22c55e?style=flat-square" alt="Apache License 2.0" /></a>
-  <a href="#安装方式"><img src="https://img.shields.io/badge/works_with-Claude_Code_%7C_Codex_%7C_Cursor_%7C_OpenCode-7C3AED?style=flat-square" alt="Works with Claude Code, Codex, Cursor, and OpenCode" /></a>
+  <a href="#安装方式"><img src="https://img.shields.io/badge/works_with-Claude_Code_%7C_Codex_%7C_Cursor_%7C_OpenCode_%7C_Copilot-7C3AED?style=flat-square" alt="Works with Claude Code, Codex, Cursor, OpenCode, and GitHub Copilot" /></a>
   <a href="CHANGELOG.md#unreleased"><img src="https://img.shields.io/badge/version-3.3.2--dev.1-0891b2?style=flat-square" alt="Development version 3.3.2-dev.1" /></a>
 </p>
 
@@ -209,22 +211,6 @@ Archify 追踪 [`mco-org/mco`](https://github.com/mco-org/mco) 的 `9f1a1cf` 版
 
 <sub>试试切换 D1–D4、点击地点卡片，或打开地图链接。行程中的时间和地点信息为作者创作时的记录。</sub>
 
-## 在 DeepSeek Harness 里试试
-
-<p align="center"><a href="integrations/deepseek-harness/README.md"><img src="docs/assets/archify-dsh-lockup.svg" alt="Archify × DSH" width="440" /></a></p>
-
-Archify 也能在 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（DSH）里使用，通过社区插件 **`@tt-a1i/archify-dsh`** 接入。1.2.0 版内置 Archify 3.3.0 Skill，一条命令就能在 dsh 会话里画图、生成一页式解答和做代码分析：
-
-```bash
-dsh plugin --profile web add @tt-a1i/archify-dsh@1.2.0
-```
-
-然后直接说：`Use the archify skill to map this repository's runtime architecture.`
-
-<p align="center"><a href="integrations/deepseek-harness/README.md#install"><img src="https://img.shields.io/badge/%E8%AF%95%E7%94%A8_Archify_%C3%97_DSH-%E5%AE%89%E8%A3%85%E6%8C%87%E5%8D%97_%E2%86%92-0856F5?style=for-the-badge" alt="试用 Archify × DSH：安装指南" /></a></p>
-
-<sub>社区集成，面向开发者预览版 `@deepseek-ai/dsh@0.2.2-rc.5`，Node `^22.19.0 || >=24.0.0`。不是 DeepSeek 官方产品。兼容范围、升级和卸载见[安装指南](integrations/deepseek-harness/README.md)。</sub>
-
 ## 社区与关注
 
 - **GitHub Trending 全球仓库周榜第一。** [作者于 2026 年 9 月 1 日发布的榜单截图](https://x.com/t20000622yy/status/2094656813576880285)，筛选为所有语言、This week。
@@ -336,6 +322,22 @@ Archify 自带**架构诊断**，可以把仓库的依赖关系画成环形星�
 ### 3. 在对话中细调
 
 继续说：`增加 Redis`、`把鉴权移到左侧`、`突出回滚路径`。Archify 会保留 Typed Source，只修改相关部分。
+
+## 在 DeepSeek Harness 里试试
+
+<p align="center"><a href="integrations/deepseek-harness/README.md"><img src="docs/assets/archify-dsh-lockup.svg" alt="Archify × DSH" width="440" /></a></p>
+
+Archify 也能在 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（DSH）里使用，通过社区插件 **`@tt-a1i/archify-dsh`** 接入。1.2.0 版内置 Archify 3.3.0 Skill，一条命令就能在 dsh 会话里画图、生成一页式解答和做代码分析：
+
+```bash
+dsh plugin --profile web add @tt-a1i/archify-dsh@1.2.0
+```
+
+然后直接说：`Use the archify skill to map this repository's runtime architecture.`
+
+<p align="center"><a href="integrations/deepseek-harness/README.md#install"><img src="https://img.shields.io/badge/%E8%AF%95%E7%94%A8_Archify_%C3%97_DSH-%E5%AE%89%E8%A3%85%E6%8C%87%E5%8D%97_%E2%86%92-0856F5?style=for-the-badge" alt="试用 Archify × DSH：安装指南" /></a></p>
+
+<sub>社区集成，面向开发者预览版 `@deepseek-ai/dsh@0.2.2-rc.5`，Node `^22.19.0 || >=24.0.0`。不是 DeepSeek 官方产品。兼容范围、升级和卸载见[安装指南](integrations/deepseek-harness/README.md)。</sub>
 
 ## 选择合适的图表
 
@@ -531,7 +533,7 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 - [路线图](ROADMAP.md)
 - [自动生成的 Proof Lab](https://archify.si/zh/gallery)
 
-自动 Mermaid Parser、托管分享服务和 WYSIWYG 编辑器目前都不在产品范围内。自动摆放（`layout.mode: "auto"`）只适用于架构图，其他图型使用 Agent 编写的布局。
+自动 Mermaid Parser、托管分享服务和 WYSIWYG 编辑器目前都不在产品范围内。架构图可以通过 `layout.mode: "auto"` 启用自动摆放。其他图型遵循各自渲染器的布局规则，例如树状图根据你定义的父子关系计算节点位置。
 
 ## 社区交流
 

@@ -12,6 +12,8 @@
 
 <p align="center">アイデア、疑問、計画のどれから始めても構いません。AI エージェントに説明すれば、Archify が探索・カスタマイズ・共有できるインタラクティブな HTML を生成します。旅行の行程や学習マップから複雑なシステムまで、あなた自身のものに作り込めます。</p>
 
+<p align="center"><strong>10 種類の図 · 4 スタイルの 1 ページ解説 · アーキテクチャ診断 · 1080p 動画付き Story · PR/MR 変更ウォークスルー</strong></p>
+
 <p align="center">コミュニティが何を作っているかを見て、自分なら次に何を作れるかを考えてみてください。</p>
 
 <p align="center">
@@ -32,7 +34,7 @@
   <a href="https://github.com/tt-a1i/archify/stargazers"><img src="https://img.shields.io/github/stars/tt-a1i/archify?style=flat-square&amp;color=E5B650&amp;logo=github&amp;label=Stars" alt="GitHub stars" /></a>
   <a href="https://skills.sh/tt-a1i/archify/archify"><img src="https://img.shields.io/badge/installs-130K%2B-0EA5E9?style=flat-square" alt="130K+ installs on skills.sh" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-22c55e?style=flat-square" alt="Apache License 2.0" /></a>
-  <a href="#インストール方法"><img src="https://img.shields.io/badge/works_with-Claude_Code_%7C_Codex_%7C_Cursor_%7C_OpenCode-7C3AED?style=flat-square" alt="Works with Claude Code, Codex, Cursor, and OpenCode" /></a>
+  <a href="#インストール方法"><img src="https://img.shields.io/badge/works_with-Claude_Code_%7C_Codex_%7C_Cursor_%7C_OpenCode_%7C_Copilot-7C3AED?style=flat-square" alt="Works with Claude Code, Codex, Cursor, OpenCode, and GitHub Copilot" /></a>
   <a href="CHANGELOG.md#unreleased"><img src="https://img.shields.io/badge/version-3.3.2--dev.1-0891b2?style=flat-square" alt="Development version 3.3.2-dev.1" /></a>
 </p>
 
@@ -183,22 +185,6 @@ Use archify to add a guided story to this diagram and export it as a video.
 
 <sub>D1〜D4 の切り替え、場所カードを開く、地図リンクをたどる、といった操作を試してみてください。時刻や場所の情報は作者の元の行程に基づいています。</sub>
 
-## DeepSeek Harness で試す
-
-<p align="center"><a href="integrations/deepseek-harness/README.md"><img src="docs/assets/archify-dsh-lockup.svg" alt="Archify × DSH" width="440" /></a></p>
-
-Archify はコミュニティプラグイン **`@tt-a1i/archify-dsh`** を通じて [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（DSH）でも動きます。1.2.0 は Archify 3.3.0 Skill を同梱しており、コマンド 1 つで dsh セッションに図、1 ページの解説、コード分析が加わります。
-
-```bash
-dsh plugin --profile web add @tt-a1i/archify-dsh@1.2.0
-```
-
-あとは `Use the archify skill to map this repository's runtime architecture.` と頼むだけです。
-
-<p align="center"><a href="integrations/deepseek-harness/README.md#install"><img src="https://img.shields.io/badge/Archify_%C3%97_DSH_%E3%82%92%E8%A9%A6%E3%81%99-%E3%82%A4%E3%83%B3%E3%82%B9%E3%83%88%E3%83%BC%E3%83%AB%E3%82%AC%E3%82%A4%E3%83%89_%E2%86%92-0856F5?style=for-the-badge" alt="Archify × DSH を試す：インストールガイド" /></a></p>
-
-<sub>開発者プレビュー版 `@deepseek-ai/dsh@0.2.2-rc.5`、Node `^22.19.0 || >=24.0.0` 向けのコミュニティ統合です。DeepSeek 公式製品ではありません。互換性、アップグレード、削除は[インストールガイド](integrations/deepseek-harness/README.md)を参照してください。</sub>
-
 ## コミュニティと評価
 
 - **GitHub Trending の週間・全言語リポジトリランキングで 1 位。** [作者が 2026 年 9 月 1 日に公開したランキングのスクリーンショット](https://x.com/t20000622yy/status/2094656813576880285)（全言語・「This week」を選択した状態）。
@@ -304,6 +290,22 @@ Use archify Code Analysis on this repository: show module coupling, dependency c
 ### 3. チャットで調整する
 
 `add Redis`、`move auth to the left`、`highlight the rollback path` のように、焦点を絞った依頼を続けてください。Archify は型付きソースを保持しているため、狙った箇所だけを反復できます。
+
+## DeepSeek Harness で試す
+
+<p align="center"><a href="integrations/deepseek-harness/README.md"><img src="docs/assets/archify-dsh-lockup.svg" alt="Archify × DSH" width="440" /></a></p>
+
+Archify はコミュニティプラグイン **`@tt-a1i/archify-dsh`** を通じて [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（DSH）でも動きます。1.2.0 は Archify 3.3.0 Skill を同梱しており、コマンド 1 つで dsh セッションに図、1 ページの解説、コード分析が加わります。
+
+```bash
+dsh plugin --profile web add @tt-a1i/archify-dsh@1.2.0
+```
+
+あとは `Use the archify skill to map this repository's runtime architecture.` と頼むだけです。
+
+<p align="center"><a href="integrations/deepseek-harness/README.md#install"><img src="https://img.shields.io/badge/Archify_%C3%97_DSH_%E3%82%92%E8%A9%A6%E3%81%99-%E3%82%A4%E3%83%B3%E3%82%B9%E3%83%88%E3%83%BC%E3%83%AB%E3%82%AC%E3%82%A4%E3%83%89_%E2%86%92-0856F5?style=for-the-badge" alt="Archify × DSH を試す：インストールガイド" /></a></p>
+
+<sub>開発者プレビュー版 `@deepseek-ai/dsh@0.2.2-rc.5`、Node `^22.19.0 || >=24.0.0` 向けのコミュニティ統合です。DeepSeek 公式製品ではありません。互換性、アップグレード、削除は[インストールガイド](integrations/deepseek-harness/README.md)を参照してください。</sub>
 
 ## 適切な図を選ぶ
 
@@ -493,7 +495,7 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 - [ロードマップ](ROADMAP.md)
 - [生成された Proof Lab](https://archify.si/gallery.html)
 
-Mermaid の自動パース、ホスティング型の共有、WYSIWYG 編集は、現時点では意図的にスコープ外としています。自動配置（`layout.mode: "auto"`）はアーキテクチャ図のみが対象で、その他の図はエージェントが作成したレイアウトを使います。
+Mermaid の自動パース、ホスティング型の共有、WYSIWYG 編集は、現時点では意図的にスコープ外としています。アーキテクチャ図では `layout.mode: "auto"` で自動配置を有効にできます。他の図はそれぞれのレンダラーのレイアウト規則に従います。たとえばツリー図では、指定した親子関係からノードの位置を計算します。
 
 ## コミュニティ
 

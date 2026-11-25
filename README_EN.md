@@ -12,6 +12,8 @@
 
 <p align="center">Start with an idea, a question, or a plan. Describe it to your AI agent, and Archify turns it into an interactive HTML you can explore, customize, and share. From travel itineraries and learning maps to complex systems—make it your own.</p>
 
+<p align="center"><strong>10 diagram types · One-page answers in 4 styles · Architecture Diagnosis · Story walkthroughs with 1080p video · PR/MR walkthroughs</strong></p>
+
 <p align="center">See what the community is creating—and imagine what you could make next.</p>
 
 <p align="center">
@@ -32,7 +34,7 @@
   <a href="https://github.com/tt-a1i/archify/stargazers"><img src="https://img.shields.io/github/stars/tt-a1i/archify?style=flat-square&amp;color=E5B650&amp;logo=github&amp;label=Stars" alt="GitHub stars" /></a>
   <a href="https://skills.sh/tt-a1i/archify/archify"><img src="https://img.shields.io/badge/installs-130K%2B-0EA5E9?style=flat-square" alt="130K+ installs on skills.sh" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-22c55e?style=flat-square" alt="Apache License 2.0" /></a>
-  <a href="#installation-options"><img src="https://img.shields.io/badge/works_with-Claude_Code_%7C_Codex_%7C_Cursor_%7C_OpenCode-7C3AED?style=flat-square" alt="Works with Claude Code, Codex, Cursor, and OpenCode" /></a>
+  <a href="#installation-options"><img src="https://img.shields.io/badge/works_with-Claude_Code_%7C_Codex_%7C_Cursor_%7C_OpenCode_%7C_Copilot-7C3AED?style=flat-square" alt="Works with Claude Code, Codex, Cursor, OpenCode, and GitHub Copilot" /></a>
   <a href="CHANGELOG.md#unreleased"><img src="https://img.shields.io/badge/version-3.3.2--dev.1-0891b2?style=flat-square" alt="Development version 3.3.2-dev.1" /></a>
 </p>
 
@@ -209,22 +211,6 @@ The output is a self-contained HTML file. Download it and open it in your browse
 
 <sub>Try switching between D1–D4, opening a place card, or following a map link. Times and place information reflect the author's original itinerary.</sub>
 
-## Try it in DeepSeek Harness
-
-<p align="center"><a href="integrations/deepseek-harness/README.md"><img src="docs/assets/archify-dsh-lockup.svg" alt="Archify × DSH" width="440" /></a></p>
-
-Archify also runs in [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH) through **`@tt-a1i/archify-dsh`**, a community plugin. Version 1.2.0 bundles the Archify 3.3.0 Skill, so one command adds diagrams, one-page answers and Code Analysis to your dsh sessions:
-
-```bash
-dsh plugin --profile web add @tt-a1i/archify-dsh@1.2.0
-```
-
-Then ask: `Use the archify skill to map this repository's runtime architecture.`
-
-<p align="center"><a href="integrations/deepseek-harness/README.md#install"><img src="https://img.shields.io/badge/Try_Archify_%C3%97_DSH-Install_guide_%E2%86%92-0856F5?style=for-the-badge" alt="Try Archify × DSH: install guide" /></a></p>
-
-<sub>Community integration for the developer-preview `@deepseek-ai/dsh@0.2.2-rc.5` on Node `^22.19.0 || >=24.0.0`. Not an official DeepSeek product. See the [install guide](integrations/deepseek-harness/README.md) for compatibility, upgrades and removal.</sub>
-
 ## Community and recognition
 
 - **#1 on GitHub Trending's weekly, all-language repository list.** [Ranking screenshot published by the creator on September 1, 2026](https://x.com/t20000622yy/status/2094656813576880285), with all languages and “This week” selected.
@@ -338,6 +324,22 @@ Use archify Code Analysis on this repository: show module coupling, dependency c
 ### 3. Refine in chat
 
 Continue with focused requests such as `add Redis`, `move auth to the left`, or `highlight the rollback path`. Archify keeps the typed source available for targeted iteration.
+
+## Try it in DeepSeek Harness
+
+<p align="center"><a href="integrations/deepseek-harness/README.md"><img src="docs/assets/archify-dsh-lockup.svg" alt="Archify × DSH" width="440" /></a></p>
+
+Archify also runs in [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH) through **`@tt-a1i/archify-dsh`**, a community plugin. Version 1.2.0 bundles the Archify 3.3.0 Skill, so one command adds diagrams, one-page answers and Code Analysis to your dsh sessions:
+
+```bash
+dsh plugin --profile web add @tt-a1i/archify-dsh@1.2.0
+```
+
+Then ask: `Use the archify skill to map this repository's runtime architecture.`
+
+<p align="center"><a href="integrations/deepseek-harness/README.md#install"><img src="https://img.shields.io/badge/Try_Archify_%C3%97_DSH-Install_guide_%E2%86%92-0856F5?style=for-the-badge" alt="Try Archify × DSH: install guide" /></a></p>
+
+<sub>Community integration for the developer-preview `@deepseek-ai/dsh@0.2.2-rc.5` on Node `^22.19.0 || >=24.0.0`. Not an official DeepSeek product. See the [install guide](integrations/deepseek-harness/README.md) for compatibility, upgrades and removal.</sub>
 
 ## Choose the right diagram
 
@@ -527,7 +529,7 @@ The complete generation and viewer contract lives in [`archify/SKILL.md`](archif
 - [Roadmap](ROADMAP.md)
 - [Generated Proof Lab](https://archify.si/gallery.html)
 
-Automatic Mermaid parsing, hosted sharing, and WYSIWYG editing are intentionally outside the current scope. Automatic placement (`layout.mode: "auto"`) covers Architecture diagrams only; other types use the layout the agent authors.
+Automatic Mermaid parsing, hosted sharing, and WYSIWYG editing are intentionally outside the current scope. Architecture diagrams can opt into automatic placement with `layout.mode: "auto"`. Other diagram types follow their own renderer rules. For example, Tree computes node positions from the parent relationships you define.
 
 ## Community
 
