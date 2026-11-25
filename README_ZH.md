@@ -177,7 +177,7 @@ Archify 追踪 [`mco-org/mco`](https://github.com/mco-org/mco) 的 `9f1a1cf` 版
 <sub>STORY · PR 导览</sub>
 
 - **Story 视频。** 让 Agent 给任意一张图加上导览故事。页面会多出 Story 模式，带时间轴和字幕；**导出 → Story video** 可录成 1080p、60 fps 的视频（WebM 或 MP4）。也可以把多张图编排进同一个舞台页面或视频。[Story 编写说明](archify/references/story-authoring.md)
-- **PR 导览。** 让 Agent 讲解一个 PR 或分支：Archify 直接在图上标出改动，还能把深浅两版图附到 GitHub PR 或 GitLab MR。可选的 `archify-pr` Skill 会在你准备 PR 时主动询问，且只针对实质性改动。[PR 审阅说明](archify/references/pr-review.md)
+- **PR 导览。** 让 Agent 讲解一个 PR 或分支：Archify 直接在图上标出改动，还能把深浅两版图附到 GitHub PR 或 GitLab MR。默认安装已包含 `archify-pr` Skill，它会在你准备 PR 时主动询问，且只针对实质性改动。[PR 审阅说明](archify/references/pr-review.md)
 
 ```text
 用 archify 给这张图加一段导览故事，并导出成视频。
@@ -263,16 +263,16 @@ Install Archify for me by reading https://raw.githubusercontent.com/tt-a1i/archi
 只安装到 Cursor：
 
 ```bash
-npx -y skills@latest add https://archify.si --skill archify --agent cursor --global --copy --yes
+npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent cursor --global --copy --yes
 ```
 
 或者，仅在需要全部五个 Agent 时运行：
 
 ```bash
-npx -y skills@latest add https://archify.si --skill archify --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes
+npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes
 ```
 
-可选 PR 同伴 Skill（仅从仓库源码安装；默认安装仍只有 `archify`）：安装 `archify` 后，运行 `npx -y skills@latest add tt-a1i/archify --skill archify-pr --agent cursor --global --copy --yes` 可增加 PR 变更导览。它对文档、锁文件、格式化等小改动保持静默，只对实质性 diff 询问是否加图；在 Agent 全局规则文件写入 `[archify pr: on-demand]` 可完全关闭轻提示。
+默认安装已包含 `archify-pr` 同伴 Skill。它对文档、锁文件、格式化等小改动保持静默，只在你准备 PR 且存在实质性 diff 时询问是否加图。在 Agent 全局规则文件写入 `[archify pr: on-demand]` 可关闭这些主动询问。若只想保留 `/archify`，可运行 `npx -y skills@latest remove archify-pr --agent cursor --global --yes` 移除同伴 Skill（项目级安装去掉 `--global`）。如果目前只安装了 `/archify`，可执行 `npx -y skills@latest add https://archify.si --skill archify-pr --agent cursor --global --copy --yes` 补上同伴 Skill。
 
 <details>
 <summary>更多安装方式与更新检查说明</summary>

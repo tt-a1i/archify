@@ -5188,8 +5188,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     svg [data-change="removed"][data-edge-from] > path { stroke: var(--security-stroke); stroke-width: 1.6; stroke-dasharray: 5,4; }
     /* A changed edge's label stays in ink; only its +/~/− prefix carries the
        change colour, so the label never competes with the line's colour. */
-    svg [data-change][data-edge-from] > text:not([data-detail]):not([class*="t-change-badge"]),
-    svg [data-change][data-edge-from] > g > text:not([class*="t-change-badge"]) { fill: var(--text); }
+    svg [data-change]:not([data-change="unchanged"])[data-edge-from] > text:not([data-detail]):not([class*="t-change-badge"]),
+    svg [data-change]:not([data-change="unchanged"])[data-edge-from] > g > text:not([class*="t-change-badge"]) { fill: var(--text); }
     svg [data-change="removed"],
     svg text[data-change="removed"] { opacity: 0.62; }
     svg [data-change="removed"] > text[data-node-label],

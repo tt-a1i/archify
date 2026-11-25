@@ -473,3 +473,19 @@ test('notes read at 8.5px unless any note would wrap to more lines than at 7px',
   assert.equal(tight[0].lines.length, 3, 'the tight note keeps its 7px wrap');
   assert.deepEqual(tight.map((note) => note.fontSize), [7, 7], 'one size per diagram: the short note falls back too');
 });
+
+test('a single-line note falls back when the larger text reaches a later message label', (t) => {
+  const spec = sequence({ messages: [
+    { from: 'client', to: 'api', y: 200, label: 'request', note: 'a'.repeat(15) },
+    { from: 'api', to: 'db', y: 233, label: 'b'.repeat(20) },
+  ] });
+  spec.meta.column_fit = 'fixed';
+  const [note] = notes(render(t, spec));
+  assert.equal(note.lines.length, 1);
+  assert.equal(note.fontSize, 7);
+
+  spec.messages[1].y = 250;
+  const [clearNote] = notes(render(t, spec));
+  assert.equal(clearNote.lines.length, 1);
+  assert.equal(clearNote.fontSize, 8.5);
+});
