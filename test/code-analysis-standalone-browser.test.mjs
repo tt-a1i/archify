@@ -55,6 +55,8 @@ test('standalone workbench keeps Atlas alongside evidence, both locales/themes a
   const click = async selector => clickAt(await point(selector));
   const hover = async selector => send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...await point(selector) });
   const drawSettled = "!document.documentElement.hasAttribute('data-bauify-atlas-animating')";
+  const readerWidthSettled = `!document.querySelector('main.container').getAnimations()
+    .some(animation => animation.transitionProperty === 'grid-template-columns')`;
   const details = '#bauify-detail';
   const priority = '.priority-card [data-finding]';
   const copy = '.priority-card .quick-copy';
@@ -139,9 +141,15 @@ test('standalone workbench keeps Atlas alongside evidence, both locales/themes a
     assert.equal(selected.kind, { 'coupling/cycle': 'modules', 'coupling/import-cycle': 'cycle' }[selected.code]);
     await click(`${details} .inline-evidence .ref`);
     assert.equal(await run("document.getElementById('bauify-code').hidden"), false);
+    // Changing reader width moves the Back buttons under the pointer.
+    await wait(readerWidthSettled, 'source reader did not finish expanding');
     await click('#bauify-code .source-back');
+    await wait(`document.getElementById('bauify-code').hidden
+      && document.querySelector('${details}').getClientRects().length
+      && ${readerWidthSettled}`, 'finding reader did not return from source');
     assert.equal(await run(selectedFinding), id, 'returning from source keeps the detail selected');
     await click(`${details} .back`);
+    assert.equal(await run("document.getElementById('bauify-overview').hidden"), false, 'Back opens the overview');
     assert.equal(await run(selectedFinding), '', 'returning to the overview restores no selection');
     assert.equal(await run("!document.querySelector('.atlas-selection .selected')"), true);
 

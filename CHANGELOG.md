@@ -2,22 +2,30 @@
 
 All notable changes are documented here. Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
-## [Unreleased]
-
-> Development identity: `v3.3.2-dev.1`. Not a stable release.
+## [3.3.2] — 2026-11-25
 
 ### Added
 
-- **In-page update notice (#1489).** When the local cache has an update reminder, `deliver` and `finalize` add a dismissible pill to the center of the top bar on wide diagram pages with room, or to the footer otherwise. The pill shows the new version, a one-click copy button for a localized Agent update prompt, and the official release notes. The notice works offline and makes zero network requests. It stays out of print, presentation, embeds, image exports, and browser evidence. Current, disabled, and opted-out deliveries (`--no-update-notice`, `ARCHIFY_UPDATE_NOTICE_DISABLED=1`) stay byte-identical.
+- **In-page update notice (#1489).** Delivered diagrams show a cached update reminder in the Viewer header when there is room. Narrow or crowded diagrams and Explainers show it in the footer. The dismissible notice includes a one-click copy button for a localized Agent update prompt and a link to the official release notes. It works offline and stays out of embeds, print, and exports.
+- **Offline PR architecture drift review (#1443).** Use `--base` and `--head` to review pinned local commits against an authored architecture and inspect newly observed dependencies without contacting the PR host.
 
 ### Changed
 
-- **Default install includes `archify-pr`.** The canonical `https://archify.si` install now publishes and installs both `/archify` and `/archify-pr`. The companion still offers a diagram only for material PR diffs; add `[archify pr: on-demand]` to disable those offers, or run `npx -y skills@latest remove archify-pr` to keep only the core Skill. The website Skill index change takes effect when this revision is deployed from `main`.
+- **Default install includes `archify-pr` (#1488).** The canonical install from `archify.si` installs both Skills. The companion offers diagrams for material PR diffs. Set `[archify pr: on-demand]` to disable offers.
+- **PR change diagrams (#1490, #1491).** Use lighter visual weights, aligned arrowheads, in-corner badges, and larger notes. Color highlights changed elements, and dotted outlines and lines identify removals.
+- **Website, search, and READMEs (#1477, #1478, #1480).** Refresh the website and localized READMEs, improve search metadata and indexing, and update the product and installation guidance.
+- **Release checklist (#1479).** Add an optional release video step.
 
 ### Fixed
 
-- **Update reminders on slow networks (#1486).** Delivery still waits at most about one second for the update check, but a slow manifest response now finishes in a bounded background refresh (up to about five seconds) that updates the cache, so the next delivery shows the reminder. While that refresh runs, delivery reports a previously found update; unreachable services keep the existing failure backoff.
-- **Sequence WebM playback (#1416).** Record messages and participant pulses in Live order and fit the complete sequence into the requested export.
+- **Update reminders on slow networks (#1486, #1487).** Delivery waits up to about one second. A slow response can still refresh the cache in the background for the next delivery, while a previously found update remains available.
+- **Sequence WebM export (#1444).** Preserve Live playback order for message handoffs and participant pulses, and fit the complete sequence into the requested export.
+- **Story timeline seeking (#1439).** Keep the playback timeline usable on narrow screens.
+
+### Release follow-up
+
+- `docs/skill-updates/archify/stable.json` intentionally remains on `v3.3.1` until the `v3.3.2` GitHub Release asset is published and verified.
+- `archify-dsh` remains on `1.2.0` until the next DSH bundle cycle.
 
 ## [3.3.1] — 2026-11-24
 
