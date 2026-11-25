@@ -10,6 +10,8 @@
 
 <p align="center">아이디어, 질문, 계획을 AI 에이전트에게 설명하면 Archify가 탐색하고 수정하고 공유할 수 있는 인터랙티브 HTML을 만듭니다. 여행 일정과 학습 지도부터 복잡한 시스템까지 원하는 형태로 발전시킬 수 있습니다.</p>
 
+<p align="center"><strong>10가지 다이어그램 · 4가지 스타일의 한 페이지 답변 · 아키텍처 진단 · 1080p 영상 Story · PR/MR 변경 설명</strong></p>
+
 <p align="center">
   <a href="https://tt-a1i.github.io/archify/gallery.html"><strong>라이브 데모</strong></a> &nbsp;·&nbsp;
   <a href="#start"><strong>시작하기</strong></a> &nbsp;·&nbsp;
@@ -31,7 +33,7 @@
 
 <!-- archify-launch-video -->
 
-https://github.com/user-attachments/assets/78570807-ba1d-4737-953f-55504a378a87
+https://github.com/user-attachments/assets/6a0d6637-e3af-43af-a733-4b4b53da0542
 
 **한 문장으로 저장소를 지도처럼 파악하세요.** [인터랙티브 예제 보기 ↗](https://tt-a1i.github.io/archify/gallery.html)
 
@@ -179,6 +181,22 @@ Use archify Code Analysis on this repository: show module coupling, dependency c
 
 `Redis 추가`, `인증을 왼쪽으로 이동`, `롤백 경로 강조`처럼 구체적인 요청을 이어 가세요. Archify는 선택적 수정을 위해 typed source를 유지합니다.
 
+## DeepSeek Harness에서 사용해 보기
+
+<p align="center"><a href="integrations/deepseek-harness/README.md"><img src="docs/assets/archify-dsh-lockup.svg" alt="Archify × DSH" width="440" /></a></p>
+
+Archify는 커뮤니티 플러그인 **`@tt-a1i/archify-dsh`**를 통해 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)(DSH)에서도 동작합니다. 1.2.0은 Archify 3.3.0 Skill을 포함하므로, 명령 하나로 dsh 세션에서 다이어그램, 한 페이지 답변, 코드 분석을 사용할 수 있습니다.
+
+```bash
+dsh plugin --profile web add @tt-a1i/archify-dsh@1.2.0
+```
+
+그다음 `Use the archify skill to map this repository's runtime architecture.`라고 요청하세요.
+
+<p align="center"><a href="integrations/deepseek-harness/README.md#install"><img src="https://img.shields.io/badge/Archify_%C3%97_DSH_%EC%82%AC%EC%9A%A9%ED%95%B4_%EB%B3%B4%EA%B8%B0-%EC%84%A4%EC%B9%98_%EA%B0%80%EC%9D%B4%EB%93%9C_%E2%86%92-0856F5?style=for-the-badge" alt="Archify × DSH 사용해 보기: 설치 가이드" /></a></p>
+
+<sub>개발자 프리뷰 `@deepseek-ai/dsh@0.2.2-rc.5`, Node `^22.19.0 || >=24.0.0`용 커뮤니티 통합입니다. DeepSeek 공식 제품이 아닙니다. 호환 범위, 업그레이드, 제거는 [설치 가이드](integrations/deepseek-harness/README.md)를 참고하세요.</sub>
+
 ## 적합한 다이어그램 고르기
 
 | 유형 | 적합한 경우 | 요청에 포함할 내용 |
@@ -258,7 +276,7 @@ node bin/archify.mjs validate workflow examples/agent-tool-call.workflow.json --
 - [스키마 참고](archify/schemas/README.md) · [Skill과 렌더러 계약](archify/SKILL.md) · [예제](archify/examples/) · [Agent 작성 가이드](docs/authoring-cookbook.md)
 - [변경 이력](CHANGELOG.md) · [로드맵](ROADMAP.md) · [생성된 Proof Lab](https://tt-a1i.github.io/archify/gallery.html)
 
-자동 Mermaid 파싱, 범용 자동 레이아웃, 호스팅 공유, WYSIWYG 편집기는 현재 범위에 포함되지 않습니다.
+자동 Mermaid 파싱, 호스팅 공유, WYSIWYG 편집기는 현재 범위에 포함되지 않습니다. 아키텍처 다이어그램은 `layout.mode: "auto"`로 자동 배치를 켤 수 있습니다. 다른 다이어그램은 각 렌더러의 배치 규칙을 따릅니다. 예를 들어 트리 다이어그램은 지정한 부모-자식 관계를 바탕으로 노드 위치를 계산합니다.
 
 <a id="community"></a>
 

@@ -504,7 +504,7 @@
   });
 
   /* ══ Demo lightbox — zero network cost until the trigger is pressed ══ */
-  const DEMO_SRC = 'https://github.com/user-attachments/assets/78570807-ba1d-4737-953f-55504a378a87';
+  const DEMO_SRC = 'https://github.com/user-attachments/assets/6a0d6637-e3af-43af-a733-4b4b53da0542';
   const demoOpen = $('demo-open');
   const demoDialog = $('demo-dialog');
   const demoVideo = $('demo-video');
