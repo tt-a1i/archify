@@ -158,8 +158,8 @@ test('real Chrome: agent guide stays readable and navigable in both languages, t
         assert.equal(await evaluate('location.pathname'), new URL(urlFor('start', lang)).pathname);
         assert.equal(await evaluate('location.hash'), '#install');
         assert.equal(await evaluate(`document.querySelector('[data-agent="${agent}"]').getAttribute('aria-selected')`), 'true');
-        assert.equal(await evaluate('document.getElementById("install-command").textContent.trim()'), `npx -y skills@latest add https://archify.si --skill archify --agent ${agent} --global --copy --yes`);
-        assert.equal(await evaluate('document.getElementById("project-command").textContent.trim()'), `npx -y skills@latest add https://archify.si --skill archify --agent ${agent} --copy --yes`);
+        assert.equal(await evaluate('document.getElementById("install-command").textContent.trim()'), `npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent ${agent} --global --copy --yes`);
+        assert.equal(await evaluate('document.getElementById("project-command").textContent.trim()'), `npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent ${agent} --copy --yes`);
         await loadedAction(() => evaluate(`document.querySelector('.setup-guide-link a').click()`));
         assert.equal(await evaluate('location.pathname'), new URL(urlFor('agent-diagrams', lang)).pathname);
         assert.equal(await evaluate('location.hash'), '#setup');

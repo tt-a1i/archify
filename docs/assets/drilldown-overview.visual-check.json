@@ -8,8 +8,8 @@
   "provenance": "unknown",
   "artifact": {
     "path": "examples/drilldown-overview.html",
-    "sha256": "c7737917a34b5321c8249de1a8b01eef27d0374c4289021a2883e49ad0f1377c",
-    "bytes": 923223
+    "sha256": "ae6290ab7b7817f54c55084972ea18eb69e480d9c546d3677c0ed86cc64cd8f0",
+    "bytes": 928696
   },
   "state": {
     "detail": "read",
@@ -924,8 +924,7 @@
         "file": "drilldown-overview.visual-check.2048x1320.dark.png"
       }
     ],
-    "contactSheet": "drilldown-overview.visual-check.html",
-    "directory": "docs/assets"
+    "contactSheet": "drilldown-overview.visual-check.html"
   },
   "sidecars": {
     "receipt": "drilldown-overview.visual-check.json",
@@ -937,23 +936,23 @@
         "file": "drilldown-overview.visual-check.html"
       },
       {
-        "sha256": "6f913847fdf0afba360094beec9582b6268b656dcd016398c65405afb1ab3542",
-        "bytes": 76654,
+        "sha256": "a0a4caff64cab5a69556dc7d079e88f42adc3f15ad356602ad1b0baf64759b1a",
+        "bytes": 79783,
         "file": "drilldown-overview.visual-check.1440x900.light.png"
       },
       {
-        "sha256": "5fcd569aeb9ccc786e122e8e9f282c3b3965a963ab6572024a558947c2cab542",
-        "bytes": 80267,
+        "sha256": "17c755ec24dc26e2b768bddd3e56853eb353cd3072d8038892f7d7be71fa7544",
+        "bytes": 80244,
         "file": "drilldown-overview.visual-check.1440x900.dark.png"
       },
       {
-        "sha256": "1ade4941b298d74a5636d4ceb5fc0fde27ab9103a8a8096fe512e613b896c50f",
-        "bytes": 106377,
+        "sha256": "a3bf007accc347dabb735fb0a019fb182f16824c43595c5642cb15ec64d2806f",
+        "bytes": 109962,
         "file": "drilldown-overview.visual-check.2048x1320.light.png"
       },
       {
-        "sha256": "63873ce37330ae7d3da6337ebf22be7b0803fb6f484803536cfb4649316f592f",
-        "bytes": 112693,
+        "sha256": "983525423aee4ddc9387cd3e79dc18af10917345a83b83cd412cada86c9d02c5",
+        "bytes": 112987,
         "file": "drilldown-overview.visual-check.2048x1320.dark.png"
       }
     ]

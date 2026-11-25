@@ -362,6 +362,15 @@ For every Archify release, record the DSH decision in the release PR or its link
 - [ ] Record publication separately from PR completion: verify the tested npm tarball/version and `archify-dsh-v<plugin-version>` tag, then align the integration README, public README install commands, and `community/packages/archify-dsh.json` with what users can actually obtain. Keep published and pending versions distinct while unpublished; never describe a prepared bundle as publicly available.
 - [ ] Treat plugin publication and updates to users' live installations as separate authorized actions. Do not replace an existing version/tag or silently publish as part of the Archify release.
 
+### Release checklist: release video (optional)
+
+A release video is optional and never blocks a release. Consider one for a feature release; a patch release usually reuses the video of the feature release it follows. Record the decision in the release PR or its linked follow-up, with a reason when there is no video.
+
+- [ ] Edit and render the video in the release film project ([`tt-a1i/archify-release-video`](https://github.com/tt-a1i/archify-release-video)), not in this repository. Check that every product claim, PR number and source citation in it matches the release, and that the install command matches the current README.
+- [ ] Add the video after the GitHub Release exists. Releases are immutable, so it cannot be attached as an asset; release notes stay editable. A maintainer drags the English video into the release notes editor on GitHub to obtain a `https://github.com/user-attachments/assets/…` link, then puts a short video section at the top of the notes and leaves the generated notes below unchanged.
+- [ ] Open the release page signed out and confirm that the link resolves and the page shows a video player; an uploaded link stays private until saved public content references it. When a later patch release becomes Latest, add the same section to its notes.
+- [ ] Treat social posts as separate authorized actions; a release is complete without them.
+
 ## Final integration and follow-up
 
 `dev` is the integration and trial-use branch; `main` is the stable branch. Integrate reviewed changes into `dev` first. Promote a tested batch from `dev` to `main` through a separate PR after maintainers have used it on real diagram tasks and confirmed stability. Record the tested revision, usage evidence, and unresolved issues in that PR; passing CI alone does not establish trial-use acceptance. Keep Pages deployment on `main` and formal releases on version tags.

@@ -64,7 +64,7 @@ snapshot in three specific ways:
 - **Four-style conclusion-first one-page explainers & universal scope**: a code
   repository is optional; plain-language prompts also create `.archify.md`
   one-page explainers and everyday workflow HTML files.
-- **Canonical install command**: `npx -y skills@latest add https://archify.si --skill archify --agent <agent> --global --copy --yes`
+- **Canonical install command**: `npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent <agent> --global --copy --yes`
   (with `--agent` set to `claude-code`, `codex`, `cursor`, `opencode`, or
   `github-copilot`; omit `--global` for a project-only install). Treat older
   articles citing "five diagram types" or community notes citing
@@ -76,7 +76,7 @@ snapshot in three specific ways:
 均对应 Archify 首发阶段。当前最新稳定能力已扩展为 **十种原生交互图型**（新增 `erd`、
 `class`、`tree`、`timeline`、`waterfall`）、**四套排版风格的图文联动一页式解答（Explainer）**，
 且完全无需代码仓库即可使用；唯一推荐的官方安全安装命令也已统一为
-`npx -y skills@latest add https://archify.si --skill archify --agent <agent> --global --copy --yes`。
+`npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent <agent> --global --copy --yes`。
 
 ## 2. What Archify produces
 
@@ -190,8 +190,8 @@ visual explanation skill across technical and everyday scenarios:
   `story stage|svg|video` can also choreograph several diagrams into one offline
   stage page, animated SVG or video.
 - **PR walkthroughs** mark changes directly on the diagram and can attach
-  light and dark diagrams to a GitHub PR or GitLab MR. The optional `archify-pr`
-  companion Skill offers this while preparing a PR, only for material diffs.
+  light and dark diagrams to a GitHub PR or GitLab MR. The `archify-pr` companion Skill, included in the default install,
+  offers this while preparing a PR, only for material diffs.
 - **Cross-diagram navigation (drilldowns)** links overview nodes directly to
   same-directory detail HTML artifacts via `href` or `drilldowns`, with header
   back-navigation via `meta.parentHref` or `?from=`.

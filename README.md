@@ -12,6 +12,8 @@
 
 <p align="center">Start with an idea, a question, or a plan. Describe it to your AI agent, and Archify turns it into an interactive HTML you can explore, customize, and share. From travel itineraries and learning maps to complex systems—make it your own.</p>
 
+<p align="center"><strong>10 diagram types · One-page answers in 4 styles · Architecture Diagnosis · Story walkthroughs with 1080p video · PR/MR walkthroughs</strong></p>
+
 <p align="center">See what the community is creating—and imagine what you could make next.</p>
 
 <p align="center">
@@ -32,8 +34,8 @@
   <a href="https://github.com/tt-a1i/archify/stargazers"><img src="https://img.shields.io/github/stars/tt-a1i/archify?style=flat-square&amp;color=E5B650&amp;logo=github&amp;label=Stars" alt="GitHub stars" /></a>
   <a href="https://skills.sh/tt-a1i/archify/archify"><img src="https://img.shields.io/badge/installs-130K%2B-0EA5E9?style=flat-square" alt="130K+ installs on skills.sh" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-22c55e?style=flat-square" alt="Apache License 2.0" /></a>
-  <a href="#installation-options"><img src="https://img.shields.io/badge/works_with-Claude_Code_%7C_Codex_%7C_Cursor_%7C_OpenCode-7C3AED?style=flat-square" alt="Works with Claude Code, Codex, Cursor, and OpenCode" /></a>
-  <a href="CHANGELOG.md#331--2026-11-24"><img src="https://img.shields.io/badge/version-3.3.1-0891b2?style=flat-square" alt="Stable version 3.3.1" /></a>
+  <a href="#installation-options"><img src="https://img.shields.io/badge/works_with-Claude_Code_%7C_Codex_%7C_Cursor_%7C_OpenCode_%7C_Copilot-7C3AED?style=flat-square" alt="Works with Claude Code, Codex, Cursor, OpenCode, and GitHub Copilot" /></a>
+  <a href="CHANGELOG.md#332--2026-11-25"><img src="https://img.shields.io/badge/version-3.3.2-0891b2?style=flat-square" alt="Stable version 3.3.2" /></a>
 </p>
 
 <p align="center">
@@ -51,9 +53,9 @@
 
 <!-- archify-launch-video -->
 
-https://github.com/user-attachments/assets/78570807-ba1d-4737-953f-55504a378a87
+https://github.com/user-attachments/assets/6a0d6637-e3af-43af-a733-4b4b53da0542
 
-**One sentence. Your repo, mapped.** Watch the 35-second demo: explore the diagram, follow source links, and trace a path. [Try the interactive examples ↗](https://archify.si/gallery.html)
+**One sentence. Your repo, mapped.** Watch the 60-second tour: map a whole repository, put the findings on your architecture diagram, walk through a real PR, and export it as video. [Try the interactive examples ↗](https://archify.si/gallery.html)
 
 <a id="start"></a>
 
@@ -177,7 +179,7 @@ Use archify Code Analysis on this repository: show module coupling, dependency c
 <sub>STORY · PR WALKTHROUGH</sub>
 
 - **Story video.** Ask your agent to add a guided story to any diagram. The page gains a Story mode with a timeline and captions, and **Export → Story video** records it at 1080p, 60 fps (WebM or MP4). Several diagrams can also be choreographed into one stage page or video. [Story authoring](archify/references/story-authoring.md)
-- **PR walkthrough.** Ask your agent to explain a pull request or branch: Archify marks what changed directly on the diagram and can attach light and dark diagrams to a GitHub PR or GitLab MR. The optional `archify-pr` Skill offers this while you prepare a PR, and only for material diffs. [PR review](archify/references/pr-review.md)
+- **PR walkthrough.** Ask your agent to explain a pull request or branch: Archify marks what changed directly on the diagram and can attach light and dark diagrams to a GitHub PR or GitLab MR. The default install includes the `archify-pr` Skill, which offers this while you prepare a PR, and only for material diffs. [PR review](archify/references/pr-review.md)
 
 ```text
 Use archify to add a guided story to this diagram and export it as a video.
@@ -246,7 +248,7 @@ Open [`examples/web-app.html`](examples/web-app.html) locally to try the complet
 
 ## Quick start
 
-**Current stable version:** `v3.3.1`. See [Changelog](CHANGELOG.md#331--2026-11-24).
+**Current stable version:** `v3.3.2`. See [Changelog](CHANGELOG.md#332--2026-11-25).
 
 ### 1. Install
 
@@ -263,16 +265,16 @@ Or install without prompts. Pass one agent, or repeat `--agent` for every switch
 Cursor only:
 
 ```bash
-npx -y skills@latest add https://archify.si --skill archify --agent cursor --global --copy --yes
+npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent cursor --global --copy --yes
 ```
 
 Or, only if you want all five agents:
 
 ```bash
-npx -y skills@latest add https://archify.si --skill archify --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes
+npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes
 ```
 
-Optional PR companion (repository-source installs only; the default install stays `archify`): after installing `archify`, `npx -y skills@latest add tt-a1i/archify --skill archify-pr --agent cursor --global --copy --yes` adds PR change walkthroughs. It stays silent for docs, lockfiles, formatting and other small changes and offers a diagram only for material diffs; add `[archify pr: on-demand]` to your agent's global rules file to disable even those offers.
+The default install includes the `archify-pr` companion. It stays silent for docs, lockfiles, formatting and other small changes and offers a diagram only for material diffs while you prepare a PR. Add `[archify pr: on-demand]` to your agent's global rules file to disable those offers. To keep only `/archify`, remove the companion with `npx -y skills@latest remove archify-pr --agent cursor --global --yes` (omit `--global` for a project-only install). If you already have only `/archify`, add the companion with `npx -y skills@latest add https://archify.si --skill archify-pr --agent cursor --global --copy --yes`.
 
 <details>
 <summary>More installation options and update-check details</summary>
@@ -287,7 +289,7 @@ npx skills use tt-a1i/archify@archify --agent codex
 
 The [agent switcher](https://archify.si/start.html?agent=cursor&type=architecture) covers `cursor`, `codex`, `claude-code`, `opencode`, and `github-copilot`.
 
-Archify may GET the fixed stable manifest solely to show an optional reminder; it never downloads or installs updates. Successful checks wait about 24 hours (±20%); active use retries failures after 6, then 24 hours. The server sees normal HTTP metadata (IP and time), but receives no version, Agent, project data, prompts, account/device ID, or ETag. You decide whether and when to update. Set `ARCHIFY_UPDATE_CHECK_DISABLED=1` to disable networking and reminder-state writes.
+Archify may GET the fixed stable manifest solely to show an optional reminder; it never downloads or installs updates. Successful checks wait about 24 hours (±20%); active use retries failures after 6, then 24 hours. The server sees normal HTTP metadata (IP and time), but receives no version, Agent, project data, prompts, account/device ID, or ETag. You decide whether and when to update. Set `ARCHIFY_UPDATE_CHECK_DISABLED=1` to disable networking and reminder-state writes. A slow check can finish in the background and show its reminder on the next delivery. When an update is known, delivered pages show a dismissible notice in the top bar on wide diagrams when space allows, and in the footer otherwise. The notice works offline and makes zero network requests. It includes a one-click copy button for an Agent update prompt and a release notes link. Pass `--no-update-notice` or set `ARCHIFY_UPDATE_NOTICE_DISABLED=1` to keep pages unchanged.
 
 </details>
 
@@ -322,6 +324,22 @@ Use archify Code Analysis on this repository: show module coupling, dependency c
 ### 3. Refine in chat
 
 Continue with focused requests such as `add Redis`, `move auth to the left`, or `highlight the rollback path`. Archify keeps the typed source available for targeted iteration.
+
+## Try it in DeepSeek Harness
+
+<p align="center"><a href="integrations/deepseek-harness/README.md"><img src="docs/assets/archify-dsh-lockup.svg" alt="Archify × DSH" width="440" /></a></p>
+
+Archify also runs in [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH) through **`@tt-a1i/archify-dsh`**, a community plugin. Version 1.2.0 bundles the Archify 3.3.0 Skill, so one command adds diagrams, one-page answers and Code Analysis to your dsh sessions:
+
+```bash
+dsh plugin --profile web add @tt-a1i/archify-dsh@1.2.0
+```
+
+Then ask: `Use the archify skill to map this repository's runtime architecture.`
+
+<p align="center"><a href="integrations/deepseek-harness/README.md#install"><img src="https://img.shields.io/badge/Try_Archify_%C3%97_DSH-Install_guide_%E2%86%92-0856F5?style=for-the-badge" alt="Try Archify × DSH: install guide" /></a></p>
+
+<sub>Community integration for the developer-preview `@deepseek-ai/dsh@0.2.2-rc.5` on Node `^22.19.0 || >=24.0.0`. Not an official DeepSeek product. See the [install guide](integrations/deepseek-harness/README.md) for compatibility, upgrades and removal.</sub>
 
 ## Choose the right diagram
 
@@ -413,7 +431,7 @@ Architecture examples: [`web-app`](examples/web-app.html) · [`Archify pipeline`
 <summary>The engineering behind the experience</summary>
 
 
-- **Layout judgment over generic auto-layout** — the agent chooses hierarchy, spacing, routes, and emphasis; shared automatic endpoints spread deterministically instead of piling arrows on one midpoint.
+- **Layout judgment, with automatic placement when you want it** — the agent chooses hierarchy, spacing, routes, and emphasis. Architecture diagrams can opt into `layout.mode: "auto"`, which places components from their relationships and keeps any positions and routes you author fixed, and shared automatic endpoints spread deterministically instead of piling arrows on one midpoint.
 - **Typed JSON IR** — every renderer-backed mode has a schema and reproducible source.
 - **Atomic validation before delivery** — schema, layout, HTML/SVG, route, and label-to-route clearance checks must all pass before a showcase artifact replaces the last known good output.
 - **Failures come with a repair receipt** — `validate --json` and `deliver --json` return stable rule codes, the exact subject, measured evidence, and only supported repair controls instead of a Node stack or an unstructured retry guess.
@@ -511,7 +529,7 @@ The complete generation and viewer contract lives in [`archify/SKILL.md`](archif
 - [Roadmap](ROADMAP.md)
 - [Generated Proof Lab](https://archify.si/gallery.html)
 
-Automatic Mermaid parsing, general-purpose auto-layout, hosted sharing, and WYSIWYG editing are intentionally outside the current scope.
+Automatic Mermaid parsing, hosted sharing, and WYSIWYG editing are intentionally outside the current scope. Architecture diagrams can opt into automatic placement with `layout.mode: "auto"`. Other diagram types follow their own renderer rules. For example, Tree computes node positions from the parent relationships you define.
 
 ## Community
 
