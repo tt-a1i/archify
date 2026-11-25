@@ -2002,3 +2002,19 @@ test('render rejects an extra positional argument', () => {
   assert.notEqual(result.status, 0);
   assert.deepEqual(fs.readdirSync(dir), ['spec.json']);
 });
+
+
+test('installed Skill copy excludes concurrent package-test markers and nested dependencies', () => {
+  const marker = `.package-negative-${process.pid}-${Date.now()}.txt`;
+  const source = path.join(skillRoot, marker);
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-copy-marker-'));
+  try {
+    fs.writeFileSync(source, 'temporary fixture', { flag: 'wx' });
+    copyInstalledSkill(path.join(out, 'skill'));
+    assert.equal(fs.existsSync(path.join(out, 'skill', marker)), false);
+    assert.equal(fs.existsSync(path.join(out, 'skill', 'modules', 'code-analysis', 'node_modules')), false);
+  } finally {
+    fs.rmSync(source, { force: true });
+    fs.rmSync(out, { recursive: true, force: true });
+  }
+});

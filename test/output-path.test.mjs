@@ -1153,3 +1153,19 @@ for (const [relative, label] of [
     assert.doesNotMatch(result.stderr, /ERR_MODULE_NOT_FOUND/);
   });
 }
+
+
+test('installed Skill copy excludes concurrent package-test markers and nested dependencies', () => {
+  const marker = `.package-negative-${process.pid}-${Date.now()}.txt`;
+  const source = path.join(skillRoot, marker);
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-copy-marker-'));
+  try {
+    fs.writeFileSync(source, 'temporary fixture', { flag: 'wx' });
+    copyInstalledSkill(path.join(out, 'skill'));
+    assert.equal(fs.existsSync(path.join(out, 'skill', marker)), false);
+    assert.equal(fs.existsSync(path.join(out, 'skill', 'modules', 'code-analysis', 'node_modules')), false);
+  } finally {
+    fs.rmSync(source, { force: true });
+    fs.rmSync(out, { recursive: true, force: true });
+  }
+});
