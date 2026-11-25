@@ -259,6 +259,9 @@ html[data-theme="dark"] #bauify-atlas.atlas-page { --atlas-amber: #fbbf24; }
   #bauify-atlas.atlas-page .atlas-first > p, #bauify-atlas.atlas-page .atlas-lead small { display: none; }
   #bauify-atlas.atlas-page .atlas-lead { padding: 6px 10px 6px 0; }
   #bauify-atlas.atlas-page:not([data-fly="closed"]) .atlas-stage { bottom: 50%; }
+  /* The finding sheet already names the selection and has a clear button.
+     Avoid covering numbered map endpoints with a redundant floating pill. */
+  #bauify-atlas.atlas-page[data-fly="finding"] .atlas-focus { display: none; }
   #bauify-atlas.atlas-page .atlas-side { top: auto; left: 8px; right: 8px; bottom: 8px; width: auto; height: calc(50% - 8px); }
 }
 @media (prefers-reduced-motion: reduce) { #bauify-atlas.atlas-page canvas, #bauify-atlas.atlas-page .atlas-side, #bauify-atlas.atlas-page .atlas-focus, #bauify-atlas.atlas-page .atlas-first { transition: none; } #bauify-atlas.atlas-page .atlas-selection > * { animation: none; } }
