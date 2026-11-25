@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { DiagnosticError, fail, receipt } from '../core/index.mjs';
 import { loadPrevious, readJsonInput } from '../lib/analysis.mjs';
-import { sameVerificationRepository, verificationContexts } from '../lib/verification-history.mjs';
+import { matchingPreviousPullRequest, sameVerificationRepository, verificationContexts } from '../lib/verification-history.mjs';
 import { evaluateVerification } from '../lib/verification.mjs';
 
 const usage = 'Usage: archify code-analysis verify-change <analysis-dir> --task <task.json> [--checks <checks.json> | --checks-template]';
@@ -64,7 +64,8 @@ async function run([dir, ...args]) {
   const previous = pinned ? loadPrevious(path.join(dir, 'base/findings.json'))
     : sameVerificationRepository(dir, previousDir) ? loadPrevious(path.join(previousDir, 'findings.json')) : null;
   const facts = current && readJsonInput(path.join(dir, 'raw-facts.json'), 'verify-change');
-  const result = await evaluateVerification(verificationContexts(dir, previous, current, facts, pinned ? [] : undefined), readInput(options.get('--task'), 'task'),
+  const previousHead = pinned && matchingPreviousPullRequest(previousDir, current, context.run.pullRequest);
+  const result = await evaluateVerification(verificationContexts(dir, previous, current, facts, pinned ? [previousHead] : undefined), readInput(options.get('--task'), 'task'),
     options.has('--checks') ? readInput(options.get('--checks'), 'checks') : undefined);
   if (result.error) {
     const [input, message, fix] = verificationFailures[result.error];

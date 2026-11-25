@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { schemaErrors } from '../schemas/index.mjs';
 import { createHash } from 'node:crypto';
-import { stableJson } from './analysis.mjs';
+import { stableJson, loadPrevious } from './analysis.mjs';
 import { reviewFindings } from './review.mjs';
 import { taskAnalysisDigest, verificationContext } from './verification-context.mjs';
 
@@ -24,6 +24,21 @@ export function sameVerificationRepository(currentDir, previousDir) {
     const identity = read(currentDir);
     return /^[a-f0-9]{64}$/.test(identity) && identity === read(previousDir);
   } catch { return false; }
+}
+
+// An adjacent PR head is eligible only when both saved views identify the
+// same PR and pins. The merge-base remains the ordinary comparison baseline.
+export function matchingPreviousPullRequest(previousDir, current, currentPR) {
+  try {
+    const old = JSON.parse(fs.readFileSync(path.join(previousDir, 'view-context.json'), 'utf8')).run.pullRequest;
+    const previous = loadPrevious(path.join(previousDir, 'findings.json'));
+    if (!old || !currentPR || !previous || old.local || currentPR.local || !Number.isInteger(old.number) || old.number < 1
+      || old.number !== currentPR.number || typeof old.repository !== 'string' || old.repository !== currentPR.repository
+      || old.scope !== currentPR.scope || !/^[a-f0-9]{40}$/.test(old.baseSHA || '') || old.baseSHA !== currentPR.baseSHA
+      || !/^[a-f0-9]{40}$/.test(old.headSHA || '') || !/^[a-f0-9]{40}$/.test(currentPR.headSHA || '')
+      || previous.repository.revision !== old.headSHA || current.repository.revision !== currentPR.headSHA) return null;
+    return previous;
+  } catch { return null; }
 }
 
 function readHistory(dir) {
@@ -57,14 +72,25 @@ export function retainVerificationBaselines(dir, previousDir, previous, current,
   const identity = repositoryIdentity(root);
   fs.writeFileSync(path.join(dir, ownerName), JSON.stringify({ identity }));
   const same = sameVerificationRepository(dir, previousDir);
-  const captures = distinctCaptures(current, same ? [previous, ...readHistory(previousDir)] : []);
+  const history = same ? readHistory(previousDir) : [];
+  // Keep the earlier byte-exact representative for an existing task identity.
+  // Checks exported against that capture must survive supplemental-only edits.
+  const priorIdentity = previous && taskAnalysisDigest(previous);
+  const retainedDuplicate = priorIdentity && history.find(capture => taskAnalysisDigest(capture) === priorIdentity);
+  const captures = same ? [retainedDuplicate || previous, previous, ...history] : [];
   const saved = [];
+  const seen = new Set();
   let bytes = 2;
   for (const capture of captures) {
+    if (!capture || capture.repository.root !== current.repository.root ||
+      (capture.repository.sourceKind ?? 'working-tree') !== (current.repository.sourceKind ?? 'working-tree')) continue;
+    const digest = taskAnalysisDigest(capture);
+    if (seen.has(digest)) continue;
     const size = Buffer.byteLength(JSON.stringify(capture)) + 1;
     if (bytes + size > maxBytes) continue;
     bytes += size;
     saved.push(capture);
+    seen.add(digest);
     if (saved.length === maxCaptures) break;
   }
   if (saved.length) fs.writeFileSync(path.join(dir, name), JSON.stringify(saved));
@@ -74,7 +100,7 @@ export function retainVerificationBaselines(dir, previousDir, previous, current,
 export function verificationContexts(dir, previous, current, facts, history = readHistory(dir)) {
   if (!current) return null;
   const files = [...facts.files, ...(current.externalEvidence || [])].map((file) => file.path);
-  const contexts = distinctCaptures(current, [previous, ...history]).map((capture) => {
+  const contexts = distinctCaptures(current, [...history, previous]).map((capture) => {
     const review = reviewFindings(current.diagnostics, { previous: capture, analysis: current.analysis, files });
     return verificationContext(capture, current, review);
   }).filter(Boolean);

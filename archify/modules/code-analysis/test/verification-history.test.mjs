@@ -4,7 +4,9 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
-import { retainVerificationBaselines, verificationContexts } from '../lib/verification-history.mjs';
+import { matchingPreviousPullRequest, retainVerificationBaselines, verificationContexts } from '../lib/verification-history.mjs';
+import { analysisDigest, taskAnalysisDigest } from '../lib/verification-context.mjs';
+import { evaluateVerification } from '../lib/verification.mjs';
 
 const fixture = JSON.parse(fs.readFileSync(new URL('./fixtures/tasks/findings.json', import.meta.url), 'utf8'));
 const snapshotId = (number) => number.toString(16).padStart(64, '0');
@@ -110,5 +112,52 @@ test('captures differing only in supplemental evidence use one task identity', t
   const supplemented = { ...baseline, externalEvidence: [{ path: 'source.py', sourceText: bytes, sha256: createHash('sha256').update(bytes).digest('hex') }] };
   retainVerificationBaselines(last, next, supplemented, current, testRoot);
   assert.equal(savedIds(last).length, 1);
-  assert.equal(beforeIds(verificationContexts(last, supplemented, current, { files: [] })).length, 1);
+  const contexts = verificationContexts(last, supplemented, current, { files: [] });
+  assert.equal(beforeIds(contexts).length, 1);
+  assert.equal(contexts[0].before.analysisSha256, analysisDigest(baseline), 'checks stay bound to the original retained capture');
+});
+
+test('an oversized duplicate does not evict its smaller retained baseline', t => {
+  const directory = workspace(t), first = directory('first'), next = directory('next'), last = directory('last');
+  const baseline = capture(1), current = capture(2);
+  retainVerificationBaselines(first, first, null, baseline, testRoot);
+  retainVerificationBaselines(next, first, baseline, current, testRoot);
+  const sourceText = 'x'.repeat(4 * 1024 * 1024);
+  const oversized = { ...baseline, externalEvidence: [{ path: 'source.py', sourceText, sha256: createHash('sha256').update(sourceText).digest('hex') }] };
+  retainVerificationBaselines(last, next, oversized, current, testRoot);
+  assert.deepEqual(savedIds(last), [snapshotId(1)]);
+});
+
+test('checks from a supplemental-only change remain usable after an unchanged rerun', async t => {
+  const directory = workspace(t), first = directory('first'), next = directory('next'), last = directory('last');
+  const baseline = capture(1), current = capture(2);
+  const task = JSON.parse(fs.readFileSync(new URL('./fixtures/tasks/complexity.task.json', import.meta.url), 'utf8'));
+  task.source.snapshotId = baseline.repository.snapshotId;
+  task.source.analysisSha256 = taskAnalysisDigest(baseline);
+  retainVerificationBaselines(first, first, null, baseline, testRoot);
+  retainVerificationBaselines(next, first, baseline, current, testRoot);
+  const contexts = verificationContexts(next, baseline, current, { files: [] });
+  const initial = await evaluateVerification(contexts, task);
+  assert.ok(initial.checksTemplate, initial.error);
+  const sourceText = 'additional source';
+  const supplemental = { ...baseline, externalEvidence: [{ path: 'source.py', sourceText, sha256: createHash('sha256').update(sourceText).digest('hex') }] };
+  retainVerificationBaselines(last, next, supplemental, current, testRoot);
+  const rerun = await evaluateVerification(verificationContexts(last, supplemental, current, { files: [] }), task, initial.checksTemplate);
+  assert.ok(rerun.receipt, rerun.error);
+  assert.equal(rerun.receipt.projectChecks.status, 'reported-not-independently-verified');
+});
+
+test('a prior PR head is accepted only for the same verified PR and pins', t => {
+  const directory = workspace(t), previousDir = directory('pr-previous');
+  const oldHead = '1'.repeat(40), newHead = '2'.repeat(40), base = '3'.repeat(40);
+  const oldPR = { repository: 'owner/repo', number: 42, scope: '.', baseSHA: base, headSHA: oldHead };
+  const currentPR = { ...oldPR, headSHA: newHead };
+  const previous = capture(1, { sourceKind: 'git-tree', revision: oldHead });
+  const current = capture(2, { sourceKind: 'git-tree', revision: newHead });
+  fs.writeFileSync(path.join(previousDir, 'findings.json'), JSON.stringify(previous));
+  fs.writeFileSync(path.join(previousDir, 'view-context.json'), JSON.stringify({ run: { pullRequest: oldPR } }));
+  assert.deepEqual(matchingPreviousPullRequest(previousDir, current, currentPR), previous);
+  for (const change of [{ number: 43 }, { repository: 'other/repo' }, { scope: 'src' }, { baseSHA: '4'.repeat(40) }, { headSHA: '5'.repeat(40) }, { local: true }]) {
+    assert.equal(matchingPreviousPullRequest(previousDir, current, { ...currentPR, ...change }), null);
+  }
 });

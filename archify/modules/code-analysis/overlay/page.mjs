@@ -9,7 +9,7 @@ import { fail, receipt } from '../core/index.mjs';
 import { schemaErrors } from '../schemas/index.mjs';
 import { buildGraph, evaluateGraph, extractFacts, loadBaseline, loadPrevious, readJsonInput, reviewSummary, stableJson, validateFacts } from '../lib/analysis.mjs';
 import { reviewFindings } from '../lib/review.mjs';
-import { retainVerificationBaselines, sameVerificationRepository, verificationContexts } from '../lib/verification-history.mjs';
+import { matchingPreviousPullRequest, retainVerificationBaselines, sameVerificationRepository, verificationContexts } from '../lib/verification-history.mjs';
 import { buildOverlay } from './inject.mjs';
 import { driftResolutionInputs } from '../lib/architecture-drift.mjs';
 import { buildPullRequestView } from './pull-request.mjs';
@@ -33,7 +33,8 @@ export function renderAnalysisSnapshot({ dir, html, root, review }) {
   if (context?.schema_version !== 1 || (!context.ir && context.mode !== 'standalone') || !context.run) fail('overlay/context-invalid', 'The captured view context is missing or invalid.', { supportedFixes: ['re-analyze the repository to rebuild its captured view'] });
   const previousDir = path.join(dir, '..', 'analysis.previous');
   const previous = context.run.pullRequest ? loadPrevious(path.join(dir, 'base/findings.json')) : sameVerificationRepository(dir, previousDir) ? loadPrevious(path.join(previousDir, 'findings.json')) : null;
-  const run = { ...context.run, rules: findings.rules, duplicates: findings.analysis?.duplicates || null, external: findings.analysis?.external || [], review, verification: verificationContexts(dir, previous, findings, facts, context.run.pullRequest ? [] : undefined) };
+  const previousHead = context.run.pullRequest && matchingPreviousPullRequest(previousDir, findings, context.run.pullRequest);
+  const run = { ...context.run, rules: findings.rules, duplicates: findings.analysis?.duplicates || null, external: findings.analysis?.external || [], review, verification: verificationContexts(dir, previous, findings, facts, context.run.pullRequest ? [previousHead] : undefined) };
   return overlayHtml({ html: html ? fs.readFileSync(html, 'utf8') : null, ir: context.ir, graph, facts, findings: findings.diagnostics, findingsDocument: findings, map: context.map, sourceRoot: root, run });
 }
 
@@ -54,7 +55,7 @@ export function writeAnalysisView(dir, overlay, review) {
 // `html` is the page Archify delivered for `ir`; it is read, never modified.
 // `baseline` (file) marks accepted findings; `previous` (a findings.json from
 // an earlier run) adds a comparison. Both are recorded in review.json.
-export function analyzeRepository({ root, ir = null, html = null, out, locale = null, language = null, config = null, map = null, irSnapshot = null, baseline = null, previous = null, resume = null, openAnalysis = false, source = null, pullRequest = null, captureDriftInputs = false, retainBaselines = false }) {
+export function analyzeRepository({ root, ir = null, html = null, out, locale = null, language = null, config = null, map = null, irSnapshot = null, baseline = null, previous = null, previousHeadDir = null, resume = null, openAnalysis = false, source = null, pullRequest = null, captureDriftInputs = false, retainBaselines = false }) {
   const absRoot = path.resolve(root);
   const irPath = ir ? path.resolve(ir) : null;
   const htmlPath = html ? path.resolve(html) : null;
@@ -90,7 +91,8 @@ export function analyzeRepository({ root, ir = null, html = null, out, locale = 
     ir: irDoc, map: mapDoc, resolutionInputs, locale, base: path.join(dir, 'base') });
   const context = { schema_version: 1, mode: irPath ? 'diagram' : 'standalone', ir: irDoc, map: mapDoc, run: { ...(pullRequest ? { pullRequest } : {}), locale: locale || irDoc?.meta?.locale || 'en', openAnalysis: !irPath || openAnalysis, ...(resume ? { resume } : {}), suppressed: cfg.ignore || [], exclude: cfg.exclude || [], otherLanguages, boundaries: cfg.boundaries || null } };
   fs.writeFileSync(path.join(dir, 'view-context.json'), stableJson(context));
-  const run = { ...context.run, rules: findings.rules, duplicates: findings.analysis?.duplicates || null, external: findings.analysis?.external || [], review, verification: verificationContexts(dir, pullRequest || !retainBaselines || sameVerificationRepository(dir, path.dirname(previous)) ? prior : null, findings, facts, history) };
+  const previousHead = pullRequest && previousHeadDir && matchingPreviousPullRequest(previousHeadDir, findings, context.run.pullRequest);
+  const run = { ...context.run, rules: findings.rules, duplicates: findings.analysis?.duplicates || null, external: findings.analysis?.external || [], review, verification: verificationContexts(dir, pullRequest || !retainBaselines || sameVerificationRepository(dir, path.dirname(previous)) ? prior : null, findings, facts, pullRequest ? [previousHead] : history) };
   const overlay = overlayHtml({ html: htmlPath ? fs.readFileSync(htmlPath, 'utf8') : null, ir: irDoc, graph, facts, findings: findings.diagnostics, findingsDocument: findings, map: mapDoc, sourceRoot: absRoot, run });
   const outHtml = path.join(dir, 'repo.analysis.html');
   writeAnalysisView(dir, overlay, review);
