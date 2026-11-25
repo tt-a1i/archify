@@ -369,10 +369,13 @@ test('Windows file share lock is reported, then cleanup succeeds after release',
     child.once('exit', resolve);
   });
   try {
-    for (let attempt = 0; attempt < 250 && !fs.existsSync(ready) && child.exitCode === null; attempt++) {
-      await delay(20);
+    // Windows CI can take longer than five seconds to launch PowerShell under
+    // load. Still require the real lock before asserting cleanup behavior.
+    const deadline = Date.now() + 30000;
+    while (!fs.existsSync(ready) && child.exitCode === null && child.signalCode === null && Date.now() < deadline) {
+      await delay(50);
     }
-    assert.ok(fs.existsSync(ready), `lock process did not become ready: ${stderr}`);
+    assert.ok(fs.existsSync(ready), `lock process did not become ready (exit ${child.exitCode}, signal ${child.signalCode}): ${stderr}`);
     await assert.rejects(owned.cleanup(), { code: 'ARCHIFY_TEMP_CLEANUP' });
     assert.ok(fs.existsSync(lockedFile));
   } finally {
