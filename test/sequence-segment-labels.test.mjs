@@ -133,8 +133,9 @@ function assertAuthoredTimeline(html, diagram) {
   assert.deepEqual(routes, diagram.messages.map(({ y }) => y), 'authored arrows stay fixed');
   const note = html.match(/<text data-detail="context" x="[\d.]+" y="([\d.]+)"[^>]*font-size="([\d.]+)">keep this annotation<\/text>/);
   assert.ok(note, 'the authored note stays complete');
-  assert.deepEqual(note.slice(1).map(Number), [diagram.messages.find((message) => message.note).y + 18, 7],
-    'the annotation keeps its authored baseline and font');
+  // A note that keeps its line count at 8.5px renders at that size (7px otherwise).
+  assert.deepEqual(note.slice(1).map(Number), [diagram.messages.find((message) => message.note).y + 18, 8.5],
+    'the annotation keeps its authored baseline and note size');
 }
 
 for (const from of [145, 144]) {
@@ -202,7 +203,7 @@ test('inside segment title clears a message note after avoiding participant head
   const [title] = labels(result.html);
   const note = result.html.match(/<text data-detail="context" x="([\d.]+)" y="([\d.]+)" class="[^"]*" font-size="([\d.]+)">diagnostic annotation<\/text>/);
   assert.ok(note, 'the full authored annotation remains visible');
-  assert.deepEqual(note.slice(1).map(Number), [176, 178, 7], 'note position and font remain authored geometry');
+  assert.deepEqual(note.slice(1).map(Number), [176, 178, 8.5], 'note position and note size remain authored geometry');
   assert.ok(title.y >= PARTICIPANT_BOTTOM, 'title clears the participant headers');
   assert.ok(title.x <= Number(note[1]) && title.x + title.width > Number(note[1]), 'fixture shares horizontal space with the note');
   const baseline = Number(note[2]);
