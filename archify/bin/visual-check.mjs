@@ -8,6 +8,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { REMOVE_UPDATE_NOTICE_SCRIPT } from './update-notice.mjs';
 import {
   DESKTOP_READABILITY_VIEWPORT,
   MIN_PROJECTED_NODE_TEXT_PX,
@@ -1680,6 +1681,7 @@ export class ChromeVisualBrowser {
     if (navigation.errorText) throw new Error(`Chrome navigation failed: ${navigation.errorText}`);
     await loaded;
     await evaluate(this.cdp, sessionId, `(function () {
+      ${REMOVE_UPDATE_NOTICE_SCRIPT}
       document.documentElement.setAttribute('data-motion', 'still');
       var panel = document.querySelector('.diagram-container');
       if (panel) panel.setAttribute('data-detail-level', 'read');
