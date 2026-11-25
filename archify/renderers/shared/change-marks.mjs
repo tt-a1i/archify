@@ -192,6 +192,25 @@ export function changeLegendEntries(review, legendConfig, locale) {
   }));
 }
 
+// In an active review colour means change. Node-type entries describe a
+// colour the nodes no longer carry, so they leave the legend unless the
+// author keeps them (legend mode 'all' or an entry with visible: true); the
+// icons still name each node's type. Line-type swatches turn neutral and keep
+// their dash pattern and weight, matching the neutral unchanged edges.
+const LINE_TYPE_DASH = Object.freeze({ 'a-security': '5,5', 'a-dashed': '4,4' });
+
+export function reviewLegendEntries(review, entries, legendConfig, nodeKinds = []) {
+  if (!review.active) return entries;
+  const colourKinds = new Set(nodeKinds);
+  const overrides = legendConfig?.entries || {};
+  return entries.flatMap((entry) => {
+    if (colourKinds.has(entry.kind) && legendConfig?.mode !== 'all' && overrides[entry.kind]?.visible !== true) return [];
+    if (typeof entry.className !== 'string' || !entry.className.startsWith('a-')) return [entry];
+    const dash = entry.dash || LINE_TYPE_DASH[entry.className];
+    return [{ ...entry, className: 'a-default', marker: 'arrowhead', ...(dash ? { dash } : {}) }];
+  });
+}
+
 export function renderChangeLegendSwatch(entry) {
   if (!entry.change) return null;
   return `<rect x="${entry.x}" y="${entry.baseline - 9}" width="16" height="10" rx="2.5" class="c-change-swatch-${esc(entry.change)}" stroke-width="1.5"/>`;
@@ -226,10 +245,14 @@ export function changeMarkerDefinitions(review) {
   return change + emphasis;
 }
 
-export function changeMarkerFor(item, fallback) {
+// In an active review colour means change, so an unchanged edge drops its
+// line-type colour (its dash pattern and weight still tell the type) and
+// takes the neutral arrowhead.
+export function changeMarkerFor(item, fallback, review = null) {
   if (isMarked(item)) return `arrowhead-change-${item.change}`;
-  if (item?.emphasis === true && Object.hasOwn(FIXED_FALLBACK_TONES, fallback)) return `${fallback}-fixed`;
-  return fallback;
+  const neutral = review?.active && Object.hasOwn(FIXED_FALLBACK_TONES, fallback) ? 'arrowhead' : fallback;
+  if (item?.emphasis === true && Object.hasOwn(FIXED_FALLBACK_TONES, neutral)) return `${neutral}-fixed`;
+  return neutral;
 }
 
 // The marker tone (`m-<tone>`) of any id changeMarkerFor returns.

@@ -8,7 +8,7 @@ import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth, nodeL
 import { brandLabelFitWidth, brandMarkFor, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
 import { layoutReportFromSvg } from '../shared/layout-report.mjs';
-import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeNodeAttrs, changeReviewFor, nodeChangeBadgePos, renderChangeBadge, renderChangeEdgePrefix, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
+import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeNodeAttrs, changeReviewFor, reviewLegendEntries, nodeChangeBadgePos, renderChangeBadge, renderChangeEdgePrefix, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
 import { DESKTOP_READER_DIAGRAM_WIDTH, MIN_PROJECTED_NODE_TEXT_PX } from '../shared/desktop-readability.mjs';
 import { asArray, rectsOverlap, properSegmentIntersection, segmentRectClearance, roundedPath, routePointsValue, arrowClassMap, edgeLabelAccent } from '../shared/geometry.mjs';
 
@@ -1013,7 +1013,9 @@ const changeReview = changeReviewFor({ nodes: asArray(lifecycle.states), edges: 
 function legendCatalog() {
   const presentKinds = new Set([...states.values()].map((state) => state.type));
   presentKinds.add('start');
-  const entries = resolveLegend(lifecycle.meta?.legend, LEGEND_CATALOG, presentKinds);
+  // The start marker and final ring are shapes, not colours, so they stay.
+  const entries = reviewLegendEntries(changeReview, resolveLegend(lifecycle.meta?.legend, LEGEND_CATALOG, presentKinds), lifecycle.meta?.legend,
+    LEGEND_CATALOG.map((entry) => entry.kind).filter((kind) => kind !== 'start'));
   if (entries.length && [...states.values()].some(isFinal)) {
     entries.push({ kind: 'final', label: i18nText(lifecycle.meta.locale, 'legend.lifecycle.final'), interactive: false, present: true, swatchWidth: 16 });
   }
@@ -1099,7 +1101,7 @@ function renderTransition(transition, index) {
   const strokeWidth = variant === 'emphasis' ? 1.8 : 1.2;
   const d = roundedPath(route.points, CORNER);
   const junction = route.bracket ? ` data-composition-junction="${esc(route.bracket.key.replaceAll('\u0000', '+'))}"` : '';
-  const edge = `          <path ${focusEdgeAttrs(transition.from, transition.to, transition.label || transition.note, index, transition.id)}${changeEdgeAttrs(changeReview, transition)} data-composition-points="${routePointsValue(route.points)}" data-composition-crossover="halo" data-composition-independent="true"${junction} d="${d}" class="${cls}"${animateAttr(lifecycle.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${changeMarkerFor(transition, marker)})"/>`;
+  const edge = `          <path ${focusEdgeAttrs(transition.from, transition.to, transition.label || transition.note, index, transition.id)}${changeEdgeAttrs(changeReview, transition)} data-composition-points="${routePointsValue(route.points)}" data-composition-crossover="halo" data-composition-independent="true"${junction} d="${d}" class="${cls}"${animateAttr(lifecycle.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${changeMarkerFor(transition, marker, changeReview)})"/>`;
   const underlay = `          <path data-graph-role="automatic-crossover-underlay" d="${d}" fill="none" stroke="var(--mask)" stroke-width="${strokeWidth + 4}" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"/>`;
   return `        <g data-graph-role="automatic-crossover" style="--step:${index}">\n${underlay}\n${edge}\n        </g>`;
 }

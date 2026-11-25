@@ -31,7 +31,7 @@ import {
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth, nodeLabelLayout } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMarkFor, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
-import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeFrameAttrs, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeNodeAttrs, centredTextBox, changeReviewFor, frameChangeBadgePos, frameTitleBox, nodeChangeBadgePos, renderChangeBadge, renderChangeEdgePrefix, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
+import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeFrameAttrs, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeNodeAttrs, centredTextBox, changeReviewFor, reviewLegendEntries, frameChangeBadgePos, frameTitleBox, nodeChangeBadgePos, renderChangeBadge, renderChangeEdgePrefix, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
 import { DESKTOP_READER_DIAGRAM_WIDTH, MIN_PROJECTED_NODE_TEXT_PX, minimumReadableSourceTextPx, predictedFixedWidthOverflow } from '../shared/desktop-readability.mjs';
 import {
   createMappedWorkflowCandidate,
@@ -993,7 +993,7 @@ function resolveWorkflowLegendFootprint(workflow, layout, changeReview) {
   ].map((kind) => ({ kind, label: i18nText(workflow.meta.locale, `legend.workflow.${kind}`) }));
   const presentLegendKinds = new Set(asArray(workflow.nodes).map((node) => node.type));
   const workflowLegendEntries = [
-    ...resolveLegend(workflow.meta?.legend, LEGEND_CATALOG, presentLegendKinds),
+    ...reviewLegendEntries(changeReview, resolveLegend(workflow.meta?.legend, LEGEND_CATALOG, presentLegendKinds), workflow.meta?.legend, LEGEND_CATALOG.map((entry) => entry.kind)),
     ...changeLegendEntries(changeReview, workflow.meta?.legend, workflow.meta.locale),
   ];
   const legendFootprintOptions = { fontSize: 7, itemGap: 7 };
@@ -5699,7 +5699,7 @@ function renderEdgePath(edge, index) {
   const strokeWidth = workflowEdgeStrokeWidth(edge);
   const routing = independentAutomaticRoute(edge) ? ' data-composition-routing="workflow-v2-auto"' : '';
   const role = workflow.schema_version === 2 ? ` data-edge-role="${esc(edge.role || '')}"` : '';
-  return `        <path ${focusEdgeAttrs(edge.from, edge.to, edge.label, index, edge.id)}${changeEdgeAttrs(changeReview, edge)}${routing}${role} data-composition-points="${routePointsValue(routed.points)}" d="${roundedWorkflowPath(routed.points)}" class="${cls}"${animateAttr(workflow.meta, 'edge', edgeSteps.get(edge))} stroke-width="${strokeWidth}" marker-end="url(#${changeMarkerFor(edge, marker)})"/>`;
+  return `        <path ${focusEdgeAttrs(edge.from, edge.to, edge.label, index, edge.id)}${changeEdgeAttrs(changeReview, edge)}${routing}${role} data-composition-points="${routePointsValue(routed.points)}" d="${roundedWorkflowPath(routed.points)}" class="${cls}"${animateAttr(workflow.meta, 'edge', edgeSteps.get(edge))} stroke-width="${strokeWidth}" marker-end="url(#${changeMarkerFor(edge, marker, changeReview)})"/>`;
 }
 
 function renderEdgeLabel(edge, index) {
