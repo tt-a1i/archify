@@ -67,4 +67,5 @@ export const browserTestFiles = [
   // Benchmark observers and real export integration require this explicit Chrome lane.
   'diagram-quality-e2e-browser.test.mjs',
   'node-index-route-browser.test.mjs',
+  'update-notice-browser.test.mjs',
 ];
