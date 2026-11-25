@@ -131,6 +131,8 @@ test('standalone workbench keeps Atlas alongside evidence, both locales/themes a
     // Each locale/theme iteration verifies a return to an empty Atlas, rather
     // than inheriting the selection left by the preceding iteration.
     await run("document.querySelector('#bauify-atlas .atlas-clear').click()");
+    await run(`(() => { const atlas = window.__archifyAtlas, original = atlas.saveSelection; window.__atlasSaved = []; atlas.saveSelection = function (...args) { const value = original.apply(this, args); window.__atlasSaved.push(value); return value; }; })()`);
+    assert.equal(await run(selectedFinding + " || ''"), '', 'the Atlas is clear before opening the overview finding');
     const id = await run("document.querySelector('.priority-card [data-finding]').dataset.finding");
     await click(priority);
     assert.equal(await run(selectedFinding), id);
@@ -145,7 +147,7 @@ test('standalone workbench keeps Atlas alongside evidence, both locales/themes a
     await click('#bauify-code .source-back');
     assert.equal(await run(selectedFinding), id, 'returning from source keeps the detail selected');
     await click(`${details} .back`);
-    assert.equal(await run(selectedFinding), '', 'returning to the overview restores no selection');
+    assert.equal(await run(selectedFinding), '', 'returning to the overview restores no selection; saved Atlas state: ' + JSON.stringify(await run('window.__atlasSaved')));
     assert.equal(await run("!document.querySelector('.atlas-selection .selected')"), true);
 
     // Selecting a captured file replaces a prior finding, and module/clear
