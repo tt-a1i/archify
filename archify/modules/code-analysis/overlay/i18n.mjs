@@ -178,6 +178,7 @@ const ZH_CN = {
   "Select a JSON file up to 2 MiB.": "请选择不超过 2 MiB 的 JSON 文件。",
   "Could not read the selected JSON file.": "无法读取选中的 JSON 文件。",
   "The task does not match a retained analysis capture.": "任务与保留的分析快照均不匹配。",
+  "The task does not match the previous analysis.": "任务与上一轮分析不匹配。",
   "This selection is no longer available in the latest analysis.": "最新分析中已无此选中项。",
   "Invalid task or mismatched task findings.": "任务格式不正确，或发现与上一轮不符。",
   "The task ID does not match the selected findings.": "任务 ID 与所选发现不匹配。",

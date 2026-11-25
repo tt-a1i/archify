@@ -884,6 +884,14 @@ test('Code Analysis Atlas draws the analyzed tree, focuses a module and hands a 
     assert.equal(await run("typeof window.THREE"), 'object', 'three.js loads on first open');
     await until(`document.documentElement.getAttribute('data-bauify-atlas3d-drawn') === '${atlas.functions.length}'`, 'Atlas 3D did not draw');
     assert.deepEqual(await run("[window.__archifyAtlas3d.view.consistent, window.__archifyAtlas3d.view.counts.files]"), [true, atlas.files.length], 'every file, function and finding of the run is in the model');
+    assert.deepEqual(await run(`(() => {
+      const view = window.__archifyAtlas3d.view;
+      view.select({ type: 'file', index: 0 });
+      const saved = view.saveSelection();
+      view.select({ type: 'module', index: 0 });
+      const missing = view.restoreSelection(saved);
+      return [missing, view.saveSelection(), view.restoreSelection({ type: 'file', path: 'no-such-file' })];
+    })()`), [false, { type: 'file', path: atlas.files[0][0] }, true], '3D selections restore by stable file identity and report missing files');
   } else {
     assert.equal(await run("typeof window.THREE"), 'undefined', 'three.js stays inert without WebGL');
     assert.match(await run("document.querySelector('#bauify-atlas3d .a3d-fallback')?.textContent || ''"), /WebGL/, 'without WebGL the view says so');

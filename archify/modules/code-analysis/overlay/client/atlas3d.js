@@ -684,7 +684,25 @@
     }
     resize(); updateCamera(); renderSide(); applyMarks();
     requestAnimationFrame(frame);
-    return { host, select, state, consistent, counts: { files: drawnFiles, functions: drawnFns, branchDeps, threadDeps, insideDeps }, trunk: M[trunk].label, refresh: () => { resize(); dirty = true; } };
+    function saveSelection() {
+      if (state.fn !== -1) { const fn = FN[state.fn]; return { type: 'function', file: F[fn[0]][0], name: fn[1], line: fn[2] }; }
+      if (state.finding !== -1) return { type: 'finding', id: FD[state.finding].id };
+      if (state.file !== -1) return { type: 'file', path: F[state.file][0] };
+      if (state.module !== -1) { const m = M[state.module]; return { type: 'module', path: m.path, rootFile: m.path ? null : F.find(f => f[1] === state.module)?.[0] }; }
+      return null;
+    }
+    function restoreSelection(saved) {
+      if (!saved) return false;
+      let indexes = [];
+      if (saved.type === 'function') indexes = FN.map((fn, i) => F[fn[0]][0] === saved.file && fn[1] === saved.name && fn[2] === saved.line ? i : -1).filter(i => i !== -1);
+      if (saved.type === 'finding') indexes = FD.map((f, i) => f.id === saved.id ? i : -1).filter(i => i !== -1);
+      if (saved.type === 'file') indexes = F.map((f, i) => f[0] === saved.path ? i : -1).filter(i => i !== -1);
+      if (saved.type === 'module') indexes = M.map((m, i) => m.path === saved.path && (m.path || F.find(f => f[1] === i)?.[0] === saved.rootFile) ? i : -1).filter(i => i !== -1);
+      if (indexes.length !== 1) return true;
+      select({ type: saved.type, index: indexes[0] });
+      return false;
+    }
+    return { host, select, state, saveSelection, restoreSelection, consistent, counts: { files: drawnFiles, functions: drawnFns, branchDeps, threadDeps, insideDeps }, trunk: M[trunk].label, refresh: () => { resize(); dirty = true; } };
   }
 
   window.__archifyAtlas3d = { mount, get view() { return mounted; } };

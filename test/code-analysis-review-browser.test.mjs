@@ -18,6 +18,7 @@ test('Code Analysis marks baseline findings, re-analyzes without a restart, and 
   const write = (file, text) => fs.writeFileSync(path.join(root, file), text);
   write('a.mjs', "import './b.mjs';\n");
   write('b.mjs', "import './a.mjs';\n");
+  write('b2.mjs', 'export const replacement = 2;\n');
   // The a <-> b cycle is known and accepted before the page is opened.
   const baseline = path.join(scratch, 'baseline.json');
   const written = await runCheck([root, '--language', 'ts', '--baseline', baseline, '--update-baseline', '--reason', 'legacy loader pair']);
@@ -33,7 +34,7 @@ test('Code Analysis marks baseline findings, re-analyzes without a restart, and 
   fs.writeFileSync(ir, JSON.stringify({ schema_version: 1, diagram_type: 'architecture', meta: { title: 'Review browser regression', output: 'architecture.html' },
     components: [{ id: 'app', type: 'backend', label: 'App', pos: [40, 40], size: [170, 64] }, { id: 'storage', type: 'backend', label: 'Storage', pos: [300, 40], size: [170, 64] }], connections: [] }));
   const map = path.join(scratch, 'map.json');
-  fs.writeFileSync(map, JSON.stringify({ app: ['a', 'c', 'd'], storage: ['b'] }));
+  fs.writeFileSync(map, JSON.stringify({ app: ['a', 'c', 'd'], storage: ['b', 'b2'] }));
   const out = path.join(scratch, 'view');
   const view = await startAnalysisView([root, '--ir', ir, '--map', map, '--baseline', baseline, '--out', out, '--language', 'ts']);
   const sockets = new Set();
@@ -102,16 +103,24 @@ test('Code Analysis marks baseline findings, re-analyzes without a restart, and 
     fs.writeFileSync(process.env.ARCHIFY_ANALYSIS_REVIEW_AFTER_SCREENSHOT, Buffer.from(shot.data, 'base64'));
   }
 
+  let toolbarClicks = 0;
   const refreshFromCurrentFocus = async () => {
-    // Exercise the pointer focus hand-off in one browser turn. Hit testing is
-    // covered separately against the real desktop report.
-    const initialPage = await run(`(() => {
+    const { initialPage, x, y, hit } = await run(`(() => {
       const button = document.getElementById('analysis-refresh');
-      const original = performance.timeOrigin;
-      button.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
-      button.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
-      return original;
+      button.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      const box = button.getBoundingClientRect();
+      const x = box.left + box.width / 2, y = box.top + box.height / 2;
+      return { initialPage: performance.timeOrigin, x, y, hit: !document.documentElement.hasAttribute('data-bauify-views') && button.contains(document.elementFromPoint(x, y)) };
     })()`);
+    if (hit) {
+      toolbarClicks += 1;
+      await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x, y });
+      await send('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', clickCount: 1 });
+      await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: 1 });
+    } else {
+      // Atlas is modal and covers the toolbar: exercise state hand-off directly.
+      await run("document.getElementById('analysis-refresh').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); document.getElementById('analysis-refresh').dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }))");
+    }
     const finished = `performance.timeOrigin !== ${initialPage} && document.documentElement.getAttribute('data-bauify') === 'on' && !history.state`;
     try {
       await wait(`(${finished}) || document.querySelector('.analysis-refresh-status.reanalyze-error')`);
@@ -132,6 +141,7 @@ test('Code Analysis marks baseline findings, re-analyzes without a restart, and 
   assert.equal(await run("document.activeElement.matches('#bauify-panel .back')"), true);
   await run("window.__archifyRestoreReading({ reading: { kind: 'indicator', id: 'app', key: 'missing-indicator' }, open: true })");
   assert.match(await run("document.querySelector('#bauify-panel h3').textContent"), /^App/, 'a removed indicator falls back to its component');
+  assert.equal(await run("document.getElementById('bauify-panel').hidden"), false, 'the fallback component is visible');
   assert.match(await run("document.querySelector('.analysis-refresh-status').textContent"), /selection is no longer available/);
 
   const indicatorTitle = await run("document.querySelector('#bauify-panel .ind.link').click(); document.querySelector('#bauify-detail h3').textContent");
@@ -182,6 +192,9 @@ test('Code Analysis marks baseline findings, re-analyzes without a restart, and 
   assert.match(await run("document.querySelector('#bauify-atlas .atlas-selection').textContent"), /a\.b/, 'module selection survives an ID collision');
   assert.doesNotMatch(await run("document.querySelector('.analysis-refresh-status').textContent"), /no longer available/);
   await run("document.querySelector('.views-option[data-view=diagram]').click()");
+  await run("window.__archifyRestoreReading({ reading: { kind: 'off', id: 'obsolete-id', path: 'a.b', rootFile: null }, open: true })");
+  assert.equal(await run("document.getElementById('bauify-panel').hidden"), false, 'an off-diagram module is located by path after IDs change');
+  assert.match(await run("document.querySelector('#bauify-panel h3').textContent"), /a\.b/);
 
   await run(`document.querySelector('.views-option[data-view=atlas]').click();
     document.getElementById('atlas-tab-files').click();
@@ -198,15 +211,39 @@ test('Code Analysis marks baseline findings, re-analyzes without a restart, and 
   assert.equal(await run("document.querySelector('.atlas-file-query').value"), 'scratch.mjs');
   assert.equal(await run("document.activeElement.matches('.atlas-file-query')"), true);
   assert.match(await run("document.querySelector('.analysis-refresh-status').textContent"), /selection is no longer available/);
-  await run("document.querySelector('.views-option[data-view=diagram]').click(); window.__archifyShowFinding(" + JSON.stringify(beforeFinding.id) + "); document.querySelector('#bauify-detail .back').click()");
+  await run("document.querySelector('.views-option[data-view=diagram]').click(); window.__archifyShowFinding(" + JSON.stringify(beforeFinding.id) + "); document.querySelector('#bauify-detail .ref[data-file]').click()");
 
   await run("document.querySelector('g[data-node-id=app]').dispatchEvent(new MouseEvent('click',{bubbles:true})); document.querySelector('#bauify-panel .fly-rel[data-edge=\\\"app>storage\\\"]').click(); document.querySelector('#bauify-panel .fly-ev').click()");
   await refreshFromCurrentFocus();
-  assert.equal(await run("document.getElementById('bauify-code').hidden"), false, 'dependency source remains open');
-  await run("document.querySelector('#bauify-code .source-back').click()");
+  assert.equal(await run("document.getElementById('bauify-code').hidden"), false, 'dependency source remains open even when a previous finding link is still marked active');
+  write('a.mjs', "import './b2.mjs';\n");
+  await refreshFromCurrentFocus();
+  assert.equal(await run("document.getElementById('bauify-code').hidden"), true, 'a different import on the same line is not reopened as the old evidence');
+  assert.match(await run("document.querySelector('.analysis-refresh-status').textContent"), /selection is no longer available/);
   write('a.mjs', 'export const a = 1;\n');
   await refreshFromCurrentFocus();
   assert.match(await run("document.querySelector('.analysis-refresh-status').textContent"), /selection is no longer available/, 'an undrawn dependency removed from code is not reported as declared');
+
+  write('complex.mjs', 'export function complex(x) {' + Array.from({ length: 25 }, (_, i) => `if (x === ${i}) return ${i};`).join('') + 'return 0; }\n');
+  await refreshFromCurrentFocus();
+  // Restore an old unverified-only filter after the last report disappears.
+  await run("window.__archifyRestoreReading({ reading: { kind: 'findings' }, open: true, filters: { unverified: true, search: '', status: 'all' } })");
+  assert.equal(await run("Boolean(document.querySelector('.unverified-filter'))"), false);
+  assert.ok(await run("document.querySelectorAll('#bauify-overview .finding-row').length") > 0, 'internal findings stay visible when the external-only control is absent');
+  await run("document.querySelector('.findings-back').click()");
+
+  const complexId = await run(`(() => {
+    const finding = JSON.parse(document.getElementById('bauify-analysis').textContent).findings.find(f => f.code === 'complexity/function' && f.subject.file === 'complex.mjs');
+    if (!finding) return null;
+    window.__archifyShowFinding(finding.id);
+    document.querySelector('#bauify-detail .inline-evidence .ref').click();
+    return finding.id;
+  })()`);
+  assert.ok(complexId, 'the fixture has a complex function and opens its inline source');
+  await refreshFromCurrentFocus();
+  assert.equal(await run("document.getElementById('bauify-code').hidden"), false, 'duplicate link locations do not hide the original inline source');
+  assert.ok(toolbarClicks > 0, 'the toolbar was reached by a real browser pointer');
+  await run("document.querySelector('#bauify-code .source-back').click(); document.querySelector('#bauify-detail .back').click()");
 
   // A failing run keeps the last good result on disk and on the page.
   const before = fs.readFileSync(path.join(out, 'analysis', 'findings.json'), 'utf8');

@@ -157,7 +157,7 @@
   var entryById = {}; ((data.overview && data.overview.findings) || []).forEach(function (e) { entryById[e.id] = e; });
   var moduleInfo = {};
   data.components.forEach(function (c) { c.modules.forEach(function (m) { moduleInfo[m.id] = m; }); });
-  (data.unmapped || []).forEach(function (m) { if (!moduleInfo[m.id]) moduleInfo[m.id] = { id: m.id, label: m.label, path: m.label, files: m.files, loc: m.loc, fanIn: m.fanIn, fanOut: m.fanOut, fileList: m.fileList || [] }; });
+  (data.unmapped || []).forEach(function (m) { if (!moduleInfo[m.id]) moduleInfo[m.id] = { id: m.id, label: m.label, path: m.path ?? m.label, files: m.files, loc: m.loc, fanIn: m.fanIn, fanOut: m.fanOut, fileList: m.fileList || [] }; });
   var detail = document.createElement('section');
   detail.id = 'bauify-detail'; detail.hidden = true; detail.setAttribute('aria-label', tr("Bauify finding details"));
   reader.appendChild(detail);
@@ -585,7 +585,7 @@
     if (!externalGroup) h += ("<details class=\"relationship\">" + "<summary>" + tr("Relationships and metrics") + "</summary>") + diagram(c, key, fl) + '</details>';
     h += ("<div class=\"k\">" + tr("Findings · ")) + fl.length + '</div>';
     if (!fl.length) h += '<div class="ev">' + (key === 'instability' ? tr("Instability measures dependency direction: out / (in + out). 0 = no outgoing dependencies, 1 = no incoming dependents. It is not a failure probability or a quality verdict.") : tr("No finding for this indicator; this is not a safety guarantee.")) + '</div>';
-    fl.forEach(function (f) { h += f.external ? findingListRow(f) : quickHandoff(f) + evidencePreview(f) + findingCard(f) + taskHtml(f); });
+    fl.forEach(function (f) { h += '<div data-evidence-owner="' + esc(f.id) + '">' + (f.external ? findingListRow(f) : quickHandoff(f) + evidencePreview(f) + findingCard(f) + taskHtml(f)) + '</div>'; });
     detail.innerHTML = h;
     detail.hidden = false;
     codePane.hidden = true;
@@ -707,6 +707,7 @@
   }
   function renderFindingList() {
     var sources = externalSources(), dimensions = [...new Set(data.findings.map(function (f) { return f.dimension; }))].sort();
+    if (!sources.length) filters.unverified = false;
     var option = function (value, label) { return '<option value="' + esc(value) + '">' + esc(label) + '</option>'; };
     overview.innerHTML = ("<button type=\"button\" class=\"back findings-back\">" + tr("← Overview") + "</button>" + "<div class=\"findings-heading\">" + "<h3>" + tr("Findings") + "</h3>") + (sources.length ? ("<button type=\"button\" class=\"text-action view-sources\">" + tr("Sources · ")) + sources.length + '</button>' : '') + '</div>' +
       ("<label class=\"sr-only\" for=\"finding-search\">" + tr("Search findings") + "</label>" + "<input id=\"finding-search\" class=\"finding-search\" type=\"search\" placeholder=\"" + tr("Search rule, message or file…") + "\" value=\"") + esc(filters.search) + '">' +
@@ -1685,7 +1686,7 @@
       h += '<div class="fly-nums two"><div><b>' + fmt(e.weight) + '</b><span>' + esc(tr('imports')) + '</span></div><div><b>' + Object.keys(files).length + (e.evidence.length < e.weight ? '+' : '') + '</b><span>' + esc(tr('source files')) + '</span></div></div>';
       h += '<p class="fly-note' + (undrawn ? ' attention' : '') + '">' + esc(undrawn ? tr('{from} imports {to} in the code, but the diagram draws no line between them. Add it to the diagram, or treat it as coupling that should not exist.', { from: compLabel(from), to: compLabel(to) }) : tr('The diagram draws this dependency and the code confirms it.')) + '</p>';
       h += '<h4 class="fly-h">' + esc(tr('Which files cause it')) + '<small>' + esc(e.evidence.length < e.weight ? tr('first {count}', { count: e.evidence.length }) : tr('all')) + '</small></h4>';
-      h += e.evidence.map(function (v) { return '<button type="button" class="fly-ev" data-file="' + esc(v.file) + '" data-line="' + (v.line || '') + '"><span>' + esc(v.file) + '</span><em>:' + (v.line || '?') + '</em><small>→ ' + esc(v.to) + '</small></button>'; }).join('');
+      h += e.evidence.map(function (v) { return '<button type="button" class="fly-ev" data-file="' + esc(v.file) + '" data-line="' + (v.line || '') + '" data-target="' + esc(v.to) + '"><span>' + esc(v.file) + '</span><em>:' + (v.line || '?') + '</em><small>→ ' + esc(v.to) + '</small></button>'; }).join('');
       h += '<div class="fly-acts"><button type="button" class="fly-copy">' + esc(tr('Copy for AI')) + '</button></div><p class="fly-status ev" role="status" aria-live="polite"></p>';
     } else h += '<p class="fly-note">' + esc(tr('The diagram draws this relationship, but no import between these components was found. It may come from configuration, runtime calls or an external system, or the diagram over-states it.')) + '</p>';
     panel.innerHTML = h; panel.hidden = false; panel.scrollTop = 0;
@@ -1702,8 +1703,8 @@
   }
   // A module no component on the diagram owns.
   function showOff(id) {
-    reading = { kind: 'off', id: id };
     var m = moduleInfo[id]; if (!m) return;
+    reading = { kind: 'off', id: id, path: m.path, rootFile: m.path ? null : m.fileList[0]?.path };
     readerPage(tr('Not on the diagram')); root.removeAttribute('data-bauify-source');
     overview.hidden = true; detail.hidden = true; codePane.hidden = true; clearPick(); setFocus([]);
     var fs = data.findings.filter(function (f) { return (f.moduleIds || []).indexOf(id) !== -1; });
@@ -1765,6 +1766,13 @@
     return !codePane.hidden ? codePane : !detail.hidden ? detail : !panel.hidden ? panel : overview;
   }
   var readingControls = ['.back', '.locate', '.reader-toggle', '.browse-findings', '.bauify-reanalyze'];
+  var sourceKeys = ['data-file', 'data-line', 'data-range-start', 'data-range-end', 'data-match', 'data-target'];
+  function sourceIdentity(ref) {
+    var owner = ref.closest('[data-evidence-owner]');
+    return { attributes: sourceKeys.map(function (key) { return ref.getAttribute(key); }),
+      role: ref.closest('.inline-evidence') ? 'inline' : ref.closest('.more-evidence') ? 'details' : 'other',
+      owner: owner ? owner.getAttribute('data-evidence-owner') : null };
+  }
   function captureReading(active) {
     var pane = visibleReaderPage();
     return {
@@ -1772,10 +1780,11 @@
       filters: Object.assign({}, filters), listScroll: overviewMode === 'findings' && pane === overview ? overview.scrollTop : listScroll,
       view: root.getAttribute('data-bauify-views'), scroll: pane.scrollTop,
       sourceRef: pane === codePane ? (function () {
-        var ref = detail.querySelector('.ref.active') || panel.querySelector('.fly-ev.active');
-        return ref ? ['data-file', 'data-line', 'data-range-start', 'data-range-end', 'data-match'].map(function (key) { return ref.getAttribute(key); }) : null;
+        var ref = reading.kind === 'edge' ? panel.querySelector('.fly-ev.active') : detail.querySelector('.ref.active');
+        return ref ? sourceIdentity(ref) : null;
       })() : null,
       atlas: window.__archifyAtlas?.saveSelection(true, active), findingReturn: findingReturn,
+      atlas3d: root.getAttribute('data-bauify-views') === 'atlas3d' ? window.__archifyAtlas3d?.view?.saveSelection?.() : null,
       focus: readingControls.find(function (selector) { return active?.matches(selector); }),
       focusRefresh: active === refresh
     };
@@ -1819,7 +1828,10 @@
     } else if (saved.open && page.kind === 'findings') showFindings();
     else if (saved.open && page.kind === 'sources') showSources();
     else if (saved.open && page.kind === 'edge' && Object.hasOwn(byId, page.from) && Object.hasOwn(byId, page.to) && (codeEdgeByKey[page.from + '>' + page.to] || svg && Array.from(svg.querySelectorAll('path[data-edge-from][data-edge-to]')).some(function (edge) { return edge.getAttribute('data-edge-from') === page.from && edge.getAttribute('data-edge-to') === page.to; }))) showEdge(page.from, page.to);
-    else if (saved.open && page.kind === 'off' && Object.hasOwn(moduleInfo, page.id)) showOff(page.id);
+    else if (saved.open && page.kind === 'off') {
+      var matches = (data.unmapped || []).filter(function (item) { return page.path === undefined ? item.id === page.id : (item.path ?? item.label) === page.path && (page.path || item.fileList?.[0]?.path === page.rootFile); });
+      if (matches.length === 1) showOff(matches[0].id); else { missing = true; showOverview(); }
+    }
     else if (saved.open) {
       missing = page.kind !== 'overview';
       showOverview();
@@ -1827,14 +1839,16 @@
     if (saved.sourceOpen && !missing) {
       // Only reopen the exact captured evidence item. A different block in the
       // same file is not a safe substitute after a new analysis.
-      var keys = ['data-file', 'data-line', 'data-range-start', 'data-range-end', 'data-match'];
       var refs = saved.sourceRef ? Array.from((page.kind === 'edge' ? panel : detail).querySelectorAll(page.kind === 'edge' ? '.fly-ev[data-file]' : '.ref[data-file]')).filter(function (link) {
-        return keys.every(function (key, index) { return link.getAttribute(key) === saved.sourceRef[index]; });
+        var identity = sourceIdentity(link);
+        if (Array.isArray(saved.sourceRef)) return saved.sourceRef.every(function (value, index) { return identity.attributes[index] === value; });
+        return identity.role === saved.sourceRef.role && identity.owner === saved.sourceRef.owner && sourceKeys.every(function (_key, index) { return identity.attributes[index] === saved.sourceRef.attributes[index]; });
       }) : [];
       if (refs.length === 1) refs[0].click(); else missing = true;
     }
     if (saved.collapsed) setReaderCollapsed(true);
     if (saved.view === 'atlas' || saved.view === 'atlas3d') window.__archifyAtlas?.showView(saved.view);
+    if (saved.view === 'atlas3d' && saved.atlas3d) missing = window.__archifyAtlas3d?.view?.restoreSelection?.(saved.atlas3d) !== false || missing;
     var pane = visibleReaderPage();
     if (!missing && (!saved.sourceOpen || pane === codePane)) pane.scrollTop = saved.scroll;
     var target = saved.focusRefresh ? refresh : saved.focus && (pane.querySelector(saved.focus) || reader.querySelector(saved.focus));
