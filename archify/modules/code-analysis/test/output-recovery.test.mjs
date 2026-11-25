@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { runCheck } from '../bin/check.mjs';
 import { prepareAnalysisView } from '../bin/prepare.mjs';
 import { startAnalysisView } from '../bin/serve.mjs';
+import { withAnalysisOutput } from '../lib/output.mjs';
 
 const check = fileURLToPath(new URL('../bin/check.mjs', import.meta.url));
 const prepare = fileURLToPath(new URL('../bin/prepare.mjs', import.meta.url));
@@ -259,40 +260,36 @@ test('Linux reclaims a reused PID only when process and clock identities can be 
     return true;
   };
   try {
-    const { withAnalysisOutput } = await import('../lib/output.mjs?original-owner');
     let original;
     await withAnalysisOutput(f.out, workspace => { original = workspace; });
     fs.mkdirSync(original, { recursive: true });
     const staged = path.join(original, 'staged.json');
     fs.writeFileSync(staged, 'previous staging');
-    const expectBusy = async claim => {
-      await assert.rejects(claim(f.out, () => assert.fail('a foreign writer took the lock')),
+    const expectBusy = async () => {
+      await assert.rejects(withAnalysisOutput(f.out, () => assert.fail('a foreign writer took the lock')),
         error => error.diagnostics?.[0]?.code === 'analysis/output-busy');
       assert.equal(fs.readFileSync(staged, 'utf8'), 'previous staging');
     };
 
     pidNamespace = 124n;
     visible = false;
-    const differentPids = await import('../lib/output.mjs?different-pids');
-    await expectBusy(differentPids.withAnalysisOutput);
+    await expectBusy();
 
     pidNamespace = 123n;
     boot = '00000000-0000-0000-0000-000000000002';
-    const differentBoot = await import('../lib/output.mjs?different-boot');
-    await expectBusy(differentBoot.withAnalysisOutput);
+    await expectBusy();
 
     boot = '00000000-0000-0000-0000-000000000001';
     timeNamespace = 457n;
     visible = true;
     started = '200';
-    const differentClock = await import('../lib/output.mjs?different-clock');
-    await expectBusy(differentClock.withAnalysisOutput);
+    await expectBusy();
 
     timeNamespace = 456n;
     procPids = `42\t${process.pid}`;
-    const differentProcView = await import('../lib/output.mjs?different-proc-view');
-    await expectBusy(differentProcView.withAnalysisOutput);
+    await expectBusy();
 
+    procPids = String(process.pid);
     await withAnalysisOutput(f.out, workspace => {
       assert.notEqual(workspace, original);
       assert.equal(fs.existsSync(original), false);

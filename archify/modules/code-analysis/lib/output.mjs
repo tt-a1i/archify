@@ -8,7 +8,6 @@ const RECOVERY_REQUIRED = 'analysis/output-recovery-required';
 export const OUTPUT_BUSY = 'analysis/output-busy';
 // Read older labels for rollback diagnostics, without using them to prove ownership.
 const OWNER = /^(?<version>v2-)?(?<scope>[0-9a-f]{16}|unknown)-(?<pid>[1-9][0-9]{0,9})-[0-9a-f]{16}(?:-(?<started>[0-9]{1,20}))?$/;
-const PROCESS = processIdentity();
 const MOVE_PLAN = 'move-plan.json';
 const ROLLBACK_FAILED = 'rollback-failed';
 const RECOVERY_FIXES = ['retain the output and backups for recovery', 'use another --out directory for a new run'];
@@ -58,8 +57,9 @@ function removeVacantLock(lock) {
 }
 
 function claimOutput(lock) {
-  const generation = PROCESS.started ? `-${PROCESS.started}` : '';
-  const label = `v2-${PROCESS.scope ?? 'unknown'}-${process.pid}-${randomBytes(8).toString('hex')}${generation}`;
+  const claimant = processIdentity();
+  const generation = claimant.started ? `-${claimant.started}` : '';
+  const label = `v2-${claimant.scope ?? 'unknown'}-${process.pid}-${randomBytes(8).toString('hex')}${generation}`;
   const workspace = path.join(lock, label);
   const candidate = fs.mkdtempSync(path.join(path.dirname(lock), '.archify-analysis.claim-'));
   const claim = () => {
@@ -95,7 +95,7 @@ function claimOutput(lock) {
     const plan = path.join(abandoned, MOVE_PLAN);
     // A workbench can stay alive after its publication has stopped.
     const rollbackFailed = outputEntry(path.join(abandoned, ROLLBACK_FAILED));
-    if (!rollbackFailed && !ownerExited(identity, pid)) busy(lock, pid);
+    if (!rollbackFailed && !ownerExited(identity, pid, claimant)) busy(lock, pid);
     if (rollbackFailed || outputEntry(plan)) {
       const message = rollbackFailed
         ? 'An analysis publication still needs recovery after a failed rollback.'
@@ -120,14 +120,14 @@ function claimOutput(lock) {
   }
 }
 
-function ownerExited(owner, pid) {
-  if (!owner.version || !PROCESS.scope || owner.scope !== PROCESS.scope) return false;
+function ownerExited(owner, pid, claimant) {
+  if (!owner.version || !claimant.scope || owner.scope !== claimant.scope) return false;
   try {
     process.kill(pid, 0);
   } catch (error) {
     return error.code === 'ESRCH';
   }
-  if (!PROCESS.started || !owner.started) return false;
+  if (!claimant.started || !owner.started) return false;
   const started = linuxStartTime(pid);
   return started !== null && started !== owner.started;
 }
