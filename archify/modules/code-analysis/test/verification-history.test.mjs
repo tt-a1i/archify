@@ -128,6 +128,16 @@ test('an oversized duplicate does not evict its smaller retained baseline', t =>
   assert.deepEqual(savedIds(last), [snapshotId(1)]);
 });
 
+test('an oversized owned adjacent capture remains usable outside retained history', t => {
+  const directory = workspace(t), previous = directory('previous'), currentDir = directory('current');
+  const current = capture(2), sourceText = 'x'.repeat(5 * 1024 * 1024);
+  const oversized = { ...capture(1), externalEvidence: [{ path: 'source.py', sourceText, sha256: createHash('sha256').update(sourceText).digest('hex') }] };
+  retainVerificationBaselines(previous, previous, null, current, testRoot);
+  assert.deepEqual(retainVerificationBaselines(currentDir, previous, oversized, current, testRoot), [], 'the 4 MiB history cap still applies');
+  assert.equal(sameVerificationRepository(currentDir, previous), true);
+  assert.deepEqual(beforeIds(verificationContexts(currentDir, oversized, current, { files: [] })), [snapshotId(1)], 'the independently owned adjacent capture can still be compared');
+});
+
 test('checks from a supplemental-only change remain usable after an unchanged rerun', async t => {
   const directory = workspace(t), first = directory('first'), next = directory('next'), last = directory('last');
   const baseline = capture(1), current = capture(2);

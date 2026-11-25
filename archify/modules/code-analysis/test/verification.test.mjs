@@ -131,6 +131,12 @@ test('verify-change rejects an unowned legacy adjacent pair even if its command 
   const result = spawnSync(process.execPath, [cli, 'code-analysis', 'verify-change', dir, '--task', taskPath], { encoding: 'utf8' });
   assert.equal(result.status, 2, result.stdout + result.stderr);
   assert.equal(JSON.parse(result.stdout).diagnostics[0].code, 'verification/no-comparison');
+  previous.externalEvidence = [{ path: 'large.py', sourceText: 'x'.repeat(5 * 1024 * 1024) }];
+  fs.writeFileSync(path.join(previousDir, 'findings.json'), JSON.stringify(previous));
+  fs.writeFileSync(path.join(dir, 'verification-owner.json'), JSON.stringify({ identity: 'a'.repeat(64) }));
+  const oversized = spawnSync(process.execPath, [cli, 'code-analysis', 'verify-change', dir, '--task', taskPath], { encoding: 'utf8' });
+  assert.equal(oversized.status, 2, oversized.stdout + oversized.stderr);
+  assert.equal(JSON.parse(oversized.stdout).diagnostics[0].code, 'verification/no-comparison', 'an unowned oversized legacy capture cannot be trusted as adjacent evidence');
 });
 
 
