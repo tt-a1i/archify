@@ -1808,7 +1808,11 @@
     if (saved.filters) Object.keys(filters).forEach(function (key) { if (typeof saved.filters[key] === typeof filters[key]) filters[key] = saved.filters[key]; });
     if (typeof saved.listScroll === 'number') listScroll = saved.listScroll;
     if (saved.open && page.kind === 'component' && Object.hasOwn(byId, page.id)) show(page.id);
-    else if (saved.open && page.kind === 'indicator' && byId[page.id] && byId[page.id].indicators.items.some(function (item) { return item.key === page.key; })) { show(page.id); showDetail(byId[page.id], page.key); }
+    else if (saved.open && page.kind === 'indicator' && byId[page.id]) {
+      show(page.id);
+      if (byId[page.id].indicators.items.some(function (item) { return item.key === page.key; })) showDetail(byId[page.id], page.key);
+      else missing = true;
+    }
     else if (saved.open && page.kind === 'finding' && Object.hasOwn(findingById, page.id)) {
       findingReturn = saved.findingReturn;
       showFinding(page.id, page.parent);

@@ -130,6 +130,9 @@ test('Code Analysis marks baseline findings, re-analyzes without a restart, and 
   await refreshFromCurrentFocus();
   assert.match(await run("document.querySelector('#bauify-panel h3').textContent"), /^App/);
   assert.equal(await run("document.activeElement.matches('#bauify-panel .back')"), true);
+  await run("window.__archifyRestoreReading({ reading: { kind: 'indicator', id: 'app', key: 'missing-indicator' }, open: true })");
+  assert.match(await run("document.querySelector('#bauify-panel h3').textContent"), /^App/, 'a removed indicator falls back to its component');
+  assert.match(await run("document.querySelector('.analysis-refresh-status').textContent"), /selection is no longer available/);
 
   const indicatorTitle = await run("document.querySelector('#bauify-panel .ind.link').click(); document.querySelector('#bauify-detail h3').textContent");
   await refreshFromCurrentFocus();
