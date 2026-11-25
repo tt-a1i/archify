@@ -31,7 +31,7 @@ import {
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth, nodeLabelLayout } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMarkFor, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
-import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeFrameAttrs, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeNodeAttrs, changeReviewFor, frameChangeBadgePos, frameTitleBox, nodeChangeBadgePos, renderChangeBadge, renderChangeEdgePrefix, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
+import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeFrameAttrs, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeNodeAttrs, centredTextBox, changeReviewFor, frameChangeBadgePos, frameTitleBox, nodeChangeBadgePos, renderChangeBadge, renderChangeEdgePrefix, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
 import { DESKTOP_READER_DIAGRAM_WIDTH, MIN_PROJECTED_NODE_TEXT_PX, minimumReadableSourceTextPx, predictedFixedWidthOverflow } from '../shared/desktop-readability.mjs';
 import {
   createMappedWorkflowCandidate,
@@ -5665,7 +5665,12 @@ function renderNode(node) {
   const drilldowns = resolveNodeDrilldowns(node);
   const passport = { kind: node.type, sublabel: node.sublabel, tag: node.tag, context: nodeContext(node), drilldowns, href: node.href, ...brandMetadataFor(node) };
   const mark = drilldowns.length ? `\n          ${renderDrilldownMark(node)}` : '';
-  const changeBadge = renderChangeBadge(node, nodeChangeBadgePos(node, { rx: 8, rightInset: brand ? 26 : 0 }));
+  const textBoxes = [
+    centredTextBox(node.x + labelLayout.x, node.y + labelLayout.ys[0], labelFontSize, node.label),
+    hasSub && centredTextBox(node.cx, node.y + labelLayout.ys[1], sublabelFontSize, node.sublabel),
+    node.tag && centredTextBox(node.cx, node.y + labelLayout.ys[hasSub ? 2 : 1], tagFontSize, node.tag),
+  ];
+  const changeBadge = renderChangeBadge(node, nodeChangeBadgePos(node, { rx: 8, rightInset: brand ? 26 : 0, avoid: textBoxes }));
   const badge = changeBadge ? `\n          ${changeBadge}` : '';
   return wrapSingleChildAnchor(`        <g ${focusNodeAttrs(node.id, node.label, passport, workflow.meta.locale)}${changeNodeAttrs(changeReview, node)}>
           ${focusNodeTitle(node.label, passport)}

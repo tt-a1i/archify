@@ -10,7 +10,7 @@ import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth, nodeT
 import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { declaredWideReadabilityBudget, minimumReadableSourceTextPx } from '../shared/desktop-readability.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
-import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeFrameAttrs, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeMarkerTone, changeNodeAttrs, changeFrameBadgeWidth, changeReviewFor, frameChangeBadgePos, isChangeMarked, nodeChangeBadgePos, renderChangeBadge, renderChangeEdgePrefix, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
+import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeFrameAttrs, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeMarkerTone, changeNodeAttrs, changeFrameBadgeWidth, centredTextBox, changeReviewFor, frameChangeBadgePos, isChangeMarked, nodeChangeBadgePos, renderChangeBadge, renderChangeEdgePrefix, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
 import { gridLayout, resolveComponentPos, validateGridPlacement } from './grid.mjs';
 import { automaticComponentPositions, boundaryInsets } from './automatic-placement.mjs';
 import { denseTerminalCandidates, junctionBends, junctionCandidates } from './junction-placement.mjs';
@@ -2744,7 +2744,12 @@ function renderComponent(c) {
   let badgeY = c.y;
   if (compact && c.y >= 20) badgeY -= 9;
   else if (compact && c.y + c.height + 20 <= viewBox[1]) badgeY += c.height + 9;
-  const badgePosition = nodeChangeBadgePos({ ...c, y: badgeY }, { rx: 8, rightInset: brand ? 26 : 0 });
+  const textBoxes = [
+    centredTextBox(c.x + rows.title.x, c.y + rows.title.y, rows.title.font, c.label),
+    hasSub && centredTextBox(c.x + rows.sublabel.x, c.y + rows.sublabel.y, rows.sublabel.font, c.sublabel),
+    rows.tag && centredTextBox(c.x + rows.tag.x, c.y + rows.tag.y, rows.tag.font, c.tag),
+  ];
+  const badgePosition = nodeChangeBadgePos({ ...c, y: badgeY }, { rx: 8, rightInset: brand ? 26 : 0, avoid: badgeY === c.y ? textBoxes : null });
   const changeBadge = renderChangeBadge(c, badgePosition);
   const badge = changeBadge ? `\n          ${changeBadge}` : '';
   return wrapSingleChildAnchor(`        <g ${focusNodeAttrs(c.id, c.label, passport, arch.meta.locale)}${changeNodeAttrs(changeReview, c)}>

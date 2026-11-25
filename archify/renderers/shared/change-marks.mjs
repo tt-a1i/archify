@@ -93,24 +93,44 @@ export function renderChangeEdgePrefix(item) {
   return `<tspan class="t-change-badge-${item.change}" font-weight="700">${BADGE_GLYPH[item.change]} </tspan>`;
 }
 
-// Position for a node/container badge. A node tall enough to hold it gets the
-// badge inside its top-right corner, clear of the border; shorter rows fall
-// back to straddling the top edge. Both clear rounded corners, right-side
-// adornments (e.g. brand marks or toggles), and the top edge of the viewport.
+// Position for a node/container badge. By default the badge straddles the top
+// edge. A caller that passes the node's text boxes as `avoid` gets the badge
+// inside the top-right corner, clear of the border, when the card is tall
+// enough and the badge clears every box; otherwise it straddles as before.
+// Both clear rounded corners, right-side adornments (e.g. brand marks or
+// toggles), and the top edge of the viewport.
 export const CHANGE_BADGE_INSET = 5;
+const CHANGE_BADGE_TEXT_CLEARANCE = 2;
 
-export function nodeChangeBadgePos(rect, { rx = 8, rightInset = 0, minTop = 2 } = {}) {
+export function nodeChangeBadgePos(rect, { rx = 8, rightInset = 0, minTop = 2, avoid = null } = {}) {
   const { width, height } = CHANGE_BADGE_SIZES.node;
   const halfW = width / 2;
   const halfH = height / 2;
-  const inset = rect.height >= height * 2 + CHANGE_BADGE_INSET * 2;
-  const minCenterX = rect.x + Math.min(rect.width / 2, (inset ? CHANGE_BADGE_INSET : rx + 4) + halfW);
-  const maxCenterX = rect.x + rect.width - Math.max(inset ? CHANGE_BADGE_INSET : rx + 4, rightInset) - halfW;
-  const x = Math.round(Math.max(minCenterX, maxCenterX) * 10) / 10;
-  const top = inset ? rect.y + CHANGE_BADGE_INSET + halfH : rect.y;
-  const rawY = Number.isFinite(minTop) ? Math.max(top, minTop + halfH) : top;
-  const y = Math.round(rawY * 10) / 10;
-  return { x, y };
+  const round1 = (n) => Math.round(n * 10) / 10;
+  const place = (inset) => {
+    const minCenterX = rect.x + Math.min(rect.width / 2, (inset ? CHANGE_BADGE_INSET : rx + 4) + halfW);
+    const maxCenterX = rect.x + rect.width - Math.max(inset ? CHANGE_BADGE_INSET : rx + 4, rightInset) - halfW;
+    const x = Math.max(minCenterX, maxCenterX);
+    const top = inset ? rect.y + CHANGE_BADGE_INSET + halfH : rect.y;
+    const y = Number.isFinite(minTop) ? Math.max(top, minTop + halfH) : top;
+    return { x: round1(x), y: round1(y) };
+  };
+  if (Array.isArray(avoid) && rect.height >= height * 2 + CHANGE_BADGE_INSET * 2) {
+    const inside = place(true);
+    const pad = CHANGE_BADGE_TEXT_CLEARANCE;
+    const clear = avoid.every((box) => !box
+      || inside.x + halfW + pad <= box.x || box.x + box.width <= inside.x - halfW - pad
+      || inside.y + halfH + pad <= box.y || box.y + box.height <= inside.y - halfH - pad);
+    if (clear) return inside;
+  }
+  return place(false);
+}
+
+// Conservative box of a centred text line, for `avoid`: the 0.62em advance
+// matches the bundled monospace face (CJK counts two units).
+export function centredTextBox(cx, baseline, fontSize, text) {
+  const width = textUnits(String(text ?? '')) * fontSize * 0.62;
+  return { x: cx - width / 2, y: baseline - fontSize, width, height: fontSize * 1.3 };
 }
 
 export const CHANGE_FRAME_BADGE_GAP = 4;

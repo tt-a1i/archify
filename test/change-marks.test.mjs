@@ -292,10 +292,12 @@ test('change and emphasis arrowheads keep a fixed size while CSS widens their st
 
 test('node badges sit inside tall cards and frame badges follow their title', () => {
   const card = { x: 100, y: 50, width: 160, height: 60 };
-  const inside = nodeChangeBadgePos(card);
+  const inside = nodeChangeBadgePos(card, { avoid: [{ x: 140, y: 72, width: 80, height: 14 }] });
   assert.ok(inside.x + 9 <= card.x + card.width - 5 && inside.y - 6.5 >= card.y + 5, 'the badge stays inside the card corner');
+  assert.equal(nodeChangeBadgePos(card, { avoid: [{ x: 110, y: 56, width: 145, height: 14 }] }).y, card.y, 'a title under the corner keeps the badge on the edge');
+  assert.equal(nodeChangeBadgePos(card).y, card.y, 'callers that cannot measure their text keep the edge badge');
   const row = { x: 100, y: 50, width: 160, height: 20 };
-  assert.equal(nodeChangeBadgePos(row).y, row.y, 'a short row keeps the badge on its top edge');
+  assert.equal(nodeChangeBadgePos(row, { avoid: [] }).y, row.y, 'a short row keeps the badge on its top edge');
 
   const title = { x: 60, y: 20, width: 80, height: 16 };
   const after = frameChangeBadgePos(title, { maxRight: 400, fallback: { x: 390, y: 30 } });

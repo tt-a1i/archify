@@ -9,7 +9,7 @@ import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from
 import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
 import { layoutReportFromSvg } from '../shared/layout-report.mjs';
-import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeFrameAttrs, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeNodeAttrs, changeReviewFor, frameChangeBadgePos, nodeChangeBadgePos, renderChangeBadge, renderChangeEdgePrefix, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
+import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeFrameAttrs, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeNodeAttrs, centredTextBox, changeReviewFor, frameChangeBadgePos, nodeChangeBadgePos, renderChangeBadge, renderChangeEdgePrefix, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
 import { DESKTOP_READER_DIAGRAM_WIDTH, MIN_PROJECTED_NODE_TEXT_PX, minimumReadableSourceTextPx } from '../shared/desktop-readability.mjs';
 
 const participantTextFit = {
@@ -992,8 +992,11 @@ function renderParticipant(participant) {
   const labelFontSize = fittedNodeFontSize(participant.label, brandLabelFitWidth(participant, layout.participantW), 11, 8);
   // Fitting a smaller title moves its top down; lift the whole text block equally.
   const fittedTextOffset = (11 - labelFontSize) / 2;
+  const sublabelFontSize = hasSub ? fittedNodeFontSize(participant.sublabel, layout.participantW, readableSublabelPreferred, readableSublabelMinimum) : 0;
+  const labelY = layout.topY + (hasSub ? layout.participantLabelY : layout.participantSingleLabelY) - fittedTextOffset;
+  const sublabelY = layout.topY + layout.participantSublabelY - fittedTextOffset;
   const sub = hasSub
-    ? `\n          <text data-detail="context" x="${participant.cx}" y="${layout.topY + layout.participantSublabelY - fittedTextOffset}" class="t-muted" font-size="${fittedNodeFontSize(participant.sublabel, layout.participantW, readableSublabelPreferred, readableSublabelMinimum)}" text-anchor="middle">${esc(participant.sublabel)}</text>`
+    ? `\n          <text data-detail="context" x="${participant.cx}" y="${sublabelY}" class="t-muted" font-size="${sublabelFontSize}" text-anchor="middle">${esc(participant.sublabel)}</text>`
     : '';
   const brand = renderBrandMark(participant, { x: participant.x + layout.participantW - 22, y: layout.topY + 6 });
   // drilldowns / href 简写一并解析：单目标会包 <a> + 角标，多目标只写 Passport 属性
@@ -1014,14 +1017,17 @@ function renderParticipant(participant) {
     y: layout.topY,
     width: layout.participantW,
     height: layout.participantH,
-  }, { rx: 6, rightInset: brand ? 26 : 0 }));
+  }, { rx: 6, rightInset: brand ? 26 : 0, avoid: [
+    centredTextBox(participant.cx, labelY, labelFontSize, participant.label),
+    hasSub && centredTextBox(participant.cx, sublabelY, sublabelFontSize, participant.sublabel),
+  ] }));
   const badge = changeBadge ? `\n          ${changeBadge}` : '';
   return wrapSingleChildAnchor(`        <g ${focusNodeAttrs(participant.id, participant.label, passport, sequence.meta.locale)}${changeNodeAttrs(changeReview, participant)}>
           ${focusNodeTitle(participant.label, passport)}
           <rect x="${participant.x}" y="${layout.topY}" width="${layout.participantW}" height="${layout.participantH}" rx="6" class="c-mask"/>
           <rect x="${participant.x}" y="${layout.topY}" width="${layout.participantW}" height="${layout.participantH}" rx="6" class="${fill}"${animateAttr(sequence.meta, 'node', participant.index)} stroke-width="1.5"/>
           ${renderSemanticSigil(participant.type, { icon: participant.icon, x: participant.x + 6, y: layout.topY + 6 })}${brand ? `\n          ${brand}` : ''}
-          <text data-node-label=""${hasSub ? ' data-detail-anchor=""' : ''} x="${participant.cx}" y="${layout.topY + (hasSub ? layout.participantLabelY : layout.participantSingleLabelY) - fittedTextOffset}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(participant.label)}</text>${sub}${mark}${badge}
+          <text data-node-label=""${hasSub ? ' data-detail-anchor=""' : ''} x="${participant.cx}" y="${labelY}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(participant.label)}</text>${sub}${mark}${badge}
         </g>`, drilldowns);
 }
 
