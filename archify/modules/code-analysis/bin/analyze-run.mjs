@@ -11,7 +11,8 @@ process.stdin.setEncoding('utf8');
 process.stdin.on('data', (chunk) => { input += chunk; });
 process.stdin.on('end', () => {
   try {
-    const result = analyzeRepository(JSON.parse(input));
+    // The lock owner creates the stage, so a late worker cannot recreate it.
+    const result = analyzeRepository(JSON.parse(input), { createOutput: false });
     process.stdout.write(`${JSON.stringify(result)}\n`);
   } catch (error) {
     const diagnostics = error instanceof DiagnosticError ? error.diagnostics

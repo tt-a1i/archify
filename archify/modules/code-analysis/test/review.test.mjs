@@ -176,6 +176,43 @@ test('check: --new-only without a previous run treats every open finding as new'
   }
 });
 
+test('check: each PR attempt gates against the same explicit comparison', t => {
+  const dir = pyTree();
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const args = ['.', '--language', 'py', '--json'];
+  const comparison = path.join(dir, 'base/findings.json');
+  assert.equal(check([...args, '--out', 'base', '--fail-on', 'never'], dir).code, 0);
+  const originalBase = fs.readFileSync(comparison);
+
+  fs.writeFileSync(path.join(dir, 'app/c.py'), 'from app import d\n');
+  fs.writeFileSync(path.join(dir, 'app/d.py'), 'from app import c\n');
+  const gate = [...args, '--new-only', '--fail-on', 'warning'];
+  const first = check([...gate, '--compare', comparison, '--out', 'first'], dir);
+  assert.equal(first.code, 1);
+  assert.equal(first.json.gate.failing.length, 1);
+  assert.equal(first.json.gate.failing[0].code, 'coupling/import-cycle');
+  assert.match(first.json.gate.failing[0].where, /^app\/(c|d)\.py:1$/);
+  const firstReport = path.join(dir, 'first/findings.json');
+  const originalReport = fs.readFileSync(firstReport);
+
+  const retry = check([...gate, '--compare', comparison, '--out', 'retry'], dir);
+  assert.equal(retry.code, 1);
+  const [newCycle] = first.json.gate.failing;
+  assert.deepEqual(retry.json.gate.failing.map(finding => finding.id), [newCycle.id]);
+  assert.deepEqual(fs.readFileSync(firstReport), originalReport);
+  assert.deepEqual(fs.readFileSync(comparison), originalBase);
+  const retryReport = JSON.parse(fs.readFileSync(path.join(dir, 'retry/findings.json'), 'utf8'));
+  assert.ok(retryReport.diagnostics.some(finding => finding.id === newCycle.id));
+
+  fs.writeFileSync(path.join(dir, 'invalid.json'), '{}');
+  for (const file of ['missing.json', 'invalid.json']) {
+    const failed = check([...gate, '--compare', file, '--out', 'unwritten'], dir);
+    assert.equal(failed.code, 2);
+    assert.equal(failed.json.diagnostics[0].code, 'cli/input-invalid');
+  }
+  assert.equal(fs.existsSync(path.join(dir, 'unwritten')), false);
+});
+
 test('check: usage and analysis errors exit 2 with a diagnostic, never a stack', () => {
   const dir = pyTree();
   try {
