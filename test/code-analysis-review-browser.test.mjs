@@ -29,7 +29,7 @@ test('Java root build module survives an earlier-sorting source after re-analysi
   t.after(async () => {
     if (browser.child.exitCode === null && browser.child.signalCode === null) {
       const exited = once(browser.child, 'exit', { signal: AbortSignal.timeout(5000) }).catch(() => {});
-      await browser.cdp.send('Browser.close').catch(() => {});
+      await Promise.race([browser.cdp.send('Browser.close').catch(() => {}), exited]);
       await exited;
     }
     await browser.close();
@@ -168,7 +168,7 @@ test('Code Analysis marks baseline findings, re-analyzes without a restart, and 
   t.after(async () => {
     if (browser.child.exitCode === null && browser.child.signalCode === null) {
       const exited = once(browser.child, 'exit', { signal: AbortSignal.timeout(5000) }).catch(() => {});
-      await browser.cdp.send('Browser.close').catch(() => {});
+      await Promise.race([browser.cdp.send('Browser.close').catch(() => {}), exited]);
       await exited;
     }
     await browser.close();
