@@ -431,8 +431,10 @@ const result = await startDeliveryUpdateCheck({
 });
 process.stdout.write(JSON.stringify(result) + '\\n');
 `);
+  const workspace = path.join(testFixture.root, 'workspace');
+  fs.mkdirSync(workspace);
   const parent = spawn(process.execPath, [delivery], {
-    env: localManifestEnv(testFixture, server.url), stdio: ['ignore', 'pipe', 'inherit'],
+    cwd: workspace, env: localManifestEnv(testFixture, server.url), stdio: ['ignore', 'pipe', 'inherit'],
   });
   let stdout = '';
   parent.stdout.on('data', (chunk) => { stdout += chunk; });
@@ -445,8 +447,28 @@ process.stdout.write(JSON.stringify(result) + '\\n');
   // The delivery process has exited while its refresh still waits for the manifest.
   await server.request();
   assert.equal(alive(), true);
+  // The refresh does not hold the delivery's working directory (Windows would
+  // refuse to remove a directory that a running process uses).
+  fs.rmSync(workspace, { recursive: true });
   server.respond();
-  while (alive()) await new Promise((resolve) => setTimeout(resolve, 20));
+  // Completion is observed through the cache, not only through the PID: an
+  // orphan may remain a zombie where no init process reaps it.
+  const recorded = () => {
+    try {
+      return fs.readdirSync(testFixture.cacheDirectory, { recursive: true })
+        .filter((entry) => path.basename(entry) === 'state.json')
+        .some((entry) => JSON.parse(fs.readFileSync(path.join(testFixture.cacheDirectory, entry), 'utf8'))
+          .candidate?.version === available);
+    } catch {
+      return false;
+    }
+  };
+  for (const until = Date.now() + 10_000; !recorded() && Date.now() < until;) {
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+  for (const until = Date.now() + 10_000; alive() && Date.now() < until;) {
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  }
   const cached = await checkForUpdate({ ...testFixture,
     fetchImpl: async () => { throw new Error('the refresh result must be cached'); } });
   assert.equal(cached.status, 'update_available');

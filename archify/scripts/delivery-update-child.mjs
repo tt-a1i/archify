@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 
+import os from 'node:os';
+import path from 'node:path';
+
 import { checkForUpdate } from './check-update.mjs';
 
 // Arguments: the delivery's wait deadline and, optionally, a later refresh
@@ -36,11 +39,23 @@ function emit(phase, result) {
   }
 }
 
+// Node has already resolved NODE_OPTIONS preloads from the caller's working
+// directory. Resolve the path overrides there too, then leave it: a refresh
+// that outlives delivery must not keep that directory open (Windows locks a
+// process's current directory against removal).
+const releasePath = process.env.ARCHIFY_UPDATE_RELEASE_PATH
+  ? path.resolve(process.env.ARCHIFY_UPDATE_RELEASE_PATH) : undefined;
+const cacheDirectory = process.env.ARCHIFY_UPDATE_CACHE_DIRECTORY
+  ? path.resolve(process.env.ARCHIFY_UPDATE_CACHE_DIRECTORY) : undefined;
+try {
+  process.chdir(os.tmpdir());
+} catch {
+  // Keeping the inherited directory only affects its removal on Windows.
+}
+
 const result = await checkForUpdate({
-  ...(process.env.ARCHIFY_UPDATE_RELEASE_PATH
-    ? { releasePath: process.env.ARCHIFY_UPDATE_RELEASE_PATH } : {}),
-  ...(process.env.ARCHIFY_UPDATE_CACHE_DIRECTORY
-    ? { cacheDirectory: process.env.ARCHIFY_UPDATE_CACHE_DIRECTORY } : {}),
+  ...(releasePath ? { releasePath } : {}),
+  ...(cacheDirectory ? { cacheDirectory } : {}),
   timeoutMs: Math.max(1, Math.floor(Number(fetchDeadlineNs - process.hrtime.bigint()) / 1_000_000)),
   // Recompute the remaining fetch budget after cache preparation, so that
   // startup work cannot consume the failure-recording reserve unnoticed.
