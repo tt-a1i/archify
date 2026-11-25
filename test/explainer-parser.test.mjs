@@ -346,3 +346,12 @@ test('workflow shorthand uses final page locale without moving its source locati
  assert.ok(source.slice(location.start,location.end).startsWith(workflow.trimEnd()));
  assert.equal(late.sourceMap['/meta/locale'].start,source.indexOf('@meta'));
 });
+
+test('the meta line turns the feedback footer off and on, and refuses another value',()=>{
+  assert.equal(parse(draft('@meta locale=en feedback_links=false')).document.meta.feedback_links,false);
+  assert.equal(parse(draft('@meta feedback_links=true')).document.meta.feedback_links,true);
+  assert.equal(parse(draft('@meta locale=en')).document.meta.feedback_links,undefined);
+  const refused=parseExplainer(draft('@meta feedback_links=no'),{inputPath:'answer.md'});
+  assert.equal(refused.document,null);
+  assert.ok(refused.diagnostics.some(item=>/feedback_links must be true or false/.test(item.message)),JSON.stringify(refused.diagnostics));
+});
