@@ -128,6 +128,9 @@ test('standalone workbench keeps Atlas alongside evidence, both locales/themes a
     assert.equal(await run("document.activeElement.selectionStart === 0 && document.activeElement.selectionEnd === window.__copied.length"), true);
     await run("document.querySelector('.priority-card .ai-task').open = false; document.getElementById('bauify-overview').scrollTop = 0");
 
+    // Each locale/theme iteration verifies a return to an empty Atlas, rather
+    // than inheriting the selection left by the preceding iteration.
+    await run("document.querySelector('#bauify-atlas .atlas-clear').click()");
     const id = await run("document.querySelector('.priority-card [data-finding]').dataset.finding");
     await click(priority);
     assert.equal(await run(selectedFinding), id);
