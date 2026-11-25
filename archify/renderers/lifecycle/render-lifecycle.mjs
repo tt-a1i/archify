@@ -1018,9 +1018,10 @@ function legendCatalog() {
   const entries = reviewLegendEntries(changeReview, resolveLegend(config, LEGEND_CATALOG, presentKinds), config,
     LEGEND_CATALOG.map((entry) => entry.kind).filter((kind) => kind !== 'start'));
   const changeEntries = changeLegendEntries(changeReview, config, lifecycle.meta.locale);
-  // The final ring explains other entries; on its own it would be legend chrome with nothing to explain.
-  if ((entries.length || changeEntries.length) && config?.mode !== 'hidden'
-    && config?.entries?.final?.visible !== false && [...states.values()].some(isFinal)) {
+  // By default the final ring only joins other entries; an explicit visible: true keeps it alone.
+  const finalVisible = config?.entries?.final?.visible;
+  if ((entries.length || changeEntries.length || finalVisible === true) && config?.mode !== 'hidden'
+    && finalVisible !== false && [...states.values()].some(isFinal)) {
     const label = config?.entries?.final?.label || i18nText(lifecycle.meta.locale, 'legend.lifecycle.final');
     entries.push({ kind: 'final', label, interactive: false, present: true, swatchWidth: 16 });
   }
