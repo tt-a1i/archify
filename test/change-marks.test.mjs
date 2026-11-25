@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { changeReviewFor, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, frameChangeBadgePos, nodeChangeBadgePos, CHANGE_STATES } from '../archify/renderers/shared/change-marks.mjs';
+import { changeReviewFor, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, frameChangeBadgePos, nodeChangeBadgePos, reviewLegendEntries, CHANGE_STATES } from '../archify/renderers/shared/change-marks.mjs';
 import { createScratchDirectory } from './helpers/scratch-directory.mjs';
 import { extractSvgs, parseXml } from './helpers/xml.mjs';
 
@@ -315,4 +315,72 @@ test('sequence segment badges follow the segment title', () => {
   const [labelX, labelY, labelWidth, labelHeight, badgeX, badgeY] = label.slice(1).map(Number);
   assert.ok(badgeX >= labelX + labelWidth && badgeX <= labelX + labelWidth + 8, 'the badge sits right after the title tab');
   assert.ok(badgeY >= labelY - 1 && badgeY <= labelY + labelHeight, 'the badge shares the title row');
+});
+
+test('in a change review colour means change: type swatches leave the legend and line types turn neutral', () => {
+  const review = changeReviewFor({ nodes: [{ id: 'a', change: 'added' }, { id: 'b' }] });
+  const entries = [
+    { kind: 'backend', label: 'Backend' },
+    { kind: 'security', className: 'a-security', marker: 'arrowhead-security', label: 'Security' },
+    { kind: 'return', className: 'a-default', marker: 'arrowhead', dash: '3,5', label: 'Return' },
+  ];
+  const reviewed = reviewLegendEntries(review, entries, undefined, ['backend']);
+  assert.deepEqual(reviewed.map((entry) => entry.kind), ['security', 'return'], 'node-type colours leave the legend');
+  assert.deepEqual(reviewed.map(({ className, marker, dash }) => ({ className, marker, dash })), [
+    { className: 'a-default', marker: 'arrowhead', dash: '5,5' },
+    { className: 'a-default', marker: 'arrowhead', dash: '3,5' },
+  ], 'line types keep their dash, not their colour');
+  assert.deepEqual(reviewLegendEntries(review, entries, { mode: 'all' }, ['backend']).map((entry) => entry.kind), ['backend', 'security', 'return']);
+  assert.deepEqual(reviewLegendEntries(review, entries, { entries: { backend: { visible: true } } }, ['backend']).map((entry) => entry.kind), ['backend', 'security', 'return']);
+  assert.equal(reviewLegendEntries(changeReviewFor({ nodes: [{ id: 'a' }] }), entries, undefined, ['backend']), entries, 'an unmarked diagram keeps its legend');
+
+  assert.equal(changeMarkerFor({}, 'arrowhead-security', review), 'arrowhead', 'an unchanged security edge takes the neutral arrowhead');
+  assert.equal(changeMarkerFor({ emphasis: true }, 'arrowhead-emphasis', review), 'arrowhead-fixed');
+  assert.equal(changeMarkerFor({ change: 'removed' }, 'arrowhead-security', review), 'arrowhead-change-removed');
+});
+
+for (const type of ['architecture', 'workflow', 'lifecycle']) {
+  test(`${type}: a change-marked diagram drops node-type legend swatches`, () => {
+    const plain = render(type, example(type), `${type}-type-legend-plain`).svg;
+    const marked = render(type, markedExample(type), `${type}-type-legend-marked`).svg;
+    const kinds = (svg) => [...svg.matchAll(/data-legend-semantic-kind="([^"]+)"/g)].map((match) => match[1]);
+    assert.ok(kinds(plain).some((kind) => !kind.startsWith('change-') && kind !== 'start' && kind !== 'final'), `${type} lists node types without marks`);
+    assert.deepEqual(kinds(marked).filter((kind) => !kind.startsWith('change-') && kind !== 'start' && kind !== 'final'), [], `${type} lists only change states once marked`);
+  });
+}
+
+test('sequence: activation bars stay neutral in a change review', () => {
+  const plain = render('sequence', example('sequence'), 'sequence-activation-plain').svg;
+  const marked = render('sequence', markedExample('sequence'), 'sequence-activation-marked').svg;
+  assert.doesNotMatch(plain, /c-activation-review/);
+  assert.match(marked, /<rect [^>]*width="10" [^>]*class="c-activation-review"/);
+  assert.doesNotMatch(marked, /<rect [^>]*width="10" [^>]*class="c-(?:frontend|backend|database|cloud|security|messagebus|external)" stroke-width="1"\/>/);
+});
+
+test('tree: a changed root uses readable theme text on its tinted fill', () => {
+  const document = example('tree');
+  document.nodes[0].change = 'modified';
+  const { svg } = render('tree', document, 'tree-changed-root');
+  assert.match(svg, /<g [^>]*data-node-id="platform"[^>]*data-change="modified"[^>]*data-tree-depth="0"/);
+  assert.match(svg, /\[data-tree-depth="0"\]\[data-change\] \.tree-label \{ fill: var\(--text\); \}/);
+  assert.match(svg, /\[data-tree-depth="0"\]\[data-change\] \.tree-sublabel \{ fill: var\(--text-muted\); opacity: 1; \}/);
+});
+
+test('lifecycle: terminal states retain their legend key when start and node types are hidden', () => {
+  const document = markedExample('lifecycle');
+  document.meta.legend = { entries: { start: { visible: false } } };
+  const { svg } = render('lifecycle', document, 'lifecycle-final-legend');
+  assert.deepEqual(
+    [...svg.matchAll(/data-legend-semantic-kind="([^"]+)"/g)].map((match) => match[1]),
+    ['final', ...CHANGE_STATES.map((state) => `change-${state}`)],
+  );
+
+  document.meta.legend.entries.final = { visible: false };
+  const hiddenFinal = render('lifecycle', document, 'lifecycle-final-hidden').svg;
+  assert.doesNotMatch(hiddenFinal, /data-legend-semantic-kind="final"/);
+  assert.match(hiddenFinal, /data-legend-semantic-kind="change-removed"/);
+
+  document.meta.legend = { mode: 'hidden' };
+  const hiddenLegend = render('lifecycle', document, 'lifecycle-legend-hidden').svg;
+  assert.doesNotMatch(hiddenLegend, /data-legend-semantic-kind=/);
 });

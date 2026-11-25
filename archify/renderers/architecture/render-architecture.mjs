@@ -10,7 +10,7 @@ import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth, nodeT
 import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { declaredWideReadabilityBudget, minimumReadableSourceTextPx } from '../shared/desktop-readability.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
-import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeFrameAttrs, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeMarkerTone, changeNodeAttrs, changeFrameBadgeWidth, centredTextBox, changeReviewFor, frameChangeBadgePos, isChangeMarked, nodeChangeBadgePos, renderChangeBadge, renderChangeEdgePrefix, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
+import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeFrameAttrs, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeMarkerTone, changeNodeAttrs, changeFrameBadgeWidth, centredTextBox, changeReviewFor, reviewLegendEntries, frameChangeBadgePos, isChangeMarked, nodeChangeBadgePos, renderChangeBadge, renderChangeEdgePrefix, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
 import { gridLayout, resolveComponentPos, validateGridPlacement } from './grid.mjs';
 import { automaticComponentPositions, boundaryInsets } from './automatic-placement.mjs';
 import { denseTerminalCandidates, junctionBends, junctionCandidates } from './junction-placement.mjs';
@@ -225,11 +225,11 @@ const changeReview = changeReviewFor({
 });
 
 const architectureLegendEntries = [
-  ...resolveLegend(
+  ...reviewLegendEntries(changeReview, resolveLegend(
     arch.meta?.legend,
     LEGEND_CATALOG,
     new Set([...components.values()].map((component) => component.type)),
-  ),
+  ), arch.meta?.legend, LEGEND_CATALOG.map((entry) => entry.kind)),
   ...changeLegendEntries(changeReview, arch.meta?.legend, arch.meta.locale),
 ];
 
@@ -2579,7 +2579,7 @@ function renderBoundaryLabel(b, index) {
 
 function connectionMarker(conn, index, definitions) {
   const [, fallback] = arrowClassMap[conn.variant || 'default'] || arrowClassMap.default;
-  const marker = changeMarkerFor(conn, fallback);
+  const marker = changeMarkerFor(conn, fallback, changeReview);
   const stroke = routeStrokeWidth(conn);
   const scale = routeMarkerScale(pathFor(conn).points, stroke);
   if (scale === stroke) return marker;
