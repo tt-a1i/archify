@@ -5020,8 +5020,8 @@ svg path[data-change="removed"][data-edge-from],
 svg [data-change="removed"][data-edge-from] > path { stroke: var(--security-stroke); stroke-width: 1.6; stroke-dasharray: 0.1,3.4; stroke-linecap: round; }
 /* A changed edge's label stays in ink; only its +/~/− prefix carries the
    change colour, so the label never competes with the line's colour. */
-svg [data-change][data-edge-from] > text:not([data-detail]):not([class*="t-change-badge"]),
-svg [data-change][data-edge-from] > g > text:not([class*="t-change-badge"]) { fill: var(--text); }
+svg [data-change]:not([data-change="unchanged"])[data-edge-from] > text:not([data-detail]):not([class*="t-change-badge"]),
+svg [data-change]:not([data-change="unchanged"])[data-edge-from] > g > text:not([class*="t-change-badge"]) { fill: var(--text); }
 svg [data-change="removed"],
 svg text[data-change="removed"] { opacity: 0.62; }
 svg [data-change="removed"] > text[data-node-label],

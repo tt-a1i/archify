@@ -1011,15 +1011,17 @@ const LEGEND_CATALOG = ['start', 'active', 'waiting', 'decision', 'success', 'fa
 const changeReview = changeReviewFor({ nodes: asArray(lifecycle.states), edges: transitions });
 
 function legendCatalog() {
+  const config = lifecycle.meta?.legend;
   const presentKinds = new Set([...states.values()].map((state) => state.type));
   presentKinds.add('start');
-  // The start marker and final ring are shapes, not colours, so they stay.
-  const entries = reviewLegendEntries(changeReview, resolveLegend(lifecycle.meta?.legend, LEGEND_CATALOG, presentKinds), lifecycle.meta?.legend,
+  // The start marker and final ring remain meaningful in a change review.
+  const entries = reviewLegendEntries(changeReview, resolveLegend(config, LEGEND_CATALOG, presentKinds), config,
     LEGEND_CATALOG.map((entry) => entry.kind).filter((kind) => kind !== 'start'));
-  if (entries.length && [...states.values()].some(isFinal)) {
-    entries.push({ kind: 'final', label: i18nText(lifecycle.meta.locale, 'legend.lifecycle.final'), interactive: false, present: true, swatchWidth: 16 });
+  if (config?.mode !== 'hidden' && config?.entries?.final?.visible !== false && [...states.values()].some(isFinal)) {
+    const label = config?.entries?.final?.label || i18nText(lifecycle.meta.locale, 'legend.lifecycle.final');
+    entries.push({ kind: 'final', label, interactive: false, present: true, swatchWidth: 16 });
   }
-  return [...entries, ...changeLegendEntries(changeReview, lifecycle.meta?.legend, lifecycle.meta.locale)];
+  return [...entries, ...changeLegendEntries(changeReview, config, lifecycle.meta.locale)];
 }
 const legendEntries = legendCatalog();
 const canvasWidth = Math.max(640, Math.ceil(geometry.contentRight + MARGIN_X));

@@ -134,6 +134,8 @@ const participantCount = Math.max(1, asArray(sequence.participants).length);
 // Resolve the actual final-canvas text floor before choosing header geometry.
 // Notes and automatic height must use the resulting column gaps below.
 const readableMessages = sequence.meta?.quality_profile === 'showcase';
+const messageUnitWidth = readableMessages ? 6.6 : 5.2;
+const messageLabelHeight = readableMessages ? 18 : 16;
 const readableAutomaticSublabel = readableMessages && automaticWidth !== null && columnFit === 'spread';
 const readableSublabelMinimum = readableAutomaticSublabel
   ? Math.max(participantTextFit.sublabelMinimum, Math.ceil(minimumReadableSourceTextPx(canvasWidth) * 10) / 10)
@@ -184,9 +186,8 @@ function participantX(index) {
 // stays visible, including in image exports: long unbroken text (a URL or
 // path) breaks after its punctuation, otherwise at any character.
 // Notes read at 8.5px, above the reader's 7.5px legibility floor, when every
-// note in the diagram still wraps to the line count it had at the original
-// 7px. Otherwise the whole diagram keeps 7px notes, so one size is used per
-// diagram and no authored spacing that validated before needs to move.
+// note keeps its original line count or better and still clears the later
+// messages it cleared at 7px in showcase. Otherwise all notes stay at 7px.
 const NOTE_FONT_SIZE = 8.5;
 const NOTE_FALLBACK_FONT_SIZE = 7;
 // The line advance and first baseline keep their original values, so a note's
@@ -207,9 +208,7 @@ const noteSegmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' })
 let noteWordSegmenter;
 const noteLayouts = new Map();
 
-let noteFontSizeChoice = null;
-
-function noteTextWidth(text, fontSize = noteFontSize()) {
+function noteTextWidth(text, fontSize) {
   return minimumNodeTextWidth(text, fontSize);
 }
 
@@ -221,7 +220,7 @@ function noteBreakIndex(piece) {
   return piece.length;
 }
 
-function wrapNoteText(text, width, fontSize = noteFontSize()) {
+function wrapNoteText(text, width, fontSize) {
   const original = wrapNoteWords(String(text).match(/\s+|\S+/gu) || [], width, fontSize);
   if (!/\p{Script=Han}/u.test(text)) return original;
 
@@ -289,8 +288,7 @@ function noteGapIndex(fromIndex, toIndex) {
   return best?.gap ?? null;
 }
 
-function noteRect(message) {
-  const note = noteLayout(message);
+function noteRect(message, note = noteLayout(message)) {
   return note && { x: note.x, y: note.top, width: note.width, height: note.bottom - note.top };
 }
 
@@ -307,41 +305,74 @@ function noteLines(text, maxWidth, fontSize) {
   return noteTextWidth(text, fontSize) <= maxWidth ? [text] : wrapNoteText(text, maxWidth, fontSize);
 }
 
-// Measure every note at both sizes once lane geometry is known.
-function noteFontSize() {
-  if (noteFontSizeChoice !== null) return noteFontSizeChoice;
-  noteFontSizeChoice = NOTE_FONT_SIZE;
+function measureNote(message, geometry, fontSize) {
+  const lines = noteLines(message.note, geometry.maxWidth, fontSize);
+  const baseline = message.y + NOTE_BASELINE_OFFSET;
+  return {
+    x: geometry.x,
+    baseline,
+    lines,
+    fontSize,
+    width: Math.max(...lines.map((line) => noteTextWidth(line, fontSize))),
+    // Include fallback-font ascent in the same bounds used for title clearance.
+    top: baseline - fontSize * 1.2,
+    bottom: message.y + 22 + (lines.length - 1) * NOTE_LINE_HEIGHT,
+  };
+}
+
+function noteObstacles(message, note = noteRect(message)) {
+  return [
+    ['message label', messageLabelBox(message)],
+    ['message route', messageRouteBox(message)],
+    ['note', note],
+  ];
+}
+
+function largerNotesLoseClearance(preferred, fallback) {
+  const obstacles = asArray(sequence.messages).map((message) => ({
+    message,
+    preferred: noteObstacles(message, noteRect(message, preferred.get(message) ?? null)),
+    fallback: noteObstacles(message, noteRect(message, fallback.get(message) ?? null)),
+  }));
+  for (const [message, note] of preferred) {
+    const larger = noteRect(message, note);
+    const smaller = noteRect(message, fallback.get(message));
+    for (const other of obstacles) {
+      if (typeof other.message.y !== 'number' || other.message.y <= message.y) continue;
+      if (other.preferred.some(([, rect], index) => {
+        const original = other.fallback[index][1];
+        return rect && rectsOverlap(larger, rect, 2) && (!original || !rectsOverlap(smaller, original, 2));
+      })) return true;
+    }
+  }
+  return false;
+}
+
+// Choose one size for the whole diagram before calculating its height.
+function selectNoteFontSize() {
+  const preferred = new Map();
+  const fallback = new Map();
   for (const message of asArray(sequence.messages)) {
     const geometry = noteGeometry(message);
     if (!geometry) continue;
-    const note = String(message.note);
-    if (noteLines(note, geometry.maxWidth, NOTE_FONT_SIZE).length > noteLines(note, geometry.maxWidth, NOTE_FALLBACK_FONT_SIZE).length) {
-      noteFontSizeChoice = NOTE_FALLBACK_FONT_SIZE;
-      break;
-    }
+    const larger = measureNote(message, geometry, NOTE_FONT_SIZE);
+    const smaller = measureNote(message, geometry, NOTE_FALLBACK_FONT_SIZE);
+    if (larger.lines.length > smaller.lines.length) return NOTE_FALLBACK_FONT_SIZE;
+    preferred.set(message, larger);
+    fallback.set(message, smaller);
   }
-  return noteFontSizeChoice;
+  if (readableMessages && preferred.size && largerNotesLoseClearance(preferred, fallback)) {
+    return NOTE_FALLBACK_FONT_SIZE;
+  }
+  return NOTE_FONT_SIZE;
 }
+
+const noteFontSize = selectNoteFontSize();
 
 function noteLayout(message) {
   if (noteLayouts.has(message)) return noteLayouts.get(message);
-  let result = null;
   const geometry = noteGeometry(message);
-  if (geometry) {
-    const fontSize = noteFontSize();
-    const lines = noteLines(message.note, geometry.maxWidth, fontSize);
-    const baseline = message.y + NOTE_BASELINE_OFFSET;
-    result = {
-      x: geometry.x,
-      baseline,
-      lines,
-      fontSize,
-      width: Math.max(...lines.map((line) => noteTextWidth(line, fontSize))),
-      // Include fallback-font ascent in the same bounds used for title clearance.
-      top: baseline - fontSize * 1.2,
-      bottom: message.y + 22 + (lines.length - 1) * NOTE_LINE_HEIGHT,
-    };
-  }
+  const result = geometry ? measureNote(message, geometry, noteFontSize) : null;
   noteLayouts.set(message, result);
   return result;
 }
@@ -375,7 +406,6 @@ const viewBox = sequence.meta?.viewBox || [automaticWidth, automaticHeight];
 
 // Showcase is the fast-authoring default; standard retains legacy label geometry.
 const messageFontSize = readableMessages ? 11 : 9;
-const messageUnitWidth = readableMessages ? 6.6 : 5.2;
 const layout = {
   topY: 72,
   participantW,
@@ -390,7 +420,6 @@ const layout = {
   legendY: viewBox[1] - 54,
   leftX,
   colGap,
-  labelH: readableMessages ? 18 : 16,
 };
 
 const participantBoxWidthNote = automaticWidth
@@ -419,12 +448,14 @@ const participants = new Map(asArray(sequence.participants).map((participant, in
 ]));
 
 function messageGeometry(message) {
-  const from = participants.get(message.from);
-  const to = participants.get(message.to);
-  if (!from || !to || typeof message.y !== 'number') return null;
-  const direction = to.cx > from.cx ? 1 : -1;
-  const start = from.cx + direction * 7;
-  const end = to.cx - direction * 7;
+  const fromIndex = participantIndexById.get(message.from);
+  const toIndex = participantIndexById.get(message.to);
+  if (fromIndex === undefined || toIndex === undefined || typeof message.y !== 'number') return null;
+  const from = participantX(fromIndex);
+  const to = participantX(toIndex);
+  const direction = to > from ? 1 : -1;
+  const start = from + direction * 7;
+  const end = to - direction * 7;
   return { start, end, center: (start + end) / 2 };
 }
 
@@ -439,7 +470,7 @@ function messageLabelBox(message, relationIndex = null) {
     x: geometry.center - width / 2,
     y: message.y - 20,
     width,
-    height: layout.labelH,
+    height: messageLabelHeight,
   };
 }
 
@@ -864,11 +895,7 @@ function validateSequence() {
       const blocker = messages
         .map((other, otherIndex) => {
           if (otherIndex === messageIndex || typeof other.y !== 'number' || other.y <= message.y) return null;
-          const hit = [
-            ['message label', messageLabelBox(other)],
-            ['message route', messageRouteBox(other)],
-            ['note', noteRect(other)],
-          ].find(([, rect]) => rect && rectsOverlap(ownRect, rect, 2));
+          const hit = noteObstacles(other).find(([, rect]) => rect && rectsOverlap(ownRect, rect, 2));
           return hit ? { message: other, index: otherIndex, kind: hit[0], rect: hit[1] } : null;
         })
         .filter(Boolean)
@@ -1080,7 +1107,7 @@ function messageLabel(message, x1, x2) {
   // Gray lines (default and return) keep the readable muted text color.
   const accent = ['emphasis', 'security', 'dashed'].includes(message.variant) ? edgeLabelAccent(message.variant) : 't-muted';
   return `        <g data-detail="context">
-          <rect x="${center - labelW / 2}" y="${y - 10}" width="${labelW}" height="${layout.labelH}" rx="3" class="c-mask"/>
+          <rect x="${center - labelW / 2}" y="${y - 10}" width="${labelW}" height="${messageLabelHeight}" rx="3" class="c-mask"/>
           <text x="${center}" y="${y}" class="${accent}" font-size="${messageFontSize}" text-anchor="middle">${renderChangeEdgePrefix(message)}${esc(message.label)}</text>
         </g>`;
 }

@@ -356,3 +356,31 @@ test('sequence: activation bars stay neutral in a change review', () => {
   assert.match(marked, /<rect [^>]*width="10" [^>]*class="c-activation-review"/);
   assert.doesNotMatch(marked, /<rect [^>]*width="10" [^>]*class="c-(?:frontend|backend|database|cloud|security|messagebus|external)" stroke-width="1"\/>/);
 });
+
+test('tree: a changed root uses readable theme text on its tinted fill', () => {
+  const document = example('tree');
+  document.nodes[0].change = 'modified';
+  const { svg } = render('tree', document, 'tree-changed-root');
+  assert.match(svg, /<g [^>]*data-node-id="platform"[^>]*data-change="modified"[^>]*data-tree-depth="0"/);
+  assert.match(svg, /\[data-tree-depth="0"\]\[data-change\] \.tree-label \{ fill: var\(--text\); \}/);
+  assert.match(svg, /\[data-tree-depth="0"\]\[data-change\] \.tree-sublabel \{ fill: var\(--text-muted\); opacity: 1; \}/);
+});
+
+test('lifecycle: terminal states retain their legend key when start and node types are hidden', () => {
+  const document = markedExample('lifecycle');
+  document.meta.legend = { entries: { start: { visible: false } } };
+  const { svg } = render('lifecycle', document, 'lifecycle-final-legend');
+  assert.deepEqual(
+    [...svg.matchAll(/data-legend-semantic-kind="([^"]+)"/g)].map((match) => match[1]),
+    ['final', ...CHANGE_STATES.map((state) => `change-${state}`)],
+  );
+
+  document.meta.legend.entries.final = { visible: false };
+  const hiddenFinal = render('lifecycle', document, 'lifecycle-final-hidden').svg;
+  assert.doesNotMatch(hiddenFinal, /data-legend-semantic-kind="final"/);
+  assert.match(hiddenFinal, /data-legend-semantic-kind="change-removed"/);
+
+  document.meta.legend = { mode: 'hidden' };
+  const hiddenLegend = render('lifecycle', document, 'lifecycle-legend-hidden').svg;
+  assert.doesNotMatch(hiddenLegend, /data-legend-semantic-kind=/);
+});
