@@ -53,9 +53,9 @@
 
 <!-- archify-launch-video -->
 
-https://github.com/user-attachments/assets/88cff7dd-bdf3-4b97-950c-37cc079898b1
+https://github.com/user-attachments/assets/88ec3f95-102b-417a-a392-0100b9daaca1
 
-**一句话，看懂你的项目。** 35 秒演示：探索交互图、查看源码关联、追踪完整路径。[试试可交互示例 ↗](https://archify.si/zh/gallery)
+**一句话，看懂你的项目。** 60 秒带你看完：整个仓库的依赖星图、标在架构图上的诊断结果、真实 PR 讲解，以及导出视频。[试试可交互示例 ↗](https://archify.si/zh/gallery)
 
 <a id="start"></a>
 
