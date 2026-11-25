@@ -58,9 +58,9 @@ Agent 会在极短时间内帮你选定最贴合问题的结构——覆盖**十
 
 科普原理解析、故障复盘、业务方案评审或深度教程，往往既要结论又要图和步骤对照。Archify 的 `.archify.md` 一页式解答会先给出明确结论与理由，再分成面板将文字、表格、步骤与已校验示意图左右并排——**读到哪一步，图上就自动高亮哪一部分**，支持 **4 套高颜值排版风格**、深浅主题、长图/PDF 导出及单面板追问。点击体验真实成品：[P99 尾延迟暴涨一页式解答](cases/explainer/p99-tail-latency.html)与[首次访问 HTTPS 发生了什么](cases/explainer/tls-first-visit.html)。
 
-### 4. 需要源码依据时：梳理真实代码仓库不靠猜
+### 4. 需要源码依据时：梳理、诊断并演示真实代码仓库
 
-落回软件工程场景时，可以让 Agent 沿固定 Git 提交读取真实代码片段并挂载文件依据，避免模型“幻觉画框”。见 [MCO 运行时案例](cases/mco-runtime.html)、[MCO 交互架构成品](cases/mco-runtime.architecture.html)与[仓库证据清单](agent-diagrams.html#repository-evidence)。
+落回软件工程场景时，可以让 Agent 沿固定 Git 提交读取真实代码片段并挂载文件依据，避免模型“幻觉画框”。见 [MCO 运行时案例](cases/mco-runtime.html)、[MCO 交互架构成品](cases/mco-runtime.architecture.html)与[仓库证据清单](agent-diagrams.html#repository-evidence)。此外，Skill 还内置了离线**架构诊断（Code Analysis）**（覆盖 JS/TS、Python、Java、Go、Rust、C/C++ 的静态依赖星图、可旋转 3D 模型与带源码链接的修复任务）、多图双向钻取跳转、任意原生图加**导览故事（Story 模式）并导出 1080p 60fps 视频**，以及直接附到 **GitHub PR / GitLab MR** 的变更图解。
 
 <span id="limits" class="section-anchor" aria-hidden="true"></span>
 

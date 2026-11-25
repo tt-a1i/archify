@@ -42,8 +42,15 @@ test('llms-full.txt derives release identity from package metadata and covers ca
     'https://archify.si/cases/explainer/first-rental',
     'https://archify.si/cases/life/leave-plan.workflow',
     'https://archify.si/cases/community/shanghai-citywalk',
+    'https://archify.si/gallery/artifacts/payments.class',
+    'https://archify.si/gallery/artifacts/payment-platform.tree',
+    'https://archify.si/gallery/artifacts/payment-incident.timeline',
+    'https://archify.si/gallery/artifacts/checkout-request.waterfall',
   ]) {
-    assert.ok(text.includes(lifeLink), `missing non-code/community canonical link: ${lifeLink}`);
+    assert.ok(text.includes(lifeLink), `missing canonical example link: ${lifeLink}`);
+  }
+  for (const capability of ['Architecture Diagnosis', '1080p', 'GitLab MR', 'drilldowns']) {
+    assert.ok(text.includes(capability), `missing v3.3 capability: ${capability}`);
   }
   assert.doesNotMatch(text, /aggregateRating|reviewCount|ratingValue/, 'no invented rating signals');
 });

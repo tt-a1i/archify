@@ -308,7 +308,7 @@ html[data-bauify-focus="on"] #bauify-layer g.count.focus rect { opacity: 1; }
 #bauify-overview .counts .nw { white-space: nowrap; }
 /* Source page: code needs width more than the diagram does while it is being read. */
 @media (min-width: 1181px) {
-  html[data-bauify-source="on"] #bauify-reader:not(.collapsed) { width: min(760px, 54vw); }
+  html[data-bauify-source="on"]:not([data-analysis-mode="standalone"]) #bauify-reader:not(.collapsed) { width: min(760px, 54vw); }
   /* A docked reader takes width from the page. The fly-out rides on the canvas
      edge instead, so shrinking the canvas would push it off the left side. */
   html[data-bauify="on"][data-bauify-source="on"]:not([data-bauify-reader-collapsed]):not([data-bauify-flymode]) .diagram-container,
@@ -501,6 +501,20 @@ html[data-bauify-context="pr"] #bauify-reader .comparison-banner.positive { bord
 #bauify-reader .pr-head-checks .health-summary { margin-top: 8px; }
 #bauify-reader .pr-review-heading { margin-top: 20px; margin-bottom: 0; }
 #bauify-reader .pr-review-heading .brief-copy { border-color: var(--panel-border); }
+#bauify-reader .pr-pins code { overflow-wrap: anywhere; }
+#bauify-reader .pr-review-download, #bauify-reader [data-review-relation] {
+  font: inherit; font-size: 12px; font-weight: 600; padding: 6px 10px; border-radius: 6px;
+  border: 1px solid var(--panel-border); color: var(--text); background: var(--bg); cursor: pointer;
+}
+#bauify-reader .pr-review-download { margin: 6px 0 8px; }
+#bauify-reader .pr-review-download:hover, #bauify-reader [data-review-relation]:hover { border-color: var(--backend-stroke); }
+#bauify-reader .pr-component-relation > summary { overflow-wrap: anywhere; }
+#bauify-reader .pr-component-relation .ref {
+  display: block; max-width: 100%; margin: 6px 0; padding: 6px 8px; text-align: left; overflow-wrap: anywhere;
+  font: inherit; font-size: 12px; color: var(--text); background: transparent;
+  border: 1px solid var(--panel-border); border-radius: 6px; cursor: pointer;
+}
+#bauify-reader .pr-component-relation .ref:hover { border-color: var(--backend-stroke); }
 #bauify-reader .pr-assessment { border-top: 1px solid var(--panel-border); padding: 16px 0 8px; margin-top: 12px; }
 #bauify-reader .pr-assessment > header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 #bauify-reader .pr-assessment h5 { font-size: 14px; line-height: 1.4; font-weight: 600; margin: 0; }
