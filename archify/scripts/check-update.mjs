@@ -1477,6 +1477,7 @@ export async function checkForUpdate({
   random = Math.random,
   timeoutMs = DEFAULT_TIMEOUT_MS,
   fetchDeadlineNs,
+  onNetworkCheck,
 } = {}) {
   if (updatesDisabled()) return silent('disabled');
   if (typeof fetchImpl !== 'function') return silent('runtime-unavailable');
@@ -1536,6 +1537,15 @@ export async function checkForUpdate({
       const remainingFetchMs = fetchDeadlineNs === undefined ? timeoutMs
         : Math.min(timeoutMs, Number(fetchDeadlineNs - process.hrtime.bigint()) / 1_000_000);
       if (remainingFetchMs <= 0) throw new Error('update fetch deadline expired during cache preparation');
+      // Let a caller with a shorter wait report the last validated candidate
+      // while this slower network request continues to completion.
+      if (typeof onNetworkCheck === 'function') {
+        try {
+          onNetworkCheck(state.candidate ? resultForCandidate(localRelease, state, { nowMs }) : null);
+        } catch {
+          // Reporting progress must not change the check or its persisted outcome.
+        }
+      }
       fetched = await fetchCandidate({
         fetchImpl,
         manifestUrl: localRelease.updateManifestUrl,
