@@ -12,6 +12,7 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 ### Fixed
 
+- **Update reminders on slow networks (#1486).** Delivery still waits at most about one second for the update check, but a slow manifest response now finishes in a bounded background refresh (up to about five seconds) that updates the cache, so the next delivery shows the reminder. While that refresh runs, delivery reports a previously found update; unreachable services keep the existing failure backoff.
 - **Sequence WebM playback (#1416).** Record messages and participant pulses in Live order and fit the complete sequence into the requested export.
 
 ## [3.3.1] — 2026-11-24
