@@ -53,7 +53,7 @@ Archify 支持十种原生图型。Agent 先按问题选型，再编写对应的
 
 如果选择全局复制安装，在运行 Claude Code 的环境终端中执行：
 
-<pre><code>npx -y skills@latest add https://archify.si --skill archify --agent claude-code --global --copy --yes</code></pre>
+<pre><code>npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent claude-code --global --copy --yes</code></pre>
 
 Claude Code 的全局 Skill 目录是 `~/.claude/skills/`，项目目录是 `.claude/skills/`。如果只想在当前项目使用，打开 [Start 的 Claude Code 选项](start.html?agent=claude-code#install)，在目标项目目录中使用“仅安装到当前仓库”的命令。
 
@@ -63,7 +63,7 @@ Claude Code 的全局 Skill 目录是 `~/.claude/skills/`，项目目录是 `.cl
 
 如果选择全局复制安装，在运行 Codex CLI 的环境终端中执行：
 
-<pre><code>npx -y skills@latest add https://archify.si --skill archify --agent codex --global --copy --yes</code></pre>
+<pre><code>npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent codex --global --copy --yes</code></pre>
 
 Codex CLI 的全局 Skill 目录是 `~/.agents/skills/`，项目目录是 `.agents/skills/`。如果只想在当前项目使用，打开 [Start 的 Codex 选项](start.html?agent=codex#install)，在目标项目目录中使用“仅安装到当前仓库”的命令。
 

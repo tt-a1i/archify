@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -8,6 +8,7 @@ import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { parse } from 'yaml';
 import { stageCleanSkill } from '../scripts/stage-clean-skill.mjs';
+import { stageSkillDistribution } from '../website/scripts/stage-skill-distribution.mjs';
 
 const require = createRequire(import.meta.url);
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -187,7 +188,7 @@ test('real Skills CLI keeps source and ZIP installs scoped to the requested Skil
       assert.deepEqual(installedNames(result.cwd), []);
     }
   });
-  await t.test('source: --skill archify keeps the default install unchanged', () => {
+  await t.test('source: --skill archify still installs only the core Skill', () => {
     const result = install(source, ['--skill', 'archify']);
     assert.equal(result.status, 0, result.output);
     assert.deepEqual(installedNames(result.cwd), ['archify']);
@@ -203,6 +204,14 @@ test('real Skills CLI keeps source and ZIP installs scoped to the requested Skil
       const lock = JSON.parse(fs.readFileSync(path.join(result.cwd, 'skills-lock.json'), 'utf8'));
       assert.deepEqual(Object.keys(lock.skills).sort(), ['archify', 'archify-pr']);
     }
+  });
+  await t.test('source: --skill archify --skill archify-pr installs both public Skills in one command', () => {
+    const result = install(source, ['--skill', 'archify', '--skill', 'archify-pr']);
+    assert.equal(result.status, 0, result.output);
+    assert.deepEqual(installedNames(result.cwd), ['archify', 'archify-pr']);
+    const lock = JSON.parse(fs.readFileSync(path.join(result.cwd, 'skills-lock.json'), 'utf8'));
+    assert.deepEqual(Object.keys(lock.skills).sort(), ['archify', 'archify-pr']);
+    assertDoctor(result.cwd);
   });
   await t.test('source: --skill archify-pr installs the companion alone', () => {
     const result = install(source, ['--skill', 'archify-pr']);
@@ -278,5 +287,93 @@ test('real Skills CLI keeps source and ZIP installs scoped to the requested Skil
     const lock = JSON.parse(fs.readFileSync(path.join(unfiltered.cwd, 'skills-lock.json'), 'utf8'));
     assert.deepEqual(Object.keys(lock.skills), ['archify-pr']);
     assert.doesNotMatch(unfiltered.output, /archify-review/);
+  });
+  const published = path.join(tmp, 'well-known');
+  stageSkillDistribution(repoRoot, published);
+  const serverScript = `
+import { createServer } from 'node:http';
+import fs from 'node:fs';
+import path from 'node:path';
+const root = process.argv[1];
+const server = createServer((req, res) => {
+  try {
+    const relative = decodeURIComponent(new URL(req.url, 'http://127.0.0.1').pathname);
+    if (relative.split('/').includes('..')) {
+      res.writeHead(400);
+      res.end();
+      return;
+    }
+    const file = path.resolve(root, '.' + relative);
+    if (file !== path.resolve(root) && !file.startsWith(path.resolve(root) + path.sep)) {
+      res.writeHead(400);
+      res.end();
+      return;
+    }
+    const bytes = fs.readFileSync(file);
+    const type = file.endsWith('.json') ? 'application/json'
+      : file.endsWith('.zip') ? 'application/zip'
+      : 'application/octet-stream';
+    res.writeHead(200, { 'content-type': type, 'content-length': bytes.length });
+    res.end(bytes);
+  } catch (error) {
+    res.writeHead(error && error.code === 'ENOENT' ? 404 : 500);
+    res.end();
+  }
+});
+server.listen(0, '127.0.0.1', () => {
+  process.stdout.write(String(server.address().port));
+});
+`;
+  const server = spawn(process.execPath, ['--input-type=module', '-e', serverScript, published], {
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  t.after(() => {
+    server.kill('SIGTERM');
+  });
+  const origin = await new Promise((resolve, reject) => {
+    const fail = (error) => reject(error);
+    server.once('error', fail);
+    server.stderr.on('data', (chunk) => {
+      const text = String(chunk);
+      if (text.trim()) reject(new Error(text));
+    });
+    server.stdout.once('data', (chunk) => {
+      server.off('error', fail);
+      resolve(`http://127.0.0.1:${String(chunk).trim()}`);
+    });
+  });
+  await t.test('well-known: discovery lists the published core and companion Skills', () => {
+    for (const flags of [['--list'], ['--list', '--full-depth']]) {
+      const result = invoke(origin, flags);
+      assert.equal(result.status, 0, result.output);
+      assert.match(result.output, /Found 2 skills\b/);
+      assert.match(result.output, /Available Skills[\s\S]*\barchify\b[\s\S]*\barchify-pr\b/);
+      assert.doesNotMatch(result.output, /archify-review|archify-tuning|YAML parse error/);
+      assert.deepEqual(installedNames(result.cwd), []);
+    }
+  });
+  await t.test('well-known: --skill archify --skill archify-pr installs both published Skills', () => {
+    const result = install(origin, ['--skill', 'archify', '--skill', 'archify-pr']);
+    assert.equal(result.status, 0, result.output);
+    assert.deepEqual(installedNames(result.cwd), ['archify', 'archify-pr']);
+    const lock = JSON.parse(fs.readFileSync(path.join(result.cwd, 'skills-lock.json'), 'utf8'));
+    assert.deepEqual(Object.keys(lock.skills).sort(), ['archify', 'archify-pr']);
+    assertDoctor(result.cwd);
+    const companion = runWrapper(result.cwd, 'archify-pr', ['doctor']);
+    assert.equal(companion.status, 0, companion.stderr);
+    assert.match(companion.stdout, /Archify is ready\./);
+  });
+  await t.test('well-known: unfiltered installs and * include both published Skills', () => {
+    for (const selection of [[], ['--skill', '*']]) {
+      const result = install(origin, selection);
+      assert.equal(result.status, 0, result.output);
+      assert.deepEqual(installedNames(result.cwd), ['archify', 'archify-pr']);
+    }
+  });
+  await t.test('well-known: --skill archify still installs only the core Skill', () => {
+    const result = install(origin, ['--skill', 'archify']);
+    assert.equal(result.status, 0, result.output);
+    assert.deepEqual(installedNames(result.cwd), ['archify']);
+    assertDoctor(result.cwd);
   });
 });
