@@ -570,6 +570,7 @@
     if (hit) codePane.scrollTop = Math.max(0, hit.offsetTop - codePane.offsetTop - codePane.clientHeight / 2);
   }
   function showDetail(c, key) {
+    reading = { kind: 'indicator', id: c.id, key: key };
     readerPage(tr("Problem"));
     root.removeAttribute('data-bauify-source');
     panel.hidden = true;
@@ -588,7 +589,7 @@
     detail.innerHTML = h;
     detail.hidden = false;
     codePane.hidden = true;
-    var backToComponent = function () { readerPage(tr("Component")); detail.hidden = true; codePane.hidden = true; panel.hidden = false; panel.querySelectorAll('.ind.active').forEach(function (x) { x.classList.remove('active'); }); };
+    var backToComponent = function () { reading = { kind: 'component', id: c.id }; readerPage(tr("Component")); detail.hidden = true; codePane.hidden = true; panel.hidden = false; panel.querySelectorAll('.ind.active').forEach(function (x) { x.classList.remove('active'); }); };
     detail.querySelector('.close').addEventListener('click', backToComponent);
     detail.querySelector('.back').addEventListener('click', backToComponent);
     wireRefs();
@@ -1690,7 +1691,7 @@
     panel.innerHTML = h; panel.hidden = false; panel.scrollTop = 0;
     panel.querySelector('.close').addEventListener('click', showOverview);
     panel.querySelector('.back').addEventListener('click', function () { if (byId[from]) show(from); else showOverview(); });
-    panel.querySelectorAll('.fly-ev').forEach(function (el) { el.addEventListener('click', function () { showCode(el.getAttribute('data-file'), parseInt(el.getAttribute('data-line'), 10), tr('Import from {from} to {to}.', { from: compLabel(from), to: compLabel(to) }), undrawn ? 'red' : 'info'); }); });
+    panel.querySelectorAll('.fly-ev').forEach(function (el) { el.addEventListener('click', function () { panel.querySelectorAll('.fly-ev.active').forEach(function (item) { item.classList.remove('active'); }); el.classList.add('active'); showCode(el.getAttribute('data-file'), parseInt(el.getAttribute('data-line'), 10), tr('Import from {from} to {to}.', { from: compLabel(from), to: compLabel(to) }), undrawn ? 'red' : 'info'); }); });
     var copy = panel.querySelector('.fly-copy');
     if (copy) copy.addEventListener('click', function () {
       var text = tr('{from} → {to}: {count} imports in the code', { from: compLabel(from), to: compLabel(to), count: e.weight }) + (undrawn ? tr(', not drawn on the architecture diagram') : '') + '.\n' + e.evidence.map(function (v) { return '- ' + v.file + ':' + (v.line || '?') + ' → ' + v.to; }).join('\n');
@@ -1768,9 +1769,10 @@
     var pane = visibleReaderPage();
     return {
       reading: reading, open: !flyMode || flyOpen, collapsed: readerCollapsed, sourceOpen: pane === codePane,
+      filters: Object.assign({}, filters), listScroll: overviewMode === 'findings' && pane === overview ? overview.scrollTop : listScroll,
       view: root.getAttribute('data-bauify-views'), scroll: pane.scrollTop,
       sourceRef: pane === codePane ? (function () {
-        var ref = detail.querySelector('.inline-evidence .ref.active');
+        var ref = detail.querySelector('.ref.active') || panel.querySelector('.fly-ev.active');
         return ref ? ['data-file', 'data-line', 'data-range-start', 'data-range-end', 'data-match'].map(function (key) { return ref.getAttribute(key); }) : null;
       })() : null,
       atlas: window.__archifyAtlas?.saveSelection(true, active), findingReturn: findingReturn,
@@ -1803,13 +1805,16 @@
   window.__archifyRestoreReading = function (saved) {
     if (!saved || !saved.reading) return;
     var page = saved.reading, missing = false;
+    if (saved.filters) Object.keys(filters).forEach(function (key) { if (typeof saved.filters[key] === typeof filters[key]) filters[key] = saved.filters[key]; });
+    if (typeof saved.listScroll === 'number') listScroll = saved.listScroll;
     if (saved.open && page.kind === 'component' && Object.hasOwn(byId, page.id)) show(page.id);
+    else if (saved.open && page.kind === 'indicator' && byId[page.id] && byId[page.id].indicators.items.some(function (item) { return item.key === page.key; })) { show(page.id); showDetail(byId[page.id], page.key); }
     else if (saved.open && page.kind === 'finding' && Object.hasOwn(findingById, page.id)) {
       findingReturn = saved.findingReturn;
       showFinding(page.id, page.parent);
     } else if (saved.open && page.kind === 'findings') showFindings();
     else if (saved.open && page.kind === 'sources') showSources();
-    else if (saved.open && page.kind === 'edge' && Object.hasOwn(byId, page.from) && Object.hasOwn(byId, page.to)) showEdge(page.from, page.to);
+    else if (saved.open && page.kind === 'edge' && Object.hasOwn(byId, page.from) && Object.hasOwn(byId, page.to) && (codeEdgeByKey[page.from + '>' + page.to] || svg && Array.from(svg.querySelectorAll('path[data-edge-from][data-edge-to]')).some(function (edge) { return edge.getAttribute('data-edge-from') === page.from && edge.getAttribute('data-edge-to') === page.to; }))) showEdge(page.from, page.to);
     else if (saved.open && page.kind === 'off' && Object.hasOwn(moduleInfo, page.id)) showOff(page.id);
     else if (saved.open) {
       missing = page.kind !== 'overview';
@@ -1819,7 +1824,7 @@
       // Only reopen the exact captured evidence item. A different block in the
       // same file is not a safe substitute after a new analysis.
       var keys = ['data-file', 'data-line', 'data-range-start', 'data-range-end', 'data-match'];
-      var refs = page.kind === 'finding' && saved.sourceRef ? Array.from(detail.querySelectorAll('.inline-evidence .ref[data-file]')).filter(function (link) {
+      var refs = saved.sourceRef ? Array.from((page.kind === 'edge' ? panel : detail).querySelectorAll(page.kind === 'edge' ? '.fly-ev[data-file]' : '.ref[data-file]')).filter(function (link) {
         return keys.every(function (key, index) { return link.getAttribute(key) === saved.sourceRef[index]; });
       }) : [];
       if (refs.length === 1) refs[0].click(); else missing = true;

@@ -31,9 +31,9 @@ test('Code Analysis marks baseline findings, re-analyzes without a restart, and 
 
   const ir = path.join(scratch, 'input.json');
   fs.writeFileSync(ir, JSON.stringify({ schema_version: 1, diagram_type: 'architecture', meta: { title: 'Review browser regression', output: 'architecture.html' },
-    components: [{ id: 'app', type: 'backend', label: 'App', pos: [40, 40], size: [170, 64] }], connections: [] }));
+    components: [{ id: 'app', type: 'backend', label: 'App', pos: [40, 40], size: [170, 64] }, { id: 'storage', type: 'backend', label: 'Storage', pos: [300, 40], size: [170, 64] }], connections: [] }));
   const map = path.join(scratch, 'map.json');
-  fs.writeFileSync(map, JSON.stringify({ app: ['a', 'b', 'c', 'd'] }));
+  fs.writeFileSync(map, JSON.stringify({ app: ['a', 'c', 'd'], storage: ['b'] }));
   const out = path.join(scratch, 'view');
   const view = await startAnalysisView([root, '--ir', ir, '--map', map, '--baseline', baseline, '--out', out, '--language', 'ts']);
   const sockets = new Set();
@@ -131,6 +131,11 @@ test('Code Analysis marks baseline findings, re-analyzes without a restart, and 
   assert.match(await run("document.querySelector('#bauify-panel h3').textContent"), /^App/);
   assert.equal(await run("document.activeElement.matches('#bauify-panel .back')"), true);
 
+  const indicatorTitle = await run("document.querySelector('#bauify-panel .ind.link').click(); document.querySelector('#bauify-detail h3').textContent");
+  await refreshFromCurrentFocus();
+  assert.equal(await run("document.querySelector('#bauify-detail h3').textContent"), indicatorTitle, 'the selected indicator survives re-analysis');
+  await run("document.querySelector('#bauify-detail .back').click()");
+
   const beforeFinding = await run(`(() => {
     const finding = JSON.parse(document.getElementById('bauify-analysis').textContent).findings[0];
     window.__archifyShowFinding(finding.id);
@@ -141,6 +146,24 @@ test('Code Analysis marks baseline findings, re-analyzes without a restart, and 
   assert.equal(await run("document.querySelector('#bauify-detail .ai-task').dataset.taskId"), beforeFinding.id);
   assert.equal(await run("document.querySelector('#bauify-detail h3').textContent"), beforeFinding.title);
   assert.equal(await run("document.activeElement.matches('#bauify-detail .back')"), true);
+
+  const sourceRef = await run(`(() => {
+    const ref = document.querySelector('#bauify-detail .ref[data-file]');
+    if (!ref) return null;
+    const result = [ref.getAttribute('data-file'), ref.getAttribute('data-line')];
+    ref.click(); return result;
+  })()`);
+  assert.ok(sourceRef, 'the finding offers a captured source reference');
+  await refreshFromCurrentFocus();
+  assert.equal(await run("document.getElementById('bauify-code').hidden"), false, 'the same source remains open after re-analysis');
+  assert.ok((await run("document.getElementById('bauify-code').textContent")).includes(sourceRef[0]));
+  await run("document.querySelector('#bauify-code .source-back').click()");
+
+  await run("document.querySelector('#bauify-detail .back').click(); document.querySelector('.browse-findings').click(); const input = document.querySelector('#finding-search'); input.value = 'cycle'; input.dispatchEvent(new Event('input', { bubbles: true }));");
+  await refreshFromCurrentFocus();
+  assert.equal(await run("document.querySelector('#finding-search').value"), 'cycle', 'finding search survives re-analysis');
+  assert.equal(await run("document.querySelector('#bauify-overview h3').textContent"), 'Findings');
+  await run("document.querySelector('.findings-back').click()");
 
   // The generated ID changes when a later module has the same slug. The
   // selection follows the stable grouping path instead of that generated ID.
@@ -173,6 +196,14 @@ test('Code Analysis marks baseline findings, re-analyzes without a restart, and 
   assert.equal(await run("document.activeElement.matches('.atlas-file-query')"), true);
   assert.match(await run("document.querySelector('.analysis-refresh-status').textContent"), /selection is no longer available/);
   await run("document.querySelector('.views-option[data-view=diagram]').click(); window.__archifyShowFinding(" + JSON.stringify(beforeFinding.id) + "); document.querySelector('#bauify-detail .back').click()");
+
+  await run("document.querySelector('g[data-node-id=app]').dispatchEvent(new MouseEvent('click',{bubbles:true})); document.querySelector('#bauify-panel .fly-rel[data-edge=\\\"app>storage\\\"]').click(); document.querySelector('#bauify-panel .fly-ev').click()");
+  await refreshFromCurrentFocus();
+  assert.equal(await run("document.getElementById('bauify-code').hidden"), false, 'dependency source remains open');
+  await run("document.querySelector('#bauify-code .source-back').click()");
+  write('a.mjs', 'export const a = 1;\n');
+  await refreshFromCurrentFocus();
+  assert.match(await run("document.querySelector('.analysis-refresh-status').textContent"), /selection is no longer available/, 'an undrawn dependency removed from code is not reported as declared');
 
   // A failing run keeps the last good result on disk and on the page.
   const before = fs.readFileSync(path.join(out, 'analysis', 'findings.json'), 'utf8');

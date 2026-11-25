@@ -150,7 +150,7 @@ const ZH_CN = {
   "Verify a previous task": "核验上一次导出的任务",
   "Run project checks separately. This receipt compares captured analyses and records your reported check results.": "请单独运行项目检查。回执对比两次分析，并记录你报告的检查结果。",
   "Download the task JSON before editing, then re-analyze using the same output directory.": "请先下载任务 JSON，改动后使用同一输出目录重新分析。",
-  "Task JSON from a retained run": "从保留的分析快照导出的任务 JSON",
+  "Task JSON from the previous run": "上一轮导出的任务 JSON",
   "Project check results JSON (optional)": "项目检查结果 JSON（可选）",
   "Preview verification": "预览核验回执",
   "Download checks template": "下载检查结果模板",
