@@ -288,8 +288,10 @@ test('Motion Governor preserves mode, ownership, continuous Live flow and real c
     await load('sequence');
     const result = await run(`(async () => {
       const svg = document.querySelector('.diagram-container svg');
-      const rows = [...svg.querySelectorAll('[data-animate="edge"]')].map(element =>
-        Math.round(element.getPointAtLength(element.getTotalLength() / 2).y)).sort((a, b) => a - b);
+      const edges = [...svg.querySelectorAll('[data-animate="edge"]')];
+      const edgeRow = element => Math.round(element.getPointAtLength(element.getTotalLength() / 2).y);
+      const rows = edges.map(edgeRow).sort((a, b) => a - b);
+      const traceRows = edges.filter(element => element.closest('[data-edge-to]')?.getAttribute('data-edge-to') === 'trace').map(edgeRow);
       const canvas = CanvasRenderingContext2D.prototype;
       const originalArc = canvas.arc, originalClear = canvas.clearRect;
       const originalMove = canvas.moveTo, originalStroke = canvas.stroke;
@@ -333,7 +335,7 @@ test('Motion Governor preserves mode, ownership, continuous Live flow and real c
           return originalStroke.apply(this, arguments);
         };
         const video = await Archify.motion.recordWebm({ fps: 24, duration: ${duration} });
-        return { rows, seen, peak, last, pulses, cometFrames, participants, elapsed: performance.now() - started, size: video.size, type: video.type };
+        return { rows, traceRows, seen, peak, last, pulses, cometFrames, participants, elapsed: performance.now() - started, size: video.size, type: video.type };
       } finally {
         canvas.arc = originalArc;
         canvas.clearRect = originalClear;
@@ -349,7 +351,8 @@ test('Motion Governor preserves mode, ownership, continuous Live flow and real c
     assert.ok(result.last > duration * 0.61, 'the final authored message remains animated near the end of the timeline');
     assert.ok(new Set(result.pulses.map(pulse => pulse.id)).size >= 2, 'sender and receiver participants pulse during the recording');
     assert.ok(result.pulses.some(pulse => pulse.id === 'trace'), 'the receive-only trace participant pulses when the message arrives');
-    const traceFrames = result.cometFrames.filter(frame => frame.row === result.rows[9]);
+    assert.equal(result.traceRows.length, 1, 'fixture has exactly one message addressed to trace');
+    const traceFrames = result.cometFrames.filter(frame => frame.row === result.traceRows[0]);
     const firstTracePulse = result.pulses.find(pulse => pulse.id === 'trace');
     assert.ok(traceFrames.length && firstTracePulse.at >= traceFrames.at(-1).at - 1000 / 24 - 10,
       'the receive-only pulse starts no earlier than the final frame of its incoming message, allowing one recording frame');
