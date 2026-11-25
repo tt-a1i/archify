@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { scanHtml } from './check.mjs';
+import { REMOVE_UPDATE_NOTICE_SCRIPT } from '../bin/update-notice.mjs';
 
 export const EXPLAINER_VIEWPORTS = Object.freeze([Object.freeze({width:1280,height:900}),Object.freeze({width:1440,height:900})]);
 async function evaluate(browser, expression, awaitPromise=false) {
@@ -105,6 +106,8 @@ export async function inspectPublicHtml(browser,{artifactPath,width=1440,height=
     const url=pathToFileURL(artifactPath);if(themeControl==='query')url.searchParams.set('theme',theme);else clearStorage=await browser.cdp.send('Page.addScriptToEvaluateOnNewDocument',{source:'try {localStorage.clear();sessionStorage.clear();} catch {}'},session);
     const loaded=browser.cdp.waitFor('Page.loadEventFired',session);loaded.catch(()=>{});
     const navigation=await browser.cdp.send('Page.navigate',{url:url.href},session);if(navigation.errorText)throw new Error(navigation.errorText);await loaded;
+    // Reader evidence describes the document, not the optional local update notice.
+    await evaluate(browser,REMOVE_UPDATE_NOTICE_SCRIPT);
     if(themeControl==='system'&&!javascript)await evaluate(browser,"(function(){try{localStorage.clear();sessionStorage.clear();return true;}catch{return false;}})()");
     // Inspector evaluation works with page JavaScript disabled; it does not run
     // or repair the artifact's reader. Font readiness is separate from reader JS.

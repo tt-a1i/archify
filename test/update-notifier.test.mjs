@@ -2190,7 +2190,7 @@ test('preference retry budget uses a monotonic clock', async (t) => {
     async () => response(remoteRelease()),
   ));
   writePendingOperation(testFixture, { generation: 2n });
-  const ticks = [100, 1_301];
+  const ticks = [100, 7_101];
   const started = Date.now();
 
   assert.deepEqual(await setUpdatePreference({
@@ -2198,7 +2198,7 @@ test('preference retry budget uses a monotonic clock', async (t) => {
     cacheDirectory: testFixture.cacheDirectory,
     eventKey: offered.eventKey,
     mode: 'snooze',
-    monotonicNow: () => ticks.shift() ?? 1_301,
+    monotonicNow: () => ticks.shift() ?? 7_101,
   }), { status: 'silent', reason: 'check-in-progress' });
   assert.ok(Date.now() - started < 200, 'an exhausted monotonic budget should not sleep on wall time');
 });

@@ -2,7 +2,7 @@
 
 > Turn any idea, everyday plan, concept, workflow, Mermaid draft, or codebase into a polished interactive HTML diagram (ten diagram types: architecture, workflow, sequence, dataflow, lifecycle, ERD, class, tree, timeline, waterfall) or a 4-style one-page explainer, plus built-in Architecture Diagnosis for codebases and 1080p Story video export — zero diagram syntax, layout-checked, offline HTML. Free and open source (Apache-2.0).
 
-Version: 3.3.2-dev.1
+Version: 3.3.2
 Repository: https://github.com/tt-a1i/archify
 Website: https://archify.si
 
@@ -15,31 +15,31 @@ Confirm this scope first:
 - Global (`--global`) or the current project only.
 - Target agent: the agent you are running in, unless the user names others. Switcher ids: `cursor`, `codex`, `claude-code`, `opencode`, `github-copilot`.
 
-1. Discover the skill. This only lists the package; it does not install it.
+1. Discover the skills. This only lists the package; it does not install it.
 
    `npx -y skills@latest add https://archify.si --list --full-depth`
 
-   Stop unless the listing contains exactly one skill named `archify`.
+   Stop unless the listing contains exactly two skills, named `archify` and `archify-pr`.
 
-2. Before either install command, inspect every selected agent destination. If an existing `archify` destination contains unmanaged files, stop and report the conflict before running the installer; preserve those files.
+2. Before either install command, inspect every selected agent destination. If an existing `archify` or `archify-pr` destination contains unmanaged files, stop and report the conflict before running the installer; preserve those files.
 
-   Install that skill for the confirmed agent. `--copy` copies files instead of symlinking. Leave unmanaged files in place. If the installer reports a conflict with existing unmanaged files, stop and tell the user; do not delete them. `--yes` only skips prompts for the scope they already confirmed.
+   Install those skills for the confirmed agent. `--copy` copies files instead of symlinking. Leave unmanaged files in place. If the installer reports a conflict with existing unmanaged files, stop and tell the user; do not delete them. `--yes` only skips prompts for the scope they already confirmed.
 
    One agent:
 
-   `npx -y skills@latest add https://archify.si --skill archify --agent <agent> --global --copy --yes`
+   `npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent <agent> --global --copy --yes`
 
    Several agents, by repeating `--agent`:
 
-   `npx -y skills@latest add https://archify.si --skill archify --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes`
+   `npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes`
 
    Omit `--global` for a project-only install. Do not add other skills, agents, sources, or force flags.
 
-3. Verify with the installed package. `<installed-path>` is the directory the installer reported (a global copy is often under a `skills/archify` directory the agent already scans; a project copy is often `.agents/skills/archify`).
+3. Verify with the installed package. `<installed-path>` is the directory the installer reported for `archify` (a global copy is often under a `skills/archify` directory the agent already scans; a project copy is often `.agents/skills/archify`). The companion is installed beside it as `archify-pr`.
 
    `node <installed-path>/bin/archify.mjs doctor`
 
-   Report each selected target and its verification result. Say Archify is ready only for targets whose installation and doctor check succeeded; report skipped or failed targets separately. They can ask for any of the ten diagram types, or a one-page explainer.
+   Report each selected target and its verification result. Say Archify is ready only for targets whose installation and doctor check succeeded; report skipped or failed targets separately. They can ask for any of the ten diagram types, or a one-page explainer. `/archify-pr` offers a diagram while they prepare a material pull request.
 
 If you were only asked to install Archify, stop here and do not fetch the reference links below.
 

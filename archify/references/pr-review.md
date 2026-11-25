@@ -51,7 +51,17 @@ Each view is a single diagram that contains both sides of the change:
   Omit `change` entirely on an ordinary diagram; the legend only appears when at
   least one element carries a change state.
 - Set `emphasis: true` on the one or two elements the reviewer must find first.
-  It thickens stroke and label weight; it is not a severity.
+  It thickens stroke and label weight; it is not a severity. Do not stack it on
+  changed elements: the change colour, border and badge already lead the eye,
+  so emphasise an unchanged element only when the review hinges on it.
+- Once any element carries a change state, colour means change. Unchanged
+  nodes and edges turn neutral, changed nodes take the change colour as border
+  and tint, node-type swatches leave the legend (the node icons still name the
+  type) and line-type swatches keep only their dash and weight. A security
+  node or edge therefore loses its rose colour cue in a change-marked diagram:
+  name the trust boundary in a label or a `security-group` boundary when it
+  matters to the review. `removed` draws as a fine rose dotted line, distinct
+  from the security dash.
 - Keep the overview small enough to read at GitHub's column width. When one
   branch needs more than that, give it its own view with `"collapsed": true` so
   the Markdown folds it into `<details>`, and keep the overview's nodes to the

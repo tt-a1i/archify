@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const paste = 'Install Archify for me by reading https://raw.githubusercontent.com/tt-a1i/archify/main/llms.txt';
-const cursorCommand = 'npx -y skills@latest add https://archify.si --skill archify --agent cursor --global --copy --yes';
+const cursorCommand = 'npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent cursor --global --copy --yes';
 const discovery = 'npx -y skills@latest add https://archify.si --list --full-depth';
 const doctor = 'node <installed-path>/bin/archify.mjs doctor';
 
@@ -42,9 +42,9 @@ test('llms.txt states the package version and the bounded install', () => {
   assert.match(root, /https:\/\/github\.com\/tt-a1i\/archify/);
   assert.match(root, /https:\/\/archify\.si/);
   assert.match(root, /confirm the scope before you install/i);
-  assert.match(root, /exactly one skill named `archify`/);
+  assert.match(root, /exactly two skills, named `archify` and `archify-pr`/);
   assert.match(root, new RegExp(discovery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
-  assert.match(root, /--skill archify --agent <agent> --global --copy --yes/);
+  assert.match(root, /--skill archify --skill archify-pr --agent <agent> --global --copy --yes/);
   assert.match(root, /unmanaged files/);
   assert.match(root, /Before either install command, inspect every selected agent destination/);
   assert.match(root, /stop and report the conflict before running the installer/);
@@ -57,7 +57,7 @@ test('llms.txt states the package version and the bounded install', () => {
 
 test('localized quick starts show the agent prompt and non-interactive flags', () => {
   const agents = switcherAgents();
-  const multi = `npx -y skills@latest add https://archify.si --skill archify ${agents.map((agent) => `--agent ${agent}`).join(' ')} --global --copy --yes`;
+  const multi = `npx -y skills@latest add https://archify.si --skill archify --skill archify-pr ${agents.map((agent) => `--agent ${agent}`).join(' ')} --global --copy --yes`;
   const wall = 'https://raw.githubusercontent.com/tt-a1i/archify/contributors/contributors.svg';
   const graph = 'https://github.com/tt-a1i/archify/graphs/contributors';
 
