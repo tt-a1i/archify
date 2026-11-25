@@ -33,7 +33,8 @@ function copyInstalledSkill(target) {
     recursive: true,
     filter(source) {
       const rel = path.relative(skillRoot, source);
-      return !rel.split(path.sep).includes('node_modules')
+      return !rel.startsWith('.package-negative-')
+        && !rel.split(path.sep).includes('node_modules')
         && rel !== 'test' && !rel.startsWith(`test${path.sep}`)
         // Another test creates this short-lived directory under skillRoot so
         // Ajv resolves from the checkout. Never copy a concurrently removed

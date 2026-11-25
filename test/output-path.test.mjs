@@ -28,8 +28,9 @@ function copyInstalledSkill(target) {
     recursive: true,
     filter(source) {
       const relative = path.relative(skillRoot, source);
-      return relative !== 'node_modules'
-        && !relative.startsWith(`node_modules${path.sep}`)
+      // Package tests create and remove these checkout-local markers concurrently.
+      return !relative.startsWith('.package-negative-')
+        && !relative.split(path.sep).includes('node_modules')
         && relative !== 'test'
         && !relative.startsWith(`test${path.sep}`);
     },
