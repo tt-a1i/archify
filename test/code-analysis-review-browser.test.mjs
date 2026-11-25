@@ -450,6 +450,11 @@ test('Code Analysis marks baseline findings, re-analyzes without a restart, and 
     write('callbacks.mjs', complexCallback.replace('return 0;', 'return -1;') + complexCallback);
     await refreshFromCurrentFocus();
     assert.equal(await run('window.__archifyAtlas3d.view.saveSelection()'), null, 'an inserted callback finding cannot inherit the selected finding identity');
+    write('unnamed-binding.mjs', 'const onSave = function () { return 1; };\n');
+    await refreshFromCurrentFocus();
+    await run(`(() => { const atlas = JSON.parse(document.getElementById('bauify-atlas-data').textContent); const i = atlas.functions.findIndex(fn => atlas.files[fn[0]][0] === 'unnamed-binding.mjs'); if (i < 0) throw Error('bound anonymous expression missing'); window.__archifyAtlas3d.view.select({ type: 'function', index: i }); })()`);
+    await refreshFromCurrentFocus();
+    assert.equal(await run('window.__archifyAtlas3d.view.saveSelection()?.name'), 'onSave', 'an unchanged anonymous expression with a stable variable binding is restored');
     write('named-bindings.mjs', 'const onSave = function handler() { return 1; };\n');
     await refreshFromCurrentFocus();
     await run(`(() => { const atlas = JSON.parse(document.getElementById('bauify-atlas-data').textContent); const i = atlas.functions.findIndex(fn => atlas.files[fn[0]][0] === 'named-bindings.mjs'); if (i < 0) throw Error('named expression missing'); window.__archifyAtlas3d.view.select({ type: 'function', index: i }); })()`);

@@ -21,6 +21,22 @@ function analyze(t) {
   return { facts, graph, findings, atlas: buildAtlas({ graph, facts, findings }) };
 }
 
+test('atlas: only function expressions named by a binding may restore', (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-atlas-binding-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  fs.writeFileSync(path.join(dir, 'bindings.js'), 'const onSave = function /* comment */ () { return 1; };\nconst onCancel = function handler() { return 2; };\n{ const scoped = function () { return 3; }; }\n');
+  const config = loadConfig();
+  const { facts } = extractFacts(dir, { language: 'ts', config });
+  const graph = buildGraph(facts, config);
+  const atlas = buildAtlas({ graph, facts });
+  assert.equal(atlas.functions.find(fn => fn[1] === 'onSave')?.[9], true);
+  assert.equal(atlas.functions.find(fn => fn[1] === 'handler')?.[9], false);
+  assert.equal(atlas.functions.find(fn => fn[1] === 'scoped')?.[9], false, 'scope is not captured as part of the binding identity');
+  facts.files.find(file => file.path === 'bindings.js').sourceText = facts.files[0].sourceText.replace('return 1', 'return 9');
+  const mismatch = buildAtlas({ graph, facts });
+  assert.equal(mismatch.functions.find(fn => fn[1] === 'onSave')?.[9], false, 'a mismatched captured digest cannot establish a binding');
+});
+
 test('atlas: Java initializer and nested names are not stable identities', (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-atlas-java-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
