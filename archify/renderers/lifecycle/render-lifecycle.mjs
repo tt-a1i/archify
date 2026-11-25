@@ -1017,7 +1017,7 @@ function legendCatalog() {
   // The start marker and final ring remain meaningful in a change review.
   const entries = reviewLegendEntries(changeReview, resolveLegend(config, LEGEND_CATALOG, presentKinds), config,
     LEGEND_CATALOG.map((entry) => entry.kind).filter((kind) => kind !== 'start'));
-  if (config?.mode !== 'hidden' && config?.entries?.final?.visible !== false && [...states.values()].some(isFinal)) {
+  if ((entries.length || changeReview.active) && config?.mode !== 'hidden' && config?.entries?.final?.visible !== false && [...states.values()].some(isFinal)) {
     const label = config?.entries?.final?.label || i18nText(lifecycle.meta.locale, 'legend.lifecycle.final');
     entries.push({ kind: 'final', label, interactive: false, present: true, swatchWidth: 16 });
   }

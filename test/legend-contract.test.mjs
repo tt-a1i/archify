@@ -250,6 +250,15 @@ test('visibility overrides apply after auto/all and empty legends leave no chrom
   }
 });
 
+test('change review retains the lifecycle final-state key when type keys are hidden', () => {
+  const entries = Object.fromEntries(AUTO_KINDS.lifecycle.filter(kind => kind !== 'final').map(kind => [kind, { visible: false }]));
+  const doc = withLegend('lifecycle', { entries });
+  doc.states[1].change = 'modified';
+  const kinds = legendKinds(render('lifecycle', doc));
+  assert.ok(kinds.includes('final'), 'the final marker remains explained in change review');
+  assert.ok(kinds.includes('change-modified'), 'the changed state remains explained');
+});
+
 test('label overrides round-trip through all five public renderers', () => {
   for (const type of Object.keys(FIXTURES)) {
     const kind = AUTO_KINDS[type][0];
