@@ -5,6 +5,23 @@ import { test } from 'node:test';
 import { driftFixture } from './helpers/code-analysis-drift-fixture.mjs';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { compareArchitectureDrift } from '../archify/modules/code-analysis/lib/architecture-drift.mjs';
+
+test('custom groups make an omitted path with a misleading directory inconclusive', () => {
+  const ir = { components: [{ id: 'app' }, { id: 'ui' }, { id: 'db' }], connections: [] };
+  const graph = { repository: { root: '.' }, grouping: { groups: ['app'] }, modules: [
+    { id: 'app', path: 'app' }, { id: 'ui', path: 'src/ui' }, { id: 'db', path: 'src/db' },
+  ], fileModules: { 'src/app/main.ts': 'app', 'src/ui/other.ts': 'ui', 'src/db/module.ts': 'db', 'src/ui/shared.ts': 'app' } };
+  const map = { app: ['app'], ui: ['ui'], db: ['db'] };
+  const facts = { repository: { adapter: 'ts', adapterRevision: 1 }, files: [
+    { path: 'src/ui/shared.ts', sourceText: "import '../db/module';" },
+  ], imports: [], unresolved: 0 };
+  const base = { facts, graph, omitted: new Map([['src/ui/shared.ts', 'link']]), resolutionInputs: new Map() };
+  const head = { facts: { ...facts, imports: [{ kind: 'static', from: 'src/ui/shared.ts', to: 'src/db/module.ts', resolved: true, line: 1 }] }, graph, omitted: new Map(), resolutionInputs: new Map() };
+  const result = compareArchitectureDrift({ base, head, ir, map });
+  assert.equal(result.edges[0].state, 'inconclusive');
+  assert.ok(result.edges[0].reasons.includes('skipped-tree-entries-changed'));
+});
 
 test('CLI compares pinned directed pairs; the authored IR and dirty working tree are unchanged', t => {
   const f = driftFixture(t);

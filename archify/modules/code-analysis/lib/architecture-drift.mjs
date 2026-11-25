@@ -39,6 +39,9 @@ function project({ facts, graph, omitted }, ir, map) {
   const components = new Set([...byModule.values()].filter(v => v.length === 1).flat());
   const owner = file => byModule.get(Object.hasOwn(graph.fileModules, file) ? graph.fileModules[file] : null) || [];
   const omittedOwner = file => {
+    // Explicit groups can claim paths outside their directory, so a skipped
+    // path cannot be assigned safely from its nearest directory alone.
+    if (graph.grouping?.groups?.length) return null;
     const matches = graph.modules.filter(module => module.path && (file === module.path || file.startsWith(module.path + '/')));
     const depth = Math.max(0, ...matches.map(module => module.path.length));
     const nearest = matches.filter(module => module.path.length === depth);

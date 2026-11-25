@@ -159,8 +159,16 @@ async function validateLocalObjectsAndScope(root, local, scope) {
     if (type !== 'commit') fail('pr/commit-invalid', 'A pinned object must be a commit.', { subject: { side }, evidence: { commit, type } });
   }
   if (scope !== '.') {
-    const entries = await Promise.all(Object.values(local).map(sha => git(root, ['ls-tree', '-rz', '--full-tree', sha, '--', `${scope}/`], readOptions)));
-    if (entries.every(entry => !entry.length)) fail('pr/scope-invalid', 'The analysis scope has no entries in either pinned commit.', { subject: { scope }, evidence: { scope }, supportedFixes: ['choose a directory present in at least one pinned commit, or omit --scope for the repository root'] });
+    const entries = await Promise.all(Object.entries(local).map(async ([side, sha]) => {
+      try { return await git(root, ['ls-tree', '-rz', '--full-tree', sha, '--', `${scope}/`], readOptions); }
+      catch (error) {
+        if (error.diagnostics?.[0]?.code !== 'pr/git-failed') throw error;
+        fail('pr/local-object-missing', 'The pinned source tree could not be read from the local Git object database.', {
+          subject: { side }, evidence: { commit: sha }, supportedFixes: fixes,
+        });
+      }
+    }));
+    if (entries.every(entry => !entry.length)) fail('pr/scope-invalid', 'The analysis scope has no entries in either pinned commit.', { subject: { scope }, evidence: { scope }, supportedFixes: ['choose a directory present in at least one pinned commit, or use --scope . for the repository root'] });
   }
 }
 
@@ -185,7 +193,7 @@ async function prepareLocalPullRequest({ root, out, local, scope }) {
       }
     }
     if (scope !== '.' && Object.values(manifests).every(manifest => !manifest.files.length && !manifest.skipped.length)) {
-      fail('pr/scope-invalid', 'The analysis scope has no entries in either pinned commit.', { subject: { scope }, evidence: { scope }, supportedFixes: ['choose a directory present in at least one pinned commit, or omit --scope for the repository root'] });
+      fail('pr/scope-invalid', 'The analysis scope has no entries in either pinned commit.', { subject: { scope }, evidence: { scope }, supportedFixes: ['choose a directory present in at least one pinned commit, or use --scope . for the repository root'] });
     }
     const changedFiles = await localFiles(root, local.base, local.head, scope);
     return { pr, scope, directory, roots, manifests, changedFiles, sourceGitRoot: root,
