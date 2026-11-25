@@ -183,12 +183,15 @@ function participantX(index) {
 // crosses an unrelated lifeline or activation bar (#676). Every character
 // stays visible, including in image exports: long unbroken text (a URL or
 // path) breaks after its punctuation, otherwise at any character.
-// 8.5px keeps notes above the reader's 7.5px legibility floor.
+// Notes read at 8.5px, above the reader's 7.5px legibility floor, when every
+// note in the diagram still wraps to the line count it had at the original
+// 7px. Otherwise the whole diagram keeps 7px notes, so one size is used per
+// diagram and no authored spacing that validated before needs to move.
 const NOTE_FONT_SIZE = 8.5;
-const NOTE_LINE_HEIGHT = NOTE_FONT_SIZE + 4;
-// The first baseline keeps its position 18px below the message line; at 8.5px
-// the ascent still clears the arrow stroke and marker, and a one-line note
-// keeps its original bottom (message.y + 22), so spacing checks are unchanged.
+const NOTE_FALLBACK_FONT_SIZE = 7;
+// The line advance and first baseline keep their original values, so a note's
+// vertical footprint (message.y + 22 per line set) never changes with its size.
+const NOTE_LINE_HEIGHT = NOTE_FALLBACK_FONT_SIZE + 4;
 const NOTE_BASELINE_OFFSET = 18;
 // The first line keeps its original position: 12px past the arrow start,
 // which sits 7px from the lifeline.
@@ -204,8 +207,10 @@ const noteSegmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' })
 let noteWordSegmenter;
 const noteLayouts = new Map();
 
-function noteTextWidth(text) {
-  return minimumNodeTextWidth(text, NOTE_FONT_SIZE);
+let noteFontSizeChoice = null;
+
+function noteTextWidth(text, fontSize = noteFontSize()) {
+  return minimumNodeTextWidth(text, fontSize);
 }
 
 // Index after the last punctuation break in `piece`, or its full length.
@@ -216,8 +221,8 @@ function noteBreakIndex(piece) {
   return piece.length;
 }
 
-function wrapNoteText(text, width) {
-  const original = wrapNoteWords(String(text).match(/\s+|\S+/gu) || [], width);
+function wrapNoteText(text, width, fontSize = noteFontSize()) {
+  const original = wrapNoteWords(String(text).match(/\s+|\S+/gu) || [], width, fontSize);
   if (!/\p{Script=Han}/u.test(text)) return original;
 
   // Space-only tokens can waste half a line before a Chinese phrase. Split Han
@@ -233,12 +238,12 @@ function wrapNoteText(text, width) {
       words.push(token);
     }
   }
-  const compact = wrapNoteWords(words, width);
+  const compact = wrapNoteWords(words, width, fontSize);
   // Never grow a note or change a same-height wrap merely to rebalance lines.
   return compact.length < original.length ? compact : original;
 }
 
-function wrapNoteWords(words, width) {
+function wrapNoteWords(words, width, fontSize) {
   const lines = [];
   let line = '';
   const flush = () => {
@@ -251,14 +256,14 @@ function wrapNoteWords(words, width) {
       if (line) line += ' ';
       continue;
     }
-    if (noteTextWidth(line + word) <= width) {
+    if (noteTextWidth(line + word, fontSize) <= width) {
       line += word;
       continue;
     }
     flush();
     let piece = '';
     for (const { segment } of noteSegmenter.segment(word)) {
-      while (piece && noteTextWidth(piece + segment) > width) {
+      while (piece && noteTextWidth(piece + segment, fontSize) > width) {
         const cut = noteBreakIndex(piece);
         lines.push(piece.slice(0, cut));
         piece = piece.slice(cut);
@@ -289,24 +294,51 @@ function noteRect(message) {
   return note && { x: note.x, y: note.top, width: note.width, height: note.bottom - note.top };
 }
 
+function noteGeometry(message) {
+  const fromIndex = participantIndexById.get(message.from);
+  const toIndex = participantIndexById.get(message.to);
+  if (!message.note || typeof message.y !== 'number' || fromIndex === undefined || toIndex === undefined || fromIndex === toIndex) return null;
+  const gap = noteGapIndex(fromIndex, toIndex);
+  const x = participantX(gap) + NOTE_ARROW_INSET + NOTE_TEXT_INSET;
+  return { x, maxWidth: Math.max(1, participantX(gap + 1) - NOTE_LIFELINE_CLEARANCE - x) };
+}
+
+function noteLines(text, maxWidth, fontSize) {
+  return noteTextWidth(text, fontSize) <= maxWidth ? [text] : wrapNoteText(text, maxWidth, fontSize);
+}
+
+// Measure every note at both sizes once lane geometry is known.
+function noteFontSize() {
+  if (noteFontSizeChoice !== null) return noteFontSizeChoice;
+  noteFontSizeChoice = NOTE_FONT_SIZE;
+  for (const message of asArray(sequence.messages)) {
+    const geometry = noteGeometry(message);
+    if (!geometry) continue;
+    const note = String(message.note);
+    if (noteLines(note, geometry.maxWidth, NOTE_FONT_SIZE).length > noteLines(note, geometry.maxWidth, NOTE_FALLBACK_FONT_SIZE).length) {
+      noteFontSizeChoice = NOTE_FALLBACK_FONT_SIZE;
+      break;
+    }
+  }
+  return noteFontSizeChoice;
+}
+
 function noteLayout(message) {
   if (noteLayouts.has(message)) return noteLayouts.get(message);
   let result = null;
-  const fromIndex = participantIndexById.get(message.from);
-  const toIndex = participantIndexById.get(message.to);
-  if (message.note && typeof message.y === 'number' && fromIndex !== undefined && toIndex !== undefined && fromIndex !== toIndex) {
-    const gap = noteGapIndex(fromIndex, toIndex);
-    const x = participantX(gap) + NOTE_ARROW_INSET + NOTE_TEXT_INSET;
-    const maxWidth = Math.max(1, participantX(gap + 1) - NOTE_LIFELINE_CLEARANCE - x);
-    const lines = noteTextWidth(message.note) <= maxWidth ? [message.note] : wrapNoteText(message.note, maxWidth);
+  const geometry = noteGeometry(message);
+  if (geometry) {
+    const fontSize = noteFontSize();
+    const lines = noteLines(message.note, geometry.maxWidth, fontSize);
     const baseline = message.y + NOTE_BASELINE_OFFSET;
     result = {
-      x,
+      x: geometry.x,
       baseline,
       lines,
-      width: Math.max(...lines.map(noteTextWidth)),
+      fontSize,
+      width: Math.max(...lines.map((line) => noteTextWidth(line, fontSize))),
       // Include fallback-font ascent in the same bounds used for title clearance.
-      top: baseline - NOTE_FONT_SIZE * 1.2,
+      top: baseline - fontSize * 1.2,
       bottom: message.y + 22 + (lines.length - 1) * NOTE_LINE_HEIGHT,
     };
   }
@@ -1072,7 +1104,7 @@ function renderMessage(message, index) {
   // Notes carry message conditions and already reserve timeline space. Keep
   // them readable at the default depth; Map still hides context without reflow.
   const note = noteBox
-    ? `\n        <text data-detail="context" x="${noteBox.x}" y="${noteBox.baseline}" class="t-muted" font-size="${NOTE_FONT_SIZE}">${noteContent}</text>`
+    ? `\n        <text data-detail="context" x="${noteBox.x}" y="${noteBox.baseline}" class="t-muted" font-size="${noteBox.fontSize}">${noteContent}</text>`
     : '';
   return `        <g ${focusEdgeAttrs(message.from, message.to, message.label, index, message.id)}${changeEdgeAttrs(changeReview, message)}>
           <path data-composition-edge-from="${esc(message.from)}" data-composition-edge-to="${esc(message.to)}"${message.id ? ` data-composition-edge-id="${esc(message.id)}"` : ''} data-composition-points="${routePointsValue([[start, message.y], [end, message.y]])}" d="M ${start} ${message.y} L ${end} ${message.y}" class="${cls}"${animateAttr(sequence.meta, 'edge', index)} stroke-width="${strokeWidth}"${dash} marker-end="url(#${changeMarkerFor(message, marker)})"/>
