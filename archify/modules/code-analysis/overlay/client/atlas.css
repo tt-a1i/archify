@@ -258,7 +258,8 @@ html[data-theme="dark"] #bauify-atlas.atlas-page { --atlas-amber: #fbbf24; }
   #bauify-atlas.atlas-page .atlas-first { bottom: 58px; width: calc(100% - 28px); padding-bottom: 4px; }
   #bauify-atlas.atlas-page .atlas-first > p, #bauify-atlas.atlas-page .atlas-lead small { display: none; }
   #bauify-atlas.atlas-page .atlas-lead { padding: 6px 10px 6px 0; }
-  #bauify-atlas.atlas-page .atlas-side { top: auto; left: 8px; right: 8px; bottom: 8px; width: auto; height: 72%; }
+  #bauify-atlas.atlas-page:not([data-fly="closed"]) .atlas-stage { bottom: 50%; }
+  #bauify-atlas.atlas-page .atlas-side { top: auto; left: 8px; right: 8px; bottom: 8px; width: auto; height: calc(50% - 8px); }
 }
 @media (prefers-reduced-motion: reduce) { #bauify-atlas.atlas-page canvas, #bauify-atlas.atlas-page .atlas-side, #bauify-atlas.atlas-page .atlas-focus, #bauify-atlas.atlas-page .atlas-first { transition: none; } #bauify-atlas.atlas-page .atlas-selection > * { animation: none; } }
 @media print { #bauify-atlas, #bauify-views { display: none; } }

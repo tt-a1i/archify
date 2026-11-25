@@ -873,6 +873,14 @@ test('Code Analysis Atlas draws the analyzed tree, focuses a module and hands a 
   await until("!document.getElementById('bauify-atlas').hidden && document.activeElement.matches('.atlas-evidence')", 'Atlas evidence did not regain focus');
   await until("document.querySelector('#bauify-atlas canvas').width > 0", 'Atlas did not reopen after evidence');
 
+  // A component opened after an Atlas finding is a new navigation context.
+  await run("document.querySelector('#bauify-atlas .atlas-evidence').click()");
+  await run("document.querySelector('g[data-node-id=app]').dispatchEvent(new MouseEvent('click', { bubbles: true }))");
+  await run("document.querySelector('#bauify-panel .fly-find').click()");
+  assert.doesNotMatch(await run("document.querySelector('#bauify-detail .back').textContent"), /Atlas/, 'component finding must not return to the earlier Atlas finding');
+  await run("document.querySelector('#bauify-detail .back').click()");
+  assert.equal(await run("document.getElementById('bauify-atlas').hidden"), true);
+
   // The Atlas 3D tab shows the same run in the same place, every item accounted for.
   const hasWebGl = await run(`(() => {
     const canvas = document.createElement('canvas');

@@ -27,9 +27,9 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
   const ir = { schema_version: 1, diagram_type: 'architecture', meta: { title: 'Source evidence', output: 'architecture.html', locale: 'en' },
     components: [{ id: 'app', type: 'backend', label: 'App', pos: [40, 40], size: [170, 64] }], connections: [] };
   const out = path.join(dir, 'out');
-  const prepare = locale => {
+  const prepare = (locale, extra = []) => {
     ir.meta.locale = locale; fs.writeFileSync(irPath, JSON.stringify(ir));
-    const prepared = spawnSync(process.execPath, [cli, 'code-analysis', 'prepare', root, '--ir', irPath, '--out', out, '--language', 'ts', '--config', config], { encoding: 'utf8' });
+    const prepared = spawnSync(process.execPath, [cli, 'code-analysis', 'prepare', root, '--ir', irPath, '--out', out, '--language', 'ts', '--config', config, ...extra], { encoding: 'utf8' });
     assert.equal(prepared.status, 0, prepared.stdout + prepared.stderr);
     return JSON.parse(prepared.stdout);
   };
@@ -337,8 +337,16 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
     await send('Input.dispatchKeyEvent', { type, key: 'ArrowDown', code: 'ArrowDown', windowsVirtualKeyCode: 40 });
   }
   assert.deepEqual(await paths(), ['src/alpha/a.ts', 'src/beta/helper.ts']);
+  await click('.atlas-evidence');
+  await click('#bauify-detail .back');
+  assert.deepEqual(await paths(), ['src/alpha/a.ts', 'src/beta/helper.ts'], 'returning from evidence restores the second selected import');
   await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: false });
   await run('new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))');
+  assert.equal(await run(`(() => {
+    const map = document.querySelector('#bauify-atlas .atlas-stage').getBoundingClientRect();
+    const details = document.querySelector('#bauify-atlas .atlas-side').getBoundingClientRect();
+    return map.bottom <= details.top + 1 && map.height >= 200;
+  })()`), true, 'the finding panel leaves the narrow map and import endpoints visible');
   assert.equal(await run(`(() => {
     const paths = document.querySelector('.atlas-import-paths');
     paths.scrollIntoView({ block: 'center' });

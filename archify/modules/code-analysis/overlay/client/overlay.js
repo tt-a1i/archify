@@ -361,6 +361,7 @@
     return findings.length ? findings.map(findingWhat).join('；') : tr(indicator.value);
   }
   function show(id) {
+    findingReturn = null;
     readerPage(tr("Component"));
     root.removeAttribute('data-bauify-source');
     var c = byId[id]; if (!c) return;
@@ -699,6 +700,7 @@
       (review.status === 'accepted' ? ("<span class=\"finding-row-state\">" + tr("Accepted")) + (f.severity === 'error' ? tr(" · still present") : '') + '</span>' : review.status === 'accepted-changed' ? ("<span class=\"finding-row-state attention\">" + tr("Accepted evidence changed · review again") + "</span>") : external && external.binding !== 'verified' ? ("<span class=\"finding-row-state attention\">" + tr("Report binding: ")) + esc(bindingLabel(external.binding).toLowerCase()) + '</span>' : '') + '</button>';
   }
   function showFindings(source) {
+    findingReturn = null;
     if (typeof source === 'string') { filters.source = source; filters.category = 'all'; filters.severity = 'all'; filters.status = 'open'; filters.unverified = false; filters.search = ''; filters.page = 0; listScroll = 0; }
     overviewMode = 'findings'; clearPick(); readerPage(tr("Findings")); root.removeAttribute('data-bauify-source');
     panel.hidden = detail.hidden = codePane.hidden = true; overview.hidden = false; setFocus([]);
@@ -745,6 +747,7 @@
     pagination.querySelectorAll('button').forEach(function (button) { button.addEventListener('click', function () { filters.page += Number(button.getAttribute('data-page')); renderFindingRows(); overview.scrollTop = 0; }); });
   }
   function showSources() {
+    findingReturn = null;
     var parent = overviewMode; overviewMode = 'sources'; readerPage(tr("Sources")); root.removeAttribute('data-bauify-source');
     panel.hidden = detail.hidden = codePane.hidden = true; overview.hidden = false; setFocus([]);
     overview.innerHTML = '<button type="button" class="back sources-back">← ' + (parent === 'findings' ? tr("Findings") : tr("Overview")) + ("</button>" + "<h3>" + tr("Sources & coverage") + "</h3>" + "<p class=\"ev\">" + tr("Report import, source binding and scan scope are separate facts.") + "</p>") + externalSources().map(function (source) {
@@ -1233,7 +1236,7 @@
   }
   function showFinding(id, parent, atlasReturn) {
     var f = findingById[id]; if (!f) return;
-    if (atlasReturn && (!findingReturn || findingReturn.parent === 'atlas')) findingReturn = { parent: 'atlas', restore: atlasReturn };
+    if (atlasReturn) findingReturn = { parent: 'atlas', restore: atlasReturn };
     parent = findingReturn ? findingReturn.parent : parent || (!overview.hidden && overviewMode === 'findings' ? 'findings' : 'summary');
     if (standalone && !findingReturn) {
       var opener = document.activeElement;
@@ -1724,6 +1727,7 @@
   }
   // A module no component on the diagram owns.
   function showOff(id) {
+    findingReturn = null;
     var m = moduleInfo[id]; if (!m) return;
     readerPage(tr('Not on the diagram')); root.removeAttribute('data-bauify-source');
     overview.hidden = true; detail.hidden = true; codePane.hidden = true; clearPick(); setFocus([]);
