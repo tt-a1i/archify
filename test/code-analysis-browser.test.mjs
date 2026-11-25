@@ -873,6 +873,12 @@ test('Code Analysis Atlas draws the analyzed tree, focuses a module and hands a 
   await until("!document.getElementById('bauify-atlas').hidden && document.activeElement.matches('.atlas-evidence')", 'Atlas evidence did not regain focus');
   await until("document.querySelector('#bauify-atlas canvas').width > 0", 'Atlas did not reopen after evidence');
 
+  // Escape from the finding heading returns to the same Atlas evidence action.
+  await run("document.querySelector('#bauify-atlas .atlas-evidence').click()");
+  await run("document.querySelector('#bauify-detail h3').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))");
+  await until("!document.getElementById('bauify-atlas').hidden && document.activeElement.matches('.atlas-evidence')", 'Escape did not restore Atlas and its evidence action');
+  assert.equal(await run("document.documentElement.getAttribute('data-bauify-atlas-finding')"), atlas.findings[complex].id);
+
   // A component opened after an Atlas finding is a new navigation context.
   await run("document.querySelector('#bauify-atlas .atlas-evidence').click()");
   await run("document.querySelector('g[data-node-id=app]').dispatchEvent(new MouseEvent('click', { bubbles: true }))");
