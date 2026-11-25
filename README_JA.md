@@ -151,7 +151,7 @@ Use archify Code Analysis on this repository: show module coupling, dependency c
 <sub>STORY · PR ウォークスルー</sub>
 
 - **Story 動画。** Agent に頼むと、どの図にもガイド付きのストーリーを追加できます。ページにはタイムラインと字幕付きの Story モードが加わり、**Export → Story video** で 1080p・60 fps の動画（WebM または MP4）に書き出せます。複数の図を 1 つのステージページや動画にまとめることもできます。[Story の書き方](archify/references/story-authoring.md)
-- **PR ウォークスルー。** Agent に PR やブランチの説明を頼むと、Archify が変更点を図の上に直接マークし、ライト／ダークの図を GitHub PR や GitLab MR に添付できます。任意の `archify-pr` Skill は、PR の準備中に実質的な変更があるときだけ提案します。[PR レビュー](archify/references/pr-review.md)
+- **PR ウォークスルー。** Agent に PR やブランチの説明を頼むと、Archify が変更点を図の上に直接マークし、ライト／ダークの図を GitHub PR や GitLab MR に添付できます。既定のインストールには `archify-pr` Skill が含まれ、PR の準備中に実質的な変更があるときだけ提案します。[PR レビュー](archify/references/pr-review.md)
 
 ```text
 Use archify to add a guided story to this diagram and export it as a video.
@@ -237,16 +237,16 @@ Install Archify for me by reading https://raw.githubusercontent.com/tt-a1i/archi
 Cursor のみにインストールする場合:
 
 ```bash
-npx -y skills@latest add https://archify.si --skill archify --agent cursor --global --copy --yes
+npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent cursor --global --copy --yes
 ```
 
 または、5 つすべてのエージェントが必要な場合のみ:
 
 ```bash
-npx -y skills@latest add https://archify.si --skill archify --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes
+npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes
 ```
 
-任意の PR コンパニオン Skill（リポジトリソースからのインストールのみ。既定のインストールは引き続き `archify` のみ）: `archify` をインストールした後、`npx -y skills@latest add tt-a1i/archify --skill archify-pr --agent cursor --global --copy --yes` で PR 変更ウォークスルーを追加できます。ドキュメント、ロックファイル、整形などの小さな変更では静かに待機し、実質的な diff のときだけ図を提案します。エージェントのグローバルルールファイルに `[archify pr: on-demand]` を書くと提案を完全に止められます。
+既定のインストールには `archify-pr` コンパニオンが含まれます。ドキュメント、ロックファイル、整形などの小さな変更では静かに待機し、PR の準備中で実質的な diff があるときだけ図を提案します。エージェントのグローバルルールファイルに `[archify pr: on-demand]` を書くと提案を止められます。`/archify` だけを残す場合は `npx -y skills@latest remove archify-pr --agent cursor --global --yes` でコンパニオンを削除できます（プロジェクトのみのインストールでは `--global` を省きます）。すでに `/archify` だけを入れている場合は、既定のインストールコマンドを再実行するか、`npx -y skills@latest add https://archify.si --skill archify-pr --agent cursor --global --copy --yes` でコンパニオンを追加できます。
 
 <details>
 <summary>その他のインストール方法と更新チェックの詳細</summary>
