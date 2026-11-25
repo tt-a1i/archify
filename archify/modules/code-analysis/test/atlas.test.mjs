@@ -24,7 +24,7 @@ function analyze(t) {
 test('atlas: only function expressions named by a binding may restore', (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-atlas-binding-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
-  fs.writeFileSync(path.join(dir, 'bindings.ts'), 'const onSave = function /* comment */ () { return 1; };\nconst wrapped = (function () { return 4; });\nconst checked = (function () { return 5; }) satisfies () => number;\nconst onCancel = function handler() { return 2; };\n{ const scoped = function () { return 3; }; }\n');
+  fs.writeFileSync(path.join(dir, 'bindings.ts'), 'const onSave = function /* comment */ () { return 1; };\nconst wrapped = (function () { return 4; });\nconst checked = (function () { return 5; }) satisfies () => number;\nconst asserted = (function () { return 6; }) as () => number;\nconst cast = <() => number>function () { return 7; };\nconst onCancel = function handler() { return 2; };\n{ const scoped = function () { return 3; }; }\n');
   const config = loadConfig();
   const { facts } = extractFacts(dir, { language: 'ts', config });
   const graph = buildGraph(facts, config);
@@ -32,6 +32,8 @@ test('atlas: only function expressions named by a binding may restore', (t) => {
   assert.equal(atlas.functions.find(fn => fn[1] === 'onSave')?.[9], true);
   assert.equal(atlas.functions.find(fn => fn[1] === 'wrapped')?.[9], true, 'parenthesized bindings stay eligible');
   assert.equal(atlas.functions.find(fn => fn[1] === 'checked')?.[9], true, 'satisfies bindings stay eligible');
+  assert.equal(atlas.functions.find(fn => fn[1] === 'asserted')?.[9], true, 'as assertions stay eligible');
+  assert.equal(atlas.functions.find(fn => fn[1] === 'cast')?.[9], true, 'angle-bracket assertions stay eligible');
   assert.equal(atlas.functions.find(fn => fn[1] === 'handler')?.[9], false);
   assert.equal(atlas.functions.find(fn => fn[1] === 'scoped')?.[9], false, 'scope is not captured as part of the binding identity');
   facts.files.find(file => file.path === 'bindings.ts').sourceText = facts.files[0].sourceText.replace('return 1', 'return 9');
