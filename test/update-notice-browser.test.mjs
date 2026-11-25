@@ -83,3 +83,62 @@ test('the update notice leaves the Viewer first screen unchanged, prints hidden,
     fs.rmSync(scratch, { recursive: true, force: true });
   }
 });
+
+// Explainer image export clones the whole page and captures 48px below the
+// shell; the notice must not reach PNG/WebP/JPG downloads.
+test('Explainer image export is unchanged by a visible update notice', {
+  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
+}, async () => {
+  const { renderExplainer } = await import('../archify/explainer/render.mjs');
+  const document = { schema_version: 1, diagram_type: 'explainer', meta: { id: 'notice-export', title: 'Notice export', locale: 'en' }, answer: { summary: 'Read the cache first.', reasons: ['Fewer database queries'], scope: 'Illustrative request path' }, panels: [{ id: 'why', title: 'Why does it work?', blocks: [{ id: 'claim', type: 'prose', text: 'A cached read is fast.' }] }], sources: [{ id: 'example', title: 'Example' }] };
+  const plainHtml = renderExplainer(document, { preparedSources: { sources: { example: { id: 'example', title: 'Example' } } }, sourceText: JSON.stringify(document) });
+  const injected = injectUpdateNotice(plainHtml, {
+    installedVersion: '2.15.0', availableVersion: '2.16.0', severity: 'normal',
+    releaseNotes: 'https://github.com/tt-a1i/archify/releases/tag/v2.16.0',
+  });
+  assert.equal(injected.embedded, true);
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-update-notice-explainer-'));
+  const plain = path.join(scratch, 'plain.html');
+  const noticed = path.join(scratch, 'noticed.html');
+  fs.writeFileSync(plain, plainHtml);
+  fs.writeFileSync(noticed, injected.html);
+  const browser = new ChromeVisualBrowser(chromePath);
+  try {
+    const session = await browser.sessionPromise;
+    await browser.cdp.send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false }, session);
+    const exported = async (file) => {
+      const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
+      loaded.catch(() => {});
+      await browser.cdp.send('Page.navigate', { url: pathToFileURL(file).href }, session);
+      await loaded;
+      const result = await browser.cdp.send('Runtime.evaluate', {
+        awaitPromise: true,
+        returnByValue: true,
+        expression: `document.fonts.ready.then(async function () {
+          var notice = document.querySelector('[data-archify-update-notice]');
+          var blob = await window.ArchifyExplainer.pageImage();
+          var bitmap = await createImageBitmap(blob), canvas = document.createElement('canvas');
+          canvas.width = bitmap.width; canvas.height = bitmap.height;
+          var context = canvas.getContext('2d'); context.drawImage(bitmap, 0, 0);
+          var bytes = context.getImageData(0, 0, canvas.width, canvas.height).data, hash = 0;
+          for (var i = 0; i < bytes.length; i++) hash = (hash * 31 + bytes[i]) >>> 0;
+          bitmap.close();
+          return { width: canvas.width, height: canvas.height, hash: hash, noticeShown: Boolean(notice) && notice.getBoundingClientRect().height > 0 };
+        })`,
+      }, session, 20000);
+      assert.equal(result.exceptionDetails, undefined, result.exceptionDetails?.exception?.description);
+      return result.result.value;
+    };
+    const base = await exported(plain);
+    const candidate = await exported(noticed);
+    assert.equal(base.noticeShown, false);
+    assert.equal(candidate.noticeShown, true);
+    assert.deepEqual(
+      { width: candidate.width, height: candidate.height, hash: candidate.hash },
+      { width: base.width, height: base.height, hash: base.hash },
+    );
+  } finally {
+    await browser.close();
+    fs.rmSync(scratch, { recursive: true, force: true });
+  }
+});

@@ -194,10 +194,19 @@ const VIEWER_FOOTER = /<footer\b[^>]*\bclass\s*=\s*"[^"]*\bpage-feedback\b[^"]*"
 export function injectUpdateNotice(html, notice) {
   const markup = updateNoticeMarkup(notice, updateNoticeLocale(html));
   if (!markup) return { html, embedded: false };
-  const lower = html.toLowerCase();
+  // Match on the original string: case-folding can change its length
+  // (e.g. Turkish U+0130), which would shift offsets into the runtime.
   const footer = VIEWER_FOOTER.exec(html);
-  let index = footer ? lower.indexOf('</footer>', footer.index + footer[0].length) : -1;
-  if (index < 0) index = lower.lastIndexOf('</body>');
+  let index = -1;
+  if (footer) {
+    const closing = /<\/footer\s*>/gi;
+    closing.lastIndex = footer.index + footer[0].length;
+    const match = closing.exec(html);
+    if (match) index = match.index;
+  }
+  if (index < 0) {
+    for (const match of html.matchAll(/<\/body\s*>/gi)) index = match.index;
+  }
   if (index < 0) return { html, embedded: false };
   return { html: `${html.slice(0, index)}${markup}${html.slice(index)}`, embedded: true };
 }

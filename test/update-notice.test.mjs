@@ -113,6 +113,22 @@ test('the Viewer footer hosts the notice; a page without a body is left unchange
   assert.deepEqual(injectUpdateNotice('<svg></svg>', notice), { html: '<svg></svg>', embedded: false });
 });
 
+// Case folding can lengthen a string (U+0130 becomes i + U+0307), so offsets
+// must come from the original HTML or the markup lands inside the runtime.
+test('a Turkish title before the footer does not shift the notice into the runtime', () => {
+  const title = 'İSTANBUL VE İZMİR İÇİN İŞLEM İZLEME VE İŞLETİM SİSTEMİ';
+  const viewer = `<html lang="tr"><head><title>${title}</title></head><body><h1>${title}</h1><FOOTER class="page-feedback">x</FOOTER ><script>var ok=1;</script></BODY></html>`;
+  const { html, embedded } = injectUpdateNotice(viewer, notice);
+  assert.equal(embedded, true);
+  const markup = html.slice(viewer.indexOf('x</FOOTER') + 1, html.indexOf('</FOOTER >'));
+  assert.match(markup, /^<style data-archify-update-notice-style="">[\s\S]*<\/div>\n$/);
+  assert.ok(html.endsWith('</FOOTER ><script>var ok=1;</script></BODY></html>'));
+  const bodyOnly = `<html><body><p>${title}</p></BODY></html>`;
+  const fallback = injectUpdateNotice(bodyOnly, notice).html;
+  assert.ok(fallback.startsWith(`<html><body><p>${title}</p><style data-archify-update-notice-style`));
+  assert.ok(fallback.endsWith('</div>\n</BODY></html>'));
+});
+
 test('the cached read never fetches or creates cache state and keeps snooze and ignore', async (t) => {
   const testFixture = fixture(t);
   const options = { releasePath: testFixture.releasePath, cacheDirectory: testFixture.cacheDirectory };
@@ -181,7 +197,7 @@ test('finalize reads the cached notice for its delivery and honors snooze and th
   };
   assert.match(finalize('outdated'), /Made with Archify 2\.15\.0 · 2\.16\.0 available/);
   const optOut = finalize('opt-out', ['--no-update-notice']);
-  assert.doesNotMatch(optOut, /data-archify-update-notice/);
+  assert.doesNotMatch(optOut, /data-archify-update-notice=""/);
   await setUpdatePreference({ releasePath: testFixture.releasePath, cacheDirectory: testFixture.cacheDirectory, eventKey: seeded.eventKey, mode: 'snooze' });
   assert.equal(finalize('snoozed'), optOut);
 });

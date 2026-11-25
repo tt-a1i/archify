@@ -195,7 +195,7 @@ test('standalone deliver and finalize receipts include one update without changi
   const deliveryReceipt = JSON.parse(deliver.stdout);
   assert.equal(deliveryReceipt.update.noticeRequired, true);
   assert.equal(deliveryReceipt.updateNotice?.embedded, true);
-  assert.match(fs.readFileSync(output, 'utf8'), /data-archify-update-notice/);
+  assert.match(fs.readFileSync(output, 'utf8'), /data-archify-update-notice=""/);
   const artifactHash = deliveryReceipt.artifact.sha256;
   const optedOut = spawnSync(process.execPath,
     [cli, 'deliver', 'architecture', input, output, '--quality', 'showcase', '--json', '--no-update-notice'],
