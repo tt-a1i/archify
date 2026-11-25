@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { fail } from '../core/index.mjs';
 import { resolveMapping } from './diagram-mapping.mjs';
@@ -7,6 +8,17 @@ const order = (a, b) => a < b ? -1 : a > b ? 1 : 0;
 const pair = (a, b) => JSON.stringify([a, b]);
 const staticImport = imp => ['static', 'export', 'require'].includes(imp.kind) && !imp.typeOnly && !imp.lazy && !imp.conditional;
 export const driftDigest = value => createHash('sha256').update(value).digest('hex');
+
+// The TS snapshot host tracks both bytes read and observed missing config files.
+export function driftResolutionInputs(root, reads) {
+  const inputs = new Map([['tsconfig.json', null]]);
+  for (const [file, content] of reads) {
+    const relative = path.relative(root, file);
+    if (relative === '..' || relative.startsWith('..' + path.sep) || path.isAbsolute(relative)) continue;
+    inputs.set(relative.split(path.sep).join('/'), content === undefined ? null : driftDigest(content));
+  }
+  return inputs;
+}
 
 function boundedText(line) {
   if (line.length <= 400) return line;
