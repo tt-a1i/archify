@@ -20,6 +20,17 @@ function analyze(t) {
   return { facts, graph, findings, atlas: buildAtlas({ graph, facts, findings }) };
 }
 
+test('atlas: function identity includes the full Python definition when present', (t) => {
+  const { facts, graph, findings } = analyze(t);
+  const fn = facts.functions.find(item => graph.fileModules[item.file]);
+  assert.ok(fn);
+  fn.sourceRange = { ...fn.sourceRange, sha256: 'metrics-only' };
+  fn.definition = { kind: 'FunctionDef', sourceRange: { ...fn.sourceRange, sha256: 'definition-with-decorators' } };
+  const atlas = buildAtlas({ graph, facts, findings });
+  const entry = atlas.functions.find(item => atlas.files[item[0]][0] === fn.file && item[1] === (fn.qualname || fn.name));
+  assert.equal(entry[8], 'definition-with-decorators');
+});
+
 test('atlas: every in-tree dependency between analyzed files is drawn once, between the right files', (t) => {
   const { facts, graph, atlas } = analyze(t);
   const paths = atlas.files.map((f) => f[0]);

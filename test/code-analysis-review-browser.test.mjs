@@ -119,9 +119,10 @@ test('Java root build module survives an earlier-sorting source after re-analysi
       return window.__archifyAtlas3d.view.saveSelection();
     })()`);
     assert.equal(javaMethod.unique, true);
+    assert.equal(javaMethod.stableName, false, 'a Java anonymous owner is order-dependent');
     fs.writeFileSync(core, 'package app; class Core { Runnable b = new Runnable() { public void run() { int y = 2; } }; Runnable a = new Runnable() { public void run() { int x = 1; } }; }\n');
     await reload3d();
-    assert.equal((await run('window.__archifyAtlas3d.view.saveSelection()'))?.digest, javaMethod.digest, '3D does not switch to a newly numbered Java anonymous method');
+    assert.equal(await run('window.__archifyAtlas3d.view.saveSelection()'), null, '3D does not switch to a newly numbered Java anonymous method');
   } else t.diagnostic('Java root 3D handoff requires WebGL and was not exercised');
 });
 test('Code Analysis marks baseline findings, re-analyzes without a restart, and keeps the last good result on failure', {
@@ -400,6 +401,12 @@ test('Code Analysis marks baseline findings, re-analyzes without a restart, and 
     const quotedAfter = await run('window.__archifyAtlas3d.view.saveSelection()');
     assert.equal(quotedAfter?.digest, quoted.digest, 'the explicitly named method survives a line shift');
     assert.equal(quotedAfter?.line, quoted.line + 1);
+    write('bindings.mjs', 'const onSave = () => 1;\n');
+    await refreshFromCurrentFocus();
+    await run(`(() => { const atlas = JSON.parse(document.getElementById('bauify-atlas-data').textContent); const i = atlas.functions.findIndex(fn => atlas.files[fn[0]][0] === 'bindings.mjs' && fn[1] === 'onSave'); if (i < 0) throw Error('binding missing'); window.__archifyAtlas3d.view.select({ type: 'function', index: i }); })()`);
+    write('bindings.mjs', 'const onCancel = () => 1;\nconst onSave = () => 2;\n');
+    await refreshFromCurrentFocus();
+    assert.equal(await run('window.__archifyAtlas3d.view.saveSelection()'), null, 'copying the old body under a different binding does not switch selection');
     write('callbacks.mjs', 'app.use(() => 1);\n');
     await refreshFromCurrentFocus();
     const callback = await run(`(() => {
@@ -409,12 +416,11 @@ test('Code Analysis marks baseline findings, re-analyzes without a restart, and 
       window.__archifyAtlas3d.view.select({ type: 'function', index: i });
       return window.__archifyAtlas3d.view.saveSelection();
     })()`);
-    assert.equal(callback.unique, true, 'the original callback has unique captured source');
+    assert.equal(callback.stableName, false, 'the callback name depends on source order');
     write('callbacks.mjs', 'app.use(() => 2);\napp.use(() => 1);\n');
     await refreshFromCurrentFocus();
-    const restoredCallback = await run('window.__archifyAtlas3d.view.saveSelection()');
-    assert.equal(restoredCallback?.digest, callback.digest, 'a newly inserted callback is not mistaken for the old selection');
-    assert.equal(restoredCallback?.line, 2, 'the original callback moves down a line');
+    assert.equal(await run('window.__archifyAtlas3d.view.saveSelection()'), null, 'a newly inserted callback is not mistaken for the old selection');
+    await run(`(() => { const atlas = JSON.parse(document.getElementById('bauify-atlas-data').textContent); const i = atlas.functions.findIndex(fn => atlas.files[fn[0]][0] === 'callbacks.mjs'); window.__archifyAtlas3d.view.select({ type: 'function', index: i }); })()`);
     write('callbacks.mjs', 'app.use(() => 1);\napp.use(() => 1);\n');
     await refreshFromCurrentFocus();
     assert.equal(await run('window.__archifyAtlas3d.view.saveSelection()'), null, 'identical callbacks have no unique captured identity');
