@@ -38,7 +38,10 @@ const MAX_CACHE_STATE_BYTES = 64 * 1_024;
 const MAX_CLAIM_OWNER_BYTES = 1_024;
 const LONGEST_ISO_TIMESTAMP = '+275760-09-13T00:00:00.000Z';
 const LOCK_STALE_MS = 30_000;
-const PREFERENCE_LOCK_WAIT_MS = 1_200;
+// A delivery's background refresh can hold the cache claim for up to 6s
+// (REFRESH_DEADLINE_MS in bin/delivery-update.mjs). A snooze or ignore requested
+// for the reminder it reported must outlast that refresh rather than be lost.
+const PREFERENCE_LOCK_WAIT_MS = 7_000;
 const LOCK_RETRY_DELAY_MS = 20;
 const DIGEST_PATTERN = /^sha256:[a-f0-9]{64}$/;
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));

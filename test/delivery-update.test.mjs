@@ -7,7 +7,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import test from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-import { checkForUpdate } from '../archify/scripts/check-update.mjs';
+import { checkForUpdate, setUpdatePreference } from '../archify/scripts/check-update.mjs';
 import { startDeliveryUpdateCheck } from '../archify/bin/delivery-update.mjs';
 import { runFinalize } from '../archify/bin/finalize.mjs';
 
@@ -451,4 +451,34 @@ process.stdout.write(JSON.stringify(result) + '\\n');
     fetchImpl: async () => { throw new Error('the refresh result must be cached'); } });
   assert.equal(cached.status, 'update_available');
   assert.equal(cached.source, 'cache');
+});
+
+test('a reminder preference set during a background refresh is not lost', async (t) => {
+  const testFixture = fixture(t);
+  await checkForUpdate({ ...testFixture,
+    now: () => Date.now() - (3 * 24 * 60 * 60 * 1_000),
+    fetchImpl: async () => new Response(JSON.stringify(manifest()), {
+      status: 200, headers: { 'content-type': 'application/json' },
+    }),
+  });
+  const server = await heldManifestServer(t);
+  const slowEnv = localManifestEnv(testFixture, server.url);
+  let refresh;
+  const offered = await startDeliveryUpdateCheck({
+    env: slowEnv, deadlineMs: 2_000,
+    onBackgroundRefresh: (background) => { refresh = background; },
+  });
+  assert.equal(offered.noticeRequired, true);
+  await server.request();
+  // The user ignores the reminder while the refresh still holds the cache claim,
+  // and the refresh confirms the same release only after a longer wait.
+  const preference = setUpdatePreference({ ...testFixture, eventKey: offered.eventKey, mode: 'ignore' });
+  await new Promise((resolve) => setTimeout(resolve, 1_500));
+  server.respond();
+  assert.deepEqual(await refreshExit(refresh), { code: 0, signal: null });
+  assert.equal((await preference).status, 'ignored');
+  const next = await startDeliveryUpdateCheck({ env: slowEnv, deadlineMs: 2_000 });
+  assert.equal(next.status, 'update_available');
+  assert.equal(next.noticeRequired, false);
+  assert.equal(next.reason, 'ignored');
 });

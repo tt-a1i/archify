@@ -1,5 +1,4 @@
 import { spawn } from 'node:child_process';
-import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -8,6 +7,8 @@ const childPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..
 // continues in the background until REFRESH_DEADLINE_MS, so that a slow but
 // reachable manifest updates the cache and the next delivery shows the notice.
 const DEADLINE_MS = 1_000;
+// Keep below the preference wait in scripts/check-update.mjs, so that a user's
+// snooze or ignore outlasts a refresh that holds the cache claim.
 const REFRESH_DEADLINE_MS = 6_000;
 const MAX_OUTPUT_BYTES = 16 * 1_024;
 
@@ -61,10 +62,6 @@ function parseMessage(line) {
   return null;
 }
 
-function absoluteEnvironmentPath(env, name) {
-  return env[name] ? { [name]: path.resolve(env[name]) } : {};
-}
-
 export function startDeliveryUpdateCheck({
   env = process.env, deadlineMs = DEADLINE_MS, refreshDeadlineMs = REFRESH_DEADLINE_MS,
   checkerPath = childPath, onBackgroundRefresh,
@@ -78,14 +75,7 @@ export function startDeliveryUpdateCheck({
       const deadlineNs = startedNs + BigInt(Math.floor(deadlineMs * 1_000_000));
       const refreshNs = startedNs + BigInt(Math.floor(refreshMs * 1_000_000));
       child = spawn(process.execPath, [checkerPath, String(deadlineNs), String(refreshNs)], {
-        // The refresh can outlive this process. Keep it out of the caller's
-        // working directory, so it does not hold that directory open.
-        cwd: os.tmpdir(),
-        env: {
-          ...env,
-          ...absoluteEnvironmentPath(env, 'ARCHIFY_UPDATE_RELEASE_PATH'),
-          ...absoluteEnvironmentPath(env, 'ARCHIFY_UPDATE_CACHE_DIRECTORY'),
-        },
+        env,
         // Only a detached process survives its parent on Windows, where Node
         // otherwise terminates children with the parent's job object.
         detached: refreshMs > deadlineMs,
