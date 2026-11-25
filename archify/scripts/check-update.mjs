@@ -38,7 +38,10 @@ const MAX_CACHE_STATE_BYTES = 64 * 1_024;
 const MAX_CLAIM_OWNER_BYTES = 1_024;
 const LONGEST_ISO_TIMESTAMP = '+275760-09-13T00:00:00.000Z';
 const LOCK_STALE_MS = 30_000;
-const PREFERENCE_LOCK_WAIT_MS = 1_200;
+// A delivery's background refresh can hold the cache claim for up to 6s
+// (REFRESH_DEADLINE_MS in bin/delivery-update.mjs). A snooze or ignore requested
+// for the reminder it reported must outlast that refresh rather than be lost.
+const PREFERENCE_LOCK_WAIT_MS = 7_000;
 const LOCK_RETRY_DELAY_MS = 20;
 const DIGEST_PATTERN = /^sha256:[a-f0-9]{64}$/;
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -1477,6 +1480,7 @@ export async function checkForUpdate({
   random = Math.random,
   timeoutMs = DEFAULT_TIMEOUT_MS,
   fetchDeadlineNs,
+  onNetworkCheck,
 } = {}) {
   if (updatesDisabled()) return silent('disabled');
   if (typeof fetchImpl !== 'function') return silent('runtime-unavailable');
@@ -1536,6 +1540,15 @@ export async function checkForUpdate({
       const remainingFetchMs = fetchDeadlineNs === undefined ? timeoutMs
         : Math.min(timeoutMs, Number(fetchDeadlineNs - process.hrtime.bigint()) / 1_000_000);
       if (remainingFetchMs <= 0) throw new Error('update fetch deadline expired during cache preparation');
+      // Let a caller with a shorter wait report the last validated candidate
+      // while this slower network request continues to completion.
+      if (typeof onNetworkCheck === 'function') {
+        try {
+          onNetworkCheck(state.candidate ? resultForCandidate(localRelease, state, { nowMs }) : null);
+        } catch {
+          // Reporting progress must not change the check or its persisted outcome.
+        }
+      }
       fetched = await fetchCandidate({
         fetchImpl,
         manifestUrl: localRelease.updateManifestUrl,

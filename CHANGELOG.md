@@ -10,8 +10,13 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 - **In-page update notice.** When the installed Archify is outdated and the reminder is not snoozed or ignored, `deliver` and `finalize` add a small dismissible footer line with both versions and the official release-notes link. It is read from the local update cache, sends nothing when the page is opened, and is hidden in print, presentation, Viewer exports, and browser evidence. Current, disabled, or opted-out deliveries (`--no-update-notice`, `ARCHIFY_UPDATE_NOTICE_DISABLED=1`) stay byte-identical.
 
+### Changed
+
+- **Default install includes `archify-pr`.** The canonical `https://archify.si` install now publishes and installs both `/archify` and `/archify-pr`. The companion still offers a diagram only for material PR diffs; add `[archify pr: on-demand]` to disable those offers, or run `npx -y skills@latest remove archify-pr` to keep only the core Skill. The website Skill index change takes effect when this revision is deployed from `main`.
+
 ### Fixed
 
+- **Update reminders on slow networks (#1486).** Delivery still waits at most about one second for the update check, but a slow manifest response now finishes in a bounded background refresh (up to about five seconds) that updates the cache, so the next delivery shows the reminder. While that refresh runs, delivery reports a previously found update; unreachable services keep the existing failure backoff.
 - **Sequence WebM playback (#1416).** Record messages and participant pulses in Live order and fit the complete sequence into the requested export.
 
 ## [3.3.1] — 2026-11-24
