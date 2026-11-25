@@ -1,0 +1,10 @@
+{
+  "templateVersion": 1,
+  "repository": "tt-a1i/archify",
+  "number": 1494,
+  "author": "tt-a1i",
+  "title": "fix: restore lifecycle final-legend guard and settle workbench Back clicks",
+  "mergedAt": "2026-11-25T15:24:27Z",
+  "mergeCommit": "a0199aab7bc1e87821c286f9b297afb8f98894ec",
+  "url": "https://github.com/tt-a1i/archify/pull/1494"
+}
