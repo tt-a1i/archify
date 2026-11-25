@@ -46,7 +46,8 @@ function boundExpressions(facts) {
       if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name)) {
         const name = node.name.text;
         declarations.set(name, (declarations.get(name) || 0) + 1);
-        const init = node.initializer;
+        let init = node.initializer;
+        while (init && (ts.isParenthesizedExpression(init) || ts.isAsExpression(init) || ts.isSatisfiesExpression?.(init) || ts.isTypeAssertionExpression(init))) init = init.expression;
         if (init && ts.isFunctionExpression(init) && !init.name && node.parent?.parent?.parent === source) expressions.push({ name, init });
       }
       ts.forEachChild(node, child => { pending.push(child); });
