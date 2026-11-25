@@ -1694,6 +1694,39 @@ async function runCli() {
   return silent('invalid-arguments');
 }
 
+// Read-only view of the last committed check for the in-page delivery notice.
+// It never fetches, claims an operation, or changes backoff and preferences,
+// so it cannot race or replace the bounded network check that owns the cache.
+export async function readCachedUpdate({
+  releasePath = defaultReleasePath,
+  cacheDirectory = defaultCacheDirectory(),
+  now = Date.now,
+} = {}) {
+  if (updatesDisabled()) return silent('disabled');
+  let localRelease;
+  try {
+    localRelease = validateLocalRelease(await readJsonFile(releasePath, MAX_LOCAL_RELEASE_BYTES));
+  } catch {
+    return silent('invalid-local-release');
+  }
+  const nowMs = Number(now());
+  if (!Number.isFinite(nowMs)) return silent('invalid-clock');
+  let stateDirectory = versionCacheDirectory(cacheDirectory, localRelease.version);
+  try {
+    // Do not create cache directories just to discover that nothing was checked.
+    await fs.lstat(stateDirectory);
+  } catch {
+    return silent('cache-empty');
+  }
+  try {
+    stateDirectory = await prepareCacheDirectory(stateDirectory);
+    const state = await readState(stateDirectory, localRelease.version);
+    return state.candidate ? resultForCandidate(localRelease, state, { nowMs }) : silent('cache-empty');
+  } catch {
+    return silent('cache-unavailable');
+  }
+}
+
 export function isMainModule({
   argvPath = process.argv[1],
   modulePath = fileURLToPath(import.meta.url),

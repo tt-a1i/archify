@@ -6,6 +6,10 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 > Development identity: `v3.3.2-dev.1`. Not a stable release.
 
+### Added
+
+- **In-page update notice.** When the installed Archify is outdated and the reminder is not snoozed or ignored, `deliver` and `finalize` add a small dismissible footer line with both versions and the official release-notes link. It is read from the local update cache, sends nothing when the page is opened, and is hidden in print, presentation, Viewer exports, and browser evidence. Current, disabled, or opted-out deliveries (`--no-update-notice`, `ARCHIFY_UPDATE_NOTICE_DISABLED=1`) stay byte-identical.
+
 ### Fixed
 
 - **Sequence WebM playback (#1416).** Record messages and participant pulses in Live order and fit the complete sequence into the requested export.

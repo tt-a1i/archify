@@ -194,14 +194,25 @@ test('standalone deliver and finalize receipts include one update without changi
   assert.equal(deliver.status, 0, deliver.stdout || deliver.stderr);
   const deliveryReceipt = JSON.parse(deliver.stdout);
   assert.equal(deliveryReceipt.update.noticeRequired, true);
+  assert.equal(deliveryReceipt.updateNotice?.embedded, true);
+  assert.match(fs.readFileSync(output, 'utf8'), /data-archify-update-notice/);
   const artifactHash = deliveryReceipt.artifact.sha256;
+  const optedOut = spawnSync(process.execPath,
+    [cli, 'deliver', 'architecture', input, output, '--quality', 'showcase', '--json', '--no-update-notice'],
+    { cwd: skillRoot, encoding: 'utf8', env: environment, timeout: 15_000 });
+  assert.equal(optedOut.status, 0, optedOut.stdout || optedOut.stderr);
+  const optedOutReceipt = JSON.parse(optedOut.stdout);
+  assert.equal(optedOutReceipt.update.noticeRequired, true);
+  assert.equal(optedOutReceipt.updateNotice, undefined);
+  const diagramHash = optedOutReceipt.artifact.sha256;
+  assert.notEqual(diagramHash, artifactHash);
   const disabled = spawnSync(process.execPath,
     [cli, 'deliver', 'architecture', input, output, '--quality', 'showcase', '--json'],
     { cwd: skillRoot, encoding: 'utf8', env: { ...environment, ARCHIFY_UPDATE_CHECK_DISABLED: '1' }, timeout: 15_000 });
   assert.equal(disabled.status, 0, disabled.stdout || disabled.stderr);
   const disabledReceipt = JSON.parse(disabled.stdout);
   assert.equal(disabledReceipt.update.reason, 'disabled');
-  assert.equal(disabledReceipt.artifact.sha256, artifactHash);
+  assert.equal(disabledReceipt.artifact.sha256, diagramHash);
   const finalize = spawnSync(process.execPath,
     [cli, 'finalize', 'architecture', input, output, '--quality', 'showcase', '--json'],
     { cwd: skillRoot, encoding: 'utf8', env: environment, timeout: 30_000 });

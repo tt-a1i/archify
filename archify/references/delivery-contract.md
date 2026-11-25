@@ -275,7 +275,7 @@ Use final verified delivery only after the candidate is frozen:
 node bin/archify.mjs deliver <type> <candidate.json> <output.html> --quality showcase --json
 ```
 
-Deliver reads the specification once, writes those exact bytes to a private same-directory candidate snapshot, renders that snapshot, runs the complete artifact checker, and only replaces the target after all artifact checks pass. The JSON receipt includes SHA-256 and byte counts for both `specification` and `artifact`.
+Deliver reads the specification once, writes those exact bytes to a private same-directory candidate snapshot, renders that snapshot, runs the complete artifact checker, and only replaces the target after all artifact checks pass. The JSON receipt includes SHA-256 and byte counts for both `specification` and `artifact`. When an [update notice](update-awareness.md) is required, its page line is added before the checker runs, so the hash binds the delivered bytes and the receipt records `updateNotice`.
 
 For the ordinary agent handoff path, prefer the finalizer:
 
