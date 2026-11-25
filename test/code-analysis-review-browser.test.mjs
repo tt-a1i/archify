@@ -52,6 +52,45 @@ test('Java root build module survives an earlier-sorting source after re-analysi
   assert.notEqual(await run('performance.timeOrigin'), before, 'the updated Java analysis loaded');
   assert.equal(await run("document.getElementById('bauify-panel').hidden"), false);
   assert.match(await run("document.querySelector('#bauify-panel h3').textContent"), /\(root\)/);
+  const atlasRoot = await run(`(() => {
+    document.querySelector('.views-option[data-view=atlas]').click();
+    const atlas = JSON.parse(document.getElementById('bauify-atlas-data').textContent);
+    const item = atlas.modules.find(m => m.rootGroup);
+    if (item) window.__archifyAtlas.focusModule(item.id);
+    return item;
+  })()`);
+  assert.ok(atlasRoot, 'Atlas identifies the root build group separately from root files');
+  fs.writeFileSync(path.join(root, 'src/main/java/app/Aardvark.java'), 'package app; class Aardvark {}\n');
+  const atlasBefore = await run('performance.timeOrigin');
+  await run("document.getElementById('analysis-refresh').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); document.getElementById('analysis-refresh').dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }))");
+  const atlasDeadline = Date.now() + 60000;
+  while (Date.now() < atlasDeadline) {
+    try { if (await run(`performance.timeOrigin !== ${atlasBefore} && !history.state`)) break; } catch { /* navigation */ }
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+  assert.notEqual(await run('performance.timeOrigin'), atlasBefore);
+  assert.match(await run("document.querySelector('#bauify-atlas .atlas-selection').textContent"), /root|\./i, 'Atlas keeps the root build selection');
+  assert.equal(await run('window.__archifyAtlas.saveSelection(true).module.rootFile'), null);
+  const hasJava3d = await run(`(() => {
+    document.querySelector('.views-option[data-view=atlas3d]').click();
+    const view = window.__archifyAtlas3d.view;
+    if (!view || view.failed) return false;
+    const atlas = JSON.parse(document.getElementById('bauify-atlas-data').textContent);
+    view.select({ type: 'module', index: atlas.modules.findIndex(m => m.rootGroup) });
+    return true;
+  })()`);
+  if (hasJava3d) {
+    fs.writeFileSync(path.join(root, 'src/main/java/app/Aa.java'), 'package app; class Aa {}\n');
+    const before3d = await run('performance.timeOrigin');
+    await run("document.getElementById('analysis-refresh').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); document.getElementById('analysis-refresh').dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }))");
+    const until3d = Date.now() + 60000;
+    while (Date.now() < until3d) {
+      try { if (await run(`performance.timeOrigin !== ${before3d} && !history.state`)) break; } catch { /* navigation */ }
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    assert.notEqual(await run('performance.timeOrigin'), before3d);
+    assert.deepEqual(await run('window.__archifyAtlas3d.view.saveSelection()'), { type: 'module', path: '', rootFile: null }, '3D keeps the Java root build selection');
+  } else t.diagnostic('Java root 3D handoff requires WebGL and was not exercised');
 });
 test('Code Analysis marks baseline findings, re-analyzes without a restart, and keeps the last good result on failure', {
   skip: chrome ? false : 'Set ARCHIFY_CHROME to run Code Analysis browser coverage.',
@@ -304,15 +343,30 @@ test('Code Analysis marks baseline findings, re-analyzes without a restart, and 
     const index = atlas.functions.findIndex(fn => atlas.files[fn[0]][0] === 'complex.mjs');
     if (index < 0) throw Error('complex function missing from 3D fixture');
     view.select({ type: 'function', index });
-    return view.saveSelection().unique;
+    return true;
   })()`);
   if (has3d) {
     const before3d = await run('window.__archifyAtlas3d.view.saveSelection()');
+    assert.equal(before3d.unique, true, 'the selected fixture function has a unique name');
     write('complex.mjs', '\n' + fs.readFileSync(path.join(root, 'complex.mjs'), 'utf8'));
     await refreshFromCurrentFocus();
     const after3d = await run('window.__archifyAtlas3d.view.saveSelection()');
     assert.equal(after3d?.name, before3d.name, '3D restores the unique function after a line shift');
     assert.equal(after3d?.line, before3d.line + 1);
+    write('callbacks.mjs', 'app.use(() => 1);\n');
+    await refreshFromCurrentFocus();
+    const callback = await run(`(() => {
+      const atlas = JSON.parse(document.getElementById('bauify-atlas-data').textContent);
+      const i = atlas.functions.findIndex(fn => atlas.files[fn[0]][0] === 'callbacks.mjs');
+      if (i < 0) throw Error('callback missing from fixture');
+      window.__archifyAtlas3d.view.select({ type: 'function', index: i });
+      return window.__archifyAtlas3d.view.saveSelection();
+    })()`);
+    assert.equal(callback.stableName, false, 'anonymous callback has order-dependent identity');
+    write('callbacks.mjs', 'app.use(() => 2);\napp.use(() => 1);\n');
+    await refreshFromCurrentFocus();
+    assert.equal(await run('window.__archifyAtlas3d.view.saveSelection()'), null, 'a newly inserted callback is not mistaken for the old selection');
+    assert.match(await run("document.querySelector('.analysis-refresh-status').textContent"), /selection is no longer available/);
   } else t.diagnostic('3D re-analysis handoff requires WebGL and was not exercised');
   await run("document.querySelector('.views-option[data-view=diagram]').click()");
 
