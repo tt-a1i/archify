@@ -149,6 +149,7 @@ test('standalone workbench keeps Atlas alongside evidence, both locales/themes a
       && ${readerWidthSettled}`, 'finding reader did not return from source');
     assert.equal(await run(selectedFinding), id, 'returning from source keeps the detail selected');
     await click(`${details} .back`);
+    await wait("!document.getElementById('bauify-overview').hidden && document.getElementById('bauify-detail').hidden", 'Back did not return the reader to overview');
     assert.equal(await run(selectedFinding), id, 'the explicit Atlas opener replaces the earlier overview return context');
     assert.equal(await run("Boolean(document.querySelector('.atlas-selection .selected'))"), true);
 
