@@ -51,7 +51,7 @@ test('Motion Governor preserves mode, ownership, continuous Live flow and real c
   t.after(async () => {
     if (browser.child.exitCode === null && browser.child.signalCode === null) {
       const exited = once(browser.child, 'exit', { signal: AbortSignal.timeout(5000) }).catch(() => {});
-      await browser.cdp.send('Browser.close').catch(() => {});
+      await Promise.race([browser.cdp.send('Browser.close').catch(() => {}), exited]);
       await exited;
     }
     await browser.close();
@@ -293,7 +293,7 @@ test('Motion Governor preserves mode, ownership, continuous Live flow and real c
       const canvas = CanvasRenderingContext2D.prototype;
       const originalArc = canvas.arc, originalClear = canvas.clearRect;
       const originalMove = canvas.moveTo, originalStroke = canvas.stroke;
-      const current = new WeakMap(), seen = [];
+      const current = new WeakMap(), seen = [], cometFrames = [];
       const starts = new WeakMap(), pulses = [];
       const participants = [...svg.querySelectorAll('[data-node-id] > [data-animate="node"]')].map(element => {
         const box = element.getBBox();
@@ -316,6 +316,7 @@ test('Motion Governor preserves mode, ownership, continuous Live flow and real c
             const row = Math.round(y);
             if (seen.at(-1) !== row) seen.push(row);
             last = performance.now() - started;
+            cometFrames.push({ row, at: last });
           }
           return originalArc.apply(this, arguments);
         };
@@ -332,7 +333,7 @@ test('Motion Governor preserves mode, ownership, continuous Live flow and real c
           return originalStroke.apply(this, arguments);
         };
         const video = await Archify.motion.recordWebm({ fps: 24, duration: ${duration} });
-        return { rows, seen, peak, last, pulses, participants, elapsed: performance.now() - started, size: video.size, type: video.type };
+        return { rows, seen, peak, last, pulses, cometFrames, participants, elapsed: performance.now() - started, size: video.size, type: video.type };
       } finally {
         canvas.arc = originalArc;
         canvas.clearRect = originalClear;
@@ -348,6 +349,10 @@ test('Motion Governor preserves mode, ownership, continuous Live flow and real c
     assert.ok(result.last > duration * 0.61, 'the final authored message remains animated near the end of the timeline');
     assert.ok(new Set(result.pulses.map(pulse => pulse.id)).size >= 2, 'sender and receiver participants pulse during the recording');
     assert.ok(result.pulses.some(pulse => pulse.id === 'trace'), 'the receive-only trace participant pulses when the message arrives');
+    const traceFrames = result.cometFrames.filter(frame => frame.row === result.rows[9]);
+    const firstTracePulse = result.pulses.find(pulse => pulse.id === 'trace');
+    assert.ok(traceFrames.length && firstTracePulse.at >= traceFrames.at(-1).at - 1000 / 24 - 10,
+      'the receive-only pulse starts no earlier than the final frame of its incoming message, allowing one recording frame');
   });
 
   await t.test('settled Live node glow preserves Classic card depth across themes', async () => {
