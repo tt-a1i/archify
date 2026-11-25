@@ -278,6 +278,36 @@ test('check: unavailable TypeScript packages produce evidence without passing a 
   assert.equal(JSON.parse(restored.stdout).files, 2);
 });
 
+test('new-only keeps the last complete gate comparator through an incomplete run', t => {
+  const root = fixture(t, {
+    'analysis.json': '{"rules":{"complexity":{"function":{"warning":{"complexity":0}}}}}',
+    'src/index.ts': 'export const value = 1;',
+    'website/package.json': '{"devDependencies":{"base-config":"1.0.0"}}',
+    'website/tsconfig.json': '{"extends":"base-config/strict"}',
+    'website/index.ts': 'export const website = 1;',
+    'website/node_modules/base-config/package.json': '{"name":"base-config","version":"1.0.0"}',
+    'website/node_modules/base-config/strict.json': '{"compilerOptions":{"strict":true}}',
+  });
+  const out = path.join(root, 'out');
+  const args = ['--language', 'ts', '--config', path.join(root, 'analysis.json'), '--out', out, '--new-only', '--json'];
+  assert.equal(check(root, args).status, 0);
+  const baseline = fs.readFileSync(path.join(out, 'gate-findings.json'));
+  fs.rmSync(path.join(root, 'website/node_modules/base-config'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'src/index.ts'), 'export function choose(value: number) { if (value) return 1; return 0; }');
+  const partial = check(root, args);
+  assert.equal(partial.status, 2, partial.stdout + partial.stderr);
+  assert.deepEqual(fs.readFileSync(path.join(out, 'gate-findings.json')), baseline);
+  fs.mkdirSync(path.join(root, 'website/node_modules/base-config'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'website/node_modules/base-config/package.json'), '{"name":"base-config","version":"1.0.0"}');
+  fs.writeFileSync(path.join(root, 'website/node_modules/base-config/strict.json'), '{"compilerOptions":{"strict":true}}');
+  const restored = check(root, args);
+  assert.equal(restored.status, 1, restored.stdout + restored.stderr);
+  assert.equal(JSON.parse(restored.stdout).gate.failing.length, 1);
+  const retry = check(root, args);
+  assert.equal(retry.status, 1, retry.stdout + retry.stderr);
+  assert.deepEqual(fs.readFileSync(path.join(out, 'gate-findings.json')), baseline);
+});
+
 test('check: threshold errors stay errors and partial coverage does not change the finding gate', (t) => {
   const root = fixture(t, {
     'src/ok.py': 'def answer():\n    return 42\n',

@@ -132,14 +132,16 @@ function prepare(root, files, snapshot, { capturedOnly, mixedSdks, allowUnavaila
 
 // Both project membership and lexical extraction read the same captured source
 // bytes. External metadata can resolve a module, but cannot add source facts.
-function sourceProgram(root, files, options, inputs, snapshot) {
+function sourceProgram(root, files, options, inputs, snapshot, omitted = new Map()) {
   const programOptions = { ...options, noLib: true, types: [] };
   const host = ts.createCompilerHost(programOptions);
   host.readFile = file => {
-    const data = snapshot.contents.get(toPosix(path.relative(root, file)));
+    const relative = toPosix(path.relative(root, file));
+    if (omitted.has(relative)) return undefined;
+    const data = snapshot.contents.get(relative);
     return data === undefined ? undefined : file.endsWith('.json') ? inputs.readFile(file) : decodeTypeScriptText(data, true);
   };
-  host.fileExists = inputs.fileExists;
+  host.fileExists = file => !omitted.has(toPosix(path.relative(root, file))) && inputs.fileExists(file);
   host.directoryExists = inputs.directoryExists;
   host.getDirectories = inputs.getDirectories;
   host.getCurrentDirectory = inputs.getCurrentDirectory;
@@ -336,7 +338,7 @@ function configuredProjects(root, files, inputs, snapshot, { mixedSdks, captured
       const missingExtends = allowUnavailable && scope !== '.' && files.some(inside) && roots.every(inside)
         ? missingPackageConfigs(loaded.config, errors, inputs, path.dirname(file), compilerPath) : [];
       if (!missingExtends.length) invalidConfig(relative, errors);
-      unavailable.set(scope, { config: relative, missingExtends });
+      unavailable.set(relative, { config: relative, missingExtends });
       parsed.set(relative, null);
       followReferences(result.projectReferences);
       return null;
@@ -354,7 +356,7 @@ function configuredProjects(root, files, inputs, snapshot, { mixedSdks, captured
       const program = sourceProgram(root, roots, options, inputs, snapshot);
       for (const source of program.getSourceFiles()) members.add(toPosix(path.relative(root, source.fileName)));
     }
-    const project = { config: relative, options, members, selectionDigest };
+    const project = { config: relative, options, members, roots, selectionDigest };
     parsed.set(relative, project);
     followReferences(result.projectReferences);
     return project;
@@ -376,13 +378,23 @@ function configuredProjects(root, files, inputs, snapshot, { mixedSdks, captured
   // An unavailable base can change file selection. Omit the nested package's
   // entire selected subtree, even if another Program can read some of it.
   const omitted = new Map();
-  for (const [scope, { config }] of [...unavailable].sort(([a], [b]) => a.length - b.length || compareText(a, b))) {
+  for (const { config } of [...unavailable.values()].sort((a, b) => path.posix.dirname(a.config).length - path.posix.dirname(b.config).length || compareText(a.config, b.config))) {
+    const scope = path.posix.dirname(config);
     for (const file of files) if (file.startsWith(`${scope}/`) && !omitted.has(file)) omitted.set(file, config);
   }
   if (omitted.size && omitted.size === files.length) fail('extract/tsconfig-invalid', 'No selected sources have an available TypeScript project configuration.', {
     evidence: { projects: [...unavailable.values()] },
     supportedFixes: ['restore the TypeScript configuration dependencies before analyzing this scope'],
   });
+  if (omitted.size) for (const project of parsed.values()) {
+    if (!project) continue;
+    const roots = project.roots.filter(file => !omitted.has(file));
+    project.members = new Set(roots);
+    if (!project.options.noResolve && files.some(name => !omitted.has(name) && !project.members.has(name))) {
+      const program = sourceProgram(root, roots, project.options, inputs, snapshot, omitted);
+      for (const source of program.getSourceFiles()) project.members.add(toPosix(path.relative(root, source.fileName)));
+    }
+  }
   for (const [relative, candidates] of owners) {
     if (omitted.has(relative)) continue;
     // A nearer config can omit a source that another configured Program
@@ -404,7 +416,7 @@ function configuredProjects(root, files, inputs, snapshot, { mixedSdks, captured
   for (const project of groups.values()) {
     const members = project.members || new Set(project.files);
     if (project.config === null && files.some(file => !members.has(file))) {
-      const program = sourceProgram(root, project.files, project.options, inputs, snapshot);
+      const program = sourceProgram(root, project.files, project.options, inputs, snapshot, omitted);
       for (const source of program.getSourceFiles()) members.add(toPosix(path.relative(root, source.fileName)));
     }
     // SDK groups never exchange ASTs or callable bodies. The actual Program

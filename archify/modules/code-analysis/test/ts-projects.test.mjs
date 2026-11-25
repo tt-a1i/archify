@@ -33,6 +33,34 @@ function capture(root, settings = config) {
   return { facts, context };
 }
 
+test('partial coverage reports all missing referenced configurations in one directory', t => {
+  const root = project(t, {
+    'src/main.ts': 'export const main = 1;',
+    'website/package.json': '{"devDependencies":{"app-base":"1.0.0","tools-base":"1.0.0"}}',
+    'website/tsconfig.json': '{"files":[],"references":[{"path":"./tsconfig.app.json"},{"path":"./tsconfig.tools.json"}]}',
+    'website/tsconfig.app.json': '{"extends":"app-base/strict","include":["app.ts"]}',
+    'website/tsconfig.tools.json': '{"extends":"tools-base/strict","include":["app.ts"]}',
+    'website/app.ts': 'export const app = 1;',
+  });
+  const { facts } = capture(root);
+  assert.deepEqual(facts.languageScope.unavailableProjects.map(item => item.config), ['website/tsconfig.app.json', 'website/tsconfig.tools.json']);
+  assert.deepEqual(facts.languageScope.excludedByProject.map(item => item.file), ['website/app.ts']);
+});
+
+test('a project cannot acquire sources through an omitted project subtree', t => {
+  const root = project(t, {
+    'service/tsconfig.json': JSON.stringify({ compilerOptions: { baseUrl: '.', paths: { '#target': ['target.ts'] } }, files: ['index.ts'] }),
+    'service/index.ts': "import '../website/app';",
+    'service/target.ts': 'export const target = 1;',
+    'website/package.json': '{"devDependencies":{"missing-base":"1.0.0"}}',
+    'website/tsconfig.json': '{"extends":"missing-base/strict"}',
+    'website/app.ts': "import '../shared/index';",
+    'shared/index.ts': "import { target } from '#target'; export const value = target;",
+  });
+  const { facts } = capture(root);
+  assert.equal(facts.imports.find(item => item.from === 'shared/index.ts' && item.specifier === '#target')?.resolved, false);
+});
+
 test('nearest jsconfig and tsconfig give nested files their own resolution options', t => {
   const root = project(t, {
     'tsconfig.json': JSON.stringify({ compilerOptions: { allowJs: true, baseUrl: '.', paths: { '@target': ['root.js'] } }, include: ['*.js'] }),

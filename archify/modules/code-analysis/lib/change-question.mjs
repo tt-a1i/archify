@@ -422,8 +422,9 @@ function fileQuestion(sides, entry) {
     if (a.length !== 1 || b.length !== 1) {
       for (const [name, defs] of [['base', a], ['head', b]]) {
         const other = sides[name === 'base' ? 'head' : 'base'].files.get(entry);
+        const otherOmitted = sides[name === 'base' ? 'head' : 'base'].facts.languageScope?.excludedByProject?.some(item => item.file === entry);
         const otherCoverage = definitionCoverage[name === 'base' ? 'head' : 'base'];
-        const reason = a.length > 1 || b.length > 1 ? 'duplicate-slot' : (other && other.status !== 'valid') || otherCoverage === 'definition-regions-unavailable' ? 'counterpart-unavailable' : `${name}-only`;
+        const reason = a.length > 1 || b.length > 1 ? 'duplicate-slot' : otherOmitted || (other && other.status !== 'valid') || otherCoverage === 'definition-regions-unavailable' ? 'counterpart-unavailable' : `${name}-only`;
         for (const definition of defs) unpaired.push({ reason, ...describeDefinition(sides[name], definition) });
       }
       continue;
@@ -479,6 +480,7 @@ export function buildChangeQuestion({ question, entry, base, head, config }) {
   const fileChanges = [];
   for (const file of [...new Set([...sides.base.files.keys(), ...sides.head.files.keys()])].sort()) {
     const a = sides.base.files.get(file), b = sides.head.files.get(file);
+    if ([sides.base, sides.head].some(side => side.facts.languageScope?.excludedByProject?.some(item => item.file === file))) continue;
     if (a?.sourceText === b?.sourceText) continue;
     fileChanges.push({ file, status: !a ? 'head-only' : !b ? 'base-only' : 'text-changed',
       base: a ? { snapshotId: base.facts.repository.snapshotId, sha256: digest(a.sourceText), status: a.status } : null,

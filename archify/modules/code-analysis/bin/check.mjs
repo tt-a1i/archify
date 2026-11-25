@@ -99,10 +99,15 @@ export async function runCheck(argv) {
     }
   }
   const out = options['--out'] ? path.resolve(options['--out']) : null;
-  const previousFile = options['--compare'] ? path.resolve(options['--compare']) : out ? path.join(out, 'findings.json') : null;
+  const gateFile = out && options['--new-only'] && !options['--compare'] ? path.join(out, 'gate-findings.json') : null;
+  const pendingGate = gateFile ? gateFile + '.pending' : null;
+  const previousFile = options['--compare'] ? path.resolve(options['--compare']) : gateFile && fs.existsSync(gateFile) ? gateFile : pendingGate && fs.existsSync(pendingGate) ? null : out ? path.join(out, 'findings.json') : null;
   if (options['--compare'] && !fs.existsSync(previousFile)) fail('cli/input-invalid', `Not a file: ${options['--compare']}`, { subject: { option: '--compare' }, supportedFixes: ['pass the findings.json of an earlier run'] });
   // An explicit --compare must be readable; the automatic one in --out is optional.
-  const previous = loadPrevious(previousFile, { strict: Boolean(options['--compare']) });
+  let previous = loadPrevious(previousFile, { strict: Boolean(options['--compare']) });
+  // Old output directories have no dedicated gate comparator. A partial
+  // report is useful evidence but cannot become an automatic gating baseline.
+  if (gateFile && previous?.analysis?.coverage?.unavailableTypeScriptFiles) previous = null;
 
   const { facts, config, otherLanguages } = extractFacts(root, { language: options['--language'] || null, config: options['--config'] || null });
   const unavailableProjects = facts.languageScope?.unavailableProjects || [];
@@ -144,6 +149,7 @@ export async function runCheck(argv) {
 
   if (out) {
     fs.mkdirSync(out, { recursive: true });
+    if (gateFile && !fs.existsSync(gateFile) && previous && !previous.analysis?.coverage?.unavailableTypeScriptFiles) fs.writeFileSync(gateFile, stableJson(previous));
     for (const [name, doc] of [['raw-facts', facts], ['module-graph', graph], ['findings', findings], ['review', review], ['overview', overview]]) fs.writeFileSync(path.join(out, `${name}.json`), stableJson(doc));
   }
 
@@ -157,6 +163,10 @@ export async function runCheck(argv) {
   const previousIncomplete = newOnly && previous?.analysis?.coverage?.unavailableTypeScriptFiles;
   const incomplete = Boolean(unavailableProjects.length || previousIncomplete);
   const blocked = incomplete && failOn !== 'never';
+  if (gateFile && !incomplete && !failing.length) {
+    fs.writeFileSync(gateFile, stableJson(findings));
+    fs.rmSync(pendingGate, { force: true });
+  } else if (gateFile && !fs.existsSync(gateFile)) fs.writeFileSync(pendingGate, 'No complete passing gate comparator yet.\n');
   const status = incomplete ? 'incomplete' : failing.length ? 'failed' : 'ok';
   return {
     exitCode: blocked ? 2 : failing.length ? 1 : 0,

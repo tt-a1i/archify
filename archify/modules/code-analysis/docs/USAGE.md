@@ -121,6 +121,9 @@ prevents replacing the baseline. PR-attributed and architecture drift comparison
 require project coverage for both pinned sides. Git capture uses only its own
 resolution inputs, so a dependency installed in the working tree may resolve a
 live check but remain unavailable to a pinned comparison.
+Partial recovery currently recognizes a missing base package only when the
+package is declared in the manifest beside the nested configuration. A package
+declared solely in an ancestor workspace manifest remains a configuration error.
 
 The Go and Rust adapters compile Archify's source helper, not the target
 project. Rust's first use may fetch the helper's locked dependencies; cached

@@ -49,6 +49,25 @@ test('paired change questions disclose omitted TypeScript projects on both sides
   assert.deepEqual(brief.comparison.reasons.filter(reason => reason.code === 'typescript-project-coverage-incomplete').map(reason => reason.side).sort(), ['base', 'head']);
 });
 
+test('an omitted counterpart is not reported as a deleted source or definition', t => {
+  const files = {
+    'entry.mjs': source,
+    'website/package.json': '{"devDependencies":{"shared-config":"1.0.0"}}',
+    'website/tsconfig.json': '{"extends":"shared-config/strict"}',
+    'website/app.ts': 'export function selected() { return 1; }',
+  };
+  const args = { ...setup(t, files, files), entry: 'website/app.ts' };
+  const pkg = path.join(args.baseRoot, 'website/node_modules/shared-config');
+  fs.mkdirSync(pkg, { recursive: true });
+  fs.writeFileSync(path.join(pkg, 'package.json'), '{"name":"shared-config","version":"1.0.0"}');
+  fs.writeFileSync(path.join(pkg, 'strict.json'), '{"compilerOptions":{"strict":true}}');
+  const result = run(args);
+  assert.equal(result.status, 1, result.stderr + result.stdout);
+  const brief = JSON.parse(result.stdout);
+  assert.ok(!brief.fileChanges.items.some(item => item.file === args.entry));
+  assert.ok(brief.unpairedDefinitions.items.some(item => item.reason === 'counterpart-unavailable'));
+});
+
 test('paired multi-SDK captures disclose a changed subproject version', t => {
   const files = {
     'a/package.json': JSON.stringify({ devDependencies: { typescript: '5.9.71' } }),
