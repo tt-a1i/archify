@@ -30,7 +30,7 @@ test('landing metadata describes the full technical-diagram product and trusted 
   assert.match(landing, /<title>Archify — Technical Diagrams from Plain English<\/title>/);
   assert.match(landing, /<meta property="og:title" content="Archify — Technical Diagrams from Plain English">/);
   assert.match(landing, /An agent skill for Cursor, Claude Code, Codex CLI, OpenCode, and GitHub Copilot/);
-  assert.equal((landing.match(/npx -y skills add tt-a1i\/archify --skill archify --agent cursor --global --copy --yes/g) || []).length, 2);
+  assert.equal((landing.match(/npx -y skills add tt-a1i\/archify --skill archify --skill archify-pr --agent cursor --global --copy --yes/g) || []).length, 2);
   assert.match(landing, /From plain English<br>to architecture <em>you can trust\.<\/em>/);
 });
 

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="dark light">
-  <meta name="generator" content="archify 3.3.1">
+  <meta name="generator" content="archify 3.3.2">
   <meta name="archify-reader-contract" content="declared-wide-v1">
   <title>Deployment Release Lifecycle Diagram</title>
   <script>
@@ -5149,7 +5149,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     .c-change-badge-added     { fill: color-mix(in srgb, var(--backend-stroke) 18%, var(--mask));  stroke: var(--backend-stroke); }
     .c-change-badge-modified  { fill: color-mix(in srgb, var(--cloud-stroke) 18%, var(--mask));    stroke: var(--cloud-stroke); }
     .c-change-badge-removed   { fill: color-mix(in srgb, var(--security-stroke) 18%, var(--mask)); stroke: var(--security-stroke); }
-    .c-change-swatch-removed { stroke-dasharray: 3,2; }
+    .c-change-swatch-removed { stroke-dasharray: 0.1,2.6; stroke-linecap: round; stroke-width: 1.4; }
     .c-change-swatch-unchanged { fill: var(--mask); stroke: var(--text-dim); }
     .t-change-added, .t-change-badge-added       { fill: var(--backend-stroke); }
     .t-change-modified, .t-change-badge-modified { fill: var(--cloud-stroke); }
@@ -5160,32 +5160,38 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
     svg [data-change="added"] > :is(rect, circle, ellipse, polygon, path)[class^="c-"]:not(.c-mask) {
       stroke: var(--backend-stroke);
-      stroke-width: 2.4;
+      stroke-width: 1.75;
     }
     svg [data-change="modified"] > :is(rect, circle, ellipse, polygon, path)[class^="c-"]:not(.c-mask) {
       stroke: var(--cloud-stroke);
-      stroke-width: 2.4;
+      stroke-width: 1.75;
     }
     svg [data-change="removed"] > :is(rect, circle, ellipse, polygon, path)[class^="c-"]:not(.c-mask) {
       stroke: var(--security-stroke);
       stroke-width: 1.6;
-      stroke-dasharray: 5,4;
+      /* Fine round dots: removal must not read as the security dash (5,5). */
+      stroke-dasharray: 0.1,3.4;
+      stroke-linecap: round;
     }
     svg rect[data-change="added"][data-graph-role],
     svg [data-change="added"] > rect.c-lane-wash,
-    svg [data-change="added"] > rect.c-lane-rule { stroke: var(--backend-stroke); stroke-width: 2; stroke-dasharray: none; }
+    svg [data-change="added"] > rect.c-lane-rule { stroke: var(--backend-stroke); stroke-width: 1.25; stroke-dasharray: none; }
     svg rect[data-change="modified"][data-graph-role],
     svg [data-change="modified"] > rect.c-lane-wash,
-    svg [data-change="modified"] > rect.c-lane-rule { stroke: var(--cloud-stroke); stroke-width: 2; stroke-dasharray: none; }
+    svg [data-change="modified"] > rect.c-lane-rule { stroke: var(--cloud-stroke); stroke-width: 1.25; stroke-dasharray: none; }
     svg rect[data-change="removed"][data-graph-role],
     svg [data-change="removed"] > rect.c-lane-wash,
-    svg [data-change="removed"] > rect.c-lane-rule { stroke: var(--security-stroke); stroke-width: 1.4; stroke-dasharray: 5,4; }
+    svg [data-change="removed"] > rect.c-lane-rule { stroke: var(--security-stroke); stroke-width: 1.4; stroke-dasharray: 0.1,3.4; stroke-linecap: round; }
     svg path[data-change="added"][data-edge-from],
-    svg [data-change="added"][data-edge-from] > path { stroke: var(--backend-stroke); stroke-width: 2.4; }
+    svg [data-change="added"][data-edge-from] > path { stroke: var(--backend-stroke); stroke-width: 1.75; }
     svg path[data-change="modified"][data-edge-from],
-    svg [data-change="modified"][data-edge-from] > path { stroke: var(--cloud-stroke); stroke-width: 2.4; }
+    svg [data-change="modified"][data-edge-from] > path { stroke: var(--cloud-stroke); stroke-width: 1.75; }
     svg path[data-change="removed"][data-edge-from],
-    svg [data-change="removed"][data-edge-from] > path { stroke: var(--security-stroke); stroke-width: 1.6; stroke-dasharray: 5,4; }
+    svg [data-change="removed"][data-edge-from] > path { stroke: var(--security-stroke); stroke-width: 1.6; stroke-dasharray: 0.1,3.4; stroke-linecap: round; }
+    /* A changed edge's label stays in ink; only its +/~/− prefix carries the
+       change colour, so the label never competes with the line's colour. */
+    svg [data-change]:not([data-change="unchanged"])[data-edge-from] > text:not([data-detail]):not([class*="t-change-badge"]),
+    svg [data-change]:not([data-change="unchanged"])[data-edge-from] > g > text:not([class*="t-change-badge"]) { fill: var(--text); }
     svg [data-change="removed"],
     svg text[data-change="removed"] { opacity: 0.62; }
     svg [data-change="removed"] > text[data-node-label],
@@ -5196,10 +5202,45 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     svg [data-class-row][data-change="removed"] > text { text-decoration: line-through; }
     svg [data-emphasis] > :is(rect, circle, ellipse, polygon, path)[class^="c-"]:not(.c-mask),
     svg path[data-emphasis][data-edge-from],
-    svg [data-emphasis][data-edge-from] > path { stroke-width: 3.2; }
+    svg [data-emphasis][data-edge-from] > path { stroke-width: 2.4; }
     svg [data-emphasis] > text[data-node-label] { font-weight: 800; }
     svg [data-change-context="subdued"] { opacity: 0.48; }
     svg [data-change-context="subdued"] > :is(rect, circle, ellipse, polygon, path)[class^="c-"]:not(.c-mask) { stroke-dasharray: none; }
+    /* Change-only colour. Once a diagram carries change marks, colour means change:
+       unchanged nodes turn neutral and changed nodes take the change colour as
+       border and tint, so a type colour can never be read as "added" or
+       "modified". The node type stays readable from its icon. Card presets style
+       nodes with very specific selectors, so these review rules are important.
+       Class, ERD and tree cards recolour through their own hue variables, and
+       waterfall bars keep their service tone: their rows carry the change. */
+    svg [data-node-id][data-change-context] > :is(rect, circle, ellipse, polygon, path):not(.c-mask, .wf-solid, .wf-span, .wf-open, .tree-root, .tree-branch, .tree-leaf, .cl-type, .er-table):is(.c-frontend, .c-backend, .c-database, .c-cloud, .c-security, .c-messagebus, .c-external) {
+      fill: color-mix(in srgb, var(--text-dim) 6%, var(--mask)) !important;
+      stroke: color-mix(in srgb, var(--text-dim) 72%, var(--mask)) !important;
+    }
+    svg [data-node-id][data-change="added"] > :is(rect, circle, ellipse, polygon, path):not(.c-mask, .wf-solid, .wf-span, .wf-open, .tree-root, .tree-branch, .tree-leaf, .cl-type, .er-table):is(.c-frontend, .c-backend, .c-database, .c-cloud, .c-security, .c-messagebus, .c-external) {
+      fill: color-mix(in srgb, var(--backend-stroke) 11%, var(--mask)) !important;
+      stroke: var(--backend-stroke) !important;
+    }
+    svg [data-node-id][data-change="modified"] > :is(rect, circle, ellipse, polygon, path):not(.c-mask, .wf-solid, .wf-span, .wf-open, .tree-root, .tree-branch, .tree-leaf, .cl-type, .er-table):is(.c-frontend, .c-backend, .c-database, .c-cloud, .c-security, .c-messagebus, .c-external) {
+      fill: color-mix(in srgb, var(--cloud-stroke) 12%, var(--mask)) !important;
+      stroke: var(--cloud-stroke) !important;
+    }
+    svg [data-node-id][data-change="removed"] > :is(rect, circle, ellipse, polygon, path):not(.c-mask, .wf-solid, .wf-span, .wf-open, .tree-root, .tree-branch, .tree-leaf, .cl-type, .er-table):is(.c-frontend, .c-backend, .c-database, .c-cloud, .c-security, .c-messagebus, .c-external) {
+      fill: color-mix(in srgb, var(--security-stroke) 7%, var(--mask)) !important;
+      stroke: var(--security-stroke) !important;
+    }
+    svg path[data-change-context][data-edge-from]:is(.a-emphasis, .a-security, .a-dashed),
+    svg [data-change-context][data-edge-from] > path:is(.a-emphasis, .a-security, .a-dashed) { stroke: var(--arrow); }
+    svg [data-change-context][data-edge-from] text:is(.t-edge-emphasis, .t-edge-security, .t-edge-dashed) { fill: var(--edge-label); }
+    /* Frame titles and unchanged frames drop their type tint too; a changed frame
+       keeps its change-coloured outline and badge. */
+    svg g[data-composition-frame-kind]:is([data-change], [data-change-context]) > [data-graph-role="structural-frame-label-mask"] {
+      fill: var(--mask) !important;
+      stroke: var(--lane-stroke) !important;
+    }
+    svg g[data-composition-frame-kind]:is([data-change], [data-change-context]) > text[data-boundary-label] { fill: var(--text-muted); }
+    svg rect[data-graph-role="structural-frame"][data-change-context]:is(.c-security-group, .c-region) { stroke: var(--lane-stroke); }
+    .c-activation-review { fill: color-mix(in srgb, var(--text-dim) 14%, var(--mask)); stroke: color-mix(in srgb, var(--text-dim) 80%, var(--mask)); }
 
     /* Stable semantic exploration hooks emitted by every renderer. */
     svg [data-node-id] {
@@ -8186,6 +8227,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var vb = svg.viewBox.baseVal;
         var scale = Math.min(1, 1280 / vb.width);
         var data = serializeSvg(scale);
+        var sequence = Archify.motionGovernor && Archify.motionGovernor.sequenceRecordingPlan
+          ? Archify.motionGovernor.sequenceRecordingPlan() : null;
+        // Keep the requested WebM duration. Scale the complete live Sequence
+        // cycle into it so handoffs and the final arrival remain visible.
+        var secondsPerPlanSecond = sequence ? duration / (1000 * sequence.cycle) : 1;
 
         function createMotionScene(root) {
           var rootMatrix = root.getCTM ? root.getCTM() : null;
@@ -8227,27 +8273,33 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           }
 
           var edges = Array.prototype.slice.call(root.querySelectorAll('[data-animate="edge"]')).map(function (element, index) {
+            var cue = sequence && sequence.edges.get(element);
+            if (sequence && !cue) return null;
             var computed = getComputedStyle(element);
             return {
               points: samplesFor(element),
               color: computed.stroke && computed.stroke !== 'none' ? computed.stroke : '#22d3ee',
               width: Math.max(1.5, parseFloat(computed.strokeWidth) || 1.5),
-              delay: Math.min(12, authoredStep(element, index)) * 0.16
+              delay: cue ? cue.depart * secondsPerPlanSecond : Math.min(12, authoredStep(element, index)) * 0.16,
+              travel: cue ? cue.travel * secondsPerPlanSecond : 1.75
             };
-          }).filter(function (edge) { return edge.points.length > 1; });
+          }).filter(function (edge) { return edge && edge.points.length > 1; });
 
           var nodes = Array.prototype.slice.call(root.querySelectorAll('[data-node-id][data-animate="node"]')).map(function (element, index) {
             var box;
             try { box = element.getBBox(); } catch (_) { return null; }
             var painted = element.querySelector('[class*="c-"]') || element;
             var computed = getComputedStyle(painted);
+            var windows = sequence && sequence.nodes[element.getAttribute('data-node-id')];
             return {
               x: box.x,
               y: box.y,
               width: box.width,
               height: box.height,
               color: computed.stroke && computed.stroke !== 'none' ? computed.stroke : '#22d3ee',
-              delay: Math.min(12, authoredStep(element, index)) * 0.16
+              pulses: sequence ? (windows || []).map(function (window) {
+                return { delay: window.start * secondsPerPlanSecond, duration: 0.35 * secondsPerPlanSecond };
+              }) : [{ delay: Math.min(12, authoredStep(element, index)) * 0.16, duration: 2.6 }]
             };
           }).filter(Boolean);
 
@@ -8287,8 +8339,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           ctx.translate(-motionScene.x, -motionScene.y);
 
           motionScene.edges.forEach(function (edge) {
-            var duration = 1.75;
-            var progress = (elapsed - edge.delay) / duration;
+            var progress = (elapsed - edge.delay) / edge.travel;
             if (progress < 0 || progress > 1) return;
             var head = Math.max(0, Math.min(1, progress));
             var tail = Math.max(0, head - 0.24);
@@ -8320,9 +8371,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           });
 
           motionScene.nodes.forEach(function (node) {
-            var progress = (elapsed - node.delay) / 2.6;
-            if (progress < 0 || progress > 1) return;
-            var pulse = Math.sin(Math.PI * progress);
+            var pulse = node.pulses.reduce(function (peak, window) {
+              var progress = (elapsed - window.delay) / window.duration;
+              return progress < 0 || progress > 1 ? peak : Math.max(peak, Math.sin(Math.PI * progress));
+            }, 0);
             if (pulse <= 0.02) return;
             ctx.save();
             ctx.strokeStyle = node.color;
@@ -8835,6 +8887,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var entryStarted = false;
       var entryPending = new Set();
       var flowCount = 0;
+      var sequencePlan = null;
 
       // Runtime decoration carries geometry and tree visibility only. Keep each
       // flow beside its authored edge so transforms, clipping and crossover
@@ -9188,6 +9241,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           }
           var record = {
             index: records.length,
+            shape: shape,
             len: len,
             from: shape.getAttribute('data-edge-from') || shape.getAttribute('data-composition-edge-from') || '',
             to: shape.getAttribute('data-edge-to') || shape.getAttribute('data-composition-edge-to') || '',
@@ -9268,6 +9322,15 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var active = records.filter(function (record) { return record.active; });
         if (!active.length && !extras.length) return;
         var cycle = Math.max(RELAY.minCycle, span + RELAY.land + RELAY.rest);
+        if (choreography === 'sequence') {
+          sequencePlan = {
+            cycle: cycle,
+            edges: new Map(active.map(function (record) {
+              return [record.shape, { depart: record.depart, travel: record.travel }];
+            })),
+            nodes: windows
+          };
+        }
         writeKeyframes(active, windows, extras, cycle);
         svg.style.setProperty('--flow-cycle', cycle.toFixed(3) + 's');
         html.style.setProperty('--flow-cycle-chrome', cycle.toFixed(3) + 's');
@@ -9511,6 +9574,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
       return {
         capable: true,
+        sequenceRecordingPlan: function () { return sequencePlan; },
         pause: function () { return setPaused(true); },
         resume: function () { return setPaused(false); },
         toggle: function () { return setPaused(!readerPaused); },
