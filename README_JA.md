@@ -51,9 +51,9 @@
 
 <!-- archify-launch-video -->
 
-https://github.com/user-attachments/assets/78570807-ba1d-4737-953f-55504a378a87
+https://github.com/user-attachments/assets/6a0d6637-e3af-43af-a733-4b4b53da0542
 
-**ひと言で、リポジトリを可視化。** 約35秒の英語デモで、図の操作、ソースコードへのリンク、経路の追跡をご覧ください。[インタラクティブな作例を試す ↗](https://archify.si/gallery.html)
+**ひと言で、リポジトリを可視化。** 約60秒の英語ツアーで、リポジトリ全体の可視化、アーキテクチャ図上の診断結果、実際の PR の解説、動画書き出しをご覧ください。[インタラクティブな作例を試す ↗](https://archify.si/gallery.html)
 
 <a id="start"></a>
 

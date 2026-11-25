@@ -53,9 +53,9 @@
 
 <!-- archify-launch-video -->
 
-https://github.com/user-attachments/assets/78570807-ba1d-4737-953f-55504a378a87
+https://github.com/user-attachments/assets/6a0d6637-e3af-43af-a733-4b4b53da0542
 
-**One sentence. Your repo, mapped.** Watch the 35-second demo: explore the diagram, follow source links, and trace a path. [Try the interactive examples ↗](https://archify.si/gallery.html)
+**One sentence. Your repo, mapped.** Watch the 60-second tour: map a whole repository, put the findings on your architecture diagram, walk through a real PR, and export it as video. [Try the interactive examples ↗](https://archify.si/gallery.html)
 
 <a id="start"></a>
 

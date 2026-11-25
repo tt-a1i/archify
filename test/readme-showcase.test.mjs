@@ -312,7 +312,7 @@ test('all README languages show the brand mark and localized launch video', () =
     const demosIndex = sectionIndex(readme, filename, language.demos);
     assert.ok(markIndex >= 0 && markIndex < demosIndex, `${filename}: brand lockup is missing before the demos`);
     assert.ok(proofIndex > demosIndex, `${filename}: launch video must live in the demo section`);
-    const videoId = filename === 'README_ZH.md' ? '88cff7dd-bdf3-4b97-950c-37cc079898b1' : '78570807-ba1d-4737-953f-55504a378a87';
+    const videoId = filename === 'README_ZH.md' ? '88cff7dd-bdf3-4b97-950c-37cc079898b1' : '6a0d6637-e3af-43af-a733-4b4b53da0542';
     assert.ok(readme.includes(`\nhttps://github.com/user-attachments/assets/${videoId}\n`), `${filename}: missing standalone localized video attachment`);
     assert.ok(!readme.includes('docs/assets/archify-live-proof.gif'), `${filename}: obsolete preview remains`);
     assert.match(readme, filename === 'README_ZH.md'

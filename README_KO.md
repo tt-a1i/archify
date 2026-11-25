@@ -33,7 +33,7 @@
 
 <!-- archify-launch-video -->
 
-https://github.com/user-attachments/assets/78570807-ba1d-4737-953f-55504a378a87
+https://github.com/user-attachments/assets/6a0d6637-e3af-43af-a733-4b4b53da0542
 
 **한 문장으로 저장소를 지도처럼 파악하세요.** [인터랙티브 예제 보기 ↗](https://tt-a1i.github.io/archify/gallery.html)
 
