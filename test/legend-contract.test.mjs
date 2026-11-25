@@ -259,6 +259,12 @@ test('change review retains the lifecycle final-state key when type keys are hid
   assert.ok(kinds.includes('change-modified'), 'the changed state remains explained');
 });
 
+test('explicitly visible lifecycle final key survives hidden type keys', () => {
+  const entries = Object.fromEntries(AUTO_KINDS.lifecycle.filter(kind => kind !== 'final').map(kind => [kind, { visible: false }]));
+  entries.final = { visible: true };
+  assert.deepEqual(legendKinds(render('lifecycle', withLegend('lifecycle', { entries }))), ['final']);
+});
+
 test('label overrides round-trip through all five public renderers', () => {
   for (const type of Object.keys(FIXTURES)) {
     const kind = AUTO_KINDS[type][0];
