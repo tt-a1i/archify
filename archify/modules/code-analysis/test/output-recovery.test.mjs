@@ -12,6 +12,7 @@ import { runCheck } from '../bin/check.mjs';
 import { prepareAnalysisView } from '../bin/prepare.mjs';
 import { startAnalysisView } from '../bin/serve.mjs';
 
+const check = fileURLToPath(new URL('../bin/check.mjs', import.meta.url));
 const prepare = fileURLToPath(new URL('../bin/prepare.mjs', import.meta.url));
 const read = file => JSON.parse(fs.readFileSync(file, 'utf8'));
 
@@ -28,8 +29,8 @@ function fixture(t) {
   return { directory, root, out, write, args: [root, '--out', out, '--language', 'ts'] };
 }
 
-function fingerprints(directory) {
-  return Object.fromEntries(fs.readdirSync(directory).sort().map(name => {
+function fingerprints(directory, names = fs.readdirSync(directory)) {
+  return Object.fromEntries(names.sort().map(name => {
     const bytes = fs.readFileSync(path.join(directory, name));
     return [name, createHash('sha256').update(bytes).digest('hex')];
   }));
@@ -163,6 +164,144 @@ test('a failed rollback still requires recovery while the workbench stays open',
   assert.ok(backup, 'the move plan identifies the backup of the older report');
   assert.deepEqual(fingerprints(backup), older);
   assert.equal(fs.existsSync(current), false);
+});
+
+test('check owns the previous findings through publication and installs the new findings last', { timeout: 45000 }, async t => {
+  const f = fixture(t);
+  const args = [...f.args, '--new-only', '--json'];
+  assert.equal((await runCheck(args)).exitCode, 0);
+  const before = fingerprints(f.out);
+  f.write(true);
+  const hook = path.join(f.directory, 'hold-check.cjs');
+  fs.writeFileSync(hook, `
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const directory = ${JSON.stringify(f.directory)};
+    const out = ${JSON.stringify(f.out)};
+    const { readFileSync, renameSync } = fs;
+    function hold(event) {
+      fs.writeFileSync(path.join(directory, event), '');
+      const release = path.join(directory, event + '-release');
+      const wait = new Int32Array(new SharedArrayBuffer(4));
+      const deadline = Date.now() + 25000;
+      while (!fs.existsSync(release) && Date.now() < deadline) Atomics.wait(wait, 0, 0, 15);
+      if (!fs.existsSync(release)) throw new Error('Timed out after ' + event);
+    }
+    fs.readFileSync = (file, ...args) => {
+      const bytes = readFileSync(file, ...args);
+      if (file === path.join(out, 'findings.json')) hold('compared');
+      return bytes;
+    };
+    fs.renameSync = (from, to) => {
+      if (to === path.join(out, 'overview.json') && path.basename(path.dirname(from)) === 'next') {
+        hold('before-overview');
+      }
+      return renameSync(from, to);
+    };
+  `);
+  const release = event => fs.writeFileSync(path.join(f.directory, event + '-release'), '');
+  const first = new Promise(resolve => {
+    execFile(process.execPath, ['--require', hook, check, ...args], { encoding: 'utf8', timeout: 40000 },
+      (error, stdout, stderr) => resolve({ error, stdout, stderr }));
+  });
+  const checkAgain = () => spawnSync(process.execPath, [check, ...args], { encoding: 'utf8', timeout: 12000 });
+  try {
+    await waitFor(path.join(f.directory, 'compared'));
+    const second = checkAgain();
+    assert.equal(second.status, 2, second.stdout + second.stderr);
+    assert.equal(JSON.parse(second.stdout).diagnostics[0].code, 'analysis/output-busy');
+    assert.deepEqual(fingerprints(f.out, Object.keys(before)), before);
+    release('compared');
+    await waitFor(path.join(f.directory, 'before-overview'));
+    assert.deepEqual(fingerprints(f.out, ['findings.json']), { 'findings.json': before['findings.json'] });
+  } finally {
+    release('compared');
+    release('before-overview');
+    await first;
+  }
+  const completed = await first;
+  assert.equal(completed.error?.code, 1, completed.stdout + completed.stderr);
+  assert.ok(JSON.parse(completed.stdout).gate.failing.some(finding => finding.code === 'coupling/import-cycle'));
+  const retry = checkAgain();
+  assert.equal(retry.status, 0, retry.stdout + retry.stderr);
+  assert.deepEqual(JSON.parse(retry.stdout).gate.failing, []);
+});
+
+test('Linux reclaims a reused PID only when process and clock identities can be compared', {
+  skip: process.platform !== 'linux',
+}, async t => {
+  const f = fixture(t);
+  const { readFileSync, statSync } = fs;
+  const kill = process.kill;
+  let boot = '00000000-0000-0000-0000-000000000001';
+  let pidNamespace = 123n;
+  let timeNamespace = 456n;
+  let procPids = String(process.pid);
+  let started = '100';
+  let visible = true;
+  // Emulate distinct Linux process views without requiring namespace privileges in CI.
+  fs.statSync = (file, ...args) => {
+    if (file === '/proc/self/ns/pid') return { dev: 1n, ino: pidNamespace };
+    if (file === '/proc/self/ns/time') return { dev: 1n, ino: timeNamespace };
+    return statSync(file, ...args);
+  };
+  fs.readFileSync = (file, ...args) => {
+    if (file === '/proc/sys/kernel/random/boot_id') return boot + '\n';
+    if (file === '/proc/self/status') return `NStgid:\t${procPids}\n`;
+    if (file === '/proc/self/stat' || file === '/proc/' + process.pid + '/stat') {
+      return process.pid + ' (node) worker) S ' + '0 '.repeat(18) + started + ' 0\n';
+    }
+    return readFileSync(file, ...args);
+  };
+  process.kill = (pid, signal) => {
+    if (pid !== process.pid || signal !== 0) return kill(pid, signal);
+    if (!visible) throw Object.assign(new Error('not visible in this namespace'), { code: 'ESRCH' });
+    return true;
+  };
+  try {
+    const { withAnalysisOutput } = await import('../lib/output.mjs?original-owner');
+    let original;
+    await withAnalysisOutput(f.out, workspace => { original = workspace; });
+    fs.mkdirSync(original, { recursive: true });
+    const staged = path.join(original, 'staged.json');
+    fs.writeFileSync(staged, 'previous staging');
+    const expectBusy = async claim => {
+      await assert.rejects(claim(f.out, () => assert.fail('a foreign writer took the lock')),
+        error => error.diagnostics?.[0]?.code === 'analysis/output-busy');
+      assert.equal(fs.readFileSync(staged, 'utf8'), 'previous staging');
+    };
+
+    pidNamespace = 124n;
+    visible = false;
+    const differentPids = await import('../lib/output.mjs?different-pids');
+    await expectBusy(differentPids.withAnalysisOutput);
+
+    pidNamespace = 123n;
+    boot = '00000000-0000-0000-0000-000000000002';
+    const differentBoot = await import('../lib/output.mjs?different-boot');
+    await expectBusy(differentBoot.withAnalysisOutput);
+
+    boot = '00000000-0000-0000-0000-000000000001';
+    timeNamespace = 457n;
+    visible = true;
+    started = '200';
+    const differentClock = await import('../lib/output.mjs?different-clock');
+    await expectBusy(differentClock.withAnalysisOutput);
+
+    timeNamespace = 456n;
+    procPids = `42\t${process.pid}`;
+    const differentProcView = await import('../lib/output.mjs?different-proc-view');
+    await expectBusy(differentProcView.withAnalysisOutput);
+
+    await withAnalysisOutput(f.out, workspace => {
+      assert.notEqual(workspace, original);
+      assert.equal(fs.existsSync(original), false);
+      assert.deepEqual(fs.readdirSync(workspace), []);
+    });
+  } finally {
+    Object.assign(fs, { readFileSync, statSync });
+    process.kill = kill;
+  }
 });
 
 test('a second prepare process cannot publish into an output directory in use', { timeout: 45000 }, async t => {

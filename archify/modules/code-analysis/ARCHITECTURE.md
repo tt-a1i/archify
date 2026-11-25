@@ -149,7 +149,11 @@ After successful analysis, `<out>/analysis/` contains:
 
 Each run is written to a fresh staging directory inside the output lock. Once the return data is readable, the current result moves to `<out>/analysis.previous/` and the candidate becomes `<out>/analysis/`. A successful rollback restores both completed reports if publication fails.
 
-`check` also stages its complete output before publishing. Report publication and workbench review saves share an output-directory lock, covering the choice of automatic comparison through publication. A same-host retry after an interruption before publication discards the abandoned staging directory. Workers write to directories prepared by the lock owner. An interrupted publication or a failed rollback retains the move plan and backups for recovery. A failed rollback records a terminal state so retries can report that recovery even while the workbench process is alive.
+`check` also stages its complete output before publishing. Report publication and workbench review saves share an output-directory lock, covering the choice of automatic comparison through publication. Workers write to directories prepared by the lock owner. A retry discards staging before publication only after it can establish that the writer exited.
+
+The Linux lock label binds the writer to the current boot and PID namespace. When a PID remains visible, comparing start times requires a matching time namespace and a procfs view for the same PID namespace. A different or unverifiable identity, including a legacy lock label, leaves the lock in place. On other platforms, share a writable output directory only within one machine and its process view.
+
+An interrupted publication or a failed rollback retains the move plan and backups for recovery. A failed rollback records a terminal state so retries can report that recovery even while the workbench process is alive.
 
 The analysis HTML embeds source context for mapped and evidence files and can display existing results offline. It cannot rescan a project without the local server.
 

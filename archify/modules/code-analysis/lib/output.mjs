@@ -6,8 +6,9 @@ import { DiagnosticError, fail } from '../core/index.mjs';
 
 const RECOVERY_REQUIRED = 'analysis/output-recovery-required';
 export const OUTPUT_BUSY = 'analysis/output-busy';
-const OWNER = /^([0-9a-f]{16})-([1-9][0-9]{0,9})-[0-9a-f]{16}$/;
-const HOST = createHash('sha256').update(os.hostname()).digest('hex').slice(0, 16);
+// Read older labels for rollback diagnostics, without using them to prove ownership.
+const OWNER = /^(?<version>v2-)?(?<scope>[0-9a-f]{16}|unknown)-(?<pid>[1-9][0-9]{0,9})-[0-9a-f]{16}(?:-(?<started>[0-9]{1,20}))?$/;
+const PROCESS = processIdentity();
 const MOVE_PLAN = 'move-plan.json';
 const ROLLBACK_FAILED = 'rollback-failed';
 const RECOVERY_FIXES = ['retain the output and backups for recovery', 'use another --out directory for a new run'];
@@ -57,7 +58,8 @@ function removeVacantLock(lock) {
 }
 
 function claimOutput(lock) {
-  const label = `${HOST}-${process.pid}-${randomBytes(8).toString('hex')}`;
+  const generation = PROCESS.started ? `-${PROCESS.started}` : '';
+  const label = `v2-${PROCESS.scope ?? 'unknown'}-${process.pid}-${randomBytes(8).toString('hex')}${generation}`;
   const workspace = path.join(lock, label);
   const candidate = fs.mkdtempSync(path.join(path.dirname(lock), '.archify-analysis.claim-'));
   const claim = () => {
@@ -85,15 +87,15 @@ function claimOutput(lock) {
       busy(lock);
     }
     const [owner] = owners;
-    const ownerParts = owners.length === 1 && owner.isDirectory() ? OWNER.exec(owner.name) : null;
-    const pid = ownerParts ? Number(ownerParts[2]) : null;
-    if (!ownerParts || pid > 0x7fffffff) busy(lock, pid);
+    const identity = owners.length === 1 && owner.isDirectory() ? OWNER.exec(owner.name)?.groups : null;
+    const pid = identity ? Number(identity.pid) : null;
+    if (!identity || pid > 0x7fffffff) busy(lock, pid);
 
     const abandoned = path.join(lock, owner.name);
     const plan = path.join(abandoned, MOVE_PLAN);
     // A workbench can stay alive after its publication has stopped.
     const rollbackFailed = outputEntry(path.join(abandoned, ROLLBACK_FAILED));
-    if (!rollbackFailed && (ownerParts[1] !== HOST || processExists(pid))) busy(lock, pid);
+    if (!rollbackFailed && !ownerExited(identity, pid)) busy(lock, pid);
     if (rollbackFailed || outputEntry(plan)) {
       const message = rollbackFailed
         ? 'An analysis publication still needs recovery after a failed rollback.'
@@ -118,13 +120,61 @@ function claimOutput(lock) {
   }
 }
 
-function processExists(pid) {
+function ownerExited(owner, pid) {
+  if (!owner.version || !PROCESS.scope || owner.scope !== PROCESS.scope) return false;
   try {
     process.kill(pid, 0);
-    return true;
   } catch (error) {
-    return error.code !== 'ESRCH';
+    return error.code === 'ESRCH';
   }
+  if (!PROCESS.started || !owner.started) return false;
+  const started = linuxStartTime(pid);
+  return started !== null && started !== owner.started;
+}
+
+function processIdentity() {
+  const { platform } = process;
+  const scope = [platform, os.hostname()];
+  let started = null;
+  if (platform === 'linux') {
+    const boot = readProc('sys/kernel/random/boot_id').trim();
+    const pidNamespace = linuxNamespace('pid');
+    if (!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(boot) || !pidNamespace) return {};
+    // Start ticks are expressed in the reader's time namespace. A proc mount
+    // from an ancestor PID namespace also uses different IDs for /proc/<pid>.
+    const timeNamespace = linuxNamespace('time');
+    scope.push(boot, pidNamespace, timeNamespace);
+    const procPid = /^NStgid:[ \t]+([0-9]+)[ \t]*$/m.exec(readProc('self/status'))?.[1];
+    if (timeNamespace && procPid === String(process.pid)) started = linuxStartTime('self');
+  }
+  return { scope: createHash('sha256').update(JSON.stringify(scope)).digest('hex').slice(0, 16), started };
+}
+
+function linuxNamespace(name) {
+  try {
+    const { dev, ino } = fs.statSync(`/proc/self/ns/${name}`, { bigint: true });
+    return `${dev}:${ino}`;
+  } catch {
+    return null;
+  }
+}
+
+function readProc(file) {
+  try {
+    return fs.readFileSync(`/proc/${file}`, 'utf8');
+  } catch {
+    return '';
+  }
+}
+
+function linuxStartTime(pid) {
+  const stat = readProc(`${pid}/stat`);
+  const commandEnd = stat.lastIndexOf(') ');
+  if (commandEnd < 0) return null;
+  // The parenthesized command may contain spaces and closing parentheses.
+  // Field 22 (starttime) is the twentieth field after the command.
+  const started = stat.slice(commandEnd + 2).trim().split(/\s+/)[19];
+  return /^[0-9]{1,20}$/.test(started ?? '') ? started : null;
 }
 
 export function outputEntry(target, { directory = false } = {}) {
