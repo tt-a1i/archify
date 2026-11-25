@@ -74,6 +74,26 @@ function fixture(t) {
   return { dir, root, files, reports, config, configFile, out, baseline, args, cli, check, manifest, prepareComparison };
 }
 
+test('external workflow: a passing explicit comparison reseeds automatic checks after a tool upgrade', t => {
+  const f = fixture(t);
+  f.reports.eslint[0].messages = [];
+  write(path.join(f.root, 'reports/eslint.json'), f.reports.eslint);
+  write(path.join(f.root, 'reports/ruff.json'), []);
+  f.check(['--out', f.out, '--new-only']);
+  const manifest = f.manifest('eslint');
+  manifest.toolVersion = 'fixture-eslint-v2';
+  write(path.join(f.root, 'reports/eslint.manifest.json'), manifest);
+  f.check(['--out', f.out, '--new-only'], 2);
+  f.check(['--out', f.out]);
+  const fresh = path.join(f.dir, 'fresh.json');
+  fs.copyFileSync(path.join(f.out, 'findings.json'), fresh);
+  const oldGate = fs.readFileSync(path.join(f.out, 'gate-findings.json'));
+  f.check(['--out', f.out, '--new-only', '--compare', fresh, '--fail-on', 'never']);
+  assert.deepEqual(fs.readFileSync(path.join(f.out, 'gate-findings.json')), oldGate, 'inspection does not promote a comparator');
+  f.check(['--out', f.out, '--new-only', '--compare', fresh]);
+  f.check(['--out', f.out, '--new-only']);
+});
+
 test('external workflow: default TypeScript settings remain comparable with pre-C++ findings', async (t) => {
   const f = fixture(t);
   const originalInclude = ['**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}', '**/*.py', '**/*.java', '**/*.go', '**/*.rs'];

@@ -141,7 +141,9 @@ function sourceProgram(root, files, options, inputs, snapshot, omitted = new Map
     const data = snapshot.contents.get(relative);
     return data === undefined ? undefined : file.endsWith('.json') ? inputs.readFile(file) : decodeTypeScriptText(data, true);
   };
-  host.fileExists = file => !omitted.has(toPosix(path.relative(root, file))) && inputs.fileExists(file);
+  // Resolution must see the real first target; readFile still prevents the
+  // compiler from loading files in an unavailable project.
+  host.fileExists = inputs.fileExists;
   host.directoryExists = inputs.directoryExists;
   host.getDirectories = inputs.getDirectories;
   host.getCurrentDirectory = inputs.getCurrentDirectory;

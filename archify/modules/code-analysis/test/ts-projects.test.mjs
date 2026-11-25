@@ -61,6 +61,21 @@ test('a project cannot acquire sources through an omitted project subtree', t =>
   assert.equal(facts.imports.find(item => item.from === 'shared/index.ts' && item.specifier === '#target')?.resolved, false);
 });
 
+test('an omitted first alias target does not activate a later fallback', t => {
+  const root = project(t, {
+    'service/tsconfig.json': JSON.stringify({ compilerOptions: { baseUrl: '.', paths: { '#dep': ['../website/dep.ts', '../shared/dep.ts'], '#target': ['target.ts'] } }, files: ['index.ts'] }),
+    'service/index.ts': "import '#dep';",
+    'service/target.ts': 'export const target = 1;',
+    'website/package.json': '{"devDependencies":{"missing-base":"1.0.0"}}',
+    'website/tsconfig.json': '{"extends":"missing-base/strict"}',
+    'website/dep.ts': 'export const dep = 1;',
+    'shared/dep.ts': "import { target } from '#target'; export const value = target;",
+  });
+  const { facts } = capture(root);
+  assert.equal(facts.imports.find(item => item.from === 'shared/dep.ts' && item.specifier === '#target')?.resolved, false);
+  assert.ok(!facts.languageScope.projects.find(item => item.config === 'service/tsconfig.json').files.includes('shared/dep.ts'));
+});
+
 test('nearest jsconfig and tsconfig give nested files their own resolution options', t => {
   const root = project(t, {
     'tsconfig.json': JSON.stringify({ compilerOptions: { allowJs: true, baseUrl: '.', paths: { '@target': ['root.js'] } }, include: ['*.js'] }),
