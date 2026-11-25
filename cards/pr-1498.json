@@ -1,0 +1,10 @@
+{
+  "templateVersion": 1,
+  "repository": "tt-a1i/archify",
+  "number": 1498,
+  "author": "tt-a1i",
+  "title": "docs(site): fact-check the agent-diagrams guide against v3.3.2 (main)",
+  "mergedAt": "2026-11-25T16:08:31Z",
+  "mergeCommit": "aff5c2b2a0f8b6cdb187f5f121e965a495833f10",
+  "url": "https://github.com/tt-a1i/archify/pull/1498"
+}
