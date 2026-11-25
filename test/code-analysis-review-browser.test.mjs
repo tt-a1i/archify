@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { once } from 'node:events';
 import { test } from 'node:test';
 import { ChromeVisualBrowser, findChrome } from '../archify/bin/visual-check.mjs';
 import { startAnalysisView } from '../archify/modules/code-analysis/bin/serve.mjs';
@@ -25,7 +26,14 @@ test('Java root build module survives an earlier-sorting source after re-analysi
   view.server.on('connection', socket => { sockets.add(socket); socket.on('close', () => sockets.delete(socket)); });
   t.after(() => new Promise(resolve => { view.server.close(resolve); for (const socket of sockets) socket.destroy(); }));
   const browser = new ChromeVisualBrowser(chrome);
-  t.after(() => browser.close());
+  t.after(async () => {
+    if (browser.child.exitCode === null && browser.child.signalCode === null) {
+      const exited = once(browser.child, 'exit', { signal: AbortSignal.timeout(5000) }).catch(() => {});
+      await browser.cdp.send('Browser.close').catch(() => {});
+      await exited;
+    }
+    await browser.close();
+  });
   const session = await browser.sessionPromise;
   const send = (method, params = {}) => browser.cdp.send(method, params, session);
   const run = async expression => { const r = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }); assert.equal(r.exceptionDetails, undefined, r.exceptionDetails?.exception?.description); return r.result?.value; };
@@ -90,6 +98,30 @@ test('Java root build module survives an earlier-sorting source after re-analysi
     }
     assert.notEqual(await run('performance.timeOrigin'), before3d);
     assert.deepEqual(await run('window.__archifyAtlas3d.view.saveSelection()'), { type: 'module', path: '', rootFile: null }, '3D keeps the Java root build selection');
+    const core = path.join(root, 'src/main/java/app/Core.java');
+    fs.writeFileSync(core, 'package app; class Core { Runnable a = new Runnable() { public void run() { int x = 1; } }; }\n');
+    async function reload3d() {
+      const before = await run('performance.timeOrigin');
+      await run("document.getElementById('analysis-refresh').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); document.getElementById('analysis-refresh').dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }))");
+      const deadline = Date.now() + 60000;
+      while (Date.now() < deadline) {
+        try { if (await run(`performance.timeOrigin !== ${before} && !history.state`)) break; } catch { /* navigation */ }
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      assert.notEqual(await run('performance.timeOrigin'), before);
+    }
+    await reload3d();
+    const javaMethod = await run(`(() => {
+      const atlas = JSON.parse(document.getElementById('bauify-atlas-data').textContent);
+      const i = atlas.functions.findIndex(fn => fn[1].includes('<anonymous#'));
+      if (i < 0) throw Error('Java anonymous class method missing');
+      window.__archifyAtlas3d.view.select({ type: 'function', index: i });
+      return window.__archifyAtlas3d.view.saveSelection();
+    })()`);
+    assert.equal(javaMethod.unique, true);
+    fs.writeFileSync(core, 'package app; class Core { Runnable b = new Runnable() { public void run() { int y = 2; } }; Runnable a = new Runnable() { public void run() { int x = 1; } }; }\n');
+    await reload3d();
+    assert.equal((await run('window.__archifyAtlas3d.view.saveSelection()'))?.digest, javaMethod.digest, '3D does not switch to a newly numbered Java anonymous method');
   } else t.diagnostic('Java root 3D handoff requires WebGL and was not exercised');
 });
 test('Code Analysis marks baseline findings, re-analyzes without a restart, and keeps the last good result on failure', {
@@ -353,6 +385,21 @@ test('Code Analysis marks baseline findings, re-analyzes without a restart, and 
     const after3d = await run('window.__archifyAtlas3d.view.saveSelection()');
     assert.equal(after3d?.name, before3d.name, '3D restores the unique function after a line shift');
     assert.equal(after3d?.line, before3d.line + 1);
+    write('quoted.mjs', "const handlers = { '<anonymous>'() { return 'fallback'; } };\n");
+    await refreshFromCurrentFocus();
+    const quoted = await run(`(() => {
+      const atlas = JSON.parse(document.getElementById('bauify-atlas-data').textContent);
+      const i = atlas.functions.findIndex(fn => atlas.files[fn[0]][0] === 'quoted.mjs');
+      if (i < 0) throw Error('quoted method missing from fixture');
+      window.__archifyAtlas3d.view.select({ type: 'function', index: i });
+      return window.__archifyAtlas3d.view.saveSelection();
+    })()`);
+    assert.equal(quoted.unique, true, 'a quoted method has a unique captured definition');
+    write('quoted.mjs', "\nconst handlers = { '<anonymous>'() { return 'fallback'; } };\n");
+    await refreshFromCurrentFocus();
+    const quotedAfter = await run('window.__archifyAtlas3d.view.saveSelection()');
+    assert.equal(quotedAfter?.digest, quoted.digest, 'the explicitly named method survives a line shift');
+    assert.equal(quotedAfter?.line, quoted.line + 1);
     write('callbacks.mjs', 'app.use(() => 1);\n');
     await refreshFromCurrentFocus();
     const callback = await run(`(() => {
@@ -362,10 +409,15 @@ test('Code Analysis marks baseline findings, re-analyzes without a restart, and 
       window.__archifyAtlas3d.view.select({ type: 'function', index: i });
       return window.__archifyAtlas3d.view.saveSelection();
     })()`);
-    assert.equal(callback.stableName, false, 'anonymous callback has order-dependent identity');
+    assert.equal(callback.unique, true, 'the original callback has unique captured source');
     write('callbacks.mjs', 'app.use(() => 2);\napp.use(() => 1);\n');
     await refreshFromCurrentFocus();
-    assert.equal(await run('window.__archifyAtlas3d.view.saveSelection()'), null, 'a newly inserted callback is not mistaken for the old selection');
+    const restoredCallback = await run('window.__archifyAtlas3d.view.saveSelection()');
+    assert.equal(restoredCallback?.digest, callback.digest, 'a newly inserted callback is not mistaken for the old selection');
+    assert.equal(restoredCallback?.line, 2, 'the original callback moves down a line');
+    write('callbacks.mjs', 'app.use(() => 1);\napp.use(() => 1);\n');
+    await refreshFromCurrentFocus();
+    assert.equal(await run('window.__archifyAtlas3d.view.saveSelection()'), null, 'identical callbacks have no unique captured identity');
     assert.match(await run("document.querySelector('.analysis-refresh-status').textContent"), /selection is no longer available/);
   } else t.diagnostic('3D re-analysis handoff requires WebGL and was not exercised');
   await run("document.querySelector('.views-option[data-view=diagram]').click()");

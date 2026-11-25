@@ -685,7 +685,7 @@
     resize(); updateCamera(); renderSide(); applyMarks();
     requestAnimationFrame(frame);
     function saveSelection() {
-      if (state.fn !== -1) { const fn = FN[state.fn]; return { type: 'function', file: F[fn[0]][0], name: fn[1], line: fn[2], stableName: fn[8] === true, unique: FN.filter(candidate => candidate[0] === fn[0] && candidate[1] === fn[1]).length === 1 }; }
+      if (state.fn !== -1) { const fn = FN[state.fn]; return { type: 'function', file: F[fn[0]][0], name: fn[1], line: fn[2], digest: fn[8], unique: !!fn[8] && FN.filter(candidate => candidate[0] === fn[0] && candidate[8] === fn[8]).length === 1 }; }
       if (state.finding !== -1) return { type: 'finding', id: FD[state.finding].id };
       if (state.file !== -1) return { type: 'file', path: F[state.file][0] };
       if (state.module !== -1) { const m = M[state.module]; return { type: 'module', path: m.path, rootFile: m.path || m.rootGroup ? null : F.find(f => f[1] === state.module)?.[0] }; }
@@ -695,11 +695,10 @@
       if (!saved) return false;
       let indexes = [];
       if (saved.type === 'function') {
-        // Anonymous callback names may be renumbered when a sibling is inserted.
-        // Without an independent identity, do not reopen a potentially different function.
-        if (!saved.stableName) return true;
-        const named = FN.map((fn, i) => F[fn[0]][0] === saved.file && fn[1] === saved.name ? i : -1).filter(i => i !== -1);
-        indexes = saved.unique && named.length === 1 ? named : named.filter(i => FN[i][2] === saved.line);
+        // Names can be generated from source order. Only a unique captured
+        // definition digest in both analyses identifies the same function.
+        if (!saved.unique || !saved.digest) return true;
+        indexes = FN.map((fn, i) => F[fn[0]][0] === saved.file && fn[8] === saved.digest ? i : -1).filter(i => i !== -1);
       }
       if (saved.type === 'finding') indexes = FD.map((f, i) => f.id === saved.id ? i : -1).filter(i => i !== -1);
       if (saved.type === 'file') indexes = F.map((f, i) => f[0] === saved.path ? i : -1).filter(i => i !== -1);
