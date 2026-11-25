@@ -1704,7 +1704,7 @@
   // A module no component on the diagram owns.
   function showOff(id) {
     var m = moduleInfo[id]; if (!m) return;
-    reading = { kind: 'off', id: id, path: m.path, rootFile: m.path ? null : m.fileList[0]?.path };
+    reading = { kind: 'off', id: id, path: m.path, rootFile: m.path || m.label === '(root)' ? null : m.fileList[0]?.path };
     readerPage(tr('Not on the diagram')); root.removeAttribute('data-bauify-source');
     overview.hidden = true; detail.hidden = true; codePane.hidden = true; clearPick(); setFocus([]);
     var fs = data.findings.filter(function (f) { return (f.moduleIds || []).indexOf(id) !== -1; });
@@ -1829,7 +1829,7 @@
     else if (saved.open && page.kind === 'sources') showSources();
     else if (saved.open && page.kind === 'edge' && Object.hasOwn(byId, page.from) && Object.hasOwn(byId, page.to) && (codeEdgeByKey[page.from + '>' + page.to] || svg && Array.from(svg.querySelectorAll('path[data-edge-from][data-edge-to]')).some(function (edge) { return edge.getAttribute('data-edge-from') === page.from && edge.getAttribute('data-edge-to') === page.to; }))) showEdge(page.from, page.to);
     else if (saved.open && page.kind === 'off') {
-      var matches = (data.unmapped || []).filter(function (item) { return page.path === undefined ? item.id === page.id : (item.path ?? item.label) === page.path && (page.path || item.fileList?.[0]?.path === page.rootFile); });
+      var matches = (data.unmapped || []).filter(function (item) { return page.path === undefined ? item.id === page.id : (item.path ?? item.label) === page.path && (page.path || (item.label === '(root)' ? null : item.fileList?.[0]?.path) === page.rootFile); });
       if (matches.length === 1) showOff(matches[0].id); else { missing = true; showOverview(); }
     }
     else if (saved.open) {
@@ -1844,7 +1844,12 @@
         if (Array.isArray(saved.sourceRef)) return saved.sourceRef.every(function (value, index) { return identity.attributes[index] === value; });
         return identity.role === saved.sourceRef.role && identity.owner === saved.sourceRef.owner && sourceKeys.every(function (_key, index) { return identity.attributes[index] === saved.sourceRef.attributes[index]; });
       }) : [];
-      if (refs.length === 1) refs[0].click(); else missing = true;
+      if (refs.length === 1) {
+        // Keep the selected evidence visible when returning from its source.
+        var ancestor = refs[0].parentElement;
+        while (ancestor && ancestor !== detail) { if (ancestor.tagName === 'DETAILS') ancestor.open = true; ancestor = ancestor.parentElement; }
+        refs[0].click();
+      } else missing = true;
     }
     if (saved.collapsed) setReaderCollapsed(true);
     if (saved.view === 'atlas' || saved.view === 'atlas3d') window.__archifyAtlas?.showView(saved.view);

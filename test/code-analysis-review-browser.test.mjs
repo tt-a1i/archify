@@ -8,6 +8,51 @@ import { startAnalysisView } from '../archify/modules/code-analysis/bin/serve.mj
 import { runCheck } from '../archify/modules/code-analysis/bin/check.mjs';
 
 const chrome = process.env.ARCHIFY_CHROME ? findChrome() : null;
+test('Java root build module survives an earlier-sorting source after re-analysis', {
+  skip: chrome ? false : 'Set ARCHIFY_CHROME to run Code Analysis browser coverage.',
+}, async t => {
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-java-root-'));
+  t.after(() => fs.rmSync(scratch, { recursive: true, force: true }));
+  const root = path.join(scratch, 'repo');
+  for (const dir of ['src/main/java/app', 'nested/src/main/java/app']) fs.mkdirSync(path.join(root, dir), { recursive: true });
+  for (const file of ['pom.xml', 'nested/pom.xml']) fs.writeFileSync(path.join(root, file), '<project/>');
+  fs.writeFileSync(path.join(root, 'src/main/java/app/Core.java'), 'package app; class Core {}\n');
+  fs.writeFileSync(path.join(root, 'nested/src/main/java/app/Other.java'), 'package app; class Other {}\n');
+  const ir = path.join(scratch, 'input.json');
+  fs.writeFileSync(ir, JSON.stringify({ schema_version: 1, diagram_type: 'architecture', meta: { title: 'Java root', output: 'architecture.html' }, components: [{ id: 'app', type: 'backend', label: 'App', pos: [40, 40], size: [170, 64] }], connections: [] }));
+  const view = await startAnalysisView([root, '--ir', ir, '--out', path.join(scratch, 'view'), '--language', 'java']);
+  const sockets = new Set();
+  view.server.on('connection', socket => { sockets.add(socket); socket.on('close', () => sockets.delete(socket)); });
+  t.after(() => new Promise(resolve => { view.server.close(resolve); for (const socket of sockets) socket.destroy(); }));
+  const browser = new ChromeVisualBrowser(chrome);
+  t.after(() => browser.close());
+  const session = await browser.sessionPromise;
+  const send = (method, params = {}) => browser.cdp.send(method, params, session);
+  const run = async expression => { const r = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }); assert.equal(r.exceptionDetails, undefined, r.exceptionDetails?.exception?.description); return r.result?.value; };
+  const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
+  await send('Page.navigate', { url: view.url }); await loaded;
+  await run("document.getElementById('code-analysis-start').click()");
+  const readyBy = Date.now() + 60000;
+  while (Date.now() < readyBy) {
+    try { if (await run("Boolean(document.getElementById('bauify-analysis'))")) break; } catch { /* navigation */ }
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+  const module = await run(`(() => { const data = JSON.parse(document.getElementById('bauify-analysis').textContent); return data.unmapped.find(m => m.path === '' && m.label === '(root)'); })()`);
+  assert.ok(module, 'the root build module is present and is not mapped to the diagram');
+  await run(`window.__archifyRestoreReading({ reading: { kind: 'off', id: ${JSON.stringify(module.id)}, path: '', rootFile: null }, open: true })`);
+  assert.match(await run("document.querySelector('#bauify-panel h3').textContent"), /\(root\)/);
+  fs.writeFileSync(path.join(root, 'src/main/java/app/Alpha.java'), 'package app; class Alpha {}\n');
+  const before = await run("performance.timeOrigin");
+  await run("document.getElementById('analysis-refresh').click()");
+  const deadline = Date.now() + 60000;
+  while (Date.now() < deadline) {
+    try { if (await run(`performance.timeOrigin !== ${before} && !history.state`)) break; } catch { /* navigation */ }
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+  assert.notEqual(await run('performance.timeOrigin'), before, 'the updated Java analysis loaded');
+  assert.equal(await run("document.getElementById('bauify-panel').hidden"), false);
+  assert.match(await run("document.querySelector('#bauify-panel h3').textContent"), /\(root\)/);
+});
 test('Code Analysis marks baseline findings, re-analyzes without a restart, and keeps the last good result on failure', {
   skip: chrome ? false : 'Set ARCHIFY_CHROME to run Code Analysis browser coverage.',
 }, async t => {
@@ -243,7 +288,33 @@ test('Code Analysis marks baseline findings, re-analyzes without a restart, and 
   await refreshFromCurrentFocus();
   assert.equal(await run("document.getElementById('bauify-code').hidden"), false, 'duplicate link locations do not hide the original inline source');
   assert.ok(toolbarClicks > 0, 'the toolbar was reached by a real browser pointer');
-  await run("document.querySelector('#bauify-code .source-back').click(); document.querySelector('#bauify-detail .back').click()");
+  await run("document.querySelector('#bauify-code .source-back').click(); document.querySelector('.more-evidence').open = true; document.querySelector('.more-evidence .ref[data-file]').click()");
+  await refreshFromCurrentFocus();
+  assert.equal(await run("document.getElementById('bauify-code').hidden"), false, 'expanded rule evidence reopens its source after re-analysis');
+  await run("document.querySelector('#bauify-code .source-back').click()");
+  assert.equal(await run("document.querySelector('.more-evidence').open"), true, 'returning from restored source leaves the evidence visible');
+  assert.equal(await run("document.activeElement.matches('.more-evidence .ref[data-file]')"), true, 'returning from restored source focuses its visible evidence');
+  await run("document.querySelector('#bauify-detail .back').click()");
+
+  const has3d = await run(`(() => {
+    document.querySelector('.views-option[data-view=atlas3d]').click();
+    const view = window.__archifyAtlas3d.view;
+    if (!view || view.failed) return false;
+    const atlas = JSON.parse(document.getElementById('bauify-atlas-data').textContent);
+    const index = atlas.functions.findIndex(fn => atlas.files[fn[0]][0] === 'complex.mjs');
+    if (index < 0) throw Error('complex function missing from 3D fixture');
+    view.select({ type: 'function', index });
+    return view.saveSelection().unique;
+  })()`);
+  if (has3d) {
+    const before3d = await run('window.__archifyAtlas3d.view.saveSelection()');
+    write('complex.mjs', '\n' + fs.readFileSync(path.join(root, 'complex.mjs'), 'utf8'));
+    await refreshFromCurrentFocus();
+    const after3d = await run('window.__archifyAtlas3d.view.saveSelection()');
+    assert.equal(after3d?.name, before3d.name, '3D restores the unique function after a line shift');
+    assert.equal(after3d?.line, before3d.line + 1);
+  } else t.diagnostic('3D re-analysis handoff requires WebGL and was not exercised');
+  await run("document.querySelector('.views-option[data-view=diagram]').click()");
 
   // A failing run keeps the last good result on disk and on the page.
   const before = fs.readFileSync(path.join(out, 'analysis', 'findings.json'), 'utf8');

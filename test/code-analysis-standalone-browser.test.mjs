@@ -47,18 +47,22 @@ test('standalone workbench keeps Atlas alongside evidence, both locales/themes a
     const node = document.querySelector(${JSON.stringify(selector)});
     node.scrollIntoView({ block: 'nearest' });
     const deadline = Date.now() + 4000;
-    let stableSince = 0, previous;
+    let previous, stableSince = 0;
+    // Back transitions reveal a different scrollable panel; allow its layout
+    // to settle without delaying the other controls in the workflow.
+    const settleMs = /(?:source-back|#bauify-detail \.back)$/.test(${JSON.stringify(selector)}) ? 250 : 0;
     function poll() {
       const r = node.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
       const hit = document.elementFromPoint(x, y), valid = r.width > 0 && r.height > 0 && node.contains(hit);
       if (!valid || !previous || previous.x !== x || previous.y !== y) stableSince = Date.now();
-      else if (Date.now() - stableSince >= 250) return resolve({ x, y });
+      else if (Date.now() - stableSince >= settleMs) return resolve({ x, y });
       if (Date.now() >= deadline) return reject(new Error('Target is not stable and clickable: ' + ${JSON.stringify(selector)}));
       previous = { x, y }; requestAnimationFrame(poll);
     }
     requestAnimationFrame(poll);
   })`);
   const clickAt = async p => {
+    await send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...p });
     for (const type of ['mousePressed', 'mouseReleased']) await send('Input.dispatchMouseEvent', { type, ...p, button: 'left', clickCount: 1 });
   };
   const click = async selector => clickAt(await point(selector));
@@ -149,8 +153,10 @@ test('standalone workbench keeps Atlas alongside evidence, both locales/themes a
     await click(`${details} .inline-evidence .ref`);
     assert.equal(await run("document.getElementById('bauify-code').hidden"), false);
     await click('#bauify-code .source-back');
+    await wait("document.getElementById('bauify-code').hidden && !document.getElementById('bauify-detail').hidden", 'source did not return to its finding');
     assert.equal(await run(selectedFinding), id, 'returning from source keeps the detail selected');
     await click(`${details} .back`);
+    await wait("!document.getElementById('bauify-overview').hidden", 'finding did not return to overview');
     assert.equal(await run(selectedFinding), '', 'returning to the overview restores no selection');
     assert.equal(await run("!document.querySelector('.atlas-selection .selected')"), true);
 

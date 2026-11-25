@@ -1171,7 +1171,7 @@
       var saved = { module: state.focusModule, finding: state.finding, file: state.file, changedFile: changedSelection, scope: fileScope?.value, tab: filePane.hidden ? 'map' : 'files', query: fileQuery.value, zoom: focusZoom, view: sideView() };
       if (!portable) return saved;
       return {
-        ...saved, portable: true, module: M[saved.module] ? { path: M[saved.module].path, rootFile: M[saved.module].path ? null : F.find(function (entry) { return entry[1] === saved.module; })?.[0] } : null, finding: FD[saved.finding]?.id, file: F[saved.file]?.[0],
+        ...saved, portable: true, module: M[saved.module] ? { path: M[saved.module].path, rootFile: M[saved.module].path || M[saved.module].label === '(root)' ? null : F.find(function (entry) { return entry[1] === saved.module; })?.[0] } : null, finding: FD[saved.finding]?.id, file: F[saved.file]?.[0],
         changedFile: changedFiles[saved.changedFile]?.path,
         view: { ...saved.view, groups: [...saved.view.groups] }, fileScroll: filePane.scrollTop,
         focus: active === fileQuery ? 'search' : active === fileScope ? 'scope'
@@ -1184,7 +1184,7 @@
       var module = saved.module, finding = saved.finding, file = saved.file, changed = saved.changedFile;
       if (saved.portable) {
         var matchingModules = saved.module ? M.map(function (entry, index) {
-          var rootFile = entry.path ? null : F.find(function (file) { return file[1] === index; })?.[0];
+          var rootFile = entry.path || entry.label === '(root)' ? null : F.find(function (file) { return file[1] === index; })?.[0];
           return entry.path === saved.module.path && rootFile === saved.module.rootFile ? index : -1;
         }).filter(function (index) { return index >= 0; }) : [];
         module = matchingModules.length === 1 ? matchingModules[0] : -1;
