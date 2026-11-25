@@ -5160,11 +5160,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
     svg [data-change="added"] > :is(rect, circle, ellipse, polygon, path)[class^="c-"]:not(.c-mask) {
       stroke: var(--backend-stroke);
-      stroke-width: 2.4;
+      stroke-width: 1.75;
     }
     svg [data-change="modified"] > :is(rect, circle, ellipse, polygon, path)[class^="c-"]:not(.c-mask) {
       stroke: var(--cloud-stroke);
-      stroke-width: 2.4;
+      stroke-width: 1.75;
     }
     svg [data-change="removed"] > :is(rect, circle, ellipse, polygon, path)[class^="c-"]:not(.c-mask) {
       stroke: var(--security-stroke);
@@ -5173,19 +5173,23 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     }
     svg rect[data-change="added"][data-graph-role],
     svg [data-change="added"] > rect.c-lane-wash,
-    svg [data-change="added"] > rect.c-lane-rule { stroke: var(--backend-stroke); stroke-width: 2; stroke-dasharray: none; }
+    svg [data-change="added"] > rect.c-lane-rule { stroke: var(--backend-stroke); stroke-width: 1.25; stroke-dasharray: none; }
     svg rect[data-change="modified"][data-graph-role],
     svg [data-change="modified"] > rect.c-lane-wash,
-    svg [data-change="modified"] > rect.c-lane-rule { stroke: var(--cloud-stroke); stroke-width: 2; stroke-dasharray: none; }
+    svg [data-change="modified"] > rect.c-lane-rule { stroke: var(--cloud-stroke); stroke-width: 1.25; stroke-dasharray: none; }
     svg rect[data-change="removed"][data-graph-role],
     svg [data-change="removed"] > rect.c-lane-wash,
     svg [data-change="removed"] > rect.c-lane-rule { stroke: var(--security-stroke); stroke-width: 1.4; stroke-dasharray: 5,4; }
     svg path[data-change="added"][data-edge-from],
-    svg [data-change="added"][data-edge-from] > path { stroke: var(--backend-stroke); stroke-width: 2.4; }
+    svg [data-change="added"][data-edge-from] > path { stroke: var(--backend-stroke); stroke-width: 1.75; }
     svg path[data-change="modified"][data-edge-from],
-    svg [data-change="modified"][data-edge-from] > path { stroke: var(--cloud-stroke); stroke-width: 2.4; }
+    svg [data-change="modified"][data-edge-from] > path { stroke: var(--cloud-stroke); stroke-width: 1.75; }
     svg path[data-change="removed"][data-edge-from],
     svg [data-change="removed"][data-edge-from] > path { stroke: var(--security-stroke); stroke-width: 1.6; stroke-dasharray: 5,4; }
+    /* A changed edge's label stays in ink; only its +/~/− prefix carries the
+       change colour, so the label never competes with the line's colour. */
+    svg [data-change]:not([data-change="unchanged"])[data-edge-from] > text:not([data-detail]):not([class*="t-change-badge"]),
+    svg [data-change]:not([data-change="unchanged"])[data-edge-from] > g > text:not([class*="t-change-badge"]) { fill: var(--text); }
     svg [data-change="removed"],
     svg text[data-change="removed"] { opacity: 0.62; }
     svg [data-change="removed"] > text[data-node-label],
@@ -5196,7 +5200,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     svg [data-class-row][data-change="removed"] > text { text-decoration: line-through; }
     svg [data-emphasis] > :is(rect, circle, ellipse, polygon, path)[class^="c-"]:not(.c-mask),
     svg path[data-emphasis][data-edge-from],
-    svg [data-emphasis][data-edge-from] > path { stroke-width: 3.2; }
+    svg [data-emphasis][data-edge-from] > path { stroke-width: 2.4; }
     svg [data-emphasis] > text[data-node-label] { font-weight: 800; }
     svg [data-change-context="subdued"] { opacity: 0.48; }
     svg [data-change-context="subdued"] > :is(rect, circle, ellipse, polygon, path)[class^="c-"]:not(.c-mask) { stroke-dasharray: none; }
@@ -6230,7 +6234,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           svg[data-waterfall-ui] .wf-open-edge.t-security { stroke: var(--security-stroke); }
           svg[data-waterfall-ui] .wf-solid.c-external { fill: var(--external-stroke); }
           svg[data-waterfall-ui] .wf-open-edge.t-external { stroke: var(--external-stroke); }
-          svg[data-waterfall-ui] [data-node-id][data-emphasis] > :is(.wf-solid, .wf-span, .wf-open) { stroke-width: 2.8; }
+          svg[data-waterfall-ui] [data-node-id][data-emphasis] > :is(.wf-solid, .wf-span, .wf-open) { stroke-width: 2.4; }
         </style>
 
         <!-- Background Grid -->
