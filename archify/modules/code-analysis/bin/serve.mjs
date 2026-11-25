@@ -276,21 +276,24 @@ export async function startAnalysisView(argv, dependencies = {}) {
     if (!Array.isArray(ids) || !ids.length || ids.length > 20 || !ids.every((id) => typeof id === 'string' && /^[A-Z]{2,4}-(?:[0-9a-f]{12}|[0-9]{4,})$/.test(id))) return send(400, JSON.stringify({ error: 'ids must list 1–20 finding ids' }));
     if (expected !== undefined && (!expected || typeof expected !== 'object' || Array.isArray(expected) || ids.some((id) => typeof expected[id] !== 'string' || !/^[0-9a-f]{64}$/.test(expected[id])))) return send(400, JSON.stringify({ error: 'expected must map every selected finding id to its displayed reviewTarget digest' }));
     if (pending || reviewing) return fail409('task/analysis-running', 'An analysis or review update is running; build the task when it has finished.', ['retry after the analysis completes']);
-    if (!fs.existsSync(path.join(analysisDir, 'findings.json'))) return fail409('task/no-analysis', 'Run the analysis before building a task.', ['click Code Analysis first']);
     try {
-      const { buildTask, renderTaskMarkdown } = await import('../lib/task.mjs');
-      const { verifyTask } = await import('../lib/evidence.mjs');
-      const { loadBaseline, loadPrevious } = await import('../lib/analysis.mjs');
-      const { reviewFindings, reviewTargetDigest } = await import('../lib/review.mjs');
-      const read = (name) => JSON.parse(fs.readFileSync(path.join(analysisDir, name), 'utf8'));
-      const findings = read('findings.json'), facts = read('raw-facts.json');
-      if (expected && findings.diagnostics.some((finding) => ids.includes(finding.id) && reviewTargetDigest(finding) !== expected[finding.id])) return fail409('task/finding-changed', 'The finding changed since this page was loaded. Re-analyze to refresh the displayed claim before exporting its task.', ['refresh the analysis page and review the current finding']);
-      const review = reviewFindings(findings.diagnostics, { baseline: fs.existsSync(baselineFile) ? loadBaseline(baselineFile) : null, previous: loadPrevious(comparisonFile()), analysis: findings.analysis, files: [...facts.files, ...(findings.externalEvidence || [])].map((f) => f.path) });
-      const task = verifyTask(buildTask({ findings, facts, ids, review }), currentRoot());
-      send(200, JSON.stringify({ task, markdown: renderTaskMarkdown(task) }));
+      await withAnalysisOutput(out, async () => {
+        if (!fs.existsSync(path.join(analysisDir, 'findings.json'))) return fail409('task/no-analysis', 'Run the analysis before building a task.', ['click Code Analysis first']);
+        const { buildTask, renderTaskMarkdown } = await import('../lib/task.mjs');
+        const { verifyTask } = await import('../lib/evidence.mjs');
+        const { loadBaseline, loadPrevious } = await import('../lib/analysis.mjs');
+        const { reviewFindings, reviewTargetDigest } = await import('../lib/review.mjs');
+        const read = (name) => JSON.parse(fs.readFileSync(path.join(analysisDir, name), 'utf8'));
+        const findings = read('findings.json'), facts = read('raw-facts.json');
+        if (expected && findings.diagnostics.some((finding) => ids.includes(finding.id) && reviewTargetDigest(finding) !== expected[finding.id])) return fail409('task/finding-changed', 'The finding changed since this page was loaded. Re-analyze to refresh the displayed claim before exporting its task.', ['refresh the analysis page and review the current finding']);
+        const review = reviewFindings(findings.diagnostics, { baseline: fs.existsSync(baselineFile) ? loadBaseline(baselineFile) : null, previous: loadPrevious(comparisonFile()), analysis: findings.analysis, files: [...facts.files, ...(findings.externalEvidence || [])].map((f) => f.path) });
+        const task = verifyTask(buildTask({ findings, facts, ids, review }), currentRoot());
+        send(200, JSON.stringify({ task, markdown: renderTaskMarkdown(task) }));
+      });
     } catch (error) {
       const diagnostics = error instanceof DiagnosticError ? error.diagnostics : [{ code: 'internal/unclassified', severity: 'error', message: error.message, subject: {}, evidence: {}, supportedFixes: [] }];
-      send(error instanceof DiagnosticError ? 422 : 500, JSON.stringify({ error: diagnostics.map((d) => d.message).join('\n'), diagnostics }));
+      const status = diagnostics.some(d => d.code === OUTPUT_BUSY) ? 409 : error instanceof DiagnosticError && !needsOutputRecovery(error) ? 422 : 500;
+      send(status, JSON.stringify({ error: diagnostics.map((d) => d.message).join('\n'), diagnostics }));
     }
   };
   // A fixed baseline destination and one id per decision. Paths are never supplied

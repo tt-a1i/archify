@@ -10,6 +10,7 @@ export const OUTPUT_BUSY = 'analysis/output-busy';
 const OWNER = /^(?<version>v2-)?(?<scope>[0-9a-f]{16}|unknown)-(?<pid>[1-9][0-9]{0,9})-[0-9a-f]{16}(?:-(?<started>[0-9]{1,20}))?$/;
 const MOVE_PLAN = 'move-plan.json';
 const ROLLBACK_FAILED = 'rollback-failed';
+const unmarkedRollbacks = new Set();
 const RECOVERY_FIXES = ['retain the output and backups for recovery', 'use another --out directory for a new run'];
 
 export function needsOutputRecovery(error) {
@@ -68,7 +69,7 @@ function claimOutput(lock) {
       fs.renameSync(candidate, lock);
       return true;
     } catch (error) {
-      if (!['EEXIST', 'ENOTEMPTY', 'EPERM', 'EACCES'].includes(error.code)) throw error;
+      if (!['EEXIST', 'ENOTEMPTY', 'EPERM', 'EACCES', 'ENOTDIR'].includes(error.code)) throw error;
       return false;
     }
   };
@@ -94,7 +95,7 @@ function claimOutput(lock) {
     const abandoned = path.join(lock, owner.name);
     const plan = path.join(abandoned, MOVE_PLAN);
     // A workbench can stay alive after its publication has stopped.
-    const rollbackFailed = outputEntry(path.join(abandoned, ROLLBACK_FAILED));
+    const rollbackFailed = unmarkedRollbacks.has(owner.name) || outputEntry(path.join(abandoned, ROLLBACK_FAILED));
     if (!rollbackFailed && !ownerExited(identity, pid, claimant)) busy(lock, pid);
     if (rollbackFailed || outputEntry(plan)) {
       const message = rollbackFailed
@@ -113,7 +114,14 @@ function claimOutput(lock) {
       if (error.code === 'ENOENT') busy(lock);
       throw error;
     }
-    for (const entry of fs.readdirSync(workspace)) fs.rmSync(path.join(workspace, entry), { recursive: true, force: true });
+    try {
+      for (const entry of fs.readdirSync(workspace)) fs.rmSync(path.join(workspace, entry), { recursive: true, force: true });
+    } catch (error) {
+      // The remaining staging may still be undeletable. Restore the abandoned
+      // owner so another attempt can reclaim it once the problem is fixed.
+      fs.renameSync(workspace, abandoned);
+      throw error;
+    }
     return workspace;
   } finally {
     fs.rmSync(candidate, { recursive: true, force: true });
@@ -215,7 +223,10 @@ export function publishAnalysisMoves(moves, lock) {
         };
         // The plan already protects the backups if recording the terminal state also fails.
         try { fs.writeFileSync(path.join(lock, ROLLBACK_FAILED), '', { flag: 'wx' }); }
-        catch (markerError) { evidence.recoveryMarkerError = markerError.message; }
+        catch (markerError) {
+          unmarkedRollbacks.add(path.basename(lock));
+          evidence.recoveryMarkerError = markerError.message;
+        }
         fail(RECOVERY_REQUIRED, 'Analysis publication failed and the previous output could not be fully restored.', {
           subject: { out: path.dirname(path.dirname(lock)), lock, plan },
           evidence,

@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DiagnosticError, fail, receipt } from '../core/index.mjs';
-import { withAnalysisOutput, writeCheckOutputs } from '../lib/output.mjs';
+import { outputEntry, withAnalysisOutput, writeCheckOutputs } from '../lib/output.mjs';
 import { baselineCommand, taskCommand } from '../lib/task-command.mjs';
 
 export const USAGE = `Usage:
@@ -128,7 +128,11 @@ async function finishCheck({ root, out, options, irDoc, mapDoc, baselineFile, ex
   const { reviewFindings, isOpen } = await import('../lib/review.mjs');
   const { buildOverview, findingWhere } = await import('../overlay/overview.mjs');
   const { alignDiagram, findingModules } = await import('../overlay/inject.mjs');
-  const previous = explicitPrevious || (out ? loadPrevious(path.join(out, 'findings.json')) : null);
+  let previous = explicitPrevious;
+  if (!previous && out) {
+    const file = path.join(out, 'findings.json');
+    if (outputEntry(file)) previous = loadPrevious(file);
+  }
   const review = reviewFindings(findings.diagnostics, { baseline: loadBaseline(baselineFile), previous, analysis: findings.analysis, files: [...facts.files, ...(findings.externalEvidence || [])].map((f) => f.path) });
   if (options['--new-only'] && review.comparison && (findings.analysis.external?.length || previous?.analysis?.external?.length) && review.comparison.comparable !== true) {
     fail('external/comparison-unverified', 'New-only gating requires comparable external reports.', { evidence: { reasons: review.comparison.reasons }, supportedFixes: ['provide matching tool versions, rule configuration, complete scan scope and source-bound reports', 'run a full check without --new-only to inspect the available diagnostics'] });

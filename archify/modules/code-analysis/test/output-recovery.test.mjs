@@ -39,6 +39,26 @@ function fingerprints(directory, names = fs.readdirSync(directory)) {
 
 const ioError = () => Object.assign(new Error('injected analysis output error'), { code: 'EIO' });
 
+async function startWorkbench(t, args) {
+  const view = await startAnalysisView(args);
+  t.after(() => new Promise(resolve => {
+    view.server.close(resolve);
+    view.server.closeAllConnections();
+  }));
+  return view;
+}
+
+async function expectTaskDiagnostic(view, status, code) {
+  const response = await fetch(view.url + '/task', {
+    method: 'POST',
+    headers: { Origin: view.url, 'x-analysis-token': view.token },
+    body: JSON.stringify({ ids: ['CMP-0001'] }),
+  });
+  const body = await response.json();
+  assert.equal(response.status, status, JSON.stringify(body));
+  assert.equal(body.diagnostics[0].code, code);
+}
+
 async function waitFor(file) {
   const deadline = Date.now() + 12000;
   while (!fs.existsSync(file)) {
@@ -46,6 +66,36 @@ async function waitFor(file) {
     await pause(15);
   }
 }
+
+test('a regular file at the lock path yields an output path conflict', async t => {
+  const f = fixture(t);
+  fs.mkdirSync(f.out);
+  const lock = path.join(f.out, '.archify-analysis.lock');
+  fs.writeFileSync(lock, 'keep this file');
+  await assert.rejects(runCheck(f.args), error =>
+    error.diagnostics?.[0]?.code === 'analysis/output-path-conflict' && error.diagnostics[0].subject.file === lock);
+  assert.equal(fs.readFileSync(lock, 'utf8'), 'keep this file');
+});
+
+test('check rejects a directory at the automatic comparison path before reading it', async t => {
+  const f = fixture(t);
+  const findings = path.join(f.out, 'findings.json');
+  fs.mkdirSync(findings, { recursive: true });
+  const { readFileSync } = fs;
+  let readFindings = false;
+  fs.readFileSync = (file, ...args) => {
+    if (file === findings) readFindings = true;
+    return readFileSync(file, ...args);
+  };
+  try {
+    await assert.rejects(runCheck(f.args), error =>
+      error.diagnostics?.[0]?.code === 'analysis/output-path-conflict' && error.diagnostics[0].subject.file === findings);
+  } finally {
+    fs.readFileSync = readFileSync;
+  }
+  assert.equal(readFindings, false, 'check attempted to read the directory as a file');
+  assert.deepEqual(fs.readdirSync(f.out), ['findings.json']);
+});
 
 test('a failed check publication keeps the previous reports and fails the gate on retry', async t => {
   const f = fixture(t);
@@ -115,11 +165,7 @@ test('a failed prepare publication restores both reports and compares with the l
 test('a failed rollback still requires recovery while the workbench stays open', async t => {
   const f = fixture(t);
   const current = path.join(f.out, 'analysis'), previous = path.join(f.out, 'analysis.previous');
-  const view = await startAnalysisView(f.args);
-  t.after(() => new Promise(resolve => {
-    view.server.close(resolve);
-    view.server.closeAllConnections();
-  }));
+  const view = await startWorkbench(t, f.args);
   const refresh = async () => {
     const response = await fetch(view.url + '/analyze', {
       method: 'POST',
@@ -165,6 +211,39 @@ test('a failed rollback still requires recovery while the workbench stays open',
   assert.ok(backup, 'the move plan identifies the backup of the older report');
   assert.deepEqual(fingerprints(backup), older);
   assert.equal(fs.existsSync(current), false);
+});
+
+test('a workbench retry requires recovery even when the rollback marker could not be written', async t => {
+  const f = fixture(t);
+  await prepareAnalysisView(f.args);
+  const view = await startWorkbench(t, f.args);
+  const current = path.join(f.out, 'analysis');
+  const refresh = () => fetch(view.url + '/analyze', {
+    method: 'POST',
+    headers: { Origin: view.url, 'x-analysis-token': view.token, 'x-analysis-refresh': '1' },
+  });
+  const { renameSync, writeFileSync } = fs;
+  fs.renameSync = (from, to) => {
+    if (to === current) throw ioError();
+    return renameSync(from, to);
+  };
+  fs.writeFileSync = (file, ...args) => {
+    if (path.basename(file) === 'rollback-failed') throw Object.assign(new Error('no space for rollback marker'), { code: 'ENOSPC' });
+    return writeFileSync(file, ...args);
+  };
+  try {
+    const failed = await refresh();
+    assert.equal(failed.status, 500);
+    const [diagnostic] = (await failed.json()).diagnostics;
+    assert.equal(diagnostic.code, 'analysis/output-recovery-required');
+    assert.equal(diagnostic.evidence.recoveryMarkerError, 'no space for rollback marker');
+    assert.ok(fs.existsSync(diagnostic.subject.plan));
+  } finally {
+    Object.assign(fs, { renameSync, writeFileSync });
+  }
+  const retry = await refresh();
+  assert.equal(retry.status, 500);
+  assert.equal((await retry.json()).diagnostics[0].code, 'analysis/output-recovery-required');
 });
 
 test('check owns the previous findings through publication and installs the new findings last', { timeout: 45000 }, async t => {
@@ -304,6 +383,7 @@ test('Linux reclaims a reused PID only when process and clock identities can be 
 test('a second prepare process cannot publish into an output directory in use', { timeout: 45000 }, async t => {
   const f = fixture(t);
   await prepareAnalysisView(f.args);
+  const view = await startWorkbench(t, f.args);
   f.write(true);
   const current = path.join(f.out, 'analysis');
   const original = fingerprints(current);
@@ -331,6 +411,7 @@ test('a second prepare process cannot publish into an output directory in use', 
   });
   try {
     await waitFor(ready);
+    await expectTaskDiagnostic(view, 409, 'analysis/output-busy');
     const second = spawnSync(process.execPath, [prepare, ...f.args], { encoding: 'utf8', timeout: 12000 });
     assert.equal(second.status, 2, second.stdout + second.stderr);
     assert.equal(JSON.parse(second.stdout).diagnostics[0].code, 'analysis/output-busy');
@@ -386,6 +467,21 @@ test('a retry discards the staged report of a process stopped before publication
   fs.mkdirSync(path.join(f.out, unrelated));
   fs.writeFileSync(path.join(f.out, unrelated, 'note.txt'), 'keep');
 
+  const { rmSync } = fs;
+  const lock = path.dirname(path.dirname(abandoned));
+  fs.rmSync = (target, ...args) => {
+    // Emulate staging with contents that remain undeletable until permissions are repaired.
+    if (path.dirname(target) === lock || path.dirname(path.dirname(target)) === lock) {
+      throw Object.assign(new Error('cannot remove abandoned staging'), { code: 'EACCES' });
+    }
+    return rmSync(target, ...args);
+  };
+  try {
+    await assert.rejects(prepareAnalysisView(f.args), { code: 'EACCES' });
+  } finally {
+    fs.rmSync = rmSync;
+  }
+
   await prepareAnalysisView(f.args);
   assert.equal(fs.existsSync(abandoned), false);
   assert.deepEqual(fingerprints(path.join(f.out, 'analysis.previous')), original);
@@ -410,6 +506,7 @@ test('a prepare process killed during publication leaves both previous reports f
   await prepareAnalysisView(f.args);
   const lastGood = fingerprints(current);
   f.write(true);
+  const view = await startWorkbench(t, f.args);
 
   const ready = path.join(f.directory, 'ready');
   const hook = path.join(f.directory, 'stop-publication.cjs');
@@ -434,6 +531,7 @@ test('a prepare process killed during publication leaves both previous reports f
     await closed;
   }
 
+  await expectTaskDiagnostic(view, 500, 'analysis/output-recovery-required');
   const retry = spawnSync(process.execPath, [prepare, ...f.args], { encoding: 'utf8', timeout: 12000 });
   assert.equal(retry.status, 2, retry.stdout + retry.stderr);
   const [diagnostic] = JSON.parse(retry.stdout).diagnostics;
