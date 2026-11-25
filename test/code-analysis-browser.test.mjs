@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { once } from 'node:events';
 import { test } from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { ChromeVisualBrowser, findChrome } from '../archify/bin/visual-check.mjs';
@@ -617,7 +618,14 @@ test('Code Analysis Atlas draws the analyzed tree, focuses a module and hands a 
   view.server.on('connection', socket => { sockets.add(socket); socket.on('close', () => sockets.delete(socket)); });
   t.after(() => new Promise(resolve => { view.server.close(resolve); for (const socket of sockets) socket.destroy(); }));
   const browser = new ChromeVisualBrowser(chrome);
-  t.after(() => browser.close());
+  t.after(async () => {
+    if (browser.child.exitCode === null && browser.child.signalCode === null) {
+      const exited = once(browser.child, 'exit', { signal: AbortSignal.timeout(5000) }).catch(() => {});
+      await browser.cdp.send('Browser.close').catch(() => {});
+      await exited;
+    }
+    await browser.close();
+  });
   const session = await browser.sessionPromise;
   const send = (method, params = {}) => browser.cdp.send(method, params, session);
   const run = async expression => {
@@ -878,6 +886,11 @@ test('Code Analysis Atlas draws the analyzed tree, focuses a module and hands a 
   await run("document.querySelector('#bauify-detail h3').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))");
   await until("!document.getElementById('bauify-atlas').hidden && document.activeElement.matches('.atlas-evidence')", 'Escape did not restore Atlas and its evidence action');
   assert.equal(await run("document.documentElement.getAttribute('data-bauify-atlas-finding')"), atlas.findings[complex].id);
+
+  // Escape in 3D must not activate the hidden Classic finding's Atlas return.
+  await run("document.querySelector('#bauify-atlas .atlas-evidence').click(); document.querySelector('.views-option[data-view=atlas3d]').click(); document.querySelector('.views-option[data-view=atlas3d]').focus(); document.activeElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))");
+  assert.equal(await run("document.documentElement.getAttribute('data-bauify-views')"), 'atlas3d', 'Escape does not restore the hidden Classic finding over the active 3D view');
+  await run("document.querySelector('.views-option[data-view=atlas]').click()");
 
   // A component opened after an Atlas finding is a new navigation context.
   await run("document.querySelector('#bauify-atlas .atlas-evidence').click()");

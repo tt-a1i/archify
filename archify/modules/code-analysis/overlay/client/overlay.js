@@ -1754,7 +1754,7 @@
       if (event.key !== 'Escape' || event.defaultPrevented || !flyOpen) return;
       var t = event.target;
       if (t && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].indexOf(t.tagName || '') !== -1)) return;
-      if (!detail.hidden && findingReturn && findingReturn.parent === 'atlas') {
+      if (!root.hasAttribute('data-bauify-views') && !detail.hidden && findingReturn && findingReturn.parent === 'atlas') {
         event.preventDefault();
         event.stopPropagation();
         leaveFinding();
