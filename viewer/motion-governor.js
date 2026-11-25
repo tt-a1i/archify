@@ -36,6 +36,7 @@
       var entryStarted = false;
       var entryPending = new Set();
       var flowCount = 0;
+      var sequencePlan = null;
 
       // Runtime decoration carries geometry and tree visibility only. Keep each
       // flow beside its authored edge so transforms, clipping and crossover
@@ -389,6 +390,7 @@
           }
           var record = {
             index: records.length,
+            shape: shape,
             len: len,
             from: shape.getAttribute('data-edge-from') || shape.getAttribute('data-composition-edge-from') || '',
             to: shape.getAttribute('data-edge-to') || shape.getAttribute('data-composition-edge-to') || '',
@@ -469,6 +471,15 @@
         var active = records.filter(function (record) { return record.active; });
         if (!active.length && !extras.length) return;
         var cycle = Math.max(RELAY.minCycle, span + RELAY.land + RELAY.rest);
+        if (choreography === 'sequence') {
+          sequencePlan = {
+            cycle: cycle,
+            edges: new Map(active.map(function (record) {
+              return [record.shape, { depart: record.depart, travel: record.travel }];
+            })),
+            nodes: windows
+          };
+        }
         writeKeyframes(active, windows, extras, cycle);
         svg.style.setProperty('--flow-cycle', cycle.toFixed(3) + 's');
         html.style.setProperty('--flow-cycle-chrome', cycle.toFixed(3) + 's');
@@ -712,6 +723,7 @@
 
       return {
         capable: true,
+        sequenceRecordingPlan: function () { return sequencePlan; },
         pause: function () { return setPaused(true); },
         resume: function () { return setPaused(false); },
         toggle: function () { return setPaused(!readerPaused); },

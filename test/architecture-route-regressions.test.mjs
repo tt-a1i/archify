@@ -11,7 +11,7 @@ import { arrowheadTriangle, maskCoversArrowhead } from '../archify/renderers/sha
 import { drawnPathRectClearance, prepareCrossingPath } from '../archify/renderers/shared/route-crossings.mjs';
 import { measuredCrossingPairs, routeSpanMeasures, sharedNeighborCandidates } from '../archify/renderers/architecture/automatic-placement-candidates.mjs';
 import { connectionLabelBoxAt, createArchitectureRouter, parallelRunMeasures } from '../archify/renderers/architecture/routing.mjs';
-import { properSegmentIntersection, rectsOverlap, roundedPath, roundedPathSegments, segmentRectClearance } from '../archify/renderers/shared/geometry.mjs';
+import { frameBorderSegments, properSegmentIntersection, rectsOverlap, roundedPath, roundedPathSegments, segmentRectClearance } from '../archify/renderers/shared/geometry.mjs';
 
 const fixtureUrl = name => new URL(`fixtures/architecture-route-regressions/${name}.json`, import.meta.url);
 const load = name => JSON.parse(readFileSync(fixtureUrl(name), 'utf8'));
@@ -38,6 +38,101 @@ function inferredLayout(t, components, connections, boundaries, quality = 'showc
   assert.equal(status, 0, JSON.stringify(receipt.diagnostics));
   return receipt;
 }
+
+function renderFacingCards(t, { horizontal = true, gap, connection, peer = false }) {
+  const dir = mkdtempSync(join(tmpdir(), 'archify-facing-cards-'));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const input = join(dir, 'input.json');
+  const output = join(dir, 'output.html');
+  const positions = [[80, 80], horizontal ? [200 + gap, 80] : [80, 140 + gap]];
+  const components = positions.map((pos, index) => ({
+    id: index ? 'target' : 'source', type: 'backend', label: index ? 'Target' : 'Source', pos, size: [120, 60],
+  }));
+  const connections = [{ from: 'source', to: 'target', ...connection }];
+  if (peer) {
+    components.push(
+      { id: 'producer', type: 'backend', label: 'Producer', pos: [80, 190], size: [120, 60] },
+      { id: 'consumer', type: 'backend', label: 'Consumer', pos: [232, 190], size: [120, 60] },
+    );
+    connections.push({ from: 'producer', to: 'consumer', fromSide: 'right', toSide: 'left', via: [] });
+  }
+  writeFileSync(input, JSON.stringify({
+    schema_version: 1, diagram_type: 'architecture',
+    meta: { title: 'Facing cards', viewBox: [560, 360], output: 'output.html' },
+    components, connections,
+  }));
+  const result = spawnSync(process.execPath, [renderer, input, output], { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const html = readFileSync(output, 'utf8');
+  const edge = html.match(/<path [^>]*data-edge-from="source"[^>]*>/)[0];
+  const points = edge.match(/data-composition-points="([^"]+)"/)[1].split(';')
+    .map(point => point.split(',').map(Number));
+  return { html, edge, points, positions };
+}
+
+test('short connections between facing cards keep a wide label beside a straight shaft', t => {
+  for (const horizontal of [true, false]) {
+    const gap = horizontal ? 55 : 36;
+    const label = 'Fetch current metadata';
+    const { html, points, positions } = renderFacingCards(t, { horizontal, gap, connection: { label } });
+    assert.equal(points.length, 2, JSON.stringify(points));
+    const along = horizontal ? 0 : 1;
+    assert.equal(points[0][1 - along], points[1][1 - along]);
+    assert.equal(points[1][along] - points[0][along], gap);
+    const mask = html.match(/<rect x="([^"]+)" y="([^"]+)" width="([^"]+)" height="([^"]+)" rx="3" class="c-mask"\/>\s*<text [^>]*>Fetch current metadata<\/text>/);
+    assert.ok(mask, 'the relationship mask is rendered');
+    const [x, y, width, height] = mask.slice(1).map(Number);
+    const rect = { x, y, width, height };
+    assert.ok(width > gap);
+    for (const [x, y] of positions) assert.equal(rectsOverlap(rect, { x, y, width: 120, height: 60 }, 2), false);
+    const [start, end] = points;
+    const distance = segmentRectClearance({ start, end }, rect);
+    assert.ok(distance > 0.75 && distance <= height * 3, JSON.stringify({ distance, rect, points }));
+    assert.equal(maskCoversArrowhead(rect, arrowheadTriangle(end, start, 1.5)), false);
+  }
+});
+
+test('a side label in a short gap stays closer to its own shaft than to a neighboring route', t => {
+  const label = 'Fetch current metadata';
+  const { html, points } = renderFacingCards(t, { gap: 32, connection: { label }, peer: true });
+  assert.equal(points.length, 2);
+  const mask = html.match(/<rect x="([^"]+)" y="([^"]+)" width="([^"]+)" height="([^"]+)" rx="3" class="c-mask"\/>\s*<text [^>]*>Fetch current metadata<\/text>/);
+  assert.ok(mask, 'the relationship mask is rendered');
+  const [x, y, width, height] = mask.slice(1).map(Number);
+  const rect = { x, y, width, height };
+  const [start, end] = points;
+  const own = segmentRectClearance({ start, end }, rect);
+  assert.ok(own > 0.75 && own <= 2 * height, JSON.stringify({ own, rect, points }));
+  const peerPath = html.match(/<path [^>]*data-edge-from="producer"[^>]*data-composition-points="([^"]+)"/);
+  assert.ok(peerPath, 'the competing shaft is rendered');
+  const [peerStart, peerEnd] = peerPath[1].split(';').map(point => point.split(',').map(Number));
+  assert.ok(own < segmentRectClearance({ start: peerStart, end: peerEnd }, rect));
+});
+
+test('wide architecture markers respect absolute and final approach bounds', t => {
+  for (const { gap, via } of [
+    { gap: 40 },
+    { gap: 140 },
+    { gap: 100, via: [[220, 110], [220, 50], [270, 50], [270, 110]] },
+  ]) {
+    const { edge, html, points } = renderFacingCards(t, {
+      gap, connection: { width: 8, fromSide: 'right', toSide: 'left', ...(via && { via }) },
+    });
+    assert.deepEqual(points, [[200, 110], ...(via || []), [200 + gap, 110]]);
+    assert.match(edge, /stroke-width="8"/);
+    const approach = via ? edge.match(/\sd="[^"]* ([-\d.]+) 110 L ([-\d.]+) 110"/)
+      .slice(1).map(Number).reduce((start, end) => end - start) : gap;
+    const markerId = edge.match(/marker-end="url\(#([^)]*)\)"/)[1];
+    const marker = html.match(new RegExp(`<marker id="${markerId}"[^>]*>`))[0];
+    assert.match(marker, /markerUnits="userSpaceOnUse"/);
+    const length = Number(marker.match(/markerWidth="([^"]+)"/)[1]);
+    const width = Number(marker.match(/markerHeight="([^"]+)"/)[1]);
+    assert.ok(length <= Math.min(24, approach * 0.4) && length >= 8, marker);
+    assert.ok(Math.abs(width - length * 0.7) < 0.0001, marker);
+  }
+  const { edge } = renderFacingCards(t, { gap: 70, connection: {} });
+  assert.match(edge, /stroke-width="1.5" marker-end="url\(#arrowhead\)"/);
+});
 
 test('an inferred input with a deep consumer approaches from an adjacent slot', t => {
   const components = [
@@ -507,6 +602,52 @@ test('group proposals that cannot preserve a nearby route spend no additional ro
   assert.ok(receipt.routedPlacementCandidates <= 4, JSON.stringify(receipt.routedPlacementCandidates));
 });
 
+test('a fully automatic standard diagram finds label slots between vertical cards', t => {
+  const groups = [
+    ['Job dispatcher', 'Resource loader', 'Execution handler', 'Response adapter', 'Result session'],
+    ['Submitter', 'Job manager', 'Engine', 'Configuration', 'Result'],
+  ];
+  const links = [
+    [[0, 2, 'starts agent'], [0, 1, 'prepares resources'], [1, 2, 'supplies loader'],
+      [2, 4, 'creates session'], [2, 3, 'if schema supplied'], [3, 4, 'registers tool']],
+    [[0, 1, 'queues work'], [1, 2, 'starts engine'], [2, 3, 'loads configuration'],
+      [3, 4, 'supplies loader'], [2, 4, 'creates result']],
+  ];
+  const components = groups.flatMap((labels, group) =>
+    labels.map((label, index) => ({ id: `group-${group}-${index}`, type: 'backend', label })));
+  const boundaries = groups.map((labels, group) => ({
+    kind: 'region', label: ['Processing runtime', 'Background process'][group],
+    wraps: labels.map((_, index) => `group-${group}-${index}`),
+  }));
+  const connections = links.flatMap((edges, group) => edges.map(([from, to, label]) =>
+    ({ from: `group-${group}-${from}`, to: `group-${group}-${to}`, label })));
+  const receipt = inferredLayout(t, components, connections, boundaries, 'standard');
+  const route = receipt.connections.find(({ label }) => label === 'queues work');
+  const mask = connectionLabelBoxAt(route, route.labelAt);
+  assert.equal(route.points.length, 2);
+  assert.equal(route.points[0][0], route.points[1][0]);
+  assert.ok(mask.y > route.points[0][1] && mask.y + mask.height < route.points[1][1]);
+  assert.ok(segmentRectClearance({ start: route.points[0], end: route.points[1] }, mask) <= mask.height);
+});
+
+test('automatic placement centers a dispatcher beside a long rank of leaves', t => {
+  const components = ['Dispatcher', 'Status panel', 'Event monitor', 'Timer schedule',
+    'Safety checks', 'Job runner', 'Display state', 'Menu actions'].map((label, index) =>
+    ({ id: `node-${index}`, type: 'backend', label }));
+  const connections = [
+    [0, 1, 'opens panel'], [0, 7, 'registers menu'], [0, 2, 'starts monitor'],
+    [2, 0, 'event received'], [0, 3, 'updates timer'], [0, 4, 'checks limits'],
+    [0, 5, 'starts job'], [0, 6, 'updates display'],
+  ].map(([from, to, label]) => ({ from: `node-${from}`, to: `node-${to}`, label }));
+  const boundaries = [{ kind: 'region', label: 'Desktop runtime', wraps: components.map(({ id }) => id) }];
+  const receipt = inferredLayout(t, components, connections, boundaries, 'standard');
+  const [hub, ...leaves] = receipt.components;
+  const rows = leaves.map(box => box.y + box.height / 2).sort((a, b) => a - b);
+  const center = hub.y + hub.height / 2;
+  assert.ok(center >= rows[2] && center <= rows[4], JSON.stringify({ center, rows }));
+  assert.ok(receipt.connections.some(({ points }) => points.length === 2));
+});
+
 test('an inferred return label keeps its elbows and competing shafts visible', () => {
   const { status, receipt } = validate(fileURLToPath(fixtureUrl('rounded-return-label')), 'showcase', '--layout-json');
   assert.equal(status, 0, JSON.stringify(receipt.diagnostics));
@@ -523,36 +664,31 @@ test('an inferred return label keeps its elbows and competing shafts visible', (
   }
 });
 
-for (const [name, text, points] of [
-  ['review9-fixed-074', 'Fetch data 5', [
-    [[136, 88], [209, 88]],
-    [[309, 86], [356.5, 86], [356.5, 59], [404, 59]],
-    [[420, 103], [420, 162], [96, 162], [96, 199]],
-    [[110, 199], [110, 163], [266, 163], [266, 187]],
-    [[280, 187], [280, 163], [516, 163], [516, 201], [492, 201]],
-    [[432, 237], [432, 261], [180, 261], [180, 234], [156, 234]],
-    [[259, 112], [259, 155.5], [82, 155.5], [82, 199]],
-    [[388, 165], [388, 115], [136, 115]],
-    [[156, 220], [217, 220], [217, 126], [348.5, 126], [348.5, 87], [404, 87]],
-  ]],
-  ['review9-fixed-125', 'Retrieve configuration 6', [
-    [[157, 85], [202, 85]],
-    [[286, 56], [286, 48], [387, 48]],
-    [[387, 69], [363, 69], [363, 156], [161, 156], [161, 188], [137, 188]],
-    [[137, 215], [178.5, 215], [178.5, 198], [220, 198]],
-    [[320, 188], [397, 188]],
-    [[270, 162], [270, 146], [286, 146], [286, 128]],
-  ]],
+for (const [name, text] of [
+  ['review9-fixed-074', 'Fetch data 5'],
+  ['review9-fixed-125', 'Retrieve configuration 6'],
 ]) {
-  test(`automatic labels clear strokes and markers without moving pinned geometry in ${name}`, () => {
+  test(`automatic labels clear strokes and markers without moving pinned geometry in ${name}`, t => {
     const input = load(name);
     const { status, receipt } = validate(fileURLToPath(fixtureUrl(name)),
       input.meta.quality_profile ?? 'standard', '--layout-json');
     assert.equal(status, 0, JSON.stringify(receipt.diagnostics));
     assert.deepEqual(receipt.components.map(({ x, y }) => [x, y]), input.components.map(({ pos }) => pos));
-    assert.deepEqual(receipt.connections.map(route => route.points), points);
+    const points = receipt.connections.map(route => route.points);
     const ownerIndex = receipt.connections.findIndex(({ label }) => label === text);
-    const label = connectionLabelBoxAt(input.connections[ownerIndex], receipt.connections[ownerIndex].labelAt);
+    const scratch = mkdtempSync(join(tmpdir(), 'archify-label-mask-'));
+    t.after(() => rmSync(scratch, { recursive: true, force: true }));
+    const artifact = join(scratch, 'chart.html');
+    const rendered = spawnSync(process.execPath, [renderer, fileURLToPath(fixtureUrl(name)), artifact], { encoding: 'utf8' });
+    assert.equal(rendered.status, 0, rendered.stdout + rendered.stderr);
+    // Layout receipts round anchors for display. Read the drawn mask so
+    // rounding cannot erase a fractional pixel of valid ownership clearance.
+    const html = readFileSync(artifact, 'utf8');
+    const mask = [...html.matchAll(/<g data-detail="context" ([^>]+)>\s*<rect x="([^"]+)" y="([^"]+)" width="([^"]+)" height="([^"]+)"/g)]
+      .find(([, attrs]) => attrs.includes(`data-edge-key="${ownerIndex}"`));
+    assert.ok(mask, `missing rendered mask for ${text}`);
+    const [x, y, width, height] = mask.slice(2).map(Number);
+    const label = { x, y, width, height };
     const paths = points.map(route => prepareCrossingPath(roundedPathSegments(route, 8)));
     const own = drawnPathRectClearance(paths[ownerIndex], label);
     for (const [index, route] of points.entries()) {
@@ -563,3 +699,72 @@ for (const [name, text, points] of [
     }
   });
 }
+
+for (const [fixture, texts] of [
+  ['label-fixed-125-frame-29', ['Retrieve configuration 6', 'Fetch data 5']],
+  ['label-fixed-093-frame-9', ['Commit records 5']],
+  ['label-fixed-005', ['Send status']],
+]) {
+  test(`the fixed-canvas label leaves its shaft and all arrowheads visible in ${fixture}`, () => {
+    const input = load(fixture);
+    const { status, receipt } = validate(fileURLToPath(fixtureUrl(fixture)),
+      input.meta.quality_profile ?? 'standard', '--layout-json');
+    assert.equal(status, 0, JSON.stringify(receipt.diagnostics));
+    const borders = receipt.boundaries.flatMap(frame =>
+      frameBorderSegments({ ...frame, radius: frame.kind === 'security-group' ? 8 : 12 }));
+    for (const text of texts) {
+      const labelIndex = receipt.connections.findIndex(route => route.label === text);
+      const label = connectionLabelBoxAt(input.connections[labelIndex], receipt.connections[labelIndex].labelAt);
+      assert.ok(borders.every(border => segmentRectClearance(border, label) >= 0.5), `${text} covers a frame border`);
+      for (const [index, { points }] of receipt.connections.entries()) {
+        const { width, variant } = input.connections[index];
+        const stroke = width || (variant === 'emphasis' ? 1.8 : 1.5);
+        const marker = arrowheadTriangle(points.at(-1), points.at(-2), stroke);
+        assert.ok(marker, `connection ${index} has a measurable arrowhead`);
+        assert.equal(maskCoversArrowhead(label, marker), false, `${text} covers arrowhead ${index}`);
+        const path = prepareCrossingPath(roundedPathSegments(points, 8));
+        assert.ok(drawnPathRectClearance(path, label) >= stroke / 2, `${text} covers shaft ${index}`);
+      }
+    }
+  });
+}
+
+test('external readers face their own frame members without crossing a separate lookup', t => {
+  const components = [
+    ['client', 128], ['entry', 128], ['starter', 156], ['listener', 147], ['queue', 171],
+    ['scanner', 160], ['cache', 128], ['journal', 164], ['flags', 156],
+  ].map(([id, width]) => ({ id, type: 'backend', label: id, size: [width, 60] }));
+  const connections = [
+    ['client', 'entry', 'Local RPC', 'emphasis'],
+    ['entry', 'queue', 'Read and update'],
+    ['entry', 'starter', 'Start listener'],
+    ['starter', 'listener', 'Bind if needed'],
+    ['listener', 'queue', 'Submit work'],
+    ['queue', 'scanner', 'Index jobs'],
+    ['scanner', 'cache', 'Read local cache'],
+    ['scanner', 'journal', 'Read history', 'dashed'],
+    ['queue', 'flags', 'Read flags'],
+  ].map(([from, to, label, variant]) => ({ from, to, label, variant }));
+  const boundaries = [{
+    kind: 'region', label: 'Job service', wraps: ['entry', 'starter', 'listener', 'queue', 'scanner'],
+  }];
+
+  const dir = mkdtempSync(join(tmpdir(), 'archify-frame-lanes-'));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const input = join(dir, 'input.json');
+  const output = join(dir, 'chart.html');
+  writeFileSync(input, JSON.stringify({
+    schema_version: 1, diagram_type: 'architecture', layout: { mode: 'auto' },
+    meta: { title: 'Job preview and local storage', output: 'chart.html', quality_profile: 'standard' },
+    components, connections, boundaries,
+  }));
+
+  const render = spawnSync(process.execPath, [renderer, input, output], { encoding: 'utf8' });
+  assert.equal(render.status, 0, render.stdout + render.stderr);
+  const check = spawnSync(process.execPath, [cli, 'check', output, '--json'], { encoding: 'utf8' });
+  assert.equal(check.status, 0, check.stdout + check.stderr);
+  const { metrics } = JSON.parse(check.stdout).composition;
+  assert.equal(metrics.resolvedCrossovers, 0);
+  assert.equal(metrics.routesOverSuggestedBends, 0);
+  assert.equal(metrics.routesOverSuggestedStretch, 0);
+});

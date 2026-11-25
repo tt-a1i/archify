@@ -817,6 +817,11 @@
         var vb = svg.viewBox.baseVal;
         var scale = Math.min(1, 1280 / vb.width);
         var data = serializeSvg(scale);
+        var sequence = Archify.motionGovernor && Archify.motionGovernor.sequenceRecordingPlan
+          ? Archify.motionGovernor.sequenceRecordingPlan() : null;
+        // Keep the requested WebM duration. Scale the complete live Sequence
+        // cycle into it so handoffs and the final arrival remain visible.
+        var secondsPerPlanSecond = sequence ? duration / (1000 * sequence.cycle) : 1;
 
         function createMotionScene(root) {
           var rootMatrix = root.getCTM ? root.getCTM() : null;
@@ -858,27 +863,33 @@
           }
 
           var edges = Array.prototype.slice.call(root.querySelectorAll('[data-animate="edge"]')).map(function (element, index) {
+            var cue = sequence && sequence.edges.get(element);
+            if (sequence && !cue) return null;
             var computed = getComputedStyle(element);
             return {
               points: samplesFor(element),
               color: computed.stroke && computed.stroke !== 'none' ? computed.stroke : '#22d3ee',
               width: Math.max(1.5, parseFloat(computed.strokeWidth) || 1.5),
-              delay: Math.min(12, authoredStep(element, index)) * 0.16
+              delay: cue ? cue.depart * secondsPerPlanSecond : Math.min(12, authoredStep(element, index)) * 0.16,
+              travel: cue ? cue.travel * secondsPerPlanSecond : 1.75
             };
-          }).filter(function (edge) { return edge.points.length > 1; });
+          }).filter(function (edge) { return edge && edge.points.length > 1; });
 
           var nodes = Array.prototype.slice.call(root.querySelectorAll('[data-node-id][data-animate="node"]')).map(function (element, index) {
             var box;
             try { box = element.getBBox(); } catch (_) { return null; }
             var painted = element.querySelector('[class*="c-"]') || element;
             var computed = getComputedStyle(painted);
+            var windows = sequence && sequence.nodes[element.getAttribute('data-node-id')];
             return {
               x: box.x,
               y: box.y,
               width: box.width,
               height: box.height,
               color: computed.stroke && computed.stroke !== 'none' ? computed.stroke : '#22d3ee',
-              delay: Math.min(12, authoredStep(element, index)) * 0.16
+              pulses: sequence ? (windows || []).map(function (window) {
+                return { delay: window.start * secondsPerPlanSecond, duration: 0.35 * secondsPerPlanSecond };
+              }) : [{ delay: Math.min(12, authoredStep(element, index)) * 0.16, duration: 2.6 }]
             };
           }).filter(Boolean);
 
@@ -918,8 +929,7 @@
           ctx.translate(-motionScene.x, -motionScene.y);
 
           motionScene.edges.forEach(function (edge) {
-            var duration = 1.75;
-            var progress = (elapsed - edge.delay) / duration;
+            var progress = (elapsed - edge.delay) / edge.travel;
             if (progress < 0 || progress > 1) return;
             var head = Math.max(0, Math.min(1, progress));
             var tail = Math.max(0, head - 0.24);
@@ -951,9 +961,10 @@
           });
 
           motionScene.nodes.forEach(function (node) {
-            var progress = (elapsed - node.delay) / 2.6;
-            if (progress < 0 || progress > 1) return;
-            var pulse = Math.sin(Math.PI * progress);
+            var pulse = node.pulses.reduce(function (peak, window) {
+              var progress = (elapsed - window.delay) / window.duration;
+              return progress < 0 || progress > 1 ? peak : Math.max(peak, Math.sin(Math.PI * progress));
+            }, 0);
             if (pulse <= 0.02) return;
             ctx.save();
             ctx.strokeStyle = node.color;

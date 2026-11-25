@@ -7,7 +7,7 @@ const LIMIT = 64 * 1024 * 1024;
 function git(root, args, input) {
   return spawnSync('git', ['--no-replace-objects', '-C', root, ...args], {
     input, maxBuffer: LIMIT, timeout: 10000,
-    env: { ...process.env, GIT_NO_LAZY_FETCH: '1', GIT_OPTIONAL_LOCKS: '0' },
+    env: { ...process.env, GIT_NO_LAZY_FETCH: '1', GIT_ALLOW_PROTOCOL: '', GIT_OPTIONAL_LOCKS: '0' },
   });
 }
 const normalize = text => text.replace(/\r\n/g, '\n');
