@@ -163,7 +163,7 @@ export async function runCheck(argv) {
   const previousIncomplete = newOnly && previous?.analysis?.coverage?.unavailableTypeScriptFiles;
   const incomplete = Boolean(unavailableProjects.length || previousIncomplete);
   const blocked = incomplete && failOn !== 'never';
-  if (gateFile && !incomplete && !failing.length) {
+  if (gateFile && !incomplete && failOn !== 'never' && !failing.length) {
     fs.writeFileSync(gateFile, stableJson(findings));
     fs.rmSync(pendingGate, { force: true });
   } else if (gateFile && !fs.existsSync(gateFile)) fs.writeFileSync(pendingGate, 'No complete passing gate comparator yet.\n');

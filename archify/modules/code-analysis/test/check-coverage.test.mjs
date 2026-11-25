@@ -303,6 +303,7 @@ test('new-only keeps the last complete gate comparator through an incomplete run
   const restored = check(root, args);
   assert.equal(restored.status, 1, restored.stdout + restored.stderr);
   assert.equal(JSON.parse(restored.stdout).gate.failing.length, 1);
+  assert.equal(check(root, [...args, '--fail-on', 'never']).status, 0, 'inspection does not run the gate');
   const retry = check(root, args);
   assert.equal(retry.status, 1, retry.stdout + retry.stderr);
   assert.deepEqual(fs.readFileSync(path.join(out, 'gate-findings.json')), baseline);

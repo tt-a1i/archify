@@ -534,7 +534,7 @@ node bin/archify.mjs code-analysis check "/path/to/project" --baseline analysis-
 | `--baseline file` | Accepted findings do not fail the run unless their code changed. |
 | `--out dir` | Write `raw-facts`, `module-graph`, `findings`, `review` and `overview` JSON. The previous `findings.json` in that directory is compared with automatically; for `--new-only`, a separate `gate-findings.json` retains the latest complete passing gate comparator. |
 | `--compare findings.json` | Compare with a specific earlier run instead. |
-| `--new-only` | Fail only on findings that are new since the comparison, for gating pull requests. With `--out` and no explicit `--compare`, incomplete or failing runs do not replace the gate comparator. Without a previous run to compare with, every open finding counts as new, so a missing comparison artifact cannot pass the gate. |
+| `--new-only` | Fail only on findings that are new since the comparison, for gating pull requests. With `--out` and no explicit `--compare`, incomplete, failing, or `--fail-on never` runs do not replace the gate comparator. Without a previous run to compare with, every open finding counts as new, so a missing comparison artifact cannot pass the gate. |
 | `--update-baseline [--reason text]` | Write the baseline instead of checking. |
 | `--json` | Print a machine-readable receipt instead of the summary. |
 
