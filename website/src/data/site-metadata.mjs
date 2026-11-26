@@ -10,8 +10,8 @@ const descriptions = {
     zh: ['Archify Agent 画图指南 — 从想法、生活规划到代码仓', '用 Claude Code、Codex、Cursor、OpenCode 或 GitHub Copilot 把自然语言想法、生活流程、Mermaid 草稿或代码仓库快速变成十种可交互 HTML 图、四风格一页式解答、Story 1080p 演练视频与内置架构诊断。'],
   },
   compare: {
-    en: ['Archify vs Mermaid, Excalidraw, PlantUML & D2 — Mermaid Alternatives for AI Coding Agents', 'Looking for a Mermaid alternative for interactive architecture diagrams with Claude Code, Cursor, or Codex? Compare Archify with Mermaid, Excalidraw (including MCP), PlantUML, D2, LikeC4, and Eraser.io across 10 diagram types, 4-style explainers, Architecture Diagnosis, Story 1080p video, and honest limits.'],
-    zh: ['Archify 对比 Mermaid、Excalidraw、PlantUML 与 D2 — AI Coding Agent 交互架构图选型指南', '寻找比 Mermaid 更适合 Claude Code、Cursor、Codex 的交互式架构图替代方案？全面对比 Archify 与 Mermaid、Excalidraw（含 MCP）、PlantUML、D2、LikeC4、Eraser.io：10 种图型、4 风格一页式解答、内置架构诊断与 Story 视频导出。'],
+    en: ['Archify vs Mermaid, Excalidraw, PlantUML & D2 — Mermaid Alternatives for AI Coding Agents', 'Looking for a Mermaid or draw.io alternative for interactive architecture diagrams with Claude Code, Cursor, or Codex? Compare Archify with Mermaid, draw.io, Excalidraw (including MCP), PlantUML, D2, LikeC4, and Eraser.io across 10 diagram types, 4-style explainers, Architecture Diagnosis, Story 1080p video, and honest limits.'],
+    zh: ['Archify 对比 draw.io、ProcessOn、Mermaid、Excalidraw、PlantUML 与 D2 — AI 画流程图与架构图选型指南', '寻找比 draw.io、ProcessOn、Mermaid 更适合 Claude Code、Cursor、Codex 的 AI 交互式架构图与流程图工具？全面对比 Archify 与 draw.io、ProcessOn、Mermaid、Excalidraw（含 MCP）、PlantUML、D2、LikeC4、Eraser.io：10 种图型、4 风格一页解答、内置架构诊断与 Story 视频导出。'],
   },
   index: {
     en: ['Archify — Interactive Diagrams, Explainers, Diagnosis & Story Video', 'Open-source (Apache-2.0) AI agent skill turning any idea, everyday plan, concept, Mermaid draft, or codebase into 10 interactive HTML diagram types, 4-style explainers, built-in Architecture Diagnosis, PR walkthroughs, and 1080p Story videos.'],
