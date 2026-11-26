@@ -231,7 +231,9 @@ HTML requires only any web browser.
 | A hosted team workspace with cloud permissions | Not Archify (use a hosted workspace such as Excalidraw+ or Eraser) | Archify outputs local standalone HTML files, not a hosted multi-user workspace. |
 
 Choose Mermaid first when the diagram is tiny and must live inside a Markdown
-code block. Choose Excalidraw (including Excalidraw via MCP in chat) when the
+code block. Choose draw.io (diagrams.net) when you want manual drag-and-drop
+diagramming in a GUI editor with no AI coding agent. Choose Excalidraw (including
+Excalidraw via MCP in chat) when the
 value is a live shared sketching session or editable freehand canvas. Choose
 PlantUML or D2 when your team prefers plain-text DSL diffs in CI without an
 interactive HTML layer, or LikeC4 when maintaining a dedicated typed C4
@@ -244,10 +246,11 @@ for interactive architecture diagrams and workflows — to turn any complex topi
 into a crisp, non-overlapping, visually polished interactive HTML artifact or
 one-page explainer within moments.
 
-中文摘要：小图直接写进 Markdown 选 Mermaid；多人实时手绘或 MCP 白板草图选 Excalidraw；
+中文摘要：小图直接写进 Markdown 选 Mermaid；浏览器鼠标手拖标准流程图或套模板选
+draw.io（diagrams.net）或 ProcessOn；多人实时手绘或 MCP 白板草图选 Excalidraw；
 纯文本 Diagram-as-Code 流水线选 PlantUML 或 D2；偏工程 C4 模型全仓维护选 LikeC4；
 需要云端多人权限协作选 Eraser.io；想让 Coding Agent（Claude Code / Cursor / Codex）
-作为 Mermaid 替代方案、零语法门槛把任何生活规划、复杂知识科普、业务流程或代码库变成
+作为 Mermaid 或手动画图的替代方案、零语法门槛把任何生活规划、复杂知识科普、业务流程或代码库变成
 防重叠、高颜值、可交互且能一页讲透的 HTML 作品，选 Archify（10 种图型 + 4 套排版风格的 Explainer）。
 
 ## 5. What Archify does not claim
