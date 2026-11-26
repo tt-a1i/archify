@@ -139,6 +139,57 @@ test('verify-change rejects an unowned legacy adjacent pair even if its command 
   assert.equal(JSON.parse(oversized.stdout).diagnostics[0].code, 'verification/no-comparison', 'an unowned oversized legacy capture cannot be trusted as adjacent evidence');
 });
 
+test('explicit legacy baseline comparison stays inconclusive and does not adopt the report', t => {
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-legacy-explicit-'));
+  t.after(() => fs.rmSync(scratch, { recursive: true, force: true }));
+  const dir = path.join(scratch, 'analysis'), baseline = path.join(scratch, 'legacy.json');
+  fs.mkdirSync(dir);
+  const previous = JSON.parse(fs.readFileSync(new URL('./fixtures/tasks/findings.json', import.meta.url), 'utf8'));
+  const current = structuredClone(previous);
+  current.repository.snapshotId = '2'.repeat(64);
+  const task = JSON.parse(fs.readFileSync(new URL('./fixtures/tasks/complexity.task.json', import.meta.url), 'utf8'));
+  delete task.source.analysisSha256;
+  previous.externalEvidence = [{ path: 'large.py', sourceText: 'x'.repeat(5 * 1024 * 1024), sha256: 'a'.repeat(64) }];
+  fs.writeFileSync(baseline, JSON.stringify(previous));
+  fs.writeFileSync(path.join(dir, 'findings.json'), JSON.stringify(current));
+  fs.writeFileSync(path.join(dir, 'raw-facts.json'), JSON.stringify({ files: [] }));
+  const taskPath = path.join(scratch, 'task.json'); fs.writeFileSync(taskPath, JSON.stringify(task));
+  const cli = fileURLToPath(new URL('../../../bin/archify.mjs', import.meta.url));
+  const args = [cli, 'code-analysis', 'verify-change', dir, '--task', taskPath, '--unverified-baseline', baseline];
+  const result = spawnSync(process.execPath, args, { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const receipt = JSON.parse(result.stdout);
+  assert.equal(receipt.analysis.comparable, false);
+  assert.ok(receipt.analysis.reasons.includes('legacy-owner-unverified'));
+  assert.ok(receipt.analysis.selected.every(row => row.outcome === 'inconclusive'));
+  assert.equal(receipt.analysis.newCount, null);
+  assert.equal(fs.existsSync(path.join(dir, 'verification-owner.json')), false);
+  assert.equal(fs.existsSync(path.join(dir, 'verification-history.json')), false);
+  const template = spawnSync(process.execPath, [...args, '--checks-template'], { encoding: 'utf8' });
+  assert.equal(template.status, 0, template.stdout + template.stderr);
+  const checks = path.join(scratch, 'checks.json'); fs.writeFileSync(checks, template.stdout);
+  const withChecks = spawnSync(process.execPath, [...args, '--checks', checks], { encoding: 'utf8' });
+  assert.equal(withChecks.status, 0, withChecks.stdout + withChecks.stderr);
+  assert.equal(JSON.parse(withChecks.stdout).analysis.comparable, false);
+  task.source.snapshotId = '3'.repeat(64); fs.writeFileSync(taskPath, JSON.stringify(task));
+  const mismatch = spawnSync(process.execPath, args, { encoding: 'utf8' });
+  assert.equal(mismatch.status, 2);
+  assert.equal(JSON.parse(mismatch.stdout).diagnostics[0].code, 'verification/wrong-task-snapshot');
+  fs.writeFileSync(path.join(dir, 'view-context.json'), JSON.stringify({ run: { pullRequest: { local: true } } }));
+  const pinned = spawnSync(process.execPath, args, { encoding: 'utf8' });
+  assert.equal(pinned.status, 2);
+  assert.equal(JSON.parse(pinned.stdout).diagnostics[0].code, 'cli/usage');
+  fs.unlinkSync(path.join(dir, 'view-context.json'));
+  fs.writeFileSync(baseline, '{broken');
+  const invalid = spawnSync(process.execPath, args, { encoding: 'utf8' });
+  assert.equal(invalid.status, 2);
+  assert.equal(JSON.parse(invalid.stdout).diagnostics[0].code, 'cli/input-invalid');
+  fs.truncateSync(baseline, 64 * 1024 * 1024 + 1);
+  const tooLarge = spawnSync(process.execPath, args, { encoding: 'utf8' });
+  assert.equal(tooLarge.status, 2);
+  assert.equal(JSON.parse(tooLarge.stdout).diagnostics[0].code, 'cli/input-invalid');
+});
+
 
 test('task fingerprint is optional for current readers but rejected by an older strict schema', () => {
   const schema = JSON.parse(fs.readFileSync(new URL('../schemas/ai-task.schema.json', import.meta.url), 'utf8'));

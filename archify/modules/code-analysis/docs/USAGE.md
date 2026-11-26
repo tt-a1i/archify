@@ -160,6 +160,8 @@ node bin/archify.mjs code-analysis verify-change out/project-analysis/analysis -
 
 Omit `--checks` to record only analysis observations. Use the original task JSON: its ID must match the selected findings. Exit 0 means the receipt was produced (even if project checks failed or the comparison was inconclusive); exit 2 returns a JSON error on stdout with `status: "error"` and `diagnostics` instead of a receipt. `task --verify` remains a separate current-source evidence check.
 
+To inspect a saved, unowned working-tree baseline without automatically trusting it, pass `--unverified-baseline /path/to/old/findings.json` to `verify-change` together with the original task. Save the old file before subsequent runs rotate the adjacent output. The file must be a valid findings document no larger than 64 MiB, and the task must match its captured findings. The receipt always sets `analysis.comparable` to false, records `legacy-owner-unverified`, marks every selected outcome inconclusive and does not count new findings. The baseline is not added to trusted history. A matching path, task or saved command does not prove repository continuity; investigate the source separately. This option does not apply to pinned PR comparisons or the browser report.
+
 
 ## Review architecture drift between two commits
 
