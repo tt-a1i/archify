@@ -8,8 +8,8 @@
   "provenance": "unknown",
   "artifact": {
     "path": "docs/cases/astron-agent-runtime.architecture.html",
-    "sha256": "88d346f0c1245bb9b13d8c99955eab6e1b0358fe16848c2d1c9faa8f61d40d50",
-    "bytes": 962440
+    "sha256": "e723168ad8a302bc8fbd2c63b256d8e233767c31bbd8a3ddc8ff0762cdf27de9",
+    "bytes": 962446
   },
   "state": {
     "detail": "read",
