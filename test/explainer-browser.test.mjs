@@ -222,7 +222,8 @@ test('a hosted Viewer keeps preset controls and blueprint decoration without sta
   // Enter the hosted frame as a reader would. Chrome 158 keeps child focus
   // on body when DevTools calls .focus() before the host enters that frame.
   await keyboardActivate(browser,'[data-close-diagram]','Tab');
-  assert.equal(await pageValue(browser,`document.activeElement.matches('#diagram-dialog iframe')`),true,'Tab enters the native Viewer from the dialog close button');
+  const tabFocus=await pageValue(browser,`(()=>({inside:document.activeElement.matches('#diagram-dialog iframe'),active:document.activeElement.outerHTML.slice(0,400),hasFocus:document.hasFocus()}))()`);
+  assert.equal(tabFocus.inside,true,'Tab enters the native Viewer from the dialog close button: '+JSON.stringify(tabFocus));
   const attached=await browser.cdp.send('Target.attachToTarget',{targetId:viewer.targetId,flatten:true});
   try {
    const lens=await browser.cdp.send('Runtime.evaluate',{expression:`(()=>{document.querySelector('#btn-semantic-lens').click();return {title:document.querySelector('#semantic-lens-title').textContent,instruction:document.querySelector('.semantic-lens-instruction').textContent,backendKind:document.querySelector('.semantic-lens-kind[data-kind="backend"]')?.textContent||''};})()`,returnByValue:true},attached.sessionId);
