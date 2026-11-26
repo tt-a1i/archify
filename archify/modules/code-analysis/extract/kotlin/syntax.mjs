@@ -573,22 +573,32 @@ export function createTokenParser(tokens, start = 0, end = tokens.length) {
   // full recursive parses. Returns the body's open/close positions.
   function captureBalancedDeclarationBlock(members, entries = null) {
     const open = expect('{');
+    // Entry scanning is bounded to the enum's entry list: it ends at the
+    // first member declaration or at the ';' separating entries from members.
+    // Outside that list an identifier-led brace group is never an entry body —
+    // treating it as one misreads custom accessors like private set(value) {
+    // and swallows the members after them.
+    let entryScan = entries !== null;
     while (!eof() && !at('}')) {
       const before = cursor;
-      // init blocks and secondary constructors are members too.
-      const declaration = parseDeclaration();
-      if (declaration) { members.push(declaration); continue; }
-      // Enum entries: IDENTIFIER [(args)] [{ body }] [,|;]. Their names are
+      // init blocks and secondary constructors are members too. A member that
+      // fails to parse must not discard the file: skip forward one token and
+      // keep scanning instead of propagating the failure.
+      let declaration = null;
+      try {
+        declaration = parseDeclaration();
+      } catch {
+        declaration = null;
+      }
+      if (declaration) { members.push(declaration); entryScan = false; continue; }
+      // Enum entries: IDENTIFIER [(args)] [{ body }] [,]. Their names are
       // member evidence: import pkg.Enum.ENTRY binds through the enum type.
       // Any identifier counts, not only uppercase ones: lowercase entries are
       // legal Kotlin, and gating on case would skip them here only to record
-      // an uppercase constructor argument as a bogus entry instead. Member
-      // declarations never reach this branch — parseDeclaration consumed them
-      // above — so an identifier at statement position is an entry or garbage
-      // the tolerant parser cannot use either way.
-      if (atIdentifier()) {
+      // an uppercase constructor argument as a bogus entry instead.
+      if (entryScan && atIdentifier()) {
         const entry = next();
-        entries?.push(entry.image);
+        entries.push(entry.image);
         if (at('(')) skipBalancedGroup();
         // An entry body is an anonymous subclass of the enum: its members are
         // never members of the enum type, but their complexity and dependencies
@@ -609,7 +619,8 @@ export function createTokenParser(tokens, start = 0, end = tokens.length) {
         }
         continue;
       }
-      if ([';', ','].includes(peek()?.image)) { next(); continue; }
+      if (at(',')) { next(); continue; }
+      if (at(';')) { next(); entryScan = false; continue; }
       // Unrecognized member content: skip one token tolerantly.
       if (cursor === before) next();
     }
@@ -662,6 +673,24 @@ export function createTokenParser(tokens, start = 0, end = tokens.length) {
     // generic type (JdbcClient.StatementSpec.bindService, List<T>.first). The
     // cursor ends before the member name, never consuming it.
     const save = cursor;
+    // Parenthesized receivers — function types like (() -> Int).run — start
+    // with '('. The collected inner references become the receiver evidence;
+    // without this branch the member name probe throws and drops the file.
+    if (at('(')) {
+      const receiverRefs = [];
+      const typeStart = peek();
+      if (!parseType(receiverRefs)) { cursor = save; return null; }
+      if (!(at('.') || at('?.')) || peek(1)?.tokenType.name !== 'Identifier') { cursor = save; return null; }
+      next();
+      const memberStartParen = cursor;
+      const typeEnd = tokens[cursor - 2] || typeStart;
+      cursor = memberStartParen;
+      return {
+        functionType: true, references: receiverRefs,
+        name: receiverRefs[0]?.name ?? null,
+        ...span(typeStart, typeEnd),
+      };
+    }
     if (!atIdentifier()) return null;
     const segments = [];
     let memberStart = cursor;
@@ -771,9 +800,15 @@ export function createTokenParser(tokens, start = 0, end = tokens.length) {
     }
     const accessors = [];
     for (;;) {
-      const token = peek();
+      // Accessors may carry their own visibility modifiers: private set(value)
+      // is one accessor, not a member named set. Skip the modifiers before
+      // recognizing the keyword so the member loop never misreads it.
+      let lookahead = 0;
+      while (['private', 'protected', 'internal'].includes(peek(lookahead)?.image)) lookahead++;
+      const token = peek(lookahead);
       if (!token || token.tokenType.name !== 'Identifier') break;
-      if (!['get', 'set'].includes(token.image) || peek(1)?.image !== '(') break;
+      if (!['get', 'set'].includes(token.image) || peek(lookahead + 1)?.image !== '(') break;
+      while (lookahead--) next();
       const keyword = next();
       skipBalancedGroup();
       // A getter may declare its result type before the body: get(): Int = …

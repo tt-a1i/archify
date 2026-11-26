@@ -46,6 +46,13 @@ export function collectCalls(unit, described) {
 
   // Walk again for call extraction inside measurable bodies.
   function walk(decl, ownerChain) {
+    // Enum entry bodies are anonymous subclasses: their call sites are real
+    // and must be inventoried, but the entry scope is not the enum's lexical
+    // scope, so nothing inside binds through the ordinary same-scope rule.
+    if (decl.kind === 'enumEntry') {
+      for (const member of decl.members || []) walk(member, [...ownerChain, decl]);
+      return;
+    }
     if (TYPE_KINDS_CALL.has(decl.kind)) {
       for (const member of decl.members || []) walk(member, [...ownerChain, decl]);
       return;
@@ -80,6 +87,9 @@ export function collectCalls(unit, described) {
 
   function bindCall(call, site, ownerChain, callerDecl) {
     call.reason = 'no-local-function-binding';
+    // Inside an enum entry body the lexical owner is the entry's anonymous
+    // subclass, never the enum: same-scope binding does not apply at all.
+    if (ownerChain.some(d => d.kind === 'enumEntry')) return;
     // Type parameters and same-named local declarations shadow only inside the
     // extent that introduces them; a shadowed call never binds outward.
     if ((described.shadowedScopes || []).some(scope => scope.name === site.name

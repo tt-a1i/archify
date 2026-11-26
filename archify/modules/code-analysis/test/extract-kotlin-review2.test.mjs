@@ -201,3 +201,41 @@ test('kotlin review2: entry-body members never become enum member evidence', t =
   const r2 = extractFacts(root2, { language: 'kotlin', config: config() });
   assert.equal(r2.facts.imports.find(imp => imp.specifier === 'p.Mode2.active').resolved, true);
 });
+
+test('kotlin review2: private setters never misplace following nested types', t => {
+  const root = fixture(t, {
+    'p/Counter.kt': 'package p\nclass Counter {\n  var count = 0\n    private set(value) {\n      if (value >= 0) {\n        field = value\n      }\n    }\n  class Snapshot\n}\n',
+    'p/Use.kt': 'package p\nclass Use(val snap: Counter.Snapshot)\n',
+  });
+  const parsed = parseSources(root, config());
+  assert.deepEqual(parsed.parse_errors, []);
+  const counter = parsed.units[0].declarations[0];
+  assert.equal(counter.name, 'Counter');
+  assert.equal(counter.members.some(m => m.name === 'Snapshot'), true);
+  const { facts } = extractFacts(root, { language: 'kotlin', config: config() });
+  assert.equal(edges(facts, 'p/Use.kt', 'Counter.Snapshot').length > 0, true);
+});
+
+test('kotlin review2: parenthesized function-type receivers do not drop the file', t => {
+  const root = fixture(t, {
+    'p/Dep.kt': 'package p\nclass Dep\n',
+    'p/Mode.kt': 'package p\nenum class Mode {\n  ACTIVE {\n    private fun (() -> Dep).runAction(): Int = 1\n    override fun run() = 1\n  };\n  abstract fun run(): Int\n}\n',
+  });
+  const { facts } = extractFacts(root, { language: 'kotlin', config: config() });
+  assert.equal(facts.parse_errors, undefined);
+  assert.equal(facts.functions.some(f => f.file.endsWith('p/Mode.kt')), true);
+  // The type inside the receiver is genuine dependency evidence.
+  assert.equal(edges(facts, 'p/Mode.kt', 'Dep').length > 0, true);
+});
+
+test('kotlin review2: enum entry calls are inventoried without same-scope binding', t => {
+  const root = fixture(t, {
+    'p/Mode.kt': 'package p\nenum class Mode {\n  ACTIVE {\n    override fun run() {\n      helper()\n    }\n  };\n  abstract fun run()\n  fun helper() {}\n}\n',
+  });
+  const { facts } = extractFacts(root, { language: 'kotlin', config: config() });
+  const site = facts.calls.find(c => c.file.endsWith('p/Mode.kt'));
+  assert.ok(site, 'the call inside the entry override must be inventoried');
+  // helper is a member of the enum, but the entry body is an anonymous
+  // subclass: the conservative lexical model must not bind it same-scope.
+  assert.equal(site.target ?? null, null);
+});

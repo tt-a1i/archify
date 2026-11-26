@@ -131,14 +131,20 @@ export function describeUnit(unit) {
       for (const ref of decl.returnReferences || []) addReference(ref);
       for (const ref of decl.typeBounds || []) addReference(ref);
       for (const ref of decl.annotations || []) addReference(ref);
-      if (decl.receiverReference) addReference(decl.receiverReference);
+      if (decl.receiverReference) {
+        if (decl.receiverReference.functionType) for (const ref of decl.receiverReference.references || []) addReference(ref);
+        else addReference(decl.receiverReference);
+      }
       harvestNestedBodies(decl, owners);
       return;
     }
     if (decl.kind === 'property') {
       for (const ref of decl.typeReferences || []) addReference(ref);
       for (const ref of decl.annotations || []) addReference(ref);
-      if (decl.receiverReference) addReference(decl.receiverReference);
+      if (decl.receiverReference) {
+        if (decl.receiverReference.functionType) for (const ref of decl.receiverReference.references || []) addReference(ref);
+        else addReference(decl.receiverReference);
+      }
       harvestNestedBodies(decl, owners);
       for (const accessor of decl.accessors || []) {
         harvestAccessor(accessor, owners);
