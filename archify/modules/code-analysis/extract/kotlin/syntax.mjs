@@ -120,31 +120,31 @@ export function createTokenParser(tokens, start = 0, end = tokens.length) {
     }
     if (token.image === 'suspend' && token.tokenType.name === 'Identifier' && peek(1)?.image === '(') {
       next();
-      return parseTypeBase(out);
+      const sig = parseTypeBase(out);
+      return sig ? `suspend ${sig}` : false;
     }
     if (token.image === '(') {
       // Parenthesized type or function type: (T) or (A, B) -> R.
-      const typeStartCursor = cursor;
       const refStart = out.length;
       next();
-      parseFunctionTypeParameterList(out);
+      const paramSigs = parseFunctionTypeParameterList(out);
       acceptNullableSuffixes();
       if (accept('->')) {
-        if (!parseTypeBase(out)) throw new ParseError('expected a result type after ->', peek());
-        // Function type identity: the whole type — parameter types and result
-        // — normalized from token images. Type-use annotations outside the
-        // parens never enter the span, so (@Mark) (String) -> Unit keeps one
-        // identity while differing from the plain String overload. Without
-        // this the signature falls back to the first parameter reference of
-        // the lambda and collides with it.
-        const signature = tokens.slice(typeStartCursor, cursor).map(t => t.image).join('');
+        const resultSig = parseTypeBase(out);
+        if (!resultSig) throw new ParseError('expected a result type after ->', peek());
+        // Function type identity is structural: the ordered parameter types
+        // and the result type. Parameter labels, trailing separators and
+        // type-use annotations never enter it — none of them changes the
+        // type — so spelling-only edits preserve finding identity.
+        const signature = `(${paramSigs.join(',')})->${resultSig}`;
         for (let i = refStart; i < out.length; i++) out[i].functionTypeSignature = signature;
+        return signature;
       }
-      return true;
+      // Parenthesized type: identity is the inner type's own.
+      return paramSigs.length === 1 ? paramSigs[0] : (paramSigs.length ? `(${paramSigs.join(',')})` : false);
     }
     if (token.tokenType.name !== 'Identifier') return false;
     // Qualified classifier chain.
-    const typeStartCursor = cursor;
     const segments = [next()];
     while (at('.') && peek(1)?.tokenType.name === 'Identifier') {
       next();
@@ -152,8 +152,14 @@ export function createTokenParser(tokens, start = 0, end = tokens.length) {
     }
     const reference = { name: segments.map(t => t.image).join('.'), ...span(segments[0], segments.at(-1)) };
     out.push(reference);
-    if (at('<')) { reference.hasTypeArguments = true; parseTypeArgumentList(out); }
-    acceptNullableSuffixes();
+    let sig = reference.name;
+    if (at('<')) {
+      reference.hasTypeArguments = true;
+      const argSigs = parseTypeArgumentList(out);
+      if (argSigs.length) sig += `<${argSigs.join(',')}>`;
+    }
+    const nullableCount = acceptNullableSuffixes();
+    if (nullableCount) sig += '?'.repeat(nullableCount);
     // Receiver function type: T.(A) -> R — common in DSL builders. The dot
     // continues the type rather than ending it; without this branch the
     // parameter list parser chokes on the leftover '.' and the declaration
@@ -161,51 +167,65 @@ export function createTokenParser(tokens, start = 0, end = tokens.length) {
     if (at('.') && peek(1)?.image === '(') {
       next(); // '.'
       next(); // '('
-      parseFunctionTypeParameterList(out);
+      const paramSigs = parseFunctionTypeParameterList(out);
       acceptNullableSuffixes();
       if (!accept('->')) throw new ParseError('expected -> in receiver function type', peek());
-      if (!parseTypeBase(out)) throw new ParseError('expected a result type after ->', peek());
-      // Normalized signature for overload identity: token images carry the
-      // receiver, parameter types and return type without whitespace or
-      // positions, so Builder.() -> Unit and Builder.(String) -> Unit produce
-      // distinct signatures even though both share the first classifier
-      // reference.
-      reference.functionTypeSignature = tokens.slice(typeStartCursor, cursor).map(t => t.image).join('');
-      return true;
+      const resultSig = parseTypeBase(out);
+      if (!resultSig) throw new ParseError('expected a result type after ->', peek());
+      // Structural signature for overload identity: receiver, parameter types
+      // and result type — Builder.() -> Unit and Builder.(String) -> Unit
+      // stay distinct even though both share the first classifier reference.
+      const signature = `${sig}.(${paramSigs.join(',')})->${resultSig}`;
+      reference.functionTypeSignature = signature;
+      return signature;
     }
     // Function-type tail: T -> R
     if (accept('->')) {
-      if (!parseTypeBase(out)) throw new ParseError('expected a result type after ->', peek());
+      const resultSig = parseTypeBase(out);
+      if (!resultSig) throw new ParseError('expected a result type after ->', peek());
+      return `${sig}->${resultSig}`;
     }
-    return true;
+    return sig;
   }
 
   function acceptNullableSuffixes() {
-    while (at('?')) next();
+    let count = 0;
+    while (at('?')) { next(); count++; }
+    return count;
   }
 
   function parseTypeArgumentList(out) {
     expect('<');
+    const sigs = [];
     for (;;) {
       // variance annotations or star projection
-      while (at('in') || atSoft('out') || atSoft('reified')) next();
+      let variance = '';
+      while (at('in') || atSoft('out') || atSoft('reified')) variance += next().image;
       // Type-use annotations: List<@Size(max = 32) String>
       while (at('@')) {
         next();
-        if (atIdentifier()) parseTypeBase(out);
+        if (atIdentifier()) {
+          const before = out.length;
+          parseTypeBase(out);
+          for (let i = before; i < out.length; i++) out[i].annotation = true;
+        }
         if (at('(')) skipBalancedGroup();
       }
       if (accept('*')) {
-        // star projection
-      } else if (!parseTypeBase(out)) {
-        // Tolerant: skip one token inside malformed type arguments.
-        if (at('>') || at(',')) { /* boundaries handled below */ }
-        else if (!eof()) next();
+        sigs.push(variance ? `${variance} *` : '*');
+      } else {
+        const sig = parseTypeBase(out);
+        if (sig) sigs.push(variance ? `${variance} ${sig}` : sig);
+        else {
+          // Tolerant: skip one token inside malformed type arguments.
+          if (at('>') || at(',')) { /* boundaries handled below */ }
+          else if (!eof()) next();
+        }
       }
       acceptNullableSuffixes();
       if (accept(',')) continue;
       expect('>', 'unterminated type arguments');
-      return;
+      return sigs;
     }
   }
 
@@ -216,16 +236,22 @@ export function createTokenParser(tokens, start = 0, end = tokens.length) {
   // reference, while the type of `event: Événement` is collected no matter
   // how the name is capitalized.
   function parseFunctionTypeParameterList(out) {
+    const sigs = [];
     for (;;) {
-      if (accept(')')) return;
+      if (accept(')')) return sigs;
+      // Parameter labels are documentation, not identity: the name and colon
+      // are skipped before the type parse, so renaming a callback parameter
+      // never changes the signature of its function type.
       if (atIdentifier() && peek(1)?.image === ':') { next(); next(); }
-      if (!parseTypeBase(out)) {
+      const sig = parseTypeBase(out);
+      if (sig) sigs.push(sig);
+      else {
         // Tolerant: skip one token inside malformed parameter types.
         if (at(')') || at(',')) { /* boundaries handled below */ }
         else if (!eof()) next();
       }
       if (accept(',')) continue;
-      if (accept(')')) return;
+      if (accept(')')) return sigs;
       if (eof()) throw new ParseError('unterminated function type parameter list', peek());
     }
   }

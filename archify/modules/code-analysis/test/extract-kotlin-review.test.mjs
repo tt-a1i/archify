@@ -436,3 +436,30 @@ test('kotlin review: annotated callback overloads do not collide with plain-type
   assert.equal(survivorOnly.length, 1);
   assert.equal(survivorOnly[0].id, survivorInBoth?.id);
 });
+
+test('kotlin review: callback formatting edits preserve finding identity', t => {
+  // (String) -> Unit, (String,) -> Unit and (x: String) -> Unit are the same
+  // type: trailing separators and parameter labels are not part of it. The
+  // normalized signature is structural, so spelling-only edits keep the
+  // finding id instead of reporting one finding gone and one new.
+  const fn = (type) => `  fun route(x: ${type}) {\n    if (x is Any) { println(x) }\n  }\n`;
+  const lowThreshold = () => {
+    const c = config();
+    c.rules = { ...c.rules, complexity: { function: { info: { complexity: 1, nesting: 99 }, warning: { complexity: 99, nesting: 99 } } } };
+    return c;
+  };
+  const idsFor = (members) => {
+    const root = fixture(t, { 'Demo.kt': `package demo\nclass Hooks {\n${members}}\n` });
+    const cfg = lowThreshold();
+    const { facts } = extractFacts(root, { language: 'kotlin', config: cfg });
+    return evaluateGraph(buildGraph(facts, cfg), cfg, facts).diagnostics
+      .filter(d => d.code === 'complexity/function')
+      .map(d => ({ id: d.id, fn: d.subject.function }));
+  };
+  const before = idsFor(fn('(String) -> Unit'));
+  const trailingComma = idsFor(fn('(String,) -> Unit'));
+  const renamedLabel = idsFor(fn('(x: String) -> Unit'));
+  assert.equal(before.length, 1);
+  assert.equal(trailingComma[0]?.id, before[0]?.id);
+  assert.equal(renamedLabel[0]?.id, before[0]?.id);
+});
