@@ -124,11 +124,21 @@ export function createTokenParser(tokens, start = 0, end = tokens.length) {
     }
     if (token.image === '(') {
       // Parenthesized type or function type: (T) or (A, B) -> R.
+      const typeStartCursor = cursor;
+      const refStart = out.length;
       next();
       parseFunctionTypeParameterList(out);
       acceptNullableSuffixes();
       if (accept('->')) {
         if (!parseTypeBase(out)) throw new ParseError('expected a result type after ->', peek());
+        // Function type identity: the whole type — parameter types and result
+        // — normalized from token images. Type-use annotations outside the
+        // parens never enter the span, so (@Mark) (String) -> Unit keeps one
+        // identity while differing from the plain String overload. Without
+        // this the signature falls back to the first parameter reference of
+        // the lambda and collides with it.
+        const signature = tokens.slice(typeStartCursor, cursor).map(t => t.image).join('');
+        for (let i = refStart; i < out.length; i++) out[i].functionTypeSignature = signature;
       }
       return true;
     }

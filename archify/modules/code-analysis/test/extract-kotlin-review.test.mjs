@@ -405,3 +405,34 @@ test('kotlin review: overloads sharing a type-use annotation keep stable finding
   assert.equal(survivorOnly.length, 1);
   assert.equal(survivorOnly[0].id, survivorInBoth.id);
 });
+
+test('kotlin review: annotated callback overloads do not collide with plain-type overloads', t => {
+  // route(x: @Mark() (String) -> Unit) and route(x: String): once the
+  // annotation is skipped, the callback's first parameter reference is String
+  // — but the parameter type is the function type, not String. Ordinary
+  // function types carry a normalized signature excluding type-use
+  // annotations, so the two overloads measure distinctly and the survivor
+  // keeps its finding id when the other is deleted.
+  const overloadFn = (type) => `  fun route(x: ${type}) {\n    if (x is Any) { println(x) }\n  }\n`;
+  const lowThreshold = () => {
+    const c = config();
+    c.rules = { ...c.rules, complexity: { function: { info: { complexity: 1, nesting: 99 }, warning: { complexity: 99, nesting: 99 } } } };
+    return c;
+  };
+  const header = 'package demo\nannotation class Mark\nclass Hooks {\n';
+  const idsFor = (members) => {
+    const root = fixture(t, { 'Demo.kt': `${header}${members}}\n` });
+    const cfg = lowThreshold();
+    const { facts } = extractFacts(root, { language: 'kotlin', config: cfg });
+    return evaluateGraph(buildGraph(facts, cfg), cfg, facts).diagnostics
+      .filter(d => d.code === 'complexity/function')
+      .map(d => ({ id: d.id, fn: d.subject.function }));
+  };
+  const both = idsFor(overloadFn('@Mark() (String) -> Unit') + overloadFn('String'));
+  const survivorOnly = idsFor(overloadFn('String'));
+  const survivorInBoth = both.find(d => d.fn === 'Hooks.route(String)');
+  assert.equal(both.length, 2);
+  assert.notEqual(both[0].fn, both[1].fn);
+  assert.equal(survivorOnly.length, 1);
+  assert.equal(survivorOnly[0].id, survivorInBoth?.id);
+});
