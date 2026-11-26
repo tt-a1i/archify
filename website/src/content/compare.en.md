@@ -32,6 +32,7 @@ The table describes default strengths, not rigid limits. Skilled authors can pol
 ## When another tool fits better
 
 - **Use Mermaid** when the diagram is small, must render natively inside GitHub READMEs or docs Markdown, and should stay editable as a few lines of inline text.
+- **Use draw.io (diagrams.net)** when you want a free browser-based GUI editor to drag standard flowchart, network, or org-chart shapes manually with no AI coding agent involved.
 - **Use Excalidraw (including Excalidraw via MCP)** when real-time collaborative whiteboarding, rough hand-drawn sketching in chat, or mouse drag-and-drop brainstorming is the primary goal.
 - **Use PlantUML or D2** when your team already maintains diagrams as plain text in Git, wants line-by-line DSL diffs in review, or needs deep formal UML notation beyond Archify's `class` and `sequence` modes.
 - **Use LikeC4** when your team wants a dedicated C4-style architecture-as-code DSL maintained as structured model files across a repository.
