@@ -342,3 +342,66 @@ test('kotlin review: type-use annotations in nested function-type results parse 
   const other = (facts.functions ?? []).find(fn => fn.name === 'other');
   assert.equal(typeof other?.complexity, 'number');
 });
+
+test('kotlin review: argumentless annotation before a function type keeps the parameter references', t => {
+  // @Mark (Payload) -> Result — the group after an argumentless type-use
+  // annotation is the function type parameter list, not constructor
+  // arguments. Both forms must link Payload: argumentless and with explicit
+  // annotation arguments.
+  const root = fixture(t, {
+    'demo/Mark.kt': 'package demo\n@Target(AnnotationTarget.TYPE)\nannotation class Mark(val value: Int = 0)\n',
+    'demo/Payload.kt': 'package demo\nclass Payload\n',
+    'demo/Result.kt': 'package demo\nclass Result\n',
+    'demo/Ext.kt': 'package demo\nfun register(block: (@Mark (Payload) -> Result) -> Unit) = Unit\n',
+    'demo/ExtArgs.kt': 'package demo\nfun registerArgs(block: (@Mark(1) (Payload) -> Result) -> Unit) = Unit\n',
+  });
+  const { facts } = extractFacts(root, { language: 'kotlin', config: config() });
+  assert.equal(facts.parse_errors?.length ?? 0, 0);
+  for (const file of ['demo/Ext.kt', 'demo/ExtArgs.kt']) {
+    const edges = importsFrom(facts, file);
+    assert.equal(edges.some(imp => imp.to === 'demo/Payload.kt'), true, `${file} must link Payload`);
+    assert.equal(edges.some(imp => imp.to === 'demo/Result.kt'), true, `${file} must link Result`);
+  }
+});
+
+test('kotlin review: generic type-use annotation keeps its type argument references', t => {
+  // @Mark<Payload>() String — the type arguments of the annotation itself are
+  // real references; only the value argument list is expressions.
+  const root = fixture(t, {
+    'demo/Mark.kt': 'package demo\n@Target(AnnotationTarget.TYPE)\nannotation class Mark<T>\n',
+    'demo/Payload.kt': 'package demo\nclass Payload\n',
+    'demo/Ext.kt': 'package demo\nfun register(block: (@Mark<Payload>() String) -> Unit) = Unit\n',
+  });
+  const { facts } = extractFacts(root, { language: 'kotlin', config: config() });
+  const edges = importsFrom(facts, 'demo/Ext.kt');
+  assert.equal(edges.some(imp => imp.to === 'demo/Mark.kt'), true);
+  assert.equal(edges.some(imp => imp.to === 'demo/Payload.kt'), true);
+});
+
+test('kotlin review: overloads sharing a type-use annotation keep stable finding ids', t => {
+  // route(x: @Mark String) and route(x: @Mark Int) share the annotation as
+  // their first reference. The annotation is not the parameter type: removing
+  // the first overload must not renumber the surviving finding.
+  const overload = (type) => `  fun route(x: @Mark ${type}) {\n    if (x is Any) { println(x) }\n  }\n`;
+  const lowThreshold = () => {
+    const c = config();
+    c.rules = { ...c.rules, complexity: { function: { info: { complexity: 1, nesting: 99 }, warning: { complexity: 99, nesting: 99 } } } };
+    return c;
+  };
+  const header = 'package demo\nannotation class Mark\nclass Hooks {\n';
+  const idsFor = (members) => {
+    const root = fixture(t, { 'Demo.kt': `${header}${members}}\n` });
+    const cfg = lowThreshold();
+    const { facts } = extractFacts(root, { language: 'kotlin', config: cfg });
+    return evaluateGraph(buildGraph(facts, cfg), cfg, facts).diagnostics
+      .filter(d => d.code === 'complexity/function')
+      .map(d => ({ id: d.id, fn: d.subject.function }));
+  };
+  const both = idsFor(overload('String') + overload('Int'));
+  const survivorOnly = idsFor(overload('Int'));
+  const survivorInBoth = both.find(d => d.fn.includes('Int'));
+  assert.equal(both.length, 2);
+  assert.notEqual(both[0].fn, both[1].fn);
+  assert.equal(survivorOnly.length, 1);
+  assert.equal(survivorOnly[0].id, survivorInBoth.id);
+});

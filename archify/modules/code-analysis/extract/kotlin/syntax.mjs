@@ -99,8 +99,21 @@ export function createTokenParser(tokens, start = 0, end = tokens.length) {
         if (atIdentifier()) {
           const before = out.length;
           parseTypeBase(out);
-          if (at('(')) skipBalancedGroup();
-          if (out.length > before + 1) out.splice(before + 1);
+          // Annotation references stay dependency evidence — using an
+          // annotation is a real reference to it, including the type
+          // arguments of a generic annotation class — but they are flagged
+          // so parameter identity never mistakes them for the parameter type.
+          for (let i = before; i < out.length; i++) out[i].annotation = true;
+          if (at('(')) {
+            // Constructor arguments or the parameter list of an underlying
+            // function type? Arguments are expressions and skip wholesale.
+            // A group followed by -> is a function type parameter list —
+            // argumentless annotations permit exactly that shape — and it
+            // belongs to the type parse below.
+            const beforeGroup = cursor;
+            skipBalancedGroup();
+            if (at('->')) cursor = beforeGroup;
+          }
         }
       }
       return parseTypeBase(out);

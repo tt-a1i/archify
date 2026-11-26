@@ -66,10 +66,13 @@ export function measureFunctions(unit) {
 
   function parameterSignature(decl) {
     return (decl.parameters || []).map(param => {
-      // Receiver function types carry a normalized signature of the whole
-      // type: the first classifier reference is the receiver, which overloads
-      // share even when their lambda parameter lists differ.
-      const first = param.typeReferences?.[0];
+      // Type-use annotation references stay out of parameter identity: they
+      // are evidence of the annotation, not the type — route(@Mark String)
+      // and route(@Mark Int) are different overloads. Receiver function types
+      // carry a normalized signature of the whole type: the first classifier
+      // reference is the receiver, which overloads share even when their
+      // lambda parameter lists differ.
+      const first = (param.typeReferences ?? []).find(ref => !ref.annotation);
       const type = first?.functionTypeSignature || first?.name || '?';
       return type + (param.vararg ? '…' : '');
     }).join(',');
