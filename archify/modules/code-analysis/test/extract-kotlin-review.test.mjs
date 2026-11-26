@@ -463,3 +463,79 @@ test('kotlin review: callback formatting edits preserve finding identity', t => 
   assert.equal(trailingComma[0]?.id, before[0]?.id);
   assert.equal(renamedLabel[0]?.id, before[0]?.id);
 });
+
+test('kotlin review: nullable parenthesized results keep finding identity equivalence', t => {
+  // () -> (String)? and () -> String? spell the same type: the finding id
+  // must not change when the parameter type is rewritten across the forms.
+  const fn = (type) => `  fun route(block: ${type}) {\n    if (block is Any) { println(block) }\n  }\n`;
+  const lowThreshold = () => {
+    const c = config();
+    c.rules = { ...c.rules, complexity: { function: { info: { complexity: 1, nesting: 99 }, warning: { complexity: 99, nesting: 99 } } } };
+    return c;
+  };
+  const idsFor = (members) => {
+    const root = fixture(t, { 'Demo.kt': `package demo\nclass Hooks {\n${members}}\n` });
+    const cfg = lowThreshold();
+    const { facts } = extractFacts(root, { language: 'kotlin', config: cfg });
+    return evaluateGraph(buildGraph(facts, cfg), cfg, facts).diagnostics
+      .filter(d => d.code === 'complexity/function')
+      .map(d => ({ id: d.id, fn: d.subject.function }));
+  };
+  const parenthesized = idsFor(fn('() -> (String)?'));
+  const direct = idsFor(fn('() -> String?'));
+  assert.equal(parenthesized.length, 1);
+  assert.equal(direct[0]?.id, parenthesized[0]?.id);
+});
+
+test('kotlin review: nullable function overloads stay distinct and the survivor keeps its id', t => {
+  // () -> (() -> Unit)? is a nullable function; () -> () -> Unit is a function
+  // with a non-null function result. They are different types and must measure
+  // as different overloads — removing either must not renumber the other.
+  const overload = (type) => `  fun route(block: ${type}) {\n    if (block is Any) { println(block) }\n  }\n`;
+  const lowThreshold = () => {
+    const c = config();
+    c.rules = { ...c.rules, complexity: { function: { info: { complexity: 1, nesting: 99 }, warning: { complexity: 99, nesting: 99 } } } };
+    return c;
+  };
+  const idsFor = (members) => {
+    const root = fixture(t, { 'Demo.kt': `package demo\nclass Hooks {\n${members}}\n` });
+    const cfg = lowThreshold();
+    const { facts } = extractFacts(root, { language: 'kotlin', config: cfg });
+    return evaluateGraph(buildGraph(facts, cfg), cfg, facts).diagnostics
+      .filter(d => d.code === 'complexity/function')
+      .map(d => ({ id: d.id, fn: d.subject.function }));
+  };
+  const nullableFn = '() -> (() -> Unit)?';
+  const plainFn = '() -> () -> Unit';
+  const both = idsFor(overload(nullableFn) + overload(plainFn));
+  assert.equal(both.length, 2);
+  assert.notEqual(both[0].fn, both[1].fn);
+  const survivorOnly = idsFor(overload(plainFn));
+  const survivorInBoth = both.find(d => d.fn === survivorOnly[0]?.fn);
+  assert.equal(survivorOnly.length, 1);
+  assert.equal(survivorOnly[0].id, survivorInBoth?.id);
+});
+
+test('kotlin review: inner classifiers through generic outers are one parameter', t => {
+  // (Outer<String>.Inner) -> Unit is one parameter of a function type; the dot
+  // after type arguments continues the classifier. It must not split into two
+  // parameters and collide with the genuinely two-parameter (Outer<String>,
+  // Inner) -> Unit overload.
+  const overload = (type) => `  fun route(block: ${type}) {\n    if (block is Any) { println(block) }\n  }\n`;
+  const lowThreshold = () => {
+    const c = config();
+    c.rules = { ...c.rules, complexity: { function: { info: { complexity: 1, nesting: 99 }, warning: { complexity: 99, nesting: 99 } } } };
+    return c;
+  };
+  const idsFor = (members) => {
+    const root = fixture(t, { 'Demo.kt': `package demo\nclass Outer<T> {\n  inner class Inner\n}\nclass Hooks {\n${members}}\n` });
+    const cfg = lowThreshold();
+    const { facts } = extractFacts(root, { language: 'kotlin', config: cfg });
+    return evaluateGraph(buildGraph(facts, cfg), cfg, facts).diagnostics
+      .filter(d => d.code === 'complexity/function')
+      .map(d => ({ id: d.id, fn: d.subject.function }));
+  };
+  const both = idsFor(overload('(Outer<String>.Inner) -> Unit') + overload('(Outer<String>, Inner) -> Unit'));
+  assert.equal(both.length, 2);
+  assert.notEqual(both[0].fn, both[1].fn);
+});

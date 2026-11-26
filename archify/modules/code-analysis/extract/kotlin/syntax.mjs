@@ -128,7 +128,7 @@ export function createTokenParser(tokens, start = 0, end = tokens.length) {
       const refStart = out.length;
       next();
       const paramSigs = parseFunctionTypeParameterList(out);
-      acceptNullableSuffixes();
+      const nullableCount = acceptNullableSuffixes();
       if (accept('->')) {
         const resultSig = parseTypeBase(out);
         if (!resultSig) throw new ParseError('expected a result type after ->', peek());
@@ -140,8 +140,15 @@ export function createTokenParser(tokens, start = 0, end = tokens.length) {
         for (let i = refStart; i < out.length; i++) out[i].functionTypeSignature = signature;
         return signature;
       }
-      // Parenthesized type: identity is the inner type's own.
-      return paramSigs.length === 1 ? paramSigs[0] : (paramSigs.length ? `(${paramSigs.join(',')})` : false);
+      // Parenthesized type: identity is the inner type's own, plus any
+      // nullable suffix — (String)? is String?. Function types keep their
+      // parentheses when nullable: ((A) -> R)? is a nullable function, not a
+      // function with a nullable result, and must not collide with (A) -> R?.
+      const inner = paramSigs.length === 1 ? paramSigs[0] : (paramSigs.length ? `(${paramSigs.join(',')})` : null);
+      if (!inner) return false;
+      if (!nullableCount) return inner;
+      const suffix = '?'.repeat(nullableCount);
+      return inner.startsWith('(') ? `(${inner})${suffix}` : `${inner}${suffix}`;
     }
     if (token.tokenType.name !== 'Identifier') return false;
     // Qualified classifier chain.
@@ -158,8 +165,29 @@ export function createTokenParser(tokens, start = 0, end = tokens.length) {
       const argSigs = parseTypeArgumentList(out);
       if (argSigs.length) sig += `<${argSigs.join(',')}>`;
     }
+    // Qualified inner classifier: the chain may continue past type arguments
+    // (Outer<String>.Inner, possibly with further arguments on the inner
+    // segments). The reference stays the outermost classifier — inner types
+    // share its file — while the signature carries the full type.
+    while (at('.') && peek(1)?.tokenType.name === 'Identifier') {
+      next(); // '.'
+      const innerSegment = next();
+      sig += `.${innerSegment.image}`;
+      if (at('<')) {
+        const argSigs = parseTypeArgumentList(out);
+        if (argSigs.length) sig += `<${argSigs.join(',')}>`;
+      }
+    }
     const nullableCount = acceptNullableSuffixes();
     if (nullableCount) sig += '?'.repeat(nullableCount);
+    // Definitely non-null type: T & Any — the intersection continues the type
+    // rather than ending it, and must not split one parameter into fragments.
+    while (at('&')) {
+      next();
+      const rhsSig = parseTypeBase(out);
+      if (!rhsSig) throw new ParseError('expected a type after &', peek());
+      sig += `&${rhsSig}`;
+    }
     // Receiver function type: T.(A) -> R — common in DSL builders. The dot
     // continues the type rather than ending it; without this branch the
     // parameter list parser chokes on the leftover '.' and the declaration
@@ -243,13 +271,18 @@ export function createTokenParser(tokens, start = 0, end = tokens.length) {
       // are skipped before the type parse, so renaming a callback parameter
       // never changes the signature of its function type.
       if (atIdentifier() && peek(1)?.image === ':') { next(); next(); }
-      const sig = parseTypeBase(out);
-      if (sig) sigs.push(sig);
-      else {
-        // Tolerant: skip one token inside malformed parameter types.
-        if (at(')') || at(',')) { /* boundaries handled below */ }
-        else if (!eof()) next();
+      // One signature per comma-delimited parameter. Syntax the type parser
+      // does not fully recognize continues the same parameter as fragments —
+      // significant tokens stay in the signature — instead of splitting one
+      // parameter into several and colliding with genuinely different arity.
+      const fragments = [];
+      for (;;) {
+        const sig = parseTypeBase(out);
+        if (sig) fragments.push(sig);
+        else if (!at(')') && !at(',') && !eof()) fragments.push(next().image);
+        if (at(')') || at(',') || eof()) break;
       }
+      if (fragments.length) sigs.push(fragments.join(' '));
       if (accept(',')) continue;
       if (accept(')')) return sigs;
       if (eof()) throw new ParseError('unterminated function type parameter list', peek());
