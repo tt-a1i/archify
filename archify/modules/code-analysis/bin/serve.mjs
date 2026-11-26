@@ -22,6 +22,7 @@ import { execFile, spawn } from 'node:child_process';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { DiagnosticError, fail } from '../core/index.mjs';
+import { needsOutputRecovery, outputEntry, OUTPUT_BUSY, publishAnalysisMoves, withAnalysisOutput } from '../lib/output.mjs';
 import { analysisStartCommand } from '../lib/task-command.mjs';
 import { standaloneShell } from '../overlay/standalone.mjs';
 import { clientAsset } from '../overlay/client-assets.mjs';
@@ -38,6 +39,7 @@ const TASK_BODY_LIMIT = 16 * 1024;
 // Failures come back as the worker's structured diagnostics.
 export function runWorker(options, { offline = false } = {}) {
   return new Promise((resolve, reject) => {
+    fs.mkdirSync(options.out, { recursive: true });
     const child = spawn(process.execPath, [worker], {
       stdio: ['pipe', 'pipe', 'pipe'],
       ...(offline ? { env: { ...process.env, GIT_NO_LAZY_FETCH: '1', GIT_ALLOW_PROTOCOL: '', CARGO_NET_OFFLINE: 'true', RUSTUP_AUTO_INSTALL: '0' } } : {}),
@@ -100,7 +102,7 @@ export function parseArgs(argv) {
   return { repo, options };
 }
 
-export async function prepareAnalysisSession(argv) {
+export async function prepareAnalysisSession(argv, run = session => session) {
   const { repo, options } = parseArgs(argv);
   const root = path.resolve(repo), ir = options['--ir'] ? path.resolve(options['--ir']) : null, out = path.resolve(options['--out']);
   const irBytes = ir ? fs.readFileSync(ir) : null;
@@ -110,8 +112,13 @@ export async function prepareAnalysisSession(argv) {
   const pullRequest = options['--base']
     ? await resolveLocalPullRequest(root, options['--base'], options['--head'], options['--scope'])
     : options['--pr'] ? await resolvePullRequest(root, options['--pr'], options['--repository'], options['--scope']) : null;
-  fs.mkdirSync(out, { recursive: true });
+  return withAnalysisOutput(out, async lock => {
+    const session = await createAnalysisSession({ root, ir, out, options, irBytes, doc, locale, pullRequest });
+    return run(session, lock);
+  });
+}
 
+async function createAnalysisSession({ root, ir, out, options, irBytes, doc, locale, pullRequest }) {
   // 1. Archify delivers the diagram. Repository evidence is checked when the IR pins a repository.
   const delivered = ir ? path.join(out, 'architecture.html') : null;
   let evidenceArgs = [];
@@ -157,9 +164,13 @@ export async function prepareAnalysisSession(argv) {
   return { root, ir, out, options, irBytes, doc, locale, delivered, baselineFile, resume, pullRequest };
 }
 
-export async function runSessionAnalysis({ root, ir, doc, locale, delivered, out, options, baselineFile, resume, pullRequest = null, openAnalysis = false }, { preparePRSources = preparePullRequest } = {}) {
+// Callers hold the output lock for the lifetime of the comparison and publish.
+export async function runSessionAnalysis({ root, ir, doc, locale, delivered, out, options, baselineFile, resume, pullRequest = null, openAnalysis = false }, lock, { preparePRSources = preparePullRequest } = {}) {
   const analysisDir = path.join(out, 'analysis');
-  const next = path.join(out, `analysis.next-${randomBytes(6).toString('hex')}`);
+  const previousDir = path.join(out, 'analysis.previous');
+  const next = path.join(lock, 'next');
+  const current = outputEntry(analysisDir, { directory: true });
+  const previous = outputEntry(previousDir, { directory: true });
   let capture = null;
   const offline = Boolean(pullRequest?.local);
   try {
@@ -168,7 +179,7 @@ export async function runSessionAnalysis({ root, ir, doc, locale, delivered, out
       const { loadConfig, stableJson } = await import('../lib/analysis.mjs');
       const { selectAdapter } = await import('../extract/index.mjs');
       capture = await preparePRSources({ ...pullRequest, out });
-      fs.mkdirSync(next, { recursive: true });
+      fs.mkdirSync(next);
       const cfg = loadConfig(config);
       config = path.join(next, 'captured-config.json');
       fs.writeFileSync(config, stableJson(cfg));
@@ -187,18 +198,24 @@ export async function runSessionAnalysis({ root, ir, doc, locale, delivered, out
       language, config, source: capture?.source('head') || null,
       pullRequest: capture ? { pr: capture.pr, scope: capture.scope, changedFiles: capture.changedFiles, manifests: capture.manifests, sourceRoot: capture.roots.head, baseSourceRoot: capture.roots.base, sourceGitRoot: capture.sourceGitRoot } : null,
       map: options['--map'] ? path.resolve(options['--map']) : null, baseline: fs.existsSync(baselineFile) ? baselineFile : null,
-      previous: capture ? path.join(next, 'base/findings.json') : path.join(analysisDir, 'findings.json'),
+      previous: capture ? path.join(next, 'base/findings.json') : path.join(current ? analysisDir : previousDir, 'findings.json'),
     }, { offline });
+    // Read what the caller will return while the old pair is still in place.
+    const html = fs.readFileSync(path.join(next, 'repo.analysis.html'), 'utf8');
+    const overview = JSON.parse(fs.readFileSync(path.join(next, 'overview.json'), 'utf8'));
+    const summary = { counts: overview.counts, coverage: overview.coverage, leads: overview.investigation.leads };
+    const moves = [];
+    if (current) {
+      if (previous) moves.push([previousDir, path.join(lock, 'previous')]);
+      moves.push([analysisDir, previousDir]);
+    }
+    moves.push([next, analysisDir]);
+    publishAnalysisMoves(moves, lock);
+    return { html, summary };
   } catch (error) {
-    fs.rmSync(next, { recursive: true, force: true });
-    if (capture) fs.rmSync(capture.directory, { recursive: true, force: true });
+    if (capture && !needsOutputRecovery(error)) fs.rmSync(capture.directory, { recursive: true, force: true });
     throw error;
   }
-  const previousDir = path.join(out, 'analysis.previous');
-  fs.rmSync(previousDir, { recursive: true, force: true });
-  if (fs.existsSync(analysisDir)) fs.renameSync(analysisDir, previousDir);
-  fs.renameSync(next, analysisDir);
-  return fs.readFileSync(path.join(analysisDir, 'repo.analysis.html'), 'utf8');
 }
 
 export async function startAnalysisView(argv, dependencies = {}) {
@@ -208,7 +225,7 @@ export async function startAnalysisView(argv, dependencies = {}) {
   const page = (delivered ? fs.readFileSync(delivered, 'utf8') : standaloneShell({ locale, title: path.basename(root) })).replace('</body>', `<script>(${client.toString()})(${JSON.stringify(token)}, ${JSON.stringify(messagesFor(locale))}, ${createTranslator.toString()}, ${!ir}, ${JSON.stringify(clientAsset('entry.css'))})</script></body>`);
   let pending = null, result = null, origin, reviewing = false;
   const analysisDir = path.join(out, 'analysis');
-  const runAnalysis = () => runSessionAnalysis(session, dependencies);
+  const runAnalysis = () => withAnalysisOutput(out, lock => runSessionAnalysis(session, lock, dependencies));
   const currentRoot = () => {
     if (!session.pullRequest) return root;
     const file = path.join(analysisDir, 'view-context.json');
@@ -237,11 +254,11 @@ export async function startAnalysisView(argv, dependencies = {}) {
     // 3. The click returns the latest result; 4. a refresh request runs a new one.
     // Concurrent requests share the run in progress.
     try {
-      if (!pending && (!result || req.headers['x-analysis-refresh'] === '1')) pending = runAnalysis().then((html) => { result = html; return html; }).finally(() => { pending = null; });
+      if (!pending && (!result || req.headers['x-analysis-refresh'] === '1')) pending = runAnalysis().then(({ html }) => { result = html; return html; }).finally(() => { pending = null; });
       send(200, pending ? await pending : result, 'text/html; charset=utf-8');
     } catch (error) {
       const diagnostics = error instanceof DiagnosticError ? error.diagnostics : [{ code: 'internal/unclassified', severity: 'error', message: error.message, subject: {}, evidence: {}, supportedFixes: [] }];
-      send(500, JSON.stringify({ error: diagnostics.map((d) => d.message).join('\n'), diagnostics }));
+      send(diagnostics.some(d => d.code === OUTPUT_BUSY) ? 409 : 500, JSON.stringify({ error: diagnostics.map((d) => d.message).join('\n'), diagnostics }));
     }
   });
   // 5. A task for findings of the result on disk, checked against the working tree now.
@@ -259,21 +276,24 @@ export async function startAnalysisView(argv, dependencies = {}) {
     if (!Array.isArray(ids) || !ids.length || ids.length > 20 || !ids.every((id) => typeof id === 'string' && /^[A-Z]{2,4}-(?:[0-9a-f]{12}|[0-9]{4,})$/.test(id))) return send(400, JSON.stringify({ error: 'ids must list 1–20 finding ids' }));
     if (expected !== undefined && (!expected || typeof expected !== 'object' || Array.isArray(expected) || ids.some((id) => typeof expected[id] !== 'string' || !/^[0-9a-f]{64}$/.test(expected[id])))) return send(400, JSON.stringify({ error: 'expected must map every selected finding id to its displayed reviewTarget digest' }));
     if (pending || reviewing) return fail409('task/analysis-running', 'An analysis or review update is running; build the task when it has finished.', ['retry after the analysis completes']);
-    if (!fs.existsSync(path.join(analysisDir, 'findings.json'))) return fail409('task/no-analysis', 'Run the analysis before building a task.', ['click Code Analysis first']);
     try {
-      const { buildTask, renderTaskMarkdown } = await import('../lib/task.mjs');
-      const { verifyTask } = await import('../lib/evidence.mjs');
-      const { loadBaseline, loadPrevious } = await import('../lib/analysis.mjs');
-      const { reviewFindings, reviewTargetDigest } = await import('../lib/review.mjs');
-      const read = (name) => JSON.parse(fs.readFileSync(path.join(analysisDir, name), 'utf8'));
-      const findings = read('findings.json'), facts = read('raw-facts.json');
-      if (expected && findings.diagnostics.some((finding) => ids.includes(finding.id) && reviewTargetDigest(finding) !== expected[finding.id])) return fail409('task/finding-changed', 'The finding changed since this page was loaded. Re-analyze to refresh the displayed claim before exporting its task.', ['refresh the analysis page and review the current finding']);
-      const review = reviewFindings(findings.diagnostics, { baseline: fs.existsSync(baselineFile) ? loadBaseline(baselineFile) : null, previous: loadPrevious(comparisonFile()), analysis: findings.analysis, files: [...facts.files, ...(findings.externalEvidence || [])].map((f) => f.path) });
-      const task = verifyTask(buildTask({ findings, facts, ids, review }), currentRoot());
-      send(200, JSON.stringify({ task, markdown: renderTaskMarkdown(task) }));
+      await withAnalysisOutput(out, async () => {
+        if (!fs.existsSync(path.join(analysisDir, 'findings.json'))) return fail409('task/no-analysis', 'Run the analysis before building a task.', ['click Code Analysis first']);
+        const { buildTask, renderTaskMarkdown } = await import('../lib/task.mjs');
+        const { verifyTask } = await import('../lib/evidence.mjs');
+        const { loadBaseline, loadPrevious } = await import('../lib/analysis.mjs');
+        const { reviewFindings, reviewTargetDigest } = await import('../lib/review.mjs');
+        const read = (name) => JSON.parse(fs.readFileSync(path.join(analysisDir, name), 'utf8'));
+        const findings = read('findings.json'), facts = read('raw-facts.json');
+        if (expected && findings.diagnostics.some((finding) => ids.includes(finding.id) && reviewTargetDigest(finding) !== expected[finding.id])) return fail409('task/finding-changed', 'The finding changed since this page was loaded. Re-analyze to refresh the displayed claim before exporting its task.', ['refresh the analysis page and review the current finding']);
+        const review = reviewFindings(findings.diagnostics, { baseline: fs.existsSync(baselineFile) ? loadBaseline(baselineFile) : null, previous: loadPrevious(comparisonFile()), analysis: findings.analysis, files: [...facts.files, ...(findings.externalEvidence || [])].map((f) => f.path) });
+        const task = verifyTask(buildTask({ findings, facts, ids, review }), currentRoot());
+        send(200, JSON.stringify({ task, markdown: renderTaskMarkdown(task) }));
+      });
     } catch (error) {
       const diagnostics = error instanceof DiagnosticError ? error.diagnostics : [{ code: 'internal/unclassified', severity: 'error', message: error.message, subject: {}, evidence: {}, supportedFixes: [] }];
-      send(error instanceof DiagnosticError ? 422 : 500, JSON.stringify({ error: diagnostics.map((d) => d.message).join('\n'), diagnostics }));
+      const status = diagnostics.some(d => d.code === OUTPUT_BUSY) ? 409 : error instanceof DiagnosticError && !needsOutputRecovery(error) ? 422 : 500;
+      send(status, JSON.stringify({ error: diagnostics.map((d) => d.message).join('\n'), diagnostics }));
     }
   };
   // A fixed baseline destination and one id per decision. Paths are never supplied
@@ -288,10 +308,10 @@ export async function startAnalysisView(argv, dependencies = {}) {
     if (!input || !['accept', 'revoke'].includes(input.action) || typeof input.id !== 'string' || !/^[A-Z]{2,4}-[0-9a-f]{12}$/.test(input.id)) return send(400, JSON.stringify({ error: 'review requires action accept/revoke and a stable finding id' }));
     if (input.action === 'accept' && (typeof input.expected !== 'string' || !/^[0-9a-f]{64}$/.test(input.expected))) return send(400, JSON.stringify({ error: 'accept requires the reviewTarget digest shown with the finding' }));
     if (pending || reviewing) return send(409, JSON.stringify({ error: 'An analysis or review update is running; retry after it finishes.' }));
-    if (!fs.existsSync(path.join(analysisDir, 'findings.json'))) return send(409, JSON.stringify({ error: 'Run an analysis before reviewing a finding.' }));
     reviewing = true;
     let phase = 'prepare';
-    try {
+    const save = async () => {
+      if (!fs.existsSync(path.join(analysisDir, 'findings.json'))) return send(409, JSON.stringify({ error: 'Run an analysis before reviewing a finding.' }));
       const { loadBaseline, saveBaseline, loadPrevious } = await import('../lib/analysis.mjs');
       const { acceptFinding, revokeFinding, reviewFindings, reviewTargetDigest } = await import('../lib/review.mjs');
       const { buildTask } = await import('../lib/task.mjs');
@@ -321,9 +341,13 @@ export async function startAnalysisView(argv, dependencies = {}) {
         response.warnings = [{ code: 'review/artifacts-not-updated', message: `The baseline was saved and this server has the updated view, but disk view artifacts could not all be updated (${error.message}). Re-analyze when the output directory is writable to refresh the saved files.` }];
       }
       send(200, JSON.stringify(response));
+    };
+    try {
+      await withAnalysisOutput(out, save);
     } catch (error) {
       const diagnostics = error instanceof DiagnosticError ? error.diagnostics : [{ code: phase === 'save' ? 'baseline/write-failed' : 'review/preparation-failed', severity: 'error', message: error.message, subject: {}, evidence: {}, supportedFixes: [phase === 'save' ? 'check that the configured baseline can be written, then retry' : 're-analyze the repository to rebuild its captured view, then retry'] }];
-      send(error instanceof DiagnosticError ? 422 : 500, JSON.stringify({ error: diagnostics.map((d) => d.message).join('\n'), diagnostics }));
+      const status = diagnostics.some(d => d.code === OUTPUT_BUSY) ? 409 : error instanceof DiagnosticError ? 422 : 500;
+      send(status, JSON.stringify({ error: diagnostics.map((d) => d.message).join('\n'), diagnostics }));
     } finally { reviewing = false; }
   };
   await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
