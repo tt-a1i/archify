@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { once } from 'node:events';
 import { test } from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { ChromeVisualBrowser, findChrome } from '../archify/bin/visual-check.mjs';
@@ -506,7 +507,12 @@ test('Code Analysis refuses changed IR and preserves captured source in the curr
   assert.equal(await run("document.querySelector('#bauify-panel .fly-ev').dataset.file"), 'b.mjs');
   await run("document.querySelector('#bauify-panel .fly-ev').click()");
   assert.equal(await run("document.getElementById('bauify-code').hidden"), false);
+  assert.match(await run("document.querySelector('#bauify-code .source-back').textContent"), /Dependency/);
   await run("document.querySelector('#bauify-code .source-back').click()");
+  assert.equal(await run("document.activeElement.matches('#bauify-panel button.fly-ev')"), true);
+  await run("document.querySelector('#bauify-panel .fly-ev').click()");
+  await run("document.activeElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))");
+  assert.equal(await run("document.activeElement.matches('#bauify-panel button.fly-ev') && document.getElementById('bauify-code').hidden"), true);
   await run("document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))");
   assert.deepEqual(await run("[document.documentElement.hasAttribute('data-bauify-fly'), document.documentElement.hasAttribute('data-bauify-pick')]"), [false, false], 'Esc closes the fly-out and clears the pick');
   await run("document.querySelector('#bauify-stage .stage-code').click()");
@@ -612,7 +618,14 @@ test('Code Analysis Atlas draws the analyzed tree, focuses a module and hands a 
   view.server.on('connection', socket => { sockets.add(socket); socket.on('close', () => sockets.delete(socket)); });
   t.after(() => new Promise(resolve => { view.server.close(resolve); for (const socket of sockets) socket.destroy(); }));
   const browser = new ChromeVisualBrowser(chrome);
-  t.after(() => browser.close());
+  t.after(async () => {
+    if (browser.child.exitCode === null && browser.child.signalCode === null) {
+      const exited = once(browser.child, 'exit', { signal: AbortSignal.timeout(5000) }).catch(() => {});
+      await browser.cdp.send('Browser.close').catch(() => {});
+      await exited;
+    }
+    await browser.close();
+  });
   const session = await browser.sessionPromise;
   const send = (method, params = {}) => browser.cdp.send(method, params, session);
   const run = async expression => {
@@ -857,6 +870,37 @@ test('Code Analysis Atlas draws the analyzed tree, focuses a module and hands a 
   assert.match(await run("document.querySelector('#bauify-detail h3').textContent"), /is complex/);
   assert.ok(await run("!!document.querySelector('#bauify-detail pre')"), 'the reading column shows the source excerpt');
   assert.deepEqual(await run("[document.getElementById('bauify-atlas').hidden, document.documentElement.getAttribute('data-bauify-views'), getComputedStyle(document.getElementById('bauify-reader')).display !== 'none']"), [true, null, true], 'evidence shows beside the diagram');
+
+  await run("document.querySelector('#bauify-detail .inline-evidence .ref').click()");
+  assert.match(await run("document.querySelector('#bauify-code .source-back').textContent"), /Finding/);
+  await run("document.querySelector('#bauify-code .source-back').click()");
+  assert.equal(await run("document.activeElement.matches('#bauify-detail .inline-evidence .ref')"), true);
+  assert.match(await run("document.querySelector('#bauify-detail .back').textContent"), /Atlas/);
+  await run("document.querySelector('#bauify-detail .back').click()");
+  assert.equal(await run("document.documentElement.getAttribute('data-bauify-atlas-finding')"), atlas.findings[complex].id);
+  await until("!document.getElementById('bauify-atlas').hidden && document.activeElement.matches('.atlas-evidence')", 'Atlas evidence did not regain focus');
+  await until("document.querySelector('#bauify-atlas canvas').width > 0", 'Atlas did not reopen after evidence');
+
+  // Escape from the finding heading returns to the same Atlas evidence action.
+  await run("document.querySelector('#bauify-atlas .atlas-evidence').click()");
+  await run("document.querySelector('#bauify-detail h3').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))");
+  await until("!document.getElementById('bauify-atlas').hidden && document.activeElement.matches('.atlas-evidence')", 'Escape did not restore Atlas and its evidence action');
+  assert.equal(await run("document.documentElement.getAttribute('data-bauify-atlas-finding')"), atlas.findings[complex].id);
+
+  // Escape in 3D must not activate the hidden Classic finding's Atlas return.
+  await run("document.querySelector('#bauify-atlas .atlas-evidence').click(); document.querySelector('.views-option[data-view=atlas3d]').click(); document.querySelector('.views-option[data-view=atlas3d]').focus(); document.activeElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))");
+  assert.equal(await run("document.documentElement.getAttribute('data-bauify-views')"), 'atlas3d', 'Escape does not restore the hidden Classic finding over the active 3D view');
+  await run(`window.__archifyShowFinding(${JSON.stringify(atlas.findings[complex].id)}); document.querySelector('#bauify-detail h3').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))`);
+  assert.equal(await run("document.documentElement.hasAttribute('data-bauify-views')"), false, 'a 3D evidence entry does not inherit an earlier 2D Atlas return');
+  await run("document.querySelector('.views-option[data-view=atlas]').click()");
+
+  // A component opened after an Atlas finding is a new navigation context.
+  await run("document.querySelector('#bauify-atlas .atlas-evidence').click()");
+  await run("document.querySelector('g[data-node-id=app]').dispatchEvent(new MouseEvent('click', { bubbles: true }))");
+  await run("document.querySelector('#bauify-panel .fly-find').click()");
+  assert.doesNotMatch(await run("document.querySelector('#bauify-detail .back').textContent"), /Atlas/, 'component finding must not return to the earlier Atlas finding');
+  await run("document.querySelector('#bauify-detail .back').click()");
+  assert.equal(await run("document.getElementById('bauify-atlas').hidden"), true);
 
   // The Atlas 3D tab shows the same run in the same place, every item accounted for.
   const hasWebGl = await run(`(() => {

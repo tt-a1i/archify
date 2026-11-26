@@ -149,9 +149,9 @@ test('standalone workbench keeps Atlas alongside evidence, both locales/themes a
       && ${readerWidthSettled}`, 'finding reader did not return from source');
     assert.equal(await run(selectedFinding), id, 'returning from source keeps the detail selected');
     await click(`${details} .back`);
-    assert.equal(await run("document.getElementById('bauify-overview').hidden"), false, 'Back opens the overview');
-    assert.equal(await run(selectedFinding), '', 'returning to the overview restores no selection');
-    assert.equal(await run("!document.querySelector('.atlas-selection .selected')"), true);
+    await wait("!document.getElementById('bauify-overview').hidden && document.getElementById('bauify-detail').hidden", 'Back did not return the reader to overview');
+    assert.equal(await run(selectedFinding), id, 'the explicit Atlas opener replaces the earlier overview return context');
+    assert.equal(await run("Boolean(document.querySelector('.atlas-selection .selected'))"), true);
 
     // Selecting a captured file replaces a prior finding, and module/clear
     // selections replace that file. Protect the actual browser transitions.
@@ -221,7 +221,10 @@ test('standalone workbench keeps Atlas alongside evidence, both locales/themes a
     await run("const group = document.querySelector('.atlas-side details[data-group]'); group.open = true");
     const readSide = () => run(`({ scroll: document.querySelector('.atlas-side').scrollTop, modules: document.querySelector('${list}').scrollTop, groups: Array.from(document.querySelectorAll('.atlas-side details[data-group][open]'), e => e.dataset.group) })`);
     const sideBefore = await readSide();
+    await run(`document.querySelector(${JSON.stringify(priority)}).scrollIntoView({ block: 'nearest' })`);
+    await wait(`(() => { const el = document.querySelector(${JSON.stringify(priority)}), r = el.getBoundingClientRect(); const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return hit && el.contains(hit); })()`, 'overview finding is not clickable');
     await click(priority);
+    await wait(`${selectedFinding} === ${JSON.stringify(id)}`, 'overview finding did not select on the map');
     assert.equal(await run(selectedFinding), id);
     await click(`${details} .close`);
     await wait(drawSettled, 'restored sector zoom did not settle');

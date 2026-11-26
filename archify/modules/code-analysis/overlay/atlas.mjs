@@ -75,7 +75,8 @@ export function buildAtlas({ graph, facts, findings = [], review = null }) {
     (byModule.get(id) || byModule.set(id, []).get(id)).push(f);
   }
   const modules = graphModules.filter((m) => byModule.has(m.id));
-  const labels = moduleLabels(modules.map((m) => m.path));
+  // A file at the selected scope root can form its own module with an empty directory path.
+  const labels = moduleLabels(modules.map((m) => m.path || (m.label === '(root)' ? '' : m.label)));
   const moduleIndex = new Map(modules.map((m, i) => [m.id, i]));
   const labelOf = (id) => (moduleIndex.has(id) ? labels[moduleIndex.get(id)] : id);
 

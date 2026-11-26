@@ -610,7 +610,8 @@ html[data-bauify-flymode] #bauify-panel h3 { margin: 4px 0 2px; font-size: 21px;
 #bauify-reader .fly-ev em { font-style: normal; color: var(--fly-muted); }
 #bauify-reader .fly-ev small { grid-column: 1 / -1; color: var(--fly-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #bauify-reader .fly-rel:hover, #bauify-reader .fly-find:hover { background: var(--fly-hover); }
-#bauify-reader .fly-ev:hover { border-color: color-mix(in srgb, var(--fly-text) 22%, var(--fly-line)); }
+#bauify-reader .fly-ev-unavailable { cursor: default; }
+#bauify-reader button.fly-ev:hover { border-color: color-mix(in srgb, var(--fly-text) 22%, var(--fly-line)); }
 #bauify-reader .fly-note { margin: 12px 0 0; padding: 10px 12px; border-radius: 11px; border: 1px solid var(--fly-line); background: var(--fly-soft); font-size: 12.5px; line-height: 1.6; }
 #bauify-reader .fly-note.attention { border-color: color-mix(in srgb, var(--fly-red) 35%, var(--fly-line)); background: color-mix(in srgb, var(--fly-red) 7%, var(--fly-surface)); }
 #bauify-reader .fly-pill { padding: 1px 8px; border-radius: 99px; font-size: 11px; font-weight: 600; background: color-mix(in srgb, var(--fly-grey) 16%, transparent); }

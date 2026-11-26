@@ -13,6 +13,7 @@
   var prMarkerHits = [], prModuleChanges = pr ? new Map((pr.moduleChanges || []).map(function(m){return[m.id,m];})) : null;
   var changedFiles = pr ? (pr.changedFiles || []) : [];
   var changedSelection = null;
+  var findingImports = [], activeImport = 0;
   if (pr) FN.forEach(function(fn,i){prFunctions.set(JSON.stringify([F[fn[0]][0],fn[1]]),i);});
   function esc(s) { return String(s).replace(/[&<>"']/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]; }); }
   function fmt(n) { return Number(n).toLocaleString('en-US'); }
@@ -337,6 +338,29 @@
     }
     return sel;
   }
+  function drawImportEndpoints(ctx, t, edge) {
+    var ends = edge.map(function (file) { return pt(geo.ang[file], geo.R * 0.985, F[file][1]); });
+    var labels = edge.map(function (file) { return pt(geo.ang[file], Math.max(0, geo.R * 0.985 - 17), F[file][1]); });
+    if (Math.hypot(labels[0][0] - labels[1][0], labels[0][1] - labels[1][1]) < 22) {
+      var step = labels[0][1] <= labels[1][1] ? 11 : -11;
+      labels[0][1] -= step;
+      labels[1][1] += step;
+    }
+    ctx.save();
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = t.text;
+    ctx.font = '600 13px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    labels.forEach(function (point, index) {
+      ctx.beginPath(); ctx.moveTo(ends[index][0], ends[index][1]); ctx.lineTo(point[0], point[1]); ctx.stroke();
+      ctx.fillStyle = t.bg;
+      ctx.beginPath(); ctx.arc(point[0], point[1], 9, 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = t.text;
+      ctx.fillText(index === 0 ? '①' : '②', point[0], point[1]);
+    });
+    ctx.restore();
+  }
   function inSel(sel, file) { return sel.files[file] || sel.modules[F[file][1]]; }
 
   // ---- drawing ----
@@ -443,6 +467,13 @@
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, geo.w, geo.h);
     var sel = selection(), dimmed = sel.any;
+    var selectedImport = findingImports[activeImport];
+    if (selectedImport) {
+      sel.anchor = null;
+      sel.files[selectedImport[0]] = true;
+      sel.files[selectedImport[1]] = true;
+      sel.edges = [selectedImport];
+    }
     // guide rings
     ctx.lineWidth = 1; ctx.strokeStyle = t.grid;
     [0.42, 0.8, 1.0, 1.42].forEach(function (f) { ctx.beginPath(); ctx.arc(geo.cx, geo.cy, geo.R * f, 0, 2 * Math.PI); ctx.stroke(); });
@@ -537,6 +568,7 @@
       }
       ctx.restore();
     });
+    if (selectedImport) drawImportEndpoints(ctx, t, selectedImport);
     if (pr) drawPRMarks(ctx,sel);
     ctx.lineCap = 'round';
   }
@@ -647,6 +679,10 @@
     changedSelection = Number.isInteger(changeIndex) && changedFiles[changeIndex] ? changeIndex : null;
     if (state.file !== -1) { module = F[state.file][1]; finding = -1; }
     state.focusModule = module; state.finding = finding;
+    var selected = FD[finding];
+    var fn = selected?.kind === 'function' && FN[selected.fn];
+    findingImports = fn ? E.filter(function (edge) { return edge[0] === fn[0] || edge[1] === fn[0]; }) : [];
+    activeImport = findingImports[saved?.importIndex] ? saved.importIndex : 0;
     state.hover = null; tip.hidden = true;
     // The page's panel shows "all findings" only when asked; clearing closes it.
     homeOpen = wantHome && module === -1 && finding === -1 && state.file === -1; wantHome = false;
@@ -698,7 +734,7 @@
     if (f) {
       var what = findingWhat(f);
       return '<div class="selected"><h4>' + esc(findingTitle(f)) + '</h4><p><span style="color:' + (TONE[f.severity] || TONE.info) + '">' + esc(tr(f.severity)) + '</span>' + (f.accepted ? tr(" · accepted in baseline") : '') + ' · ' + esc(what) + '</p>' +
-        '<button type="button" class="atlas-evidence" data-id="' + esc(f.id) + '">' + esc(tr(standalone ? 'Open source evidence' : 'Open evidence in Classic view')) + '</button></div>';
+        '<button type="button" class="atlas-evidence" data-id="' + esc(f.id) + '">' + esc(tr(standalone ? 'Open finding details' : 'Open finding details in Classic view')) + '</button></div>';
     }
     if (state.file !== -1) {
       var picked = F[state.file];
@@ -878,6 +914,8 @@
       side.querySelector('.atlas-selection').innerHTML = '<div class="k">' + esc(tr('Selection')) + '</div>' + selectedCard();
       side.querySelector('.atlas-stats').hidden = Boolean(pr);
     }
+    var finding = FD[state.finding];
+    if (finding?.kind === 'function' && finding.fn != null) renderFindingImports(FN[finding.fn][0]);
     side.querySelector('.atlas-side-content').innerHTML = listsHtml(view, openSelected);
     side.querySelector('.module-list').scrollTop = view.modules;
     scroller.scrollTop = PAGE && !openSelected ? view.scroll : PAGE ? 0 : view.scroll;
@@ -890,7 +928,50 @@
       side.querySelectorAll('[data-module]').forEach(function (el) { el.addEventListener('click', function () { var i = Number(el.getAttribute('data-module')); select(state.focusModule === i ? -1 : i, -1); }); });
     }
     var ev = side.querySelector('.atlas-evidence');
-    if (ev) ev.addEventListener('click', function () { if (window.__archifyShowFinding) window.__archifyShowFinding(ev.getAttribute('data-id')); });
+    if (ev) ev.addEventListener('click', function () {
+      if (!window.__archifyShowFinding) return;
+      var selection = window.__archifyAtlas.saveSelection();
+      window.__archifyShowFinding(ev.dataset.id, 'atlas', function () {
+        if (!standalone) showView('atlas');
+        window.__archifyAtlas.restoreSelection(selection);
+        requestAnimationFrame(function () { side.querySelector('.atlas-evidence')?.focus({ preventScroll: true }); });
+      });
+    });
+  }
+
+  function renderFindingImports(file) {
+    var section = document.createElement('div');
+    section.className = 'atlas-imports';
+    side.querySelector('.atlas-selection').appendChild(section);
+    if (!findingImports.length) {
+      section.classList.add('note');
+      section.textContent = tr('No captured dependencies for the selected file');
+      return;
+    }
+    var label = document.createElement('label'), picker = document.createElement('select');
+    label.append(tr('File dependencies') + ' · ' + fmt(findingImports.length), picker);
+    findingImports.forEach(function (edge, index) {
+      var outgoing = edge[0] === file;
+      var other = outgoing ? edge[1] : edge[0];
+      picker.add(new Option((outgoing ? '→ ' : '← ') + F[other][0], String(index), false, index === activeImport));
+    });
+    var paths = document.createElement('dl');
+    paths.className = 'atlas-import-paths';
+    paths.setAttribute('aria-live', 'polite');
+    var values = ['① Importing file', '② Imported file'].map(function (role) {
+      var term = document.createElement('dt'), value = document.createElement('dd');
+      term.textContent = tr(role); paths.append(term, value);
+      return value;
+    });
+    function updatePaths() {
+      findingImports[activeImport].forEach(function (file, index) { values[index].textContent = F[file][0]; });
+    }
+    picker.addEventListener('change', function () {
+      activeImport = picker.selectedIndex;
+      updatePaths(); draw();
+    });
+    section.append(label, paths);
+    updatePaths();
   }
 
   // ---- the page: panel content, start card, focus pill, search ----
@@ -963,7 +1044,7 @@
     var fix = (info.supportedFixes || [])[0];
     if (fix) h += head(tr('First step')) + '<p class="atlas-fix">' + esc(fix) + '</p>';
     if (owner !== -1) h += head(tr('Module')) + '<button type="button" class="atlas-rel" data-module="' + owner + '" data-keep="1"><i style="background:' + hue(owner, theme()) + '"></i><span>' + esc(M[owner].label) + '</span><em>' + esc(tr('{n} open', { n: modOpen[owner] })) + ' ›</em></button>';
-    h += '<div class="atlas-acts"><button type="button" class="primary atlas-evidence" data-id="' + esc(f.id) + '">' + esc(tr(standalone ? 'Open source evidence' : 'Open evidence in Classic view')) + '</button></div>';
+    h += '<div class="atlas-acts"><button type="button" class="primary atlas-evidence" data-id="' + esc(f.id) + '">' + esc(tr(standalone ? 'Open finding details' : 'Open finding details in Classic view')) + '</button></div>';
     return h;
   }
   function filePanel(fi) {
@@ -1166,7 +1247,7 @@
       var index = M.findIndex(function (m) { return m.id === id; });
       select(index, -1);
     },
-    saveSelection: function () { return { module: state.focusModule, finding: state.finding, file: state.file, changedFile: changedSelection, scope: fileScope?.value, tab: filePane.hidden ? 'map' : 'files', query: fileQuery.value, zoom: focusZoom, view: sideView() }; },
+    saveSelection: function () { return { module: state.focusModule, finding: state.finding, file: state.file, importIndex: activeImport, changedFile: changedSelection, scope: fileScope?.value, tab: filePane.hidden ? 'map' : 'files', query: fileQuery.value, zoom: focusZoom, view: sideView() }; },
     restoreSelection: function (saved) {
       fileQuery.value = saved.query || '';
       if (fileScope && saved.scope) fileScope.value = saved.scope;

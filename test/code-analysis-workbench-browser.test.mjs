@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { once } from 'node:events';
 import { test } from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { ChromeVisualBrowser, findChrome } from '../archify/bin/visual-check.mjs';
@@ -27,9 +28,9 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
   const ir = { schema_version: 1, diagram_type: 'architecture', meta: { title: 'Source evidence', output: 'architecture.html', locale: 'en' },
     components: [{ id: 'app', type: 'backend', label: 'App', pos: [40, 40], size: [170, 64] }], connections: [] };
   const out = path.join(dir, 'out');
-  const prepare = locale => {
+  const prepare = (locale, extra = []) => {
     ir.meta.locale = locale; fs.writeFileSync(irPath, JSON.stringify(ir));
-    const prepared = spawnSync(process.execPath, [cli, 'code-analysis', 'prepare', root, '--ir', irPath, '--out', out, '--language', 'ts', '--config', config], { encoding: 'utf8' });
+    const prepared = spawnSync(process.execPath, [cli, 'code-analysis', 'prepare', root, '--ir', irPath, '--out', out, '--language', 'ts', '--config', config, ...extra], { encoding: 'utf8' });
     assert.equal(prepared.status, 0, prepared.stdout + prepared.stderr);
     return JSON.parse(prepared.stdout);
   };
@@ -44,7 +45,15 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
   assert.ok(fs.existsSync(first.html));
   assert.ok(!fs.readFileSync(first.diagram, 'utf8').includes('id="bauify-analysis"'), 'the original diagram is not overlaid');
 
-  const browser = new ChromeVisualBrowser(chrome); t.after(() => browser.close());
+  const browser = new ChromeVisualBrowser(chrome);
+  t.after(async () => {
+    if (browser.child.exitCode === null && browser.child.signalCode === null) {
+      const exited = once(browser.child, 'exit', { signal: AbortSignal.timeout(5000) }).catch(() => {});
+      await browser.cdp.send('Browser.close').catch(() => {});
+      await exited;
+    }
+    await browser.close();
+  });
   const session = await browser.sessionPromise;
   const send = (method, params = {}) => browser.cdp.send(method, params, session);
   const run = async expression => {
@@ -288,4 +297,106 @@ test('prepared workbench localizes, copies first-screen evidence, keeps comparis
   await open(fallback.html);
   assert.equal(await run("document.getElementById('btn-bauify').textContent"), 'Code Analysis');
   assert.equal(await run("document.querySelector('#bauify-reader').lang"), 'en');
+
+  // Use the redesigned inspector with two imports and one isolated function.
+  fs.appendFileSync(path.join(root, 'src/alpha/a.ts'), "import { helper } from '../beta/helper'; export const extra = helper();\n");
+  fs.writeFileSync(path.join(root, 'src/beta/helper.ts'), 'export function helper() { return 2; }\n');
+  fs.writeFileSync(path.join(root, 'src/alpha/isolated.ts'), 'export function isolated(x: boolean) { return x ? 1 : 2; }\n');
+  fs.mkdirSync(path.join(root, 'src/outside'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'src/outside/config.ts'), 'export const mode = "standalone";\n');
+  const map = { app: [graph.modules.find(module => module.path.endsWith('/alpha')).id] };
+  ir.components.push({ id: 'beta', type: 'backend', label: 'Beta', pos: [340, 160], size: [170, 64] });
+  map.beta = [graph.modules.find(module => module.path.endsWith('/beta')).id];
+  const mapPath = path.join(dir, 'map.json');
+  fs.writeFileSync(mapPath, JSON.stringify(map));
+  const mapped = prepare('en', ['--map', mapPath]);
+  await open(mapped.html);
+  const click = selector => run(`document.querySelector(${JSON.stringify(selector)}).click()`);
+  await click('.views-option[data-view=atlas]');
+  const focusFunction = file => run(`(() => {
+    const atlas = JSON.parse(document.getElementById('bauify-atlas-data').textContent);
+    const finding = atlas.findings.find(item => item.kind === 'function' && atlas.files[atlas.functions[item.fn][0]][0] === ${JSON.stringify(file)});
+    window.__archifyAtlas.focusFinding(finding.id);
+  })()`);
+  await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
+  await run(`(() => {
+    window.__importLabels = []; window.__importCurves = []; window.__importLeaders = [];
+    const proto = CanvasRenderingContext2D.prototype;
+    const moveTo = proto.moveTo, lineTo = proto.lineTo, bezier = proto.bezierCurveTo;
+    proto.moveTo = function (x, y) { this.__lastMove = [x, y]; return moveTo.apply(this, arguments); };
+    proto.lineTo = function (x, y) { if (this.lineWidth === 1 && this.__lastMove) window.__importLeaders.push(this.__lastMove); return lineTo.apply(this, arguments); };
+    proto.bezierCurveTo = function (a, b, c, d, x, y) { if (this.__lastMove) window.__importCurves.push([this.__lastMove, [x, y]]); return bezier.apply(this, arguments); };
+    const fillText = CanvasRenderingContext2D.prototype.fillText;
+    CanvasRenderingContext2D.prototype.fillText = function (text, ...args) {
+      if (text === '①' || text === '②') {
+        window.__importLabels.push(text);
+        const point = new DOMPoint(args[0], args[1]).matrixTransform(this.getTransform());
+        (window.__importLabelPoints ||= []).push({ text, x: point.x, y: point.y, width: this.canvas.width, height: this.canvas.height });
+      }
+      return fillText.call(this, text, ...args);
+    };
+  })()`);
+  await focusFunction('src/alpha/a.ts');
+  const paths = () => run("Array.from(document.querySelectorAll('.atlas-import-paths dd'), item => item.textContent)");
+  assert.deepEqual(await paths(), ['src/alpha/a.ts', 'src/beta/b.ts'], 'the selected import lists both full paths in order');
+  assert.deepEqual(await run("[...new Set(window.__importLabels)]"), ['①', '②']);
+  assert.equal(await run(`(() => {
+    const leaders = window.__importLeaders.slice(-2);
+    const near = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]) < 0.01;
+    return leaders.length === 2 && window.__importCurves.some(curve => near(leaders[0], curve[0]) && near(leaders[1], curve[1]));
+  })()`), true, 'both numbered leaders meet the focused dependency curve endpoints');
+  await run("document.querySelector('.atlas-imports select').focus()");
+  for (const type of ['keyDown', 'keyUp']) {
+    await send('Input.dispatchKeyEvent', { type, key: 'ArrowDown', code: 'ArrowDown', windowsVirtualKeyCode: 40 });
+  }
+  assert.deepEqual(await paths(), ['src/alpha/a.ts', 'src/beta/helper.ts']);
+  await click('.atlas-evidence');
+  await click('#bauify-detail .back');
+  assert.deepEqual(await paths(), ['src/alpha/a.ts', 'src/beta/helper.ts'], 'returning from evidence restores the second selected import');
+  await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: false });
+  await run('new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))');
+  assert.equal(await run(`(() => {
+    const map = document.querySelector('#bauify-atlas .atlas-stage').getBoundingClientRect();
+    const details = document.querySelector('#bauify-atlas .atlas-side').getBoundingClientRect();
+    return map.bottom <= details.top + 1 && map.height >= 200;
+  })()`), true, 'the finding panel leaves the narrow map and import endpoints visible');
+  await run('window.__importLabelPoints = []');
+  await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 667, deviceScaleFactor: 1, mobile: false });
+  await focusFunction('src/alpha/a.ts');
+  await run('new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))');
+  assert.equal(await run(`(() => {
+    const canvas = document.querySelector('#bauify-atlas canvas'), box = canvas.getBoundingClientRect();
+    const points = (window.__importLabelPoints || []).slice(-2);
+    return points.length === 2 && points.map(p => p.text).join('') === '①②' && points.every(p => {
+      const x = box.left + p.x / p.width * box.width, y = box.top + p.y / p.height * box.height;
+      const hit = document.elementFromPoint(x, y);
+      return x >= box.left && x <= box.right && y >= box.top && y <= box.bottom && x >= 0 && x < innerWidth && y >= 0 && y < innerHeight && (hit === canvas || canvas.contains(hit));
+    });
+  })()`), true, 'both numbered endpoints are visible and unobstructed on a short narrow viewport');
+  await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: false });
+  assert.equal(await run(`(() => {
+    const paths = document.querySelector('.atlas-import-paths');
+    paths.scrollIntoView({ block: 'center' });
+    return [...paths.querySelectorAll('dd')].every(item => {
+      const r = item.getBoundingClientRect();
+      return r.width > 0 && r.top >= 0 && r.bottom <= innerHeight && r.right <= innerWidth && item.scrollWidth <= item.clientWidth;
+    });
+  })()`), true, 'both paths remain readable at 390 px');
+  await focusFunction('src/alpha/isolated.ts');
+  assert.match(await run("document.querySelector('.atlas-imports').textContent"), /No captured dependencies for the selected file/);
+  assert.equal(await run("Boolean(document.querySelector('.atlas-imports select'))"), false);
+
+  // Build the same authored report without source snippets. The captured
+  // import still points to a location, but there is no source to open.
+  const noSource = buildOverlay({ ir, graph: read('module-graph.json'), map, facts: read('raw-facts.json'),
+    html: fs.readFileSync(mapped.diagram, 'utf8'), run: { openAnalysis: true } });
+  const missing = path.join(dir, 'missing-source.html');
+  fs.writeFileSync(missing, noSource.html);
+  await open(missing);
+  await click('#bauify-stage [data-go="code"]');
+  assert.match(await run("document.querySelector('#bauify-panel .fly-ev').textContent"), /src\/alpha\/a\.ts.*Source was not captured/s);
+  assert.equal(await run("Boolean(document.querySelector('#bauify-panel button.fly-ev'))"), false);
+  await click('#bauify-stage [data-go^="off:"]');
+  assert.match(await run("document.querySelector('#bauify-panel .fly-ev').textContent"), /src\/outside\/config\.ts.*Source was not captured/s);
+  assert.equal(await run("Boolean(document.querySelector('#bauify-panel button.fly-ev'))"), false, 'the off-diagram file list does not offer unusable source buttons');
 });
