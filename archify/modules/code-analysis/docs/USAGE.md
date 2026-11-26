@@ -146,7 +146,11 @@ node bin/archify.mjs code-analysis prepare /path/to/repo --out out/project-analy
 
 Use `--ir architecture.json` only for an existing relevant diagram or an explicit request to align authored architecture boundaries. Do not author JSON merely to unlock analysis. Each run handles one adapter and discloses other languages; select the adapter from source counts. Tool prerequisites and first-run installs affect preparation time, so report measured latency rather than a fixed speed promise.
 
-`prepare` shares extraction, rules, tasks and atomic output rotation with `serve`, then exits. The JSON receipt gives scoped counts, coverage, priority leads and `html` (`out/project-analysis/analysis/repo.analysis.html`); `diagram` is null without IR, otherwise names the untouched delivered diagram. Open the HTML directly: the workbench and Atlas are ready offline, with captured tasks, source excerpts, an architecture brief and manual-copy fallbacks.
+`prepare` shares extraction, rules, tasks and result publication with `serve`, then exits. The JSON receipt gives scoped counts, coverage, priority leads and `html` (`out/project-analysis/analysis/repo.analysis.html`); `diagram` is null without IR, otherwise names the untouched delivered diagram. Open the HTML directly: the workbench and Atlas are ready offline, with captured tasks, source excerpts, an architecture brief and manual-copy fallbacks.
+
+Report publication and workbench review saves share an output-directory lock. A retry clears a stopped writer's staging before publication when it can verify the writer is gone. Linux retries check the system boot and process namespace before interpreting a PID. They also check the process start time when the same PID is still visible and its identity can be compared.
+
+If the lock owner is active or cannot be verified, `analysis/output-busy` leaves the lock in place. Use a separate `--out` for independently retried containers or machines, including when a retained lock predates this owner check. After `analysis/output-recovery-required`, keep the output, move plan, and backups together for recovery.
 
 Under **Recheck after edits**, copy the saved start command and run it on the generating machine. It preserves language, locale, config, baseline and optional IR/map. Without IR, opening the printed URL starts analysis and compares with the captured result; with IR, click Code Analysis. Later edits use **Re-analyze**. The report never runs a command automatically. Tasks remain captured snapshots until current source is verified.
 
@@ -532,7 +536,7 @@ node bin/archify.mjs code-analysis check "/path/to/project" --baseline analysis-
 | --- | --- |
 | `--fail-on error\|warning\|info\|never` | Fail when an open finding reaches this level (default `warning`). |
 | `--baseline file` | Accepted findings do not fail the run unless their code changed. |
-| `--out dir` | Write `raw-facts`, `module-graph`, `findings`, `review` and `overview` JSON. The previous `findings.json` in that directory is compared with automatically; for `--new-only`, a separate `gate-findings.json` retains the latest complete passing gate comparator. |
+| `--out dir` | Publish `raw-facts`, `module-graph`, `findings`, `review` and `overview` JSON together. The previous `findings.json` is compared automatically; for `--new-only`, `gate-findings.json` retains the latest complete passing gate comparator. |
 | `--compare findings.json` | Compare with a specific earlier run instead. |
 | `--new-only` | Fail only on findings that are new since the comparison, for gating pull requests. With `--out`, a complete passing check can refresh the gate comparator; an explicit `--compare` must also be comparable. Incomplete, failing, and `--fail-on never` runs never replace it. An automatic run without external reports can refresh the comparator after a non-comparable configuration change. Without a previous run to compare with, every open finding counts as new, so a missing comparison artifact cannot pass the gate. |
 | `--update-baseline [--reason text]` | Write the baseline instead of checking. |
@@ -540,6 +544,43 @@ node bin/archify.mjs code-analysis check "/path/to/project" --baseline analysis-
 
 Exit codes: `0` passed, `1` the gate failed, `2` the analysis could not run or project coverage was incomplete. With `--json`, incomplete TypeScript project coverage returns a receipt with `status: "incomplete"` and exit 2, while `--fail-on never` returns that incomplete receipt with exit 0. Other analysis errors return `status: "error"` and diagnostics. A failing run without `--baseline` offers the command that records today's findings in `analysis-baseline.json`, for a first run or after a rule became stricter. If the baseline or drill-down command contains control characters, the summary points to the exact command in the `--json` receipt under `gate.adopt` or `investigation.drillDown`. The printed summary lists failing findings as `path:line` with their ids, the comparison counts, and stale baseline entries.
 
+
+### Keep the PR comparison fixed across retries
+
+An analysis that exits `1` can still publish its reports. A later run in
+the same output directory would use those reports for automatic comparison.
+Pass the original comparison file explicitly when retrying a PR gate.
+
+Record the base and head commits from the PR event. Check out their merge base
+in `BASE_TREE` and the recorded head in `HEAD_TREE`. Use the same
+`ARCHIFY_CLI` (path to `bin/archify.mjs`), `ANALYSIS_LANGUAGE`, and
+`ANALYSIS_CONFIG` (path to the shared configuration) for both commands.
+Put the output directories outside the checkouts.
+
+Generate the comparison report once for this pair of commits.
+
+```sh
+node "$ARCHIFY_CLI" code-analysis check "$BASE_TREE" \
+  --language "$ANALYSIS_LANGUAGE" --config "$ANALYSIS_CONFIG" \
+  --out "$BASE_OUT" --fail-on never --json
+```
+
+After this command exits `0`, save `BASE_OUT/findings.json` with the
+comparison's commit IDs and tool configuration. Each attempt restores that
+same file and uses a fresh `ATTEMPT_OUT`.
+
+```sh
+mkdir -p "$ATTEMPT_OUT" || exit 2
+node "$ARCHIFY_CLI" code-analysis check "$HEAD_TREE" \
+  --language "$ANALYSIS_LANGUAGE" --config "$ANALYSIS_CONFIG" \
+  --compare "$BASE_OUT/findings.json" --new-only --fail-on warning \
+  --out "$ATTEMPT_OUT" --json > "$ATTEMPT_OUT/receipt.json"
+```
+
+Keep the CLI exit status when the step ends. Save the attempt reports and
+receipt for exits `0` and `1`, including when findings block the gate.
+On exit `2`, save the error receipt. A missing or invalid file passed to
+`--compare` produces exit `2`.
 
 ## Config files
 

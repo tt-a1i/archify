@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DiagnosticError, fail, receipt } from '../core/index.mjs';
+import { outputEntry, withAnalysisOutput, writeCheckOutputs } from '../lib/output.mjs';
 import { baselineCommand, taskCommand } from '../lib/task-command.mjs';
 
 export const USAGE = `Usage:
@@ -61,10 +62,9 @@ export function parseCheckArgs(argv) {
 
 export async function runCheck(argv) {
   const { repo, options } = parseCheckArgs(argv);
-  const { extractFacts, buildGraph, evaluateGraph, loadBaseline, saveBaseline, loadPrevious, readJsonInput, stableJson, reviewSummary } = await import('../lib/analysis.mjs');
-  const { reviewFindings, baselineFrom, acceptFinding, revokeFinding, isOpen } = await import('../lib/review.mjs');
-  const { buildOverview, findingWhere } = await import('../overlay/overview.mjs');
-  const { alignDiagram, findingModules } = await import('../overlay/inject.mjs');
+  const out = options['--out'] ? path.resolve(options['--out']) : null;
+  const { extractFacts, buildGraph, evaluateGraph, loadBaseline, saveBaseline, loadPrevious, readJsonInput } = await import('../lib/analysis.mjs');
+  const { baselineFrom, acceptFinding, revokeFinding } = await import('../lib/review.mjs');
 
   const root = path.resolve(repo);
   const baselineFile = options['--baseline'] ? path.resolve(options['--baseline']) : null;
@@ -98,16 +98,9 @@ export async function runCheck(argv) {
       }
     }
   }
-  const out = options['--out'] ? path.resolve(options['--out']) : null;
-  const gateFile = out && options['--new-only'] && !options['--compare'] ? path.join(out, 'gate-findings.json') : null;
-  const pendingGate = gateFile ? gateFile + '.pending' : null;
-  const previousFile = options['--compare'] ? path.resolve(options['--compare']) : gateFile && fs.existsSync(gateFile) ? gateFile : pendingGate && fs.existsSync(pendingGate) ? null : out ? path.join(out, 'findings.json') : null;
-  if (options['--compare'] && !fs.existsSync(previousFile)) fail('cli/input-invalid', `Not a file: ${options['--compare']}`, { subject: { option: '--compare' }, supportedFixes: ['pass the findings.json of an earlier run'] });
-  // An explicit --compare must be readable; the automatic one in --out is optional.
-  let previous = loadPrevious(previousFile, { strict: Boolean(options['--compare']) });
-  // Old output directories have no dedicated gate comparator. A partial
-  // report is useful evidence but cannot become an automatic gating baseline.
-  if (gateFile && previous?.analysis?.coverage?.unavailableTypeScriptFiles) previous = null;
+  const compare = options['--compare'] ? path.resolve(options['--compare']) : null;
+  if (compare && !fs.existsSync(compare)) fail('cli/input-invalid', `Not a file: ${options['--compare']}`, { subject: { option: '--compare' }, supportedFixes: ['pass the findings.json of an earlier run'] });
+  const explicitPrevious = compare ? loadPrevious(compare, { strict: true }) : null;
 
   const { facts, config, otherLanguages } = extractFacts(root, { language: options['--language'] || null, config: options['--config'] || null });
   const unavailableProjects = facts.languageScope?.unavailableProjects || [];
@@ -133,6 +126,23 @@ export async function runCheck(argv) {
     return { exitCode: 0, receipt: receipt('ok', { command: 'check', action: 'update-baseline', baseline: baselineFile, entries: doc.accepted.length, kept, added: doc.accepted.length - kept, dropped: existing ? existing.accepted.length - kept : 0 }) };
   }
 
+  const finish = lock => finishCheck({ root, out, options, irDoc, mapDoc, baselineFile, explicitPrevious, facts, config, otherLanguages, graph, findings, lock });
+  return out ? withAnalysisOutput(out, finish) : finish(null);
+}
+
+async function finishCheck({ root, out, options, irDoc, mapDoc, baselineFile, explicitPrevious, facts, config, otherLanguages, graph, findings, lock }) {
+  const { loadBaseline, loadPrevious, stableJson, reviewSummary } = await import('../lib/analysis.mjs');
+  const { reviewFindings, isOpen } = await import('../lib/review.mjs');
+  const { buildOverview, findingWhere } = await import('../overlay/overview.mjs');
+  const { alignDiagram, findingModules } = await import('../overlay/inject.mjs');
+  const gateFile = out && options['--new-only'] && !options['--compare'] ? path.join(out, 'gate-findings.json') : null;
+  const pendingGate = gateFile ? gateFile + '.pending' : null;
+  let previous = explicitPrevious;
+  if (!previous && out && !options['--compare']) {
+    const file = gateFile && outputEntry(gateFile) ? gateFile : pendingGate && outputEntry(pendingGate) ? null : path.join(out, 'findings.json');
+    if (file && outputEntry(file)) previous = loadPrevious(file);
+    if (gateFile && previous?.analysis?.coverage?.unavailableTypeScriptFiles) previous = null;
+  }
   const review = reviewFindings(findings.diagnostics, { baseline: loadBaseline(baselineFile), previous, analysis: findings.analysis, files: [...facts.files, ...(findings.externalEvidence || [])].map((f) => f.path) });
   if (options['--new-only'] && review.comparison && (findings.analysis.external?.length || previous?.analysis?.external?.length)
     && review.comparison.comparable !== true
@@ -147,12 +157,6 @@ export async function runCheck(argv) {
     : findings.diagnostics.map((d) => ({ ...d, ...(review.findings[d.id] ? { review: review.findings[d.id] } : {}), moduleIds: findingModules(d, fileModule), componentIds: [] }));
   const overview = buildOverview({ findings: listed, graph, facts, unmapped: alignment ? alignment.unmapped : [], ambiguousModules: alignment ? alignment.ambiguousModules : [], run, diagram: Boolean(alignment) });
 
-  if (out) {
-    fs.mkdirSync(out, { recursive: true });
-    if (gateFile && !fs.existsSync(gateFile) && previous && !previous.analysis?.coverage?.unavailableTypeScriptFiles) fs.writeFileSync(gateFile, stableJson(previous));
-    for (const [name, doc] of [['raw-facts', facts], ['module-graph', graph], ['findings', findings], ['review', review], ['overview', overview]]) fs.writeFileSync(path.join(out, `${name}.json`), stableJson(doc));
-  }
-
   const failOn = options['--fail-on'];
   const newOnly = Boolean(options['--new-only']);
   const failing = failOn === 'never' ? [] : findings.diagnostics.filter((d) => SEVERITY[d.severity] <= SEVERITY[failOn]
@@ -160,17 +164,13 @@ export async function runCheck(argv) {
     // Without a comparison nothing can be shown to be old, so every open
     // finding counts as new: a missing artifact must not pass the gate.
     && (!newOnly || !review.comparison || review.findings[d.id]?.since === 'new'));
+  const unavailableProjects = facts.languageScope?.unavailableProjects || [];
   const previousIncomplete = newOnly && previous?.analysis?.coverage?.unavailableTypeScriptFiles;
   const incomplete = Boolean(unavailableProjects.length || previousIncomplete);
   const blocked = incomplete && failOn !== 'never';
-  const promotionGate = out && newOnly ? path.join(out, 'gate-findings.json') : null;
   const eligibleComparison = !options['--compare'] || review.comparison?.comparable === true;
-  if (promotionGate && eligibleComparison && !incomplete && failOn !== 'never' && !failing.length) {
-    fs.writeFileSync(promotionGate, stableJson(findings));
-    fs.rmSync(promotionGate + '.pending', { force: true });
-  } else if (gateFile && !fs.existsSync(gateFile)) fs.writeFileSync(pendingGate, 'No complete passing gate comparator yet.\n');
   const status = incomplete ? 'incomplete' : failing.length ? 'failed' : 'ok';
-  return {
+  const result = {
     exitCode: blocked ? 2 : failing.length ? 1 : 0,
     receipt: receipt(status, {
       command: 'check', root, out,
@@ -237,6 +237,20 @@ export async function runCheck(argv) {
       },
     }),
   };
+  if (lock) {
+    // The implicit comparison reads findings.json. Publish it last, after
+    // every other artifact and the CLI receipt are ready.
+    const documents = [['raw-facts', facts], ['module-graph', graph], ['review', review], ['overview', overview], ['findings', findings]];
+    const files = documents.map(([name, doc]) => [`${name}.json`, stableJson(doc)]);
+    const promotionGate = out && newOnly ? path.join(out, 'gate-findings.json') : null;
+    const gateExists = promotionGate && outputEntry(promotionGate);
+    let nextGate = gateFile && !gateExists && previous && !previous.analysis?.coverage?.unavailableTypeScriptFiles ? previous : null;
+    if (promotionGate && eligibleComparison && !incomplete && failOn !== 'never' && !failing.length) nextGate = findings;
+    if (nextGate) files.unshift(['gate-findings.json', stableJson(nextGate)]);
+    else if (gateFile && !gateExists) files.unshift(['gate-findings.json.pending', 'No complete passing gate comparator yet.\n']);
+    writeCheckOutputs(out, lock, files);
+  }
+  return result;
 }
 
 export { findingWhere as where } from '../overlay/overview.mjs';

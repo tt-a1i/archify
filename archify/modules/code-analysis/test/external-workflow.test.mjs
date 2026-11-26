@@ -389,7 +389,7 @@ test('external workflow: serve keeps the last complete analysis and tasks after 
     assert.equal((await failed.json()).diagnostics[0].code, expected);
     assert.equal(fs.readFileSync(findingsFile, 'utf8'), saved);
     assert.equal(fs.readFileSync(path.join(out, 'analysis/repo.analysis.html'), 'utf8'), html);
-    assert.equal(fs.readdirSync(out).some((name) => name.startsWith('analysis.next-')), false);
+    assert.equal(fs.existsSync(path.join(out, '.archify-analysis.lock')), false, 'the failed run releases its staging directory');
     const response = await fetch(`${view.url}/task`, { method: 'POST', headers, body: JSON.stringify({ ids: [ruff.id] }) });
     assert.equal(response.status, 200);
     assert.equal((await response.json()).task.findings[0].external.ruleId, 'F401');
