@@ -281,3 +281,47 @@ test('kotlin review: qualified types in parenthesized receivers keep their packa
   assert.equal(edges.some(imp => imp.to === 'other/Payload.kt'), true);
   assert.equal(edges.some(imp => imp.to === 'demo/Payload.kt'), false);
 });
+
+test('kotlin review: receiver lambda parameter names are not types, lowercase-named types are collected', t => {
+  // String.(Payload: String, event: Événement) -> Unit: Payload is the NAME
+  // of a string parameter and must not link demo/Payload.kt; Événement is a
+  // real type reference hidden behind a lowercase name and must resolve.
+  const root = fixture(t, {
+    'demo/Payload.kt': 'package demo\nclass Payload\n',
+    'demo/Événement.kt': 'package demo\nclass Événement\n',
+    'demo/Ext.kt': 'package demo\nfun register(block: String.(Payload: String, event: Événement) -> Unit) = Unit\n',
+  });
+  const { facts } = extractFacts(root, { language: 'kotlin', config: config() });
+  const edges = importsFrom(facts, 'demo/Ext.kt');
+  assert.equal(edges.some(imp => imp.to === 'demo/Événement.kt'), true);
+  assert.equal(edges.some(imp => imp.to === 'demo/Payload.kt'), false);
+});
+
+test('kotlin review: receiver lambda overloads keep stable finding ids when one is removed', t => {
+  // configure(Builder.() -> Unit) and configure(Builder.(String) -> Unit) share
+  // the first classifier reference (the receiver). When the signature erased
+  // the lambda parameter list both measured as configure(Builder), forcing
+  // ordinal disambiguation — and removing the first overload renumbered the
+  // second one's finding id.
+  const overload = (type) => `  fun configure(block: Builder.${type} -> Unit) {\n    if (block is Any) { println(block) }\n  }\n`;
+  const lowThreshold = () => {
+    const c = config();
+    c.rules = { ...c.rules, complexity: { function: { info: { complexity: 1, nesting: 99 }, warning: { complexity: 99, nesting: 99 } } } };
+    return c;
+  };
+  const idsFor = (members) => {
+    const root = fixture(t, { 'Demo.kt': `package demo\nclass Builder\nclass Hooks {\n${members}}\n` });
+    const cfg = lowThreshold();
+    const { facts } = extractFacts(root, { language: 'kotlin', config: cfg });
+    return evaluateGraph(buildGraph(facts, cfg), cfg, facts).diagnostics
+      .filter(d => d.code === 'complexity/function')
+      .map(d => ({ id: d.id, fn: d.subject.function }));
+  };
+  const both = idsFor(overload('()') + overload('(String)'));
+  const survivorOnly = idsFor(overload('(String)'));
+  const survivorInBoth = both.find(d => d.fn.includes('(String)'));
+  assert.equal(both.length, 2);
+  assert.notEqual(both[0].fn, both[1].fn);
+  assert.equal(survivorOnly.length, 1);
+  assert.equal(survivorOnly[0].id, survivorInBoth.id);
+});

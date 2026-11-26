@@ -66,7 +66,11 @@ export function measureFunctions(unit) {
 
   function parameterSignature(decl) {
     return (decl.parameters || []).map(param => {
-      const type = param.typeReferences?.[0]?.name || '?';
+      // Receiver function types carry a normalized signature of the whole
+      // type: the first classifier reference is the receiver, which overloads
+      // share even when their lambda parameter lists differ.
+      const first = param.typeReferences?.[0];
+      const type = first?.functionTypeSignature || first?.name || '?';
       return type + (param.vararg ? '…' : '');
     }).join(',');
   }

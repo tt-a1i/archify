@@ -95,8 +95,8 @@ export function createTokenParser(tokens, start = 0, end = tokens.length) {
     }
     if (token.image === '(') {
       // Parenthesized type or function type: (T) or (A, B) -> R.
-      const open = next();
-      scanBalancedTypeGroup(open, '(', ')', out);
+      next();
+      parseFunctionTypeParameterList(out);
       acceptNullableSuffixes();
       if (accept('->')) {
         if (!parseTypeBase(out)) throw new ParseError('expected a result type after ->', peek());
@@ -105,6 +105,7 @@ export function createTokenParser(tokens, start = 0, end = tokens.length) {
     }
     if (token.tokenType.name !== 'Identifier') return false;
     // Qualified classifier chain.
+    const typeStartCursor = cursor;
     const segments = [next()];
     while (at('.') && peek(1)?.tokenType.name === 'Identifier') {
       next();
@@ -120,11 +121,17 @@ export function createTokenParser(tokens, start = 0, end = tokens.length) {
     // is lost to recovery.
     if (at('.') && peek(1)?.image === '(') {
       next(); // '.'
-      const openParen = next(); // '('
-      scanBalancedTypeGroup(openParen, '(', ')', out);
+      next(); // '('
+      parseFunctionTypeParameterList(out);
       acceptNullableSuffixes();
       if (!accept('->')) throw new ParseError('expected -> in receiver function type', peek());
       if (!parseTypeBase(out)) throw new ParseError('expected a result type after ->', peek());
+      // Normalized signature for overload identity: token images carry the
+      // receiver, parameter types and return type without whitespace or
+      // positions, so Builder.() -> Unit and Builder.(String) -> Unit produce
+      // distinct signatures even though both share the first classifier
+      // reference.
+      reference.functionTypeSignature = tokens.slice(typeStartCursor, cursor).map(t => t.image).join('');
       return true;
     }
     // Function-type tail: T -> R
@@ -163,31 +170,25 @@ export function createTokenParser(tokens, start = 0, end = tokens.length) {
     }
   }
 
-  // Inside parenthesized types: scan balanced content, collecting capitalized
-  // classifier candidates (exact resolution is the index's business).
-  function scanBalancedTypeGroup(open, openImage, closeImage, out) {
-    let depth = 1;
-    while (!eof() && depth > 0) {
-      const token = next();
-      if (token.image === openImage) depth++;
-      else if (token.image === closeImage) depth--;
-      else if (depth >= 1 && token.tokenType.name === 'Identifier') {
-        // A name chain inside a function-type parameter list can be a type.
-        // Scan chains from any identifier, then keep those with at least one
-        // uppercase segment: a lowercase-led chain like other.Payload is a
-        // package-qualified classifier and must keep its package prefix —
-        // recording only the suffix would resolve it as a same-package simple
-        // name. Pure lowercase chains are parameter names or values, never
-        // types, so they stay unrecorded.
-        const segments = [token];
-        while (at('.') && peek(1)?.tokenType.name === 'Identifier') { next(); segments.push(next()); }
-        if (segments.some(t => /^[A-Z]/.test(t.image))) {
-          out.push({ name: segments.map(t => t.image).join('.'), ...span(segments[0], segments.at(-1)) });
-          if (at('<')) parseTypeArgumentList(out);
-        }
+  // Function type parameter list, cursor just past '(': elements are types
+  // with optional `name:` prefixes, separated by commas, up to ')'. Kotlin
+  // distinguishes a named parameter from its type with a colon, not with
+  // capitalization — so Payload in `Payload: String` is a name and never a
+  // reference, while the type of `event: Événement` is collected no matter
+  // how the name is capitalized.
+  function parseFunctionTypeParameterList(out) {
+    for (;;) {
+      if (accept(')')) return;
+      if (atIdentifier() && peek(1)?.image === ':') { next(); next(); }
+      if (!parseTypeBase(out)) {
+        // Tolerant: skip one token inside malformed parameter types.
+        if (at(')') || at(',')) { /* boundaries handled below */ }
+        else if (!eof()) next();
       }
+      if (accept(',')) continue;
+      if (accept(')')) return;
+      if (eof()) throw new ParseError('unterminated function type parameter list', peek());
     }
-    if (depth > 0) throw new ParseError(`unterminated '${openImage}' group`, open);
   }
 
   // ---------- annotations -------------------------------------------------------
