@@ -159,3 +159,16 @@ test('kotlin review2: member imports still bind same-module main helpers', t => 
   const { facts } = extractFacts(root, { language: 'kotlin', config: config() });
   assert.equal(facts.imports.find(imp => imp.specifier === 'p.helper').resolved, true);
 });
+
+test('kotlin review2: lowercase enum entries resolve and constructor arguments do not', t => {
+  const root = fixture(t, {
+    'p/Mode.kt': 'package p\nenum class Mode {\n  active(ONE),\n  INACTIVE;\n  fun label() = name\n}\nobject ONE\n',
+    'p/Use.kt': 'package p\nimport p.Mode.active\nclass Use(val mode: Mode)\n',
+    'p/Bad.kt': 'package p\nimport p.Mode.ONE\nclass Bad(val mode: Mode)\n',
+  });
+  const { facts } = extractFacts(root, { language: 'kotlin', config: config() });
+  assert.equal(facts.parse_errors, undefined);
+  assert.equal(facts.imports.find(imp => imp.specifier === 'p.Mode.active').resolved, true);
+  // ONE is a constructor argument of the entry, never an entry itself.
+  assert.equal(facts.imports.find(imp => imp.specifier === 'p.Mode.ONE').resolved, false);
+});

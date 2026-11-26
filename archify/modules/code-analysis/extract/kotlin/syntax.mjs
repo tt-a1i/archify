@@ -580,9 +580,15 @@ export function createTokenParser(tokens, start = 0, end = tokens.length) {
       if (declaration) { members.push(declaration); continue; }
       // Enum entries: IDENTIFIER [(args)] [{ body }] [,|;]. Their names are
       // member evidence: import pkg.Enum.ENTRY binds through the enum type.
-      if (atIdentifier() && /^[A-Z0-9_]/.test(peek().image)) {
-        entries?.push(next().image);
-        if (!entries) next();
+      // Any identifier counts, not only uppercase ones: lowercase entries are
+      // legal Kotlin, and gating on case would skip them here only to record
+      // an uppercase constructor argument as a bogus entry instead. Member
+      // declarations never reach this branch — parseDeclaration consumed them
+      // above — so an identifier at statement position is an entry or garbage
+      // the tolerant parser cannot use either way.
+      if (atIdentifier()) {
+        const entry = next();
+        entries?.push(entry.image);
         if (at('(')) skipBalancedGroup();
         if (at('{')) skipBalancedGroup();
         continue;
