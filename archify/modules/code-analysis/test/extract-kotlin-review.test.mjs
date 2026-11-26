@@ -1,0 +1,230 @@
+// Regression coverage for review feedback on the Kotlin adapter (PR #1509):
+// each test names the parsing, resolution or integration behaviour a review
+// comment showed broken. Do not relax these to match wrong output.
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { test } from 'node:test';
+import { parseSources } from '../extract/kotlin/parse.mjs';
+import { analysisContext } from '../evaluate/index.mjs';
+import { loadConfig, extractFacts, buildGraph, evaluateGraph } from '../lib/analysis.mjs';
+
+const config = () => ({ ...loadConfig(), include: ['**/*.kt'] });
+function fixture(t, sources) {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'analysis-kotlin-review-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  for (const [file, text] of Object.entries(sources)) {
+    fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
+    fs.writeFileSync(path.join(root, file), text);
+  }
+  return root;
+}
+const importsFrom = (facts, file) => facts.imports.filter(imp => imp.from === file && imp.resolved);
+
+test('kotlin review: unicode letters form identifiers and classifiers resolve', t => {
+  const root = fixture(t, {
+    'p/Üser.kt': 'package p\nclass Üser\n',
+    'p/Use.kt': 'package p\nclass Use(val üser: Üser)\n',
+  });
+  const { facts } = extractFacts(root, { language: 'kotlin', config: config() });
+  assert.equal(facts.parse_errors, undefined);
+  assert.equal(importsFrom(facts, 'p/Use.kt').find(imp => imp.specifier === 'Üser')?.to, 'p/Üser.kt');
+});
+
+test('kotlin review: backtick-escaped names are identifiers, never keywords', t => {
+  const root = fixture(t, {
+    'p/Escaped.kt': 'package p\nclass `object`\n',
+    'p/Use.kt': 'package p\nclass Use(val escaped: `object`)\n',
+  });
+  const parsed = parseSources(root, config());
+  assert.deepEqual(parsed.parse_errors, []);
+  assert.equal(parsed.units[0].declarations[0].name, 'object');
+  const { facts } = extractFacts(root, { language: 'kotlin', config: config() });
+  assert.equal(importsFrom(facts, 'p/Use.kt').length > 0, true);
+});
+
+test('kotlin review: in/out variance parses in type arguments and parameters', t => {
+  const root = fixture(t, {
+    'p/Variance.kt': 'package p\nclass Box<in T>\nclass Source<out R>\nfun copy(target: MutableList<in String>, source: List<out String>) {}\n',
+  });
+  const parsed = parseSources(root, config());
+  assert.deepEqual(parsed.parse_errors, []);
+  assert.equal(parsed.units[0].declarations.length, 3);
+});
+
+test('kotlin review: semicolons terminate package and import headers', t => {
+  const root = fixture(t, {
+    'p/Semi.kt': 'package p;\nimport java.util.ArrayList;\nclass Semi\n',
+  });
+  const parsed = parseSources(root, config());
+  assert.deepEqual(parsed.parse_errors, []);
+  assert.equal(parsed.units[0].packageName, 'p');
+  assert.equal(parsed.units[0].imports[0].name, 'java.util.ArrayList');
+});
+
+test('kotlin review: nullable extension receivers parse with the receiver type', t => {
+  const root = fixture(t, {
+    'p/Ext.kt': 'package p\nfun String?.nullableTag(): String = this ?: ""\nfun String.plainTag(): String = this\n',
+  });
+  const parsed = parseSources(root, config());
+  assert.deepEqual(parsed.parse_errors, []);
+  const [nullable, plain] = parsed.units[0].declarations;
+  assert.equal(nullable.name, 'nullableTag');
+  assert.equal(nullable.receiverReference?.name, 'String');
+  assert.equal(plain.receiverReference?.name, 'String');
+});
+
+test('kotlin review: explicit getter result types do not corrupt declarations', t => {
+  const root = fixture(t, {
+    'p/Props.kt': 'package p\nclass Props {\n  val size: Int\n    get(): Int = 1\n}\n',
+  });
+  const parsed = parseSources(root, config());
+  assert.deepEqual(parsed.parse_errors, []);
+  assert.equal(parsed.units[0].declarations[0].name, 'Props');
+});
+
+test('kotlin review: multiline expression-bodied if reaches the else branch', t => {
+  const root = fixture(t, {
+    'p/Branch.kt': 'package p\nfun pick(flag: Boolean) = if (flag)\n  "yes"\nelse\n  "no"\nfun next() = 1\n',
+  });
+  const parsed = parseSources(root, config());
+  assert.deepEqual(parsed.parse_errors, []);
+  assert.deepEqual(parsed.units[0].declarations.map(d => d.name), ['pick', 'next']);
+});
+
+test('kotlin review: a delegation specifier does not swallow the next declaration', t => {
+  const root = fixture(t, {
+    'p/Delegate.kt': 'package p\ninterface Base\nclass Impl : Base\nclass User(b: Base) : Base by b\nclass After\n',
+  });
+  const parsed = parseSources(root, config());
+  assert.deepEqual(parsed.parse_errors, []);
+  assert.deepEqual(parsed.units[0].declarations.map(d => d.name), ['Base', 'Impl', 'User', 'After']);
+});
+
+test('kotlin review: type-parameter shadowing is scoped to its declaration', t => {
+  const root = fixture(t, {
+    'p/T.kt': 'package p\nclass T\n',
+    'p/Pair.kt': 'package p\nclass Generic<T> {\n  fun shadowed(value: T): T = value\n}\nclass Plain {\n  fun real(value: T): T = value\n}\n',
+  });
+  const { facts } = extractFacts(root, { language: 'kotlin', config: config() });
+  const edges = importsFrom(facts, 'p/Pair.kt');
+  // Generic<T>.T is a type parameter: no edge. Plain.T is the real class: exactly one edge.
+  assert.equal(edges.filter(imp => imp.specifier === 'T').length, 1);
+});
+
+test('kotlin review: a constructor call shadowed by a value parameter is no type edge', t => {
+  const root = fixture(t, {
+    'p/Widget.kt': 'package p\nclass Widget\n',
+    'p/Use.kt': 'package p\nclass Use {\n  fun build(Widget: () -> Unit) {\n    Widget()\n  }\n}\n',
+  });
+  const { facts } = extractFacts(root, { language: 'kotlin', config: config() });
+  assert.equal(importsFrom(facts, 'p/Use.kt').filter(imp => imp.specifier === 'Widget').length, 0);
+});
+
+test('kotlin review: private top-level classifiers do not resolve across files', t => {
+  const root = fixture(t, {
+    'p/Hidden.kt': 'package p\nprivate class Hidden\n',
+    'p/Use.kt': 'package p\nclass Use(val hidden: Hidden)\n',
+  });
+  const { facts } = extractFacts(root, { language: 'kotlin', config: config() });
+  assert.equal(importsFrom(facts, 'p/Use.kt').filter(imp => imp.specifier === 'Hidden').length, 0);
+});
+
+test('kotlin review: a member import requires the member to exist on the target', t => {
+  const root = fixture(t, {
+    'p/Foo.kt': 'package p\nclass Foo {\n  fun present() {}\n}\n',
+    'p/Use.kt': 'package p\nimport p.Foo.absent\nclass Use(val foo: Foo)\n',
+  });
+  const { facts } = extractFacts(root, { language: 'kotlin', config: config() });
+  const member = facts.imports.find(imp => imp.specifier === 'p.Foo.absent');
+  assert.equal(member.resolved, false);
+});
+
+test('kotlin review: main sources never resolve to test-only classifiers', t => {
+  const root = fixture(t, {
+    'src/main/kotlin/p/Use.kt': 'package p\nclass Use(val helper: Helper)\n',
+    'src/test/kotlin/p/Helper.kt': 'package p\nclass Helper\n',
+    'build.gradle.kts': '// marker\n',
+  });
+  const { facts } = extractFacts(root, { language: 'kotlin', config: config() });
+  assert.equal(importsFrom(facts, 'src/main/kotlin/p/Use.kt').filter(imp => imp.specifier === 'Helper').length, 0);
+});
+
+test('kotlin review: cross-module test classifiers stay invisible across Gradle modules', t => {
+  const root = fixture(t, {
+    'app/build.gradle.kts': '// app\n',
+    'lib/build.gradle.kts': '// lib\n',
+    'app/src/test/kotlin/p/Helper.kt': 'package p\nclass Helper\n',
+    'lib/src/test/kotlin/p/Use.kt': 'package p\nclass Use(val helper: Helper)\n',
+  });
+  const { facts } = extractFacts(root, { language: 'kotlin', config: config() });
+  assert.equal(importsFrom(facts, 'lib/src/test/kotlin/p/Use.kt').filter(imp => imp.specifier === 'Helper').length, 0);
+});
+
+test('kotlin review: mixed java/kotlin trees autodetect instead of aborting', t => {
+  const root = fixture(t, {
+    'src/Use.kt': 'package p\nclass Use\n',
+    'src/Legacy.java': 'package p;\nclass Legacy {}\n',
+  });
+  const { facts } = extractFacts(root, { config: config() });
+  assert.ok(['java', 'kotlin'].includes(facts.repository.language));
+});
+
+test('kotlin review: kotlin-only globs never change another language config digest', () => {
+  const graph = { repository: { language: 'ts' }, excluded: { roles: [] }, grouping: {} };
+  const base = analysisContext({ graph, config: { include: ['**/*.ts'], exclude: [] } });
+  const widened = analysisContext({ graph, config: { include: ['**/*.ts', '**/*.kt'], exclude: ['**/target/**/*.kt'] } });
+  assert.equal(widened.configDigest, base.configDigest);
+  const shifted = analysisContext({ graph, config: { include: ['**/*.ts', 'lib/**/*.ts'], exclude: [] } });
+  assert.notEqual(shifted.configDigest, base.configDigest);
+});
+
+test('kotlin review: kotlin-only globs still count for kotlin digests', () => {
+  const graph = { repository: { language: 'kotlin' }, excluded: { roles: [] }, grouping: {} };
+  const base = analysisContext({ graph, config: { include: ['**/*.kt'], exclude: [] } });
+  const widened = analysisContext({ graph, config: { include: ['**/*.kt'], exclude: ['**/target/**/*.kt'] } });
+  assert.notEqual(widened.configDigest, base.configDigest);
+});
+
+test('kotlin review: kotlin fixture evaluation stays consistent end to end', t => {
+  const root = fixture(t, {
+    'p/Widget.kt': 'package p\nclass Widget\n',
+    'p/Use.kt': 'package p\nclass Use {\n  fun make(): Widget = Widget()\n}\n',
+  });
+  const { facts, config: cfg } = extractFacts(root, { language: 'kotlin', config: config() });
+  const graph = buildGraph(facts, cfg);
+  const report = evaluateGraph(graph, cfg, facts);
+  assert.ok(report);
+  assert.equal(facts.parse_errors, undefined);
+});
+
+test('kotlin review: package-qualified constructor invocations resolve as types', t => {
+  const root = fixture(t, {
+    'p/Widget.kt': 'package p\nclass Widget\n',
+    'q/Use.kt': 'package q\nimport p.Widget\nclass Use {\n  fun make() = p.Widget()\n}\n',
+  });
+  const { facts } = extractFacts(root, { language: 'kotlin', config: config() });
+  const edge = importsFrom(facts, 'q/Use.kt').find(imp => imp.specifier === 'p.Widget');
+  assert.equal(edge?.to, 'p/Widget.kt');
+});
+
+test('kotlin review: trailing commas do not inflate call arity', t => {
+  // Arity selects between overloads: target(1, 2,) must bind the two-parameter
+  // overload; counting the trailing comma as a third argument leaves no match.
+  const root = fixture(t, {
+    'p/Calls.kt': 'package p\nfun target(a: Int) {}\nfun target(a: Int, b: Int) {}\nfun run() {\n  target(1, 2,)\n}\n',
+  });
+  const { facts } = extractFacts(root, { language: 'kotlin', config: config() });
+  const call = facts.calls?.find(site => site.target?.name === 'target');
+  assert.equal(call?.target?.line, 3);
+});
+
+test('kotlin review: invocations nested in call arguments are scanned', t => {
+  const root = fixture(t, {
+    'p/Nested.kt': 'package p\nfun outer(x: Int) {}\nfun inner(): Int = 1\nfun run() {\n  outer(inner())\n}\n',
+  });
+  const { facts } = extractFacts(root, { language: 'kotlin', config: config() });
+  const inner = facts.calls?.filter(site => site.target?.name === 'inner') || [];
+  assert.equal(inner.length > 0, true);
+});

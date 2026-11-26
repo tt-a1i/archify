@@ -24,7 +24,7 @@ export function extract(root, config, { onCapture } = {}) {
   const projects = projectScope(metadataContents, packageMarkers);
   const resolveUnits = described.map(d => ({
     file: d.file, packageName: d.packageName, imports: d.imports, types: d.types,
-    references: d.references, shadowed: d.shadowed, topLevel: d.topLevel,
+    references: d.references, shadowed: d.shadowed, shadowedScopes: d.shadowedScopes, topLevel: d.topLevel,
   }));
   const { imports, unresolved, resolveType } = resolveImports(resolveUnits, projects.sourceSetVisible);
   const functions = units.flatMap(unit => measureFunctions(unit));

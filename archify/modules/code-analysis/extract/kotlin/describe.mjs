@@ -36,15 +36,22 @@ export function describeUnit(unit) {
     });
   };
 
-  // Conservative shadow set: every type parameter in the file, exactly the
-  // Java adapter's policy. Type parameters never denote analyzed types.
-  const collectTypeParameters = decls => {
+  // Scoped shadowing: a type parameter shadows project classifiers only inside
+  // the declaration that introduces it. `fun <T> id(x: T)` in one function must
+  // not suppress a `class T` reference in an unrelated function of the file.
+  const shadowedScopes = [];
+  const collectTypeParameterScopes = (decls) => {
     for (const decl of decls) {
-      for (const name of decl.typeParameters || []) shadowed.add(name);
-      if (decl.members) collectTypeParameters(decl.members);
+      const startOffset = decl.declStart?.startOffset ?? decl.startOffset;
+      const endOffset = decl.declEnd?.endOffset ?? decl.endOffset;
+      for (const name of decl.typeParameters || []) {
+        shadowed.add(name);
+        shadowedScopes.push({ name, startOffset, endOffset });
+      }
+      if (decl.members) collectTypeParameterScopes(decl.members);
     }
   };
-  collectTypeParameters(declarations);
+  collectTypeParameterScopes(declarations);
 
   // Scan one executable body once; reuse the evidence for dependency,
   // complexity and call stages. Keyed by declaration object identity.
@@ -70,6 +77,16 @@ export function describeUnit(unit) {
     if (TYPE_KINDS.has(decl.kind)) {
       if (!local && decl.name) {
         const fullName = [packageName, ...owners, decl.name].filter(Boolean).join('.');
+        // Member evidence for member-import verification: direct member names
+        // plus the members of a companion object, which are reachable through
+        // the owner's name in Kotlin.
+        const memberNames = new Set();
+        for (const member of decl.members || []) {
+          if (member.name) memberNames.add(member.name);
+          if (member.kind === 'object' && member.companion) {
+            for (const inner of member.members || []) if (inner.name) memberNames.add(inner.name);
+          }
+        }
         types.push({
           name: decl.name, fullName, file: unit.file, owners: [...owners],
           kind: decl.kind, modifiers: decl.modifiers || [],
@@ -80,6 +97,7 @@ export function describeUnit(unit) {
           memberScopeStartOffset: decl.bodyRange?.open?.startOffset ?? (decl.declStart?.startOffset ?? decl.startOffset),
           typeParameters: decl.typeParameters || [],
           companion: Boolean(decl.companion),
+          memberNames: [...memberNames],
         });
       }
       if (local && decl.name) {
@@ -126,11 +144,36 @@ export function describeUnit(unit) {
     for (const declaration of nested.declarations) harvest(declaration, [...owners, '<locals>'], true);
   }
 
+  function valueNamesInScope(decl, evidence) {
+    const names = new Set((decl.parameters || []).map(param => param.name).filter(Boolean));
+    for (const nestedDecl of evidence?.nested || []) {
+      if (nestedDecl.kind === 'property' && nestedDecl.name) names.add(nestedDecl.name);
+    }
+    return names;
+  }
+
   function harvestNestedBodies(decl, owners) {
     if (!(decl.bodyTokens || []).length) return;
     const evidence = evidenceOf(decl);
-    for (const ref of evidence.typeReferences) addReference(ref);
-    for (const nestedDecl of evidence.nested) harvest(nestedDecl, [...owners, '<locals>'], true);
+    const values = valueNamesInScope(decl, evidence);
+    for (const ref of evidence.typeReferences) {
+      // A simple construction candidate whose name is a value in scope is an
+      // invocation of that value, never a constructor reference.
+      if (ref.construction && !ref.name.includes('.') && values.has(ref.name)) continue;
+      addReference(ref);
+    }
+    for (const nestedDecl of evidence.nested) {
+      // A local function shadows same-named outer functions inside the whole
+      // enclosing body, exactly where its calls would bind.
+      if (nestedDecl.kind === 'function' && nestedDecl.name) {
+        shadowedScopes.push({
+          name: nestedDecl.name,
+          startOffset: decl.declStart?.startOffset ?? decl.startOffset,
+          endOffset: decl.declEnd?.endOffset ?? decl.endOffset,
+        });
+      }
+      harvest(nestedDecl, [...owners, '<locals>'], true);
+    }
   }
 
   for (const decl of declarations) {
@@ -149,7 +192,7 @@ export function describeUnit(unit) {
   }
 
   return {
-    packageName, imports, types, references, shadowed, uncertainScopes, topLevel,
+    packageName, imports, types, references, shadowed, shadowedScopes, uncertainScopes, topLevel,
     declarations, file: unit.file, evidenceOf,
   };
 }

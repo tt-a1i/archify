@@ -155,7 +155,7 @@ export function validateFacts(graph, facts) {
       for (const kind of [imp.kind, ...['lazy', 'conditional', 'typeOnly', 'implicit'].filter((flag) => imp[flag])]) {
         aggregate.kinds[kind] = (aggregate.kinds[kind] || 0) + 1;
       }
-      if (!['java', 'rust', 'c', 'cpp'].includes(facts.repository.language) && !imp.lazy && !imp.conditional && !imp.typeOnly && !(facts.repository.language === 'ts' && imp.kind === 'dynamic')) aggregate.kinds.eager += 1;
+      if (!['java', 'kotlin', 'rust', 'c', 'cpp'].includes(facts.repository.language) && !imp.lazy && !imp.conditional && !imp.typeOnly && !(facts.repository.language === 'ts' && imp.kind === 'dynamic')) aggregate.kinds.eager += 1;
     }
     const mismatch = graph.edges.length !== aggregates.size || graph.edges.some((edge) => {
       const expected = aggregates.get(JSON.stringify([edge.from, edge.to]));

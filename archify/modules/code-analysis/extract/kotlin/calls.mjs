@@ -80,8 +80,10 @@ export function collectCalls(unit, described) {
 
   function bindCall(call, site, ownerChain, callerDecl) {
     call.reason = 'no-local-function-binding';
-    // Type parameters/shadowed names never bind.
-    if (described.shadowed.has(site.name)) return;
+    // Type parameters and same-named local declarations shadow only inside the
+    // extent that introduces them; a shadowed call never binds outward.
+    if ((described.shadowedScopes || []).some(scope => scope.name === site.name
+      && scope.startOffset <= site.startOffset && scope.endOffset >= site.startOffset)) return;
     // Explicit import of this simple name wins over scope candidates; imported
     // targets are outside this lexical model.
     const imported = unit.imports.find(i => !i.wildcard && (i.alias || i.name.split('.').at(-1)) === site.name);

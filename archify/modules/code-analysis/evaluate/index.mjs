@@ -52,6 +52,16 @@ export function analysisContext({ graph, config = {}, facts = null, active = RUL
   // settings and coverage. It must not change the internal analyzer's context.
   const { schema_version: _ignored, external: _external, ...settings } = config || {};
   if (graph?.repository?.language !== 'ts') delete settings.typescript;
+  // Kotlin-only source globs cannot affect another language's extraction,
+  // because no non-Kotlin adapter reads .kt files: they stay out of the
+  // comparability digest for non-Kotlin runs, even when a user wrote them.
+  // Without this, adding Kotlin defaults would read as a config change for
+  // every unchanged TypeScript/Python/Java comparison after upgrade.
+  if (graph?.repository?.language !== 'kotlin') {
+    const kotlinOnly = entry => typeof entry === 'string' && /\*\.kt$/.test(entry);
+    if (Array.isArray(settings.include)) settings.include = settings.include.filter(entry => !kotlinOnly(entry));
+    if (Array.isArray(settings.exclude)) settings.exclude = settings.exclude.filter(entry => !kotlinOnly(entry));
+  }
   const goBuild = graph?.repository?.language === 'go' ? facts?.languageScope?.build : null;
   const tsProjects = graph?.repository?.language === 'ts' ? facts?.languageScope?.projects : null;
   const tsSdks = graph?.repository?.language === 'ts' ? facts?.languageScope?.sdks : null;

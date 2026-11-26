@@ -37,7 +37,11 @@ export function selectAdapter(root, config, requested) {
   // a build helper) keeps the language it was analyzed in before Kotlin
   // support; the left-out Kotlin files are reported like any other language's.
   // A root Maven/Gradle build keeps Java and Kotlin eligible.
-  const withoutJava = matched.length > 1 && !javaProject ? matched.filter((a) => a !== javaAdapter && a !== kotlinAdapter) : matched;
+  // The markerless preference drops the JVM adapters only when a non-JVM
+  // language remains; a directory holding only Java and Kotlin sources keeps
+  // both and reaches the dominance/ambiguity checks like any other mix.
+  const nonJvm = matched.filter((a) => a !== javaAdapter && a !== kotlinAdapter);
+  const withoutJava = matched.length > 1 && !javaProject && nonJvm.length ? nonJvm : matched;
   // A C++ translation-unit selection also covers C translation units from the
   // same compilation database; a mixed C/C++ project is one adapter choice.
   const detected = withoutJava.includes(cppAdapter) ? withoutJava.filter((a) => a !== cAdapter) : withoutJava;

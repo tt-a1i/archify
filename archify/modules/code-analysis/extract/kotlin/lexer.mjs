@@ -122,6 +122,7 @@ export function tokenize(sourceText) {
       if (sourceText[offset] !== '`') failHere('unterminated backtick identifier', start);
       advance(1);
       push('Identifier', start, startLine, startColumn, sourceText.slice(start + 1, offset - 1));
+      tokens.at(-1).quoted = true;
       continue;
     }
 
@@ -133,10 +134,12 @@ export function tokenize(sourceText) {
       continue;
     }
 
-    // Identifiers and keywords.
-    if (/[A-Za-z_$]/.test(char)) {
+    // Identifiers and keywords. Kotlin permits Unicode letters in identifiers;
+    // the category test runs on the code point (surrogate pairs included)
+    // while advancing stays per UTF-16 code unit, so offsets remain exact.
+    if (isIdentifierStart(char, sourceText, offset)) {
       advance(1);
-      while (offset < length && /[A-Za-z0-9_$]/.test(sourceText[offset])) advance(1);
+      while (offset < length && isIdentifierPart(sourceText[offset], sourceText, offset)) advance(1);
       const word = sourceText.slice(start, offset);
       push(HARD_KEYWORDS.has(word) ? 'Keyword' : 'Identifier', start, startLine, startColumn);
       continue;
@@ -258,6 +261,30 @@ export function tokenize(sourceText) {
   }
 
   return tokens;
+}
+
+// Unicode identifier categories per the Kotlin spec: letters (and underscore
+// or dollar) start, letters and digits continue. The test reads one code
+// point, combining surrogate pairs; lone surrogates are never letters.
+function codePointAt(sourceText, offset) {
+  const first = sourceText.charCodeAt(offset);
+  if (first >= 0xd800 && first <= 0xdbff && offset + 1 < sourceText.length) {
+    const second = sourceText.charCodeAt(offset + 1);
+    if (second >= 0xdc00 && second <= 0xdfff) {
+      return String.fromCharCode(first, second);
+    }
+  }
+  return sourceText[offset] ?? '';
+}
+
+function isIdentifierStart(char, sourceText, offset) {
+  if (/[A-Za-z_$]/.test(char)) return true;
+  return /\p{L}/u.test(codePointAt(sourceText, offset));
+}
+
+function isIdentifierPart(char, sourceText, offset) {
+  if (/[A-Za-z0-9_$]/.test(char)) return true;
+  return /[\p{L}\p{Nd}]/u.test(codePointAt(sourceText, offset));
 }
 
 // Significant tokens exclude whitespace trivia but keep NL: parsers skip NL

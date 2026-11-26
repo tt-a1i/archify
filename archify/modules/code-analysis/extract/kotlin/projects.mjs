@@ -27,7 +27,15 @@ export function projectScope(metadataContents, packageMarkers) {
 
   function sourceSetVisible(caller, targetFile) {
     const from = owner(caller), to = owner(targetFile);
-    return !from || from.root !== to?.root || sourceSet(caller, from.root) !== 'main' || sourceSet(targetFile, to.root) !== 'test';
+    if (!from) return true;
+    const targetSet = to ? sourceSet(targetFile, to.root) : null;
+    if (targetSet !== 'test') return true;
+    // Test-only declarations are invisible to every main source, and to test
+    // source of other modules: Gradle project dependencies expose the main
+    // source set only — never a neighbor project's unit-test sources. Test
+    // source keeps seeing its own module's test and every main.
+    if (sourceSet(caller, from.root) === 'main') return false;
+    return from === to;
   }
 
   const problems = [];

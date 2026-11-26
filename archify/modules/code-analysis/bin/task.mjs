@@ -41,7 +41,7 @@ importers/callers reverse the captured resolved edges with origin freshness and
 total/included/omitted counts. They are bounded source references, not complete runtime impact.
 Single-entry Python/Java/Go/Rust/C/C++ questions require a saved analysis directory with matching
 captured source and producer/call-model metadata; C/C++ header entries also need --context.
-With --base-root, question mode freshly captures both roots in the entry language (JS/TS, .py, .java, .kt, .go, .rs, .c or .cpp) with one analysis
+With --base-root, question mode freshly captures both roots in the entry language (JS/TS, .py, .java, .go, .rs, .c or .cpp) with one analysis
 config (defaults or --config). It requires --entry and accepts no analysis directory
 or --function. Both captures use the same adapter/config. Python/Java/Go/Rust/C/C++ compare captured
 full named definition headers/bodies; missing metadata is partial. Rust records captured Cargo metadata, selected crate/cfg/features and excluded scopes.

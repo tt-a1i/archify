@@ -51,6 +51,11 @@ export function resolveImports(described, sourceSetVisible = () => true) {
     return unit.types.filter(t => t.memberScopeStartOffset <= ref.startOffset && t.endOffset >= ref.endOffset);
   }
 
+  // Scoped shadowing: a type parameter or a local declaration shadows only
+  // inside the extent that introduces it, never across the whole file.
+  const isShadowed = (unit, name, offset) => (unit.shadowedScopes || [])
+    .some(scope => scope.name === name && scope.startOffset <= offset && scope.endOffset >= offset);
+
   // Resolve the first segment in lexical scope order, then navigate the rest
   // through nested classifiers. Returns candidate type declarations, or null
   // when the name cannot denote an analyzed type at all.
@@ -58,7 +63,7 @@ export function resolveImports(described, sourceSetVisible = () => true) {
     if (ref.uncertain) return [];
     const name = ref.name;
     const first = name.split('.')[0];
-    if (unit.shadowed.has(first)) return [];
+    if (isShadowed(unit, first, ref.startOffset)) return [];
 
     // Nested classifiers of enclosing classifiers (never inherited: complete
     // by construction, so no ancestry analysis is needed).
@@ -119,9 +124,9 @@ export function resolveImports(described, sourceSetVisible = () => true) {
   // Whether a name may denote an analyzed type at all (the Java adapter's
   // referenceReason, adapted: no inherited-member or external-import guards,
   // because Kotlin has neither).
-  const referenceReason = (unit, name) => {
+  const referenceReason = (unit, name, offset) => {
     const first = name.split('.')[0];
-    if (unit.shadowed.has(first)) return null;
+    if (isShadowed(unit, first, offset)) return null;
     const imported = unit.imports.find(i => !i.wildcard && (i.alias || i.name.split('.').at(-1)) === first);
     if (imported && !inProject(imported.name) && !unit.types.some(type => type.name === first)) return null;
     return typeNames.has(first) || inProject(name) ? 'unknown' : null;
@@ -132,8 +137,16 @@ export function resolveImports(described, sourceSetVisible = () => true) {
     return inProject(imp.name) ? 'unknown' : 'external';
   };
 
-  const visibleCandidates = (unit, candidates) => candidates.length === 1 && !sourceSetVisible(unit.file, candidates[0].file)
-    ? [] : candidates;
+  const visibleCandidates = (unit, candidates) => candidates.filter(type => {
+    if (type.memberImport) return true;
+    // Source-set visibility applies to every candidate, not only singletons:
+    // a test declaration invisible from main must not add ambiguity.
+    if (!sourceSetVisible(unit.file, type.file)) return false;
+    // Private top-level classifiers are invisible outside their declaring
+    // file; Kotlin's default imports or another visible declaration win.
+    if (type.file !== unit.file && !(type.owners || []).length && (type.modifiers || []).includes('private')) return false;
+    return true;
+  });
 
   const imports = [];
   const add = (unit, specifier, line, candidates, reason) => {
@@ -158,8 +171,12 @@ export function resolveImports(described, sourceSetVisible = () => true) {
           const split = imp.name.lastIndexOf('.');
           if (split > 0) {
             const owners = lookup(imp.name.slice(0, split));
-            if (owners.length === 1) candidates = owners;
-            else {
+            const memberName = imp.name.slice(split + 1);
+            // Owning the type does not establish the member: resolve only when
+            // the captured member evidence names it (direct or companion).
+            if (owners.length === 1 && (owners[0].memberNames || []).includes(memberName)) {
+              candidates = owners;
+            } else if (!owners.length) {
               const members = memberIndex.get(imp.name);
               if (members && members.size === 1 && [...members.values()][0] >= 1) {
                 // Exactly one file declares this top-level member; treated as a
@@ -179,7 +196,7 @@ export function resolveImports(described, sourceSetVisible = () => true) {
       if (seen.has(key)) continue;
       seen.add(key);
       const candidates = referenceTargets(unit, ref);
-      add(unit, ref.name, ref.line, candidates, referenceReason(unit, ref.name));
+      add(unit, ref.name, ref.line, candidates, referenceReason(unit, ref.name, ref.startOffset));
     }
   }
 

@@ -32,15 +32,16 @@ export function extractNestedDeclarations(tokens) {
     // still found in one or two tokens and the sub-parser re-reads backwards
     // only what the keyword begins — modifiers before it are not part of the
     // declaration extent for coverage purposes, which is conservative and safe.
-    if (['class', 'interface', 'fun', 'val', 'var', 'typealias'].includes(token.image)
-      || (token.image === 'object' && (tokens[i + 1]?.tokenType.name === 'Identifier' || tokens[i + 1]?.image === ':' || tokens[i + 1]?.image === '{'))) {
+    // Hard keywords only: a backtick-quoted `class`/`fun` is an Identifier
+    // with a keyword image and never opens a declaration.
+    if ((['class', 'interface', 'fun', 'val', 'var', 'typealias'].includes(token.image) && token.tokenType.name === 'Keyword')
+      || (token.image === 'object' && token.tokenType.name === 'Keyword' && (tokens[i + 1]?.tokenType.name === 'Identifier' || tokens[i + 1]?.image === ':' || tokens[i + 1]?.image === '{'))) {
       // Guard: skip keywords that are part of expressions, not declarations.
       // - `val`/`var`/`fun`/`class` never appear in valid expressions, so every
       //   occurrence is a declaration attempt.
       // - `object` appears in object expressions and object declarations only.
-      const slice = tokens.slice(i);
       try {
-        const parser = createTokenParser(slice);
+        const parser = createTokenParser(tokens, i);
         const declaration = parser.parseDeclaration();
         if (declaration?.declEnd) {
           const end = declaration.declEnd.endOffset ?? declaration.declEnd.startOffset;
@@ -70,11 +71,26 @@ export function coveredChecker(covered) {
 
 // Parse the type starting at tokens[index]. Only capitalized-path references
 // are meaningful type evidence; the probe stops where the type grammar ends.
-export function probeTypeAt(tokens, index) {
-  const slice = tokens.slice(index);
+export function probeTypeAt(tokens, index, { stopAtBranchArrow = false } = {}) {
+  let end = tokens.length;
+  if (stopAtBranchArrow && tokens[index]?.image !== '(') {
+    let round = 0, square = 0, angle = 0;
+    for (let j = index; j < tokens.length; j++) {
+      const image = tokens[j].image;
+      if (image === '(') round++;
+      else if (image === ')') round--;
+      else if (image === '[') square++;
+      else if (image === ']') square--;
+      else if (image === '<') angle++;
+      else if (image === '>') angle = Math.max(0, angle - 1);
+      else if (image === '->' && round === 0 && square === 0 && angle === 0) { end = j; break; }
+      // The probe never crosses a statement or branch boundary anyway.
+      else if ([';', '{', '}'].includes(image) && round === 0 && square === 0) { end = j; break; }
+    }
+  }
   const references = [];
   try {
-    const parser = createTokenParser(slice);
+    const parser = createTokenParser(tokens, index, end);
     const read = parser.parseTypeProbe(references);
     return read ? references : [];
   } catch {
@@ -100,7 +116,7 @@ export function scanTypeEvidence(tokens, coveredBy, owners) {
     if (['is', 'as'].includes(token.image) && token.tokenType.name === 'Keyword') {
       let j = i + 1;
       if (tokens[j]?.image === '?') j++; // as?
-      for (const ref of probeTypeAt(tokens, j)) {
+      for (const ref of probeTypeAt(tokens, j, { stopAtBranchArrow: true })) {
         if (!coveredBy(ref.startOffset)) add(ref, {});
       }
       continue;
@@ -156,8 +172,16 @@ export function scanTypeEvidence(tokens, coveredBy, owners) {
           segments.unshift(tokens[k - 1]);
           k -= 2;
         }
-        if (segments.length > 1 && UPPERCASE.test(segments[0].image) && !coveredBy(segments[0].startOffset)) {
-          add({ name: segments.map(t => t.image).join('.'), ...posSpan(segments[0], segments.at(-1)) }, { construction: true });
+        if (segments.length > 1 && !coveredBy(segments[0].startOffset)) {
+          const name = segments.map(t => t.image).join('.');
+          if (UPPERCASE.test(segments[0].image)) {
+            add({ name, ...posSpan(segments[0], segments.at(-1)) }, { construction: true });
+          } else {
+            // Package-qualified construction (p.Widget()) or a receiver call —
+            // indistinguishable lexically. Resolution decides against the
+            // captured index; unverifiable candidates are dropped there.
+            add({ name, ...posSpan(segments[0], segments.at(-1)) }, { construction: true, packageCandidate: true });
+          }
         }
         continue;
       }
@@ -238,6 +262,9 @@ export function scanCallSites(tokens, coveredBy) {
           else if (t.image === ']') square--;
           else if (t.image === ',' && round === 0 && curly === 0 && square === 0) arity++;
         }
+        // Kotlin allows one trailing comma in argument lists; it separates
+        // nothing and is not an argument of its own.
+        if (tokens[close - 1]?.image === ',') arity--;
       }
     }
     calls.push({
@@ -249,7 +276,8 @@ export function scanCallSites(tokens, coveredBy) {
       startOffset: token.startOffset,
       endOffset: tokens[close ?? i + 1]?.endOffset ?? tokens[i + 1].endOffset,
     });
-    if (close !== null) i = close;
+    // Do not jump past the closing parenthesis: arguments are expressions
+    // and can themselves be call sites, as in outer(inner()).
   }
   return calls;
 }

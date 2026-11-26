@@ -48,8 +48,10 @@ that member.
 Gradle builds are executable Kotlin/Groovy DSL and are never evaluated. Only
 conventional source-set visibility is modeled: `src/main/kotlin` and
 `src/test/kotlin` form main and test source sets; main cannot bind
-declarations found only in test, test can still see main. Build modules are
-bounded by `build.gradle(.kts)`, `settings.gradle(.kts)` or `pom.xml` markers.
+declarations found only in test anywhere, and test source binds test
+declarations of its own module only — Gradle project dependencies expose a
+neighbor module's main source set, never its unit-test sources. Build modules
+are bounded by `build.gradle(.kts)`, `settings.gradle(.kts)` or `pom.xml` markers.
 Dependencies, plugin-generated sources and build classpaths are honestly
 unmodeled in v1, exactly the Java adapter's treatment of Gradle. Mixed
 Kotlin/Java projects are analyzed one language at a time; cross-language

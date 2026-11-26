@@ -47,11 +47,13 @@ export function parseKotlinSource(sourceText) {
 // A parser over an arbitrary token slice. Token positions are intrinsic, so
 // slices of a file's token array keep exact source evidence. Used both for
 // whole files and for sub-parsing nested declarations inside captured bodies.
-export function createTokenParser(tokens) {
-  let cursor = 0;
+export function createTokenParser(tokens, start = 0, end = tokens.length) {
+  // The cursor indexes the caller's array directly: sub-parsing a declaration
+  // deep inside a large body never copies the remaining tokens.
+  let cursor = start;
 
-  const eof = () => cursor >= tokens.length;
-  const peek = (ahead = 0) => tokens[cursor + ahead] || null;
+  const eof = () => cursor >= end;
+  const peek = (ahead = 0) => (cursor + ahead < end ? tokens[cursor + ahead] : null) || null;
   const next = () => {
     if (eof()) throw new ParseError('unexpected end of file', tokens.at(-1));
     return tokens[cursor++];
@@ -127,7 +129,7 @@ export function createTokenParser(tokens) {
     expect('<');
     for (;;) {
       // variance annotations or star projection
-      while (atSoft('in') || atSoft('out') || atSoft('reified')) next();
+      while (at('in') || atSoft('out') || atSoft('reified')) next();
       // Type-use annotations: List<@Size(max = 32) String>
       while (at('@')) {
         next();
@@ -260,7 +262,11 @@ export function createTokenParser(tokens) {
         const continuesForward = INFIX_CONTINUATIONS.has(token.image) || INFIX_WORDS.has(token.image);
         const continuesBackward = prev && (INFIX_CONTINUATIONS.has(prev.image) || INFIX_WORDS.has(prev.image) || prev.image === '(');
         if (!continuesForward && !continuesBackward) {
-          if (token.startLine > (last?.endLine ?? last?.startLine)) break;
+          if (token.startLine > (last?.endLine ?? last?.startLine)) {
+            // A control condition whose branch has not started yet is an
+            // incomplete expression: if (c)\n  branch is one expression.
+            if (!endsWithUnbranchedControl(collected)) break;
+          }
           // Declaration keywords end the expression even on the same line
           // when they cannot be part of it.
           if (['fun', 'val', 'var', 'class', 'interface', 'object', 'typealias', 'import'].includes(token.image)) break;
@@ -286,6 +292,23 @@ export function createTokenParser(tokens) {
       open: first ? loc(first) : null,
       close: last ? loc(last) : null,
     };
+  }
+
+  // Whether collected tokens end with a control construct whose condition
+  // just closed but whose branch has not begun: … if (c) |newline branch.
+  function endsWithUnbranchedControl(collected) {
+    if (!collected.length || collected.at(-1).image !== ')') return false;
+    let depth = 0, k = collected.length - 1;
+    for (; k >= 0; k--) {
+      if (collected[k].image === ')') depth++;
+      else if (collected[k].image === '(') {
+        depth--;
+        if (depth === 0) break;
+      }
+    }
+    if (k <= 0) return false;
+    const before = collected[k - 1];
+    return ['if', 'when', 'while', 'for', 'catch'].includes(before.image);
   }
 
   // ---------- parameters ------------------------------------------------------------
@@ -363,7 +386,7 @@ export function createTokenParser(tokens) {
     if (!at('<')) return names;
     next();
     for (;;) {
-      while (atSoft('in') || atSoft('out') || atSoft('reified') || at('@')) {
+      while (at('in') || atSoft('out') || atSoft('reified') || at('@')) {
         if (at('@')) { next(); parseTypeBase([]); continue; }
         next();
       }
@@ -414,13 +437,27 @@ export function createTokenParser(tokens) {
 
   function skipDelegateExpression() {
     let round = 0, curly = 0;
+    let last = null;
     while (!eof()) {
       const token = peek();
       if (round === 0 && curly === 0 && [',', '{'].includes(token.image)) return;
+      // A delegate expression is an ordinary expression: it ends where the
+      // next token cannot continue it and starts a later line, or where a
+      // declaration keyword appears at the same nesting level.
+      if (round === 0 && curly === 0 && last) {
+        const continuesForward = INFIX_CONTINUATIONS.has(token.image) || INFIX_WORDS.has(token.image);
+        const continuesBackward = INFIX_CONTINUATIONS.has(last.image) || INFIX_WORDS.has(last.image);
+        if (!continuesForward && !continuesBackward) {
+          if (token.startLine > last.endLine) return;
+          if (['fun', 'val', 'var', 'class', 'interface', 'object', 'typealias', 'constructor', 'init'].includes(token.image)
+            && token.tokenType.name === 'Keyword') return;
+        }
+      }
       if (token.image === '(') round++;
       else if (token.image === ')') round--;
       else if (token.image === '{') curly++;
       else if (token.image === '}') curly--;
+      last = token;
       next();
     }
   }
@@ -441,17 +478,20 @@ export function createTokenParser(tokens) {
     if (!token) return null;
 
     // class-like: [fun] interface / [enum|annotation|data|sealed|value] class / class
-    if (token.image === 'class' || token.image === 'interface'
-      || (token.image === 'fun' && peek(1)?.image === 'interface')
-      || (['enum', 'annotation', 'data', 'sealed', 'value'].includes(token.image) && peek(1) && ['class', 'interface'].includes(peek(1).image))) {
+    // Backtick-quoted identifiers are never declaration keywords: their token
+    // type is Identifier even when the image matches a keyword.
+    const unquoted = word => token.image === word && !token.quoted;
+    if (unquoted('class') || unquoted('interface')
+      || (unquoted('fun') && peek(1)?.image === 'interface' && !peek(1)?.quoted)
+      || (['enum', 'annotation', 'data', 'sealed', 'value'].includes(token.image) && !token.quoted && peek(1) && ['class', 'interface'].includes(peek(1).image) && !peek(1).quoted)) {
       return parseClassLike(modifiers, annotations);
     }
-    if (token.image === 'object') return parseObjectLike(modifiers, annotations);
-    if (token.image === 'fun') return parseFunction(modifiers, annotations);
-    if (token.image === 'val' || token.image === 'var') return parseProperty(modifiers, annotations);
-    if (token.image === 'typealias') return parseTypeAlias(modifiers, annotations);
-    if (token.image === 'constructor') return parseSecondaryConstructor(modifiers, annotations);
-    if (token.image === 'init' && peek(1)?.image === '{') return parseInitBlock(modifiers, annotations);
+    if (unquoted('object')) return parseObjectLike(modifiers, annotations);
+    if (unquoted('fun')) return parseFunction(modifiers, annotations);
+    if (unquoted('val') || unquoted('var')) return parseProperty(modifiers, annotations);
+    if (unquoted('typealias')) return parseTypeAlias(modifiers, annotations);
+    if (unquoted('constructor')) return parseSecondaryConstructor(modifiers, annotations);
+    if (token.image === 'init' && peek(1)?.image === '{' && !token.quoted) return parseInitBlock(modifiers, annotations);
     return null;
   }
 
@@ -600,6 +640,8 @@ export function createTokenParser(tokens) {
       }
       segments.push({ token: name, typeArguments });
       if (at('.') && peek(1)?.tokenType.name === 'Identifier') { next(); continue; }
+      // Nullable receiver: String?.tag lexes the joiner as one `?.` token.
+      if (at('?.') && peek(1)?.tokenType.name === 'Identifier') { next(); continue; }
       break;
     }
     if (segments.length < 2) { cursor = save; return null; }
@@ -694,6 +736,8 @@ export function createTokenParser(tokens) {
       if (!['get', 'set'].includes(token.image) || peek(1)?.image !== '(') break;
       const keyword = next();
       skipBalancedGroup();
+      // A getter may declare its result type before the body: get(): Int = …
+      if (accept(':')) parseType([]);
       let accKind = 'none', accTokens = [], accRange = null;
       if (at('{')) {
         const body = captureBody();
@@ -771,6 +815,7 @@ export function createTokenParser(tokens) {
         while (at('.') && peek(1)?.tokenType.name === 'Identifier') { next(); segments.push(next()); }
       }
       packageName = segments.map(t => t.image).join('.');
+      accept(';');
     }
     const imports = [];
     for (;;) {
@@ -795,6 +840,7 @@ export function createTokenParser(tokens) {
         wildcard, alias,
         ...loc(keyword),
       });
+      accept(';');
     }
     const declarations = [];
     while (!eof()) {
