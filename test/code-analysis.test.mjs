@@ -3,10 +3,16 @@ import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
+import { createTranslator, messagesFor } from '../archify/modules/code-analysis/overlay/i18n.mjs';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'archify');
 const cli = path.join(root, 'bin/archify.mjs');
 const moduleRoot = path.join(root, 'modules/code-analysis');
 const run = args => spawnSync(process.execPath, [cli, 'code-analysis', ...args], { encoding: 'utf8' });
+test('verification labels and mismatch guidance have Chinese translations', () => {
+  const translate = createTranslator(messagesFor('zh-CN'));
+  assert.equal(translate('Task JSON from the previous run'), '上一轮导出的任务 JSON');
+  assert.equal(translate('The task does not match the previous analysis.'), '任务与上一轮分析不匹配。');
+});
 test('Code Analysis exposes the workbench, checks, task and verification commands through the Archify CLI', () => {
   const publicHelp = spawnSync(process.execPath, [cli, '--help'], { encoding: 'utf8' });
   assert.equal(publicHelp.status, 0);

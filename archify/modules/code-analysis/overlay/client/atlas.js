@@ -1108,6 +1108,7 @@
   // One view at a time; the diagram is the default page ('' or 'diagram').
   function showView(kind) {
     if (!views) return;
+    views.hidden = root.getAttribute('data-bauify') !== 'on';
     var next = kind === 'diagram' ? '' : kind || '';
     // Set first: the layout (summary column hidden, full width) must settle before a view draws.
     if (next) root.setAttribute('data-bauify-views', next); else root.removeAttribute('data-bauify-views');
@@ -1166,12 +1167,41 @@
       var index = M.findIndex(function (m) { return m.id === id; });
       select(index, -1);
     },
-    saveSelection: function () { return { module: state.focusModule, finding: state.finding, file: state.file, changedFile: changedSelection, scope: fileScope?.value, tab: filePane.hidden ? 'map' : 'files', query: fileQuery.value, zoom: focusZoom, view: sideView() }; },
+    saveSelection: function (portable, active) {
+      var saved = { module: state.focusModule, finding: state.finding, file: state.file, changedFile: changedSelection, scope: fileScope?.value, tab: filePane.hidden ? 'map' : 'files', query: fileQuery.value, zoom: focusZoom, view: sideView() };
+      if (!portable) return saved;
+      return {
+        ...saved, portable: true, module: M[saved.module] ? { path: M[saved.module].path, rootFile: M[saved.module].path || M[saved.module].rootGroup ? null : F.find(function (entry) { return entry[1] === saved.module; })?.[0] } : null, finding: FD[saved.finding]?.id, file: F[saved.file]?.[0],
+        changedFile: changedFiles[saved.changedFile]?.path,
+        view: { ...saved.view, groups: [...saved.view.groups] }, fileScroll: filePane.scrollTop,
+        focus: active === fileQuery ? 'search' : active === fileScope ? 'scope'
+          : active && fileList.contains(active) ? 'file' : active?.classList.contains('atlas-tab') ? 'tab' : null
+      };
+    },
     restoreSelection: function (saved) {
       fileQuery.value = saved.query || '';
       if (fileScope && saved.scope) fileScope.value = saved.scope;
-      select(saved.module, saved.finding, saved, saved.file, saved.changedFile);
+      var module = saved.module, finding = saved.finding, file = saved.file, changed = saved.changedFile;
+      if (saved.portable) {
+        var matchingModules = saved.module ? M.map(function (entry, index) {
+          var rootFile = entry.path || entry.rootGroup ? null : F.find(function (file) { return file[1] === index; })?.[0];
+          return entry.path === saved.module.path && rootFile === saved.module.rootFile ? index : -1;
+        }).filter(function (index) { return index >= 0; }) : [];
+        module = matchingModules.length === 1 ? matchingModules[0] : -1;
+        finding = FD.findIndex(function (entry) { return entry.id === saved.finding; });
+        file = F.findIndex(function (entry) { return entry[0] === saved.file; });
+        changed = changedFiles.findIndex(function (entry) { return entry.path === saved.changedFile; });
+        saved = { ...saved, view: { ...saved.view, groups: new Set(saved.view.groups) } };
+      }
+      select(module, finding, saved, file, changed);
       showTab(saved.tab === 'files');
+      if (saved.portable && saved.tab === 'files') filePane.scrollTop = saved.fileScroll;
+      if (saved.portable && !panel.hidden && saved.focus) {
+        var target = saved.focus === 'search' ? fileQuery : saved.focus === 'scope' ? fileScope
+          : saved.focus === 'file' ? fileList.querySelector('[aria-current="true"]') || fileQuery : panel.querySelector('.atlas-tab[aria-selected="true"]');
+        if (target?.getClientRects().length) target.focus({ preventScroll: true });
+      }
+      return saved.portable && ((saved.module && module < 0) || (saved.finding && finding < 0) || (saved.file && file < 0) || (saved.changedFile && changed < 0));
     }
   };
   if (standalone) open();

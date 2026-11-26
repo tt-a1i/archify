@@ -3,6 +3,7 @@
 // lost or misattributed here is drawn wrong without any other check noticing.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import os from 'node:os';
 import { test } from 'node:test';
 import { buildGraph, evaluateGraph, extractFacts, loadConfig } from '../lib/analysis.mjs';
 import { buildAtlas, moduleLabels } from '../overlay/atlas.mjs';
@@ -19,6 +20,51 @@ function analyze(t) {
   const findings = evaluateGraph(graph, config, facts).diagnostics;
   return { facts, graph, findings, atlas: buildAtlas({ graph, facts, findings }) };
 }
+
+test('atlas: only function expressions named by a binding may restore', (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-atlas-binding-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  fs.writeFileSync(path.join(dir, 'bindings.ts'), 'const onSave = function /* comment */ () { return 1; };\nconst wrapped = (function () { return 4; });\nconst checked = (function () { return 5; }) satisfies () => number;\nconst asserted = (function () { return 6; }) as () => number;\nconst cast = <() => number>function () { return 7; };\nconst onCancel = function handler() { return 2; };\n{ const scoped = function () { return 3; }; }\n');
+  const config = loadConfig();
+  const { facts } = extractFacts(dir, { language: 'ts', config });
+  const graph = buildGraph(facts, config);
+  const atlas = buildAtlas({ graph, facts });
+  assert.equal(atlas.functions.find(fn => fn[1] === 'onSave')?.[9], true);
+  assert.equal(atlas.functions.find(fn => fn[1] === 'wrapped')?.[9], true, 'parenthesized bindings stay eligible');
+  assert.equal(atlas.functions.find(fn => fn[1] === 'checked')?.[9], true, 'satisfies bindings stay eligible');
+  assert.equal(atlas.functions.find(fn => fn[1] === 'asserted')?.[9], true, 'as assertions stay eligible');
+  assert.equal(atlas.functions.find(fn => fn[1] === 'cast')?.[9], true, 'angle-bracket assertions stay eligible');
+  assert.equal(atlas.functions.find(fn => fn[1] === 'handler')?.[9], false);
+  assert.equal(atlas.functions.find(fn => fn[1] === 'scoped')?.[9], false, 'scope is not captured as part of the binding identity');
+  facts.files.find(file => file.path === 'bindings.ts').sourceText = facts.files[0].sourceText.replace('return 1', 'return 9');
+  const mismatch = buildAtlas({ graph, facts });
+  assert.equal(mismatch.functions.find(fn => fn[1] === 'onSave')?.[9], false, 'a mismatched captured digest cannot establish a binding');
+});
+
+test('atlas: Java initializer and nested names are not stable identities', (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-atlas-java-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  fs.writeFileSync(path.join(dir, 'Demo.java'), 'class Demo { static { Runnable r = new Runnable() { public void run() {} }; } { int x = 1; } }\n');
+  const config = loadConfig(); config.include = ['**/*.java'];
+  const { facts } = extractFacts(dir, { language: 'java', config });
+  const atlas = buildAtlas({ graph: buildGraph(facts, config), facts });
+  for (const kind of ['<static initializer>', '<instance initializer>', '<locals>']) {
+    const matches = atlas.functions.filter(fn => kind === '<locals>' ? fn[1].includes(kind) : fn[1].endsWith(kind));
+    assert.ok(matches.length, `the real Java fixture contains ${kind}`);
+    assert.ok(matches.every(fn => fn[9] === false), `${kind} is order-dependent`);
+  }
+});
+
+test('atlas: function identity includes the full Python definition when present', (t) => {
+  const { facts, graph, findings } = analyze(t);
+  const fn = facts.functions.find(item => graph.fileModules[item.file]);
+  assert.ok(fn);
+  fn.sourceRange = { ...fn.sourceRange, sha256: 'metrics-only' };
+  fn.definition = { kind: 'FunctionDef', sourceRange: { ...fn.sourceRange, sha256: 'definition-with-decorators' } };
+  const atlas = buildAtlas({ graph, facts, findings });
+  const entry = atlas.functions.find(item => atlas.files[item[0]][0] === fn.file && item[1] === (fn.qualname || fn.name));
+  assert.equal(entry[8], 'definition-with-decorators');
+});
 
 test('atlas: every in-tree dependency between analyzed files is drawn once, between the right files', (t) => {
   const { facts, graph, atlas } = analyze(t);
@@ -138,4 +184,30 @@ test('atlas: an internal-imports finding draws its cited imports and marks its m
   assert.deepEqual(entry.edges.map(([a, b]) => `${paths[a]}>${paths[b]}`), cited.map((i) => `${i.from}>${i.to}`));
   assert.deepEqual(entry.entries.map((i) => paths[i]), [entryFile], 'entry files outside the atlas are dropped');
   assert.match(entry.title, /^Internal imports · /);
+});
+
+test('atlas: same-named methods link each finding to its own declaration range', t => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-atlas-same-name-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const body = 'if(a) a++; '.repeat(20) + 'return a;';
+  fs.writeFileSync(path.join(dir, 'service.ts'), `export class Service {\n static dispatch(a,b,c,d,e,f,g,h,i,j) { ${body} }\n dispatch(a,b,c,d,e,f,g,h,i,j) { ${body} }\n}\n`);
+  const config = loadConfig();
+  const { facts } = extractFacts(dir, { language: 'ts', config });
+  const graph = buildGraph(facts, config);
+  const findings = evaluateGraph(graph, config, facts).diagnostics.filter(f => f.code === 'complexity/function');
+  const same = findings.filter(f => f.subject.function === 'Service.dispatch');
+  assert.equal(same.length, 2, JSON.stringify({functions:facts.functions.map(fn=>fn.qualname), findings:findings.map(f=>f.subject)}));
+  const atlas = buildAtlas({ graph, facts, findings });
+  for (const finding of same) {
+    const entry = atlas.findings.find(item => item.id === finding.id);
+    assert.notEqual(entry.fn, undefined, `missing function link for ${finding.id}`);
+    const fn = atlas.functions[entry.fn];
+    assert.equal(fn[2], finding.subject.line, `declaration line for ${finding.id}`);
+    assert.equal(atlas.findings[fn[6]].id, finding.id, 'function links back to its finding');
+  }
+  const ambiguousFacts = { ...facts, functions: facts.functions.map(fn => ({ ...fn, line: 2, endLine: 2 })) };
+  const ambiguousFindings = same.map(f => ({ ...f, subject: { ...f.subject, line: 2, endLine: 2 } }));
+  const ambiguous = buildAtlas({ graph, facts: ambiguousFacts, findings: ambiguousFindings });
+  assert.ok(ambiguous.findings.every(entry => entry.fn === undefined), 'indistinguishable declarations stay unlinked');
+  assert.ok(ambiguous.functions.every(fn => fn[6] === -1), 'ambiguous functions do not select a finding');
 });

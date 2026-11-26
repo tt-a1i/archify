@@ -684,7 +684,44 @@
     }
     resize(); updateCamera(); renderSide(); applyMarks();
     requestAnimationFrame(frame);
-    return { host, select, state, consistent, counts: { files: drawnFiles, functions: drawnFns, branchDeps, threadDeps, insideDeps }, trunk: M[trunk].label, refresh: () => { resize(); dirty = true; } };
+    function functionIdentity(index) {
+      const fn = FN[index];
+      if (!fn) return null;
+      return { file: F[fn[0]][0], name: fn[1], line: fn[2], digest: fn[8], stableName: fn[9] === true, unique: !!fn[8] && FN.filter(candidate => candidate[0] === fn[0] && candidate[1] === fn[1] && candidate[8] === fn[8]).length === 1 };
+    }
+    function matchingFunction(saved) {
+      if (!saved || !saved.stableName || !saved.unique || !saved.digest) return [];
+      return FN.map((fn, i) => F[fn[0]][0] === saved.file && fn[9] === true && fn[1] === saved.name && fn[8] === saved.digest ? i : -1).filter(i => i !== -1);
+    }
+    function saveSelection() {
+      if (state.fn !== -1) return { type: 'function', ...functionIdentity(state.fn) };
+      if (state.finding !== -1) { const finding = FD[state.finding]; return { type: 'finding', id: finding.id, ...(finding.kind === 'function' ? { function: functionIdentity(finding.fn) } : {}) }; }
+      if (state.file !== -1) return { type: 'file', path: F[state.file][0] };
+      if (state.module !== -1) { const m = M[state.module]; return { type: 'module', path: m.path, rootFile: m.path || m.rootGroup ? null : F.find(f => f[1] === state.module)?.[0] }; }
+      return null;
+    }
+    function restoreSelection(saved) {
+      if (!saved) return false;
+      let indexes = [];
+      if (saved.type === 'function') {
+        // A generated name can be reassigned to a new function. Without
+        // independent owner provenance it is safer to report it unavailable.
+        indexes = matchingFunction(saved);
+      }
+      if (saved.type === 'finding') {
+        indexes = FD.map((f, i) => f.id === saved.id ? i : -1).filter(i => i !== -1);
+        if (indexes.length === 1 && FD[indexes[0]].kind === 'function') {
+          const matches = matchingFunction(saved.function);
+          if (matches.length !== 1 || matches[0] !== FD[indexes[0]].fn) return true;
+        }
+      }
+      if (saved.type === 'file') indexes = F.map((f, i) => f[0] === saved.path ? i : -1).filter(i => i !== -1);
+      if (saved.type === 'module') indexes = M.map((m, i) => m.path === saved.path && (m.path || (m.rootGroup ? null : F.find(f => f[1] === i)?.[0]) === saved.rootFile) ? i : -1).filter(i => i !== -1);
+      if (indexes.length !== 1) return true;
+      select({ type: saved.type, index: indexes[0] });
+      return false;
+    }
+    return { host, select, state, saveSelection, restoreSelection, consistent, counts: { files: drawnFiles, functions: drawnFns, branchDeps, threadDeps, insideDeps }, trunk: M[trunk].label, refresh: () => { resize(); dirty = true; } };
   }
 
   window.__archifyAtlas3d = { mount, get view() { return mounted; } };

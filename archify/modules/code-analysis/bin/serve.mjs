@@ -436,14 +436,15 @@ function client(token, messages, makeTranslator, standalone, entryCss) {
   };
   // Re-analysis: the server runs a new analysis; the page then reloads and opens it,
   // which re-mounts the layer cleanly instead of patching a live one.
-  window.__archifyReanalyze = async function () {
+  window.__archifyReanalyze = async function (reading) {
     var response = await fetch('/analyze', { method: 'POST', headers: { 'X-Analysis-Token': token, 'X-Analysis-Refresh': '1' } });
     if (!response.ok) {
       var body = {};
       try { body = await response.json(); } catch (e) { /* not JSON */ }
       throw new Error(body.error || tr("analysis failed"));
     }
-    location.replace(location.pathname + '?analysis=open');
+    history.replaceState({ analysisRefresh: { token: token, reading: reading } }, '', location.pathname);
+    location.reload();
   };
   button.addEventListener('click', async function () {
     button.disabled = true; button.setAttribute('aria-busy', 'true'); setLabel(tr("Analyzing…")); say(tr("Reading the repository — imports, modules, rules."));
@@ -480,13 +481,16 @@ function client(token, messages, makeTranslator, standalone, entryCss) {
       if (toggle && document.documentElement.getAttribute('data-bauify') !== 'on') toggle.click();
       var params = new URLSearchParams(location.search), selectedFinding = params.get('finding');
       if (selectedFinding && window.__archifyShowFinding) window.__archifyShowFinding(selectedFinding, params.get('from') === 'findings' ? 'findings' : 'summary');
-      if (location.search) history.replaceState(null, '', location.pathname);
+      if (refreshReading) window.__archifyRestoreReading?.(refreshReading);
+      if (location.search || refreshReading) history.replaceState(null, '', location.pathname);
     } catch (error) {
       button.disabled = false; button.removeAttribute('aria-busy'); setLabel(tr("Code Analysis"));
       say(tr("Analysis failed: ") + error.message + tr(" — click Code Analysis to retry."));
     }
   });
-  if (standalone || new URLSearchParams(location.search).get('analysis') === 'open') button.click();
+  var savedRefresh = history.state?.analysisRefresh;
+  var refreshReading = savedRefresh?.token === token && savedRefresh.reading;
+  if (standalone || refreshReading || new URLSearchParams(location.search).get('analysis') === 'open') button.click();
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

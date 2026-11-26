@@ -150,14 +150,14 @@
   overview.id = 'bauify-overview'; overview.hidden = true; overview.setAttribute('aria-label', tr("Code analysis overview"));
   reader.appendChild(overview);
   var findingById = {}; (data.findings || []).forEach(function (f) { findingById[f.id] = f; });
-  var overviewMode = 'summary', listScroll = 0, findingReturn = null;
+  var overviewMode = 'summary', listScroll = 0, findingReturn = null, reading = { kind: 'overview' };
   var filters = { source: 'all', category: 'all', severity: 'all', status: 'open', search: '', unverified: false, page: 0 };
   var filterKey = 'archify-findings:' + (data.repository.root || '') + ':' + location.pathname;
   try { var restored = JSON.parse(sessionStorage.getItem(filterKey)); if (restored) Object.keys(filters).forEach(function (key) { if (typeof restored[key] === typeof filters[key]) filters[key] = restored[key]; }); } catch (error) { /* Storage is optional for offline reports. */ }
   var entryById = {}; ((data.overview && data.overview.findings) || []).forEach(function (e) { entryById[e.id] = e; });
   var moduleInfo = {};
   data.components.forEach(function (c) { c.modules.forEach(function (m) { moduleInfo[m.id] = m; }); });
-  (data.unmapped || []).forEach(function (m) { if (!moduleInfo[m.id]) moduleInfo[m.id] = { id: m.id, label: m.label, path: m.label, files: m.files, loc: m.loc, fanIn: m.fanIn, fanOut: m.fanOut, fileList: m.fileList || [] }; });
+  (data.unmapped || []).forEach(function (m) { if (!moduleInfo[m.id]) moduleInfo[m.id] = { id: m.id, label: m.label, path: m.path ?? m.label, files: m.files, loc: m.loc, fanIn: m.fanIn, fanOut: m.fanOut, fileList: m.fileList || [] }; });
   var detail = document.createElement('section');
   detail.id = 'bauify-detail'; detail.hidden = true; detail.setAttribute('aria-label', tr("Bauify finding details"));
   reader.appendChild(detail);
@@ -297,6 +297,7 @@
     return camera.centerAt(x, y, { scale: camera.state ? camera.state().scale : 1, instant: true });
   }
   function showOverview() {
+    reading = { kind: 'overview' };
     overviewMode = 'summary'; clearPick();
     readerPage(tr("Overview"));
     root.removeAttribute('data-bauify-source');
@@ -358,6 +359,7 @@
     return findings.length ? findings.map(findingWhat).join('；') : tr(indicator.value);
   }
   function show(id) {
+    reading = { kind: 'component', id: id };
     readerPage(tr("Component"));
     root.removeAttribute('data-bauify-source');
     var c = byId[id]; if (!c) return;
@@ -568,6 +570,7 @@
     if (hit) codePane.scrollTop = Math.max(0, hit.offsetTop - codePane.offsetTop - codePane.clientHeight / 2);
   }
   function showDetail(c, key) {
+    reading = { kind: 'indicator', id: c.id, key: key };
     readerPage(tr("Problem"));
     root.removeAttribute('data-bauify-source');
     panel.hidden = true;
@@ -582,11 +585,11 @@
     if (!externalGroup) h += ("<details class=\"relationship\">" + "<summary>" + tr("Relationships and metrics") + "</summary>") + diagram(c, key, fl) + '</details>';
     h += ("<div class=\"k\">" + tr("Findings · ")) + fl.length + '</div>';
     if (!fl.length) h += '<div class="ev">' + (key === 'instability' ? tr("Instability measures dependency direction: out / (in + out). 0 = no outgoing dependencies, 1 = no incoming dependents. It is not a failure probability or a quality verdict.") : tr("No finding for this indicator; this is not a safety guarantee.")) + '</div>';
-    fl.forEach(function (f) { h += f.external ? findingListRow(f) : quickHandoff(f) + evidencePreview(f) + findingCard(f) + taskHtml(f); });
+    fl.forEach(function (f) { h += '<div data-evidence-owner="' + esc(f.id) + '">' + (f.external ? findingListRow(f) : quickHandoff(f) + evidencePreview(f) + findingCard(f) + taskHtml(f)) + '</div>'; });
     detail.innerHTML = h;
     detail.hidden = false;
     codePane.hidden = true;
-    var backToComponent = function () { readerPage(tr("Component")); detail.hidden = true; codePane.hidden = true; panel.hidden = false; panel.querySelectorAll('.ind.active').forEach(function (x) { x.classList.remove('active'); }); };
+    var backToComponent = function () { reading = { kind: 'component', id: c.id }; readerPage(tr("Component")); detail.hidden = true; codePane.hidden = true; panel.hidden = false; panel.querySelectorAll('.ind.active').forEach(function (x) { x.classList.remove('active'); }); };
     detail.querySelector('.close').addEventListener('click', backToComponent);
     detail.querySelector('.back').addEventListener('click', backToComponent);
     wireRefs();
@@ -696,6 +699,7 @@
       (review.status === 'accepted' ? ("<span class=\"finding-row-state\">" + tr("Accepted")) + (f.severity === 'error' ? tr(" · still present") : '') + '</span>' : review.status === 'accepted-changed' ? ("<span class=\"finding-row-state attention\">" + tr("Accepted evidence changed · review again") + "</span>") : external && external.binding !== 'verified' ? ("<span class=\"finding-row-state attention\">" + tr("Report binding: ")) + esc(bindingLabel(external.binding).toLowerCase()) + '</span>' : '') + '</button>';
   }
   function showFindings(source) {
+    reading = { kind: 'findings' };
     if (typeof source === 'string') { filters.source = source; filters.category = 'all'; filters.severity = 'all'; filters.status = 'open'; filters.unverified = false; filters.search = ''; filters.page = 0; listScroll = 0; }
     overviewMode = 'findings'; clearPick(); readerPage(tr("Findings")); root.removeAttribute('data-bauify-source');
     panel.hidden = detail.hidden = codePane.hidden = true; overview.hidden = false; setFocus([]);
@@ -703,6 +707,7 @@
   }
   function renderFindingList() {
     var sources = externalSources(), dimensions = [...new Set(data.findings.map(function (f) { return f.dimension; }))].sort();
+    if (!sources.length) filters.unverified = false;
     var option = function (value, label) { return '<option value="' + esc(value) + '">' + esc(label) + '</option>'; };
     overview.innerHTML = ("<button type=\"button\" class=\"back findings-back\">" + tr("← Overview") + "</button>" + "<div class=\"findings-heading\">" + "<h3>" + tr("Findings") + "</h3>") + (sources.length ? ("<button type=\"button\" class=\"text-action view-sources\">" + tr("Sources · ")) + sources.length + '</button>' : '') + '</div>' +
       ("<label class=\"sr-only\" for=\"finding-search\">" + tr("Search findings") + "</label>" + "<input id=\"finding-search\" class=\"finding-search\" type=\"search\" placeholder=\"" + tr("Search rule, message or file…") + "\" value=\"") + esc(filters.search) + '">' +
@@ -742,6 +747,7 @@
     pagination.querySelectorAll('button').forEach(function (button) { button.addEventListener('click', function () { filters.page += Number(button.getAttribute('data-page')); renderFindingRows(); overview.scrollTop = 0; }); });
   }
   function showSources() {
+    reading = { kind: 'sources' };
     var parent = overviewMode; overviewMode = 'sources'; readerPage(tr("Sources")); root.removeAttribute('data-bauify-source');
     panel.hidden = detail.hidden = codePane.hidden = true; overview.hidden = false; setFocus([]);
     overview.innerHTML = '<button type="button" class="back sources-back">← ' + (parent === 'findings' ? tr("Findings") : tr("Overview")) + ("</button>" + "<h3>" + tr("Sources & coverage") + "</h3>" + "<p class=\"ev\">" + tr("Report import, source binding and scan scope are separate facts.") + "</p>") + externalSources().map(function (source) {
@@ -1012,11 +1018,7 @@
     var startCopy = overview.querySelector('.start-copy');
     if (startCopy) startCopy.addEventListener('click', function () { copyText(data.ui.resume.command, overview.querySelector('.start-status'), overview.querySelector('.start-command'), tr('Copied start command.')); });
     var again = overview.querySelector('.bauify-reanalyze');
-    if (again) again.addEventListener('click', function () {
-      again.disabled = true; again.classList.add('busy'); again.setAttribute('aria-busy', 'true');
-      var note = overview.querySelector('.brief-status'); note.classList.remove('reanalyze-error'); note.textContent = tr('Reading the repository — imports, modules, rules.');
-      window.__archifyReanalyze().catch(function (error) { again.disabled = false; again.classList.remove('busy'); again.removeAttribute('aria-busy'); note.classList.add('reanalyze-error'); note.textContent = tr('Re-analysis failed: ') + error.message + tr(' The result shown is from the last successful run.'); });
-    });
+    if (again) wireRefresh(again, overview.querySelector('.brief-status'));
     overview.querySelectorAll('[data-finding]').forEach(function (el) { el.addEventListener('click', function () { showFinding(el.getAttribute('data-finding')); }); });
     wireTasks(overview);
   }
@@ -1225,9 +1227,10 @@
   function showFinding(id, parent) {
     var f = findingById[id]; if (!f) return;
     parent = findingReturn ? findingReturn.parent : parent || (!overview.hidden && overviewMode === 'findings' ? 'findings' : 'summary');
+    reading = { kind: 'finding', id: id, parent: parent };
     if (standalone && !findingReturn) {
       var opener = document.activeElement;
-      findingReturn = { parent: parent, atlas: window.__archifyAtlas && window.__archifyAtlas.saveSelection(), opener: overview.contains(opener) && opener.getAttribute('data-finding') };
+      findingReturn = { parent: parent, atlas: window.__archifyAtlas && window.__archifyAtlas.saveSelection(true), opener: overview.contains(opener) && opener.getAttribute('data-finding') };
     }
     clearPick(); readerPage(tr("Finding")); detail.classList.remove('reviewing');
     root.removeAttribute('data-bauify-source');
@@ -1670,6 +1673,7 @@
   function flyClose(back) { return '<button class="close" aria-label="' + esc(tr("Close")) + '">×</button><button type="button" class="back">← ' + esc(back) + '</button>'; }
   // A dependency between two components: whether the diagram draws it, and the imports behind it.
   function showEdge(from, to) {
+    reading = { kind: 'edge', from: from, to: to };
     var e = codeEdgeByKey[from + '>' + to], undrawn = !!e && e.declared === false;
     readerPage(tr('Dependency')); root.removeAttribute('data-bauify-source');
     overview.hidden = true; detail.hidden = true; codePane.hidden = true; setFocus([]);
@@ -1682,13 +1686,13 @@
       h += '<div class="fly-nums two"><div><b>' + fmt(e.weight) + '</b><span>' + esc(tr('imports')) + '</span></div><div><b>' + Object.keys(files).length + (e.evidence.length < e.weight ? '+' : '') + '</b><span>' + esc(tr('source files')) + '</span></div></div>';
       h += '<p class="fly-note' + (undrawn ? ' attention' : '') + '">' + esc(undrawn ? tr('{from} imports {to} in the code, but the diagram draws no line between them. Add it to the diagram, or treat it as coupling that should not exist.', { from: compLabel(from), to: compLabel(to) }) : tr('The diagram draws this dependency and the code confirms it.')) + '</p>';
       h += '<h4 class="fly-h">' + esc(tr('Which files cause it')) + '<small>' + esc(e.evidence.length < e.weight ? tr('first {count}', { count: e.evidence.length }) : tr('all')) + '</small></h4>';
-      h += e.evidence.map(function (v) { return '<button type="button" class="fly-ev" data-file="' + esc(v.file) + '" data-line="' + (v.line || '') + '"><span>' + esc(v.file) + '</span><em>:' + (v.line || '?') + '</em><small>→ ' + esc(v.to) + '</small></button>'; }).join('');
+      h += e.evidence.map(function (v) { return '<button type="button" class="fly-ev" data-file="' + esc(v.file) + '" data-line="' + (v.line || '') + '" data-target="' + esc(v.to) + '"><span>' + esc(v.file) + '</span><em>:' + (v.line || '?') + '</em><small>→ ' + esc(v.to) + '</small></button>'; }).join('');
       h += '<div class="fly-acts"><button type="button" class="fly-copy">' + esc(tr('Copy for AI')) + '</button></div><p class="fly-status ev" role="status" aria-live="polite"></p>';
     } else h += '<p class="fly-note">' + esc(tr('The diagram draws this relationship, but no import between these components was found. It may come from configuration, runtime calls or an external system, or the diagram over-states it.')) + '</p>';
     panel.innerHTML = h; panel.hidden = false; panel.scrollTop = 0;
     panel.querySelector('.close').addEventListener('click', showOverview);
     panel.querySelector('.back').addEventListener('click', function () { if (byId[from]) show(from); else showOverview(); });
-    panel.querySelectorAll('.fly-ev').forEach(function (el) { el.addEventListener('click', function () { showCode(el.getAttribute('data-file'), parseInt(el.getAttribute('data-line'), 10), tr('Import from {from} to {to}.', { from: compLabel(from), to: compLabel(to) }), undrawn ? 'red' : 'info'); }); });
+    panel.querySelectorAll('.fly-ev').forEach(function (el) { el.addEventListener('click', function () { panel.querySelectorAll('.fly-ev.active').forEach(function (item) { item.classList.remove('active'); }); el.classList.add('active'); showCode(el.getAttribute('data-file'), parseInt(el.getAttribute('data-line'), 10), tr('Import from {from} to {to}.', { from: compLabel(from), to: compLabel(to) }), undrawn ? 'red' : 'info'); }); });
     var copy = panel.querySelector('.fly-copy');
     if (copy) copy.addEventListener('click', function () {
       var text = tr('{from} → {to}: {count} imports in the code', { from: compLabel(from), to: compLabel(to), count: e.weight }) + (undrawn ? tr(', not drawn on the architecture diagram') : '') + '.\n' + e.evidence.map(function (v) { return '- ' + v.file + ':' + (v.line || '?') + ' → ' + v.to; }).join('\n');
@@ -1700,6 +1704,7 @@
   // A module no component on the diagram owns.
   function showOff(id) {
     var m = moduleInfo[id]; if (!m) return;
+    reading = { kind: 'off', id: id, path: m.path, rootFile: m.path || m.label === '(root)' ? null : m.fileList[0]?.path };
     readerPage(tr('Not on the diagram')); root.removeAttribute('data-bauify-source');
     overview.hidden = true; detail.hidden = true; codePane.hidden = true; clearPick(); setFocus([]);
     var fs = data.findings.filter(function (f) { return (f.moduleIds || []).indexOf(id) !== -1; });
@@ -1746,6 +1751,120 @@
       setFly(false);
     } else { setFly(false); if (stage) { setBeacon(false); setCodeDeps(false); } clearEdges(); setFocus([]); if (layer) layer.remove(); layer = null; panel.hidden = true; detail.hidden = true; codePane.hidden = true; overview.hidden = true; if (svg) svg.querySelectorAll('.bauify-mapped').forEach(function (g) { g.classList.remove('bauify-mapped'); }); }
   }
+  var refresh, refreshStatus, refreshing = false;
+  if (typeof window.__archifyReanalyze === 'function') {
+    var refreshWrap = document.createElement('span');
+    refreshWrap.className = 'analysis-refresh';
+    refreshWrap.innerHTML = iconButton('refresh', tr('Re-analyze'), ' analysis-refresh-button', ' id="analysis-refresh"')
+      + '<span class="analysis-refresh-status" role="status"></span>';
+    btn.after(refreshWrap);
+    refresh = refreshWrap.firstElementChild;
+    refreshStatus = refreshWrap.lastElementChild;
+    wireRefresh(refresh, refreshStatus);
+  }
+  function visibleReaderPage() {
+    return !codePane.hidden ? codePane : !detail.hidden ? detail : !panel.hidden ? panel : overview;
+  }
+  var readingControls = ['.back', '.locate', '.reader-toggle', '.browse-findings', '.bauify-reanalyze'];
+  var sourceKeys = ['data-file', 'data-line', 'data-range-start', 'data-range-end', 'data-match', 'data-target'];
+  function sourceIdentity(ref) {
+    var owner = ref.closest('[data-evidence-owner]');
+    return { attributes: sourceKeys.map(function (key) { return ref.getAttribute(key); }),
+      role: ref.closest('.inline-evidence') ? 'inline' : ref.closest('.more-evidence') ? 'details' : 'other',
+      owner: owner ? owner.getAttribute('data-evidence-owner') : null };
+  }
+  function captureReading(active) {
+    var pane = visibleReaderPage();
+    return {
+      reading: reading, open: !flyMode || flyOpen, collapsed: readerCollapsed, sourceOpen: pane === codePane,
+      filters: Object.assign({}, filters), listScroll: overviewMode === 'findings' && pane === overview ? overview.scrollTop : listScroll,
+      view: root.getAttribute('data-bauify-views'), scroll: pane.scrollTop,
+      sourceRef: pane === codePane ? (function () {
+        var ref = reading.kind === 'edge' ? panel.querySelector('.fly-ev.active') : detail.querySelector('.ref.active');
+        return ref ? sourceIdentity(ref) : null;
+      })() : null,
+      atlas: window.__archifyAtlas?.saveSelection(true, active), findingReturn: findingReturn,
+      atlas3d: root.getAttribute('data-bauify-views') === 'atlas3d' ? window.__archifyAtlas3d?.view?.saveSelection?.() : null,
+      focus: readingControls.find(function (selector) { return active?.matches(selector); }),
+      focusRefresh: active === refresh
+    };
+  }
+  function wireRefresh(button, note) {
+    // A pointer click in the toolbar moves focus before click fires.
+    var beforePointer;
+    button.addEventListener('pointerdown', function () { beforePointer = captureReading(document.activeElement); });
+    button.addEventListener('pointercancel', function () { beforePointer = null; });
+    button.addEventListener('click', function (event) {
+      if (refreshing) return;
+      var saved = event.detail && beforePointer || captureReading(button);
+      beforePointer = null;
+      refreshing = true;
+      button.disabled = true; button.classList.add('busy'); button.setAttribute('aria-busy', 'true');
+      note.classList.remove('reanalyze-error');
+      note.textContent = tr('Reading the repository — imports, modules, rules.');
+      window.__archifyReanalyze(saved).catch(function (error) {
+        refreshing = false;
+        button.disabled = false; button.classList.remove('busy'); button.removeAttribute('aria-busy');
+        note.classList.add('reanalyze-error');
+        note.textContent = tr('Re-analysis failed: ') + error.message + tr(' The result shown is from the last successful run.');
+        if (beforePointer == null && (document.activeElement === document.body || document.activeElement === button)) button.focus({ preventScroll: true });
+      });
+    });
+  }
+  window.__archifyRestoreReading = function (saved) {
+    if (!saved || !saved.reading) return;
+    var page = saved.reading, missing = false;
+    if (saved.filters) Object.keys(filters).forEach(function (key) { if (typeof saved.filters[key] === typeof filters[key]) filters[key] = saved.filters[key]; });
+    if (typeof saved.listScroll === 'number') listScroll = saved.listScroll;
+    if (saved.open && page.kind === 'component' && Object.hasOwn(byId, page.id)) show(page.id);
+    else if (saved.open && page.kind === 'indicator' && byId[page.id]) {
+      show(page.id);
+      if (byId[page.id].indicators.items.some(function (item) { return item.key === page.key; })) showDetail(byId[page.id], page.key);
+      else missing = true;
+    }
+    else if (saved.open && page.kind === 'finding' && Object.hasOwn(findingById, page.id)) {
+      findingReturn = saved.findingReturn;
+      showFinding(page.id, page.parent);
+    } else if (saved.open && page.kind === 'findings') showFindings();
+    else if (saved.open && page.kind === 'sources') showSources();
+    else if (saved.open && page.kind === 'edge' && Object.hasOwn(byId, page.from) && Object.hasOwn(byId, page.to) && (codeEdgeByKey[page.from + '>' + page.to] || svg && Array.from(svg.querySelectorAll('path[data-edge-from][data-edge-to]')).some(function (edge) { return edge.getAttribute('data-edge-from') === page.from && edge.getAttribute('data-edge-to') === page.to; }))) showEdge(page.from, page.to);
+    else if (saved.open && page.kind === 'off') {
+      var matches = (data.unmapped || []).filter(function (item) { return page.path === undefined ? item.id === page.id : (item.path ?? item.label) === page.path && (page.path || (item.label === '(root)' ? null : item.fileList?.[0]?.path) === page.rootFile); });
+      if (matches.length === 1) showOff(matches[0].id); else { missing = true; showOverview(); }
+    }
+    else if (saved.open) {
+      missing = page.kind !== 'overview';
+      showOverview();
+    }
+    if (saved.sourceOpen && !missing) {
+      // Only reopen the exact captured evidence item. A different block in the
+      // same file is not a safe substitute after a new analysis.
+      var refs = saved.sourceRef ? Array.from((page.kind === 'edge' ? panel : detail).querySelectorAll(page.kind === 'edge' ? '.fly-ev[data-file]' : '.ref[data-file]')).filter(function (link) {
+        var identity = sourceIdentity(link);
+        if (Array.isArray(saved.sourceRef)) return saved.sourceRef.every(function (value, index) { return identity.attributes[index] === value; });
+        return identity.role === saved.sourceRef.role && identity.owner === saved.sourceRef.owner && sourceKeys.every(function (_key, index) { return identity.attributes[index] === saved.sourceRef.attributes[index]; });
+      }) : [];
+      if (refs.length === 1) {
+        // Keep the selected evidence visible when returning from its source.
+        var ancestor = refs[0].parentElement;
+        while (ancestor && ancestor !== detail) { if (ancestor.tagName === 'DETAILS') ancestor.open = true; ancestor = ancestor.parentElement; }
+        refs[0].click();
+      } else missing = true;
+    }
+    if (saved.collapsed) setReaderCollapsed(true);
+    if (saved.view === 'atlas' || saved.view === 'atlas3d') window.__archifyAtlas?.showView(saved.view);
+    if (saved.view === 'atlas3d' && saved.atlas3d) missing = window.__archifyAtlas3d?.view?.restoreSelection?.(saved.atlas3d) !== false || missing;
+    var pane = visibleReaderPage();
+    if (!missing && (!saved.sourceOpen || pane === codePane)) pane.scrollTop = saved.scroll;
+    var target = saved.focusRefresh ? refresh : saved.focus && (pane.querySelector(saved.focus) || reader.querySelector(saved.focus));
+    if (target?.getClientRects().length && !target.closest('[inert]')) target.focus({ preventScroll: true });
+    else if (saved.open && !saved.collapsed && !saved.view && pane.getClientRects().length) {
+      var heading = pane.querySelector('h3') || pane.querySelector('.back');
+      if (heading) { if (heading.tagName === 'H3') heading.tabIndex = -1; heading.focus({ preventScroll: true }); }
+    } else if (!saved.atlas?.focus) refresh?.focus({ preventScroll: true });
+    if (saved.atlas && window.__archifyAtlas) missing = window.__archifyAtlas.restoreSelection(saved.atlas) || missing;
+    if (missing && refreshStatus) refreshStatus.textContent = tr('This selection is no longer available in the latest analysis.');
+  };
   btn.addEventListener('click', function () { setOn(root.getAttribute('data-bauify') !== 'on'); });
   // The Atlas view hands a finding back here to show its source evidence.
   window.__archifyShowSource = function (file, line, snapshot, sourcePair, returnFocus) {

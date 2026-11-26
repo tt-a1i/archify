@@ -20,9 +20,58 @@
 // coupling; the side panel states the unresolved counts. Source text stays in
 // the Classic view, which the Atlas links to for any finding's evidence.
 import fs from 'node:fs';
+import { createHash } from 'node:crypto';
+import { createRequire } from 'node:module';
 import { clientAsset } from './client-assets.mjs';
 
 const compareText = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
+const require = createRequire(import.meta.url);
+
+// A function expression's measured range does not include its binding. Only
+// accept a uniquely bound top-level anonymous expression whose captured range
+// still matches the parsed source; otherwise its apparent name may be local
+// to the expression or ambiguous across scopes.
+function boundExpressions(facts) {
+  const wanted = new Set((facts.functions || []).filter(fn => fn.syntaxKind === 'FunctionExpression').map(fn => fn.file));
+  const result = new Map();
+  if (!wanted.size) return result;
+  const ts = require('../vendor/typescript.cjs');
+  for (const file of facts.files || []) {
+    if (!wanted.has(file.path) || typeof file.sourceText !== 'string') continue;
+    const source = ts.createSourceFile(file.path, file.sourceText, ts.ScriptTarget.Latest, true);
+    if (source.parseDiagnostics.length) continue;
+    const declarations = new Map(), expressions = [], pending = [source];
+    while (pending.length) {
+      const node = pending.pop();
+      if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name)) {
+        const name = node.name.text;
+        declarations.set(name, (declarations.get(name) || 0) + 1);
+        let init = node.initializer;
+        while (init && (ts.isParenthesizedExpression(init) || ts.isAsExpression(init) || ts.isSatisfiesExpression?.(init) || ts.isTypeAssertionExpression(init))) init = init.expression;
+        if (init && ts.isFunctionExpression(init) && !init.name && node.parent?.parent?.parent === source) expressions.push({ name, init });
+      }
+      ts.forEachChild(node, child => { pending.push(child); });
+    }
+    for (const { name, init } of expressions) {
+      if (declarations.get(name) !== 1) continue;
+      const start = init.getStart(source), end = init.getEnd(), pos = source.getLineAndCharacterOfPosition(start);
+      const digest = createHash('sha256').update(file.sourceText.slice(start, end)).digest('hex');
+      result.set(`${file.path}\0${pos.line + 1}\0${pos.character + 1}`, { name, digest });
+    }
+  }
+  return result;
+}
+
+function stableFunctionName(fn, expressions) {
+  if (fn.syntaxKind === 'FunctionExpression') {
+    const binding = expressions.get(`${fn.file}\0${fn.line}\0${fn.sourceRange?.column}`);
+    if (!binding || binding.name !== fn.name || binding.digest !== fn.sourceRange?.sha256) return false;
+  }
+  const name = fn.qualname || fn.name;
+  const owner = /^(?:MethodDeclaration|GetAccessor|SetAccessor)$/.test(fn.syntaxKind || '') && fn.name && name.endsWith(fn.name)
+    ? name.slice(0, -fn.name.length) : name;
+  return !/<(?:callback of |anonymous(?:#\d+)?>|(?:static|instance) initializer>)/.test(owner);
+}
 
 // Shortest unambiguous label for each module: the fewest trailing path
 // segments that no other module shares (`executor`, `cache/decorators`).
@@ -100,6 +149,10 @@ export function buildAtlas({ graph, facts, findings = [], review = null }) {
 
   const accepted = new Set(Object.entries(review?.findings || {}).filter(([, r]) => r.status === 'accepted').map(([id]) => id));
   const listed = [];
+  // A qualified name can identify multiple declarations in the same file.
+  // Link only a unique finding and function with the same declaration range.
+  const functionKey = (file, name, line, endLine) => file && name && Number.isInteger(line) && Number.isInteger(endLine) && endLine >= line
+    ? JSON.stringify([file, name, line, endLine]) : null;
   const functionFinding = new Map();
   for (const f of findings) {
     const s = f.subject || {};
@@ -113,7 +166,8 @@ export function buildAtlas({ graph, facts, findings = [], review = null }) {
       }
     } else if (f.code === 'complexity/function' && fileIndex.has(s.file)) {
       entry.kind = 'function';
-      functionFinding.set(`${s.file}\u0000${s.function}`, listed.length);
+      const key = functionKey(s.file, s.function, s.line, s.endLine);
+      if (key) functionFinding.set(key, functionFinding.has(key) ? -1 : listed.length);
     } else if (f.code === 'coupling/import-cycle' && Array.isArray(s.files)) {
       entry.kind = 'cycle';
       entry.files = s.files.filter((p) => fileIndex.has(p)).map((p) => fileIndex.get(p));
@@ -147,11 +201,22 @@ export function buildAtlas({ graph, facts, findings = [], review = null }) {
   }
 
   // [file, name, line, complexity, nesting, length, finding index or -1]
+  const expressions = boundExpressions(facts);
+  const functionCounts = new Map();
+  for (const fn of facts.functions || []) {
+    const key = functionKey(fn.file, fn.qualname || fn.name, fn.line, fn.endLine);
+    if (key) functionCounts.set(key, (functionCounts.get(key) || 0) + 1);
+  }
   const functions = (facts.functions || [])
     .filter((fn) => fileIndex.has(fn.file))
     .map((fn) => [fileIndex.get(fn.file), fn.qualname || fn.name, fn.line, fn.complexity, fn.nesting ?? 0, (fn.endLine ?? fn.line) - fn.line + 1,
-      functionFinding.has(`${fn.file}\u0000${fn.qualname}`) ? functionFinding.get(`${fn.file}\u0000${fn.qualname}`) : -1,
-      fn.sourceRange ? { column: fn.sourceRange.column, endLine: fn.sourceRange.endLine, endColumn: fn.sourceRange.endColumn } : null])
+      functionCounts.get(functionKey(fn.file, fn.qualname || fn.name, fn.line, fn.endLine)) === 1
+        ? functionFinding.get(functionKey(fn.file, fn.qualname || fn.name, fn.line, fn.endLine)) ?? -1 : -1,
+      fn.sourceRange ? { column: fn.sourceRange.column, endLine: fn.sourceRange.endLine, endColumn: fn.sourceRange.endColumn } : null,
+      fn.definition ? fn.definition.sourceRange?.sha256 || null : fn.sourceRange?.sha256 || null,
+      // Display names of callbacks and Java anonymous owners are numbered by
+      // source order. A quoted JS method named <anonymous> is a real name.
+      stableFunctionName(fn, expressions)])
     .sort((a, b) => a[0] - b[0] || a[2] - b[2] || compareText(a[1], b[1]));
   for (const [i, fn] of functions.entries()) if (fn[6] !== -1) listed[fn[6]].fn = i;
 
@@ -159,7 +224,7 @@ export function buildAtlas({ graph, facts, findings = [], review = null }) {
   return {
     language: facts.repository?.language ?? null,
     measured: Array.isArray(facts.functions),
-    modules: modules.map((m, i) => ({ id: m.id, label: labels[i], path: m.path, fanIn: m.fanIn, fanOut: m.fanOut })),
+    modules: modules.map((m, i) => ({ id: m.id, label: labels[i], path: m.path, rootGroup: m.path === '' && m.label === '(root)', fanIn: m.fanIn, fanOut: m.fanOut })),
     files: files.map((f) => [f.path, f.module, f.loc]),
     edges,
     functions,
