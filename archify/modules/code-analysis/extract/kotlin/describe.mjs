@@ -4,7 +4,7 @@
 // classifiers are never inherited (unlike Java), objects are singletons, and
 // typealiases declare substitutable names. Uncertain names are left
 // unresolved rather than guessed.
-import { extractNestedDeclarations, coveredChecker, scanTypeEvidence } from './bodies.mjs';
+import { extractNestedDeclarations, coveredChecker, scanTypeEvidence, containingBlockEnd } from './bodies.mjs';
 
 const TYPE_KINDS = new Set(['class', 'interface', 'object', 'enum', 'annotation', 'typealias']);
 
@@ -87,6 +87,9 @@ export function describeUnit(unit) {
             for (const inner of member.members || []) if (inner.name) memberNames.add(inner.name);
           }
         }
+        // Enum entries are reachable through the enum type name exactly like
+        // members: import pkg.Mode.ACTIVE binds to Mode.
+        for (const entry of decl.enumEntries || []) memberNames.add(entry);
         types.push({
           name: decl.name, fullName, file: unit.file, owners: [...owners],
           kind: decl.kind, modifiers: decl.modifiers || [],
@@ -144,22 +147,43 @@ export function describeUnit(unit) {
     for (const declaration of nested.declarations) harvest(declaration, [...owners, '<locals>'], true);
   }
 
-  function valueNamesInScope(decl, evidence) {
-    const names = new Set((decl.parameters || []).map(param => param.name).filter(Boolean));
-    for (const nestedDecl of evidence?.nested || []) {
-      if (nestedDecl.kind === 'property' && nestedDecl.name) names.add(nestedDecl.name);
+  // Value visibility is positional. Parameters stay visible through the whole
+  // body; a local property is visible from its declaration to the end of its
+  // containing block only — a `val` inside an if branch must not suppress a
+  // constructor reference outside that branch.
+  function valueScopesIn(decl, evidence) {
+    const scopes = [];
+    const bodyStart = decl.bodyTokens?.[0]?.startOffset ?? decl.declStart?.startOffset ?? 0;
+    const bodyEnd = decl.bodyTokens?.at(-1)?.endOffset ?? decl.declEnd?.endOffset ?? Number.MAX_SAFE_INTEGER;
+    for (const param of decl.parameters || []) {
+      if (param.name) scopes.push({ name: param.name, startOffset: bodyStart, endOffset: bodyEnd });
     }
-    return names;
+    for (const nestedDecl of evidence?.nested || []) {
+      if (nestedDecl.kind !== 'property' || !nestedDecl.name) continue;
+      const start = nestedDecl.declStart?.startOffset ?? nestedDecl.startOffset;
+      scopes.push({
+        name: nestedDecl.name,
+        startOffset: start,
+        endOffset: containingBlockEnd(decl.bodyTokens || [], start, bodyEnd),
+      });
+    }
+    return scopes;
   }
+
+  const inScope = (scopes, name, offset) => scopes
+    .some(scope => scope.name === name && scope.startOffset <= offset && scope.endOffset >= offset);
 
   function harvestNestedBodies(decl, owners) {
     if (!(decl.bodyTokens || []).length) return;
     const evidence = evidenceOf(decl);
-    const values = valueNamesInScope(decl, evidence);
+    const values = valueScopesIn(decl, evidence);
+    const bodyEnd = decl.bodyTokens.at(-1)?.endOffset ?? decl.declEnd?.endOffset ?? 0;
     for (const ref of evidence.typeReferences) {
-      // A simple construction candidate whose name is a value in scope is an
-      // invocation of that value, never a constructor reference.
-      if (ref.construction && !ref.name.includes('.') && values.has(ref.name)) continue;
+      // A construction candidate whose name — or whose qualified path's first
+      // segment — is a value in scope at the reference offset is an invocation
+      // of that value, never a constructor reference: p.Widget() with a value
+      // p in scope calls a method on p.
+      if (ref.construction && inScope(values, ref.name.split('.')[0], ref.startOffset)) continue;
       addReference(ref);
     }
     for (const nestedDecl of evidence.nested) {
@@ -170,6 +194,17 @@ export function describeUnit(unit) {
           name: nestedDecl.name,
           startOffset: decl.declStart?.startOffset ?? decl.startOffset,
           endOffset: decl.declEnd?.endOffset ?? decl.endOffset,
+        });
+      }
+      // A local classifier shadows same-named project classifiers from its
+      // declaration point to the end of its containing block. References
+      // inside that range stay unbound rather than leaking to another file.
+      if (['class', 'interface', 'object', 'enum', 'annotation'].includes(nestedDecl.kind) && nestedDecl.name) {
+        const start = nestedDecl.declStart?.startOffset ?? nestedDecl.startOffset;
+        shadowedScopes.push({
+          name: nestedDecl.name,
+          startOffset: start,
+          endOffset: containingBlockEnd(decl.bodyTokens, start, bodyEnd),
         });
       }
       harvest(nestedDecl, [...owners, '<locals>'], true);

@@ -138,10 +138,11 @@ export function resolveImports(described, sourceSetVisible = () => true) {
   };
 
   const visibleCandidates = (unit, candidates) => candidates.filter(type => {
-    if (type.memberImport) return true;
-    // Source-set visibility applies to every candidate, not only singletons:
-    // a test declaration invisible from main must not add ambiguity.
+    // Source-set visibility applies to every candidate shape — classifiers and
+    // member-import pseudo-candidates alike: a test helper invisible from main
+    // must neither resolve nor add ambiguity.
     if (!sourceSetVisible(unit.file, type.file)) return false;
+    if (type.memberImport) return true;
     // Private top-level classifiers are invisible outside their declaring
     // file; Kotlin's default imports or another visible declaration win.
     if (type.file !== unit.file && !(type.owners || []).length && (type.modifiers || []).includes('private')) return false;

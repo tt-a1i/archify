@@ -438,6 +438,7 @@ export function createTokenParser(tokens, start = 0, end = tokens.length) {
   function skipDelegateExpression() {
     let round = 0, curly = 0;
     let last = null;
+    const collected = [];
     while (!eof()) {
       const token = peek();
       if (round === 0 && curly === 0 && [',', '{'].includes(token.image)) return;
@@ -448,7 +449,10 @@ export function createTokenParser(tokens, start = 0, end = tokens.length) {
         const continuesForward = INFIX_CONTINUATIONS.has(token.image) || INFIX_WORDS.has(token.image);
         const continuesBackward = INFIX_CONTINUATIONS.has(last.image) || INFIX_WORDS.has(last.image);
         if (!continuesForward && !continuesBackward) {
-          if (token.startLine > last.endLine) return;
+          // A control condition whose branch has not started yet is an
+          // incomplete expression, exactly as in expression bodies:
+          // by if (c)\n  branch is one delegate expression.
+          if (token.startLine > last.endLine && !endsWithUnbranchedControl(collected)) return;
           if (['fun', 'val', 'var', 'class', 'interface', 'object', 'typealias', 'constructor', 'init'].includes(token.image)
             && token.tokenType.name === 'Keyword') return;
         }
@@ -458,6 +462,7 @@ export function createTokenParser(tokens, start = 0, end = tokens.length) {
       else if (token.image === '{') curly++;
       else if (token.image === '}') curly--;
       last = token;
+      collected.push(token);
       next();
     }
   }
@@ -537,16 +542,21 @@ export function createTokenParser(tokens, start = 0, end = tokens.length) {
     const typeBounds = [];
     parseWhereClauses(typeBounds);
     const members = [];
+    const enumEntries = [];
     let bodyRange = null;
+    // A bodyless declaration still extends through its header: constructor
+    // types, supertypes and where clauses are part of its extent, and type
+    // parameters stay in scope across all of them.
+    const headerEnd = tokens[cursor - 1] && cursor > 0 ? loc(tokens[cursor - 1]) : loc(name);
     if (at('{')) {
-      const body = captureBalancedDeclarationBlock(members);
+      const body = captureBalancedDeclarationBlock(members, kind === 'enum' ? enumEntries : null);
       bodyRange = body;
     } else accept(';');
     return {
       nodeName: nodeNameOf(kind), kind, name: name.image, modifiers, annotations,
-      typeParameters, primaryConstructor, supertypes, typeBounds, members,
+      typeParameters, primaryConstructor, supertypes, typeBounds, members, enumEntries,
       ...span(first, bodyRange?.close ? { startOffset: bodyRange.close.startOffset, endOffset: bodyRange.close.endOffset, startLine: bodyRange.close.startLine, endLine: bodyRange.close.endLine, startColumn: bodyRange.close.startColumn, endColumn: bodyRange.close.endColumn } : name),
-      declStart: loc(first), declEnd: bodyRange?.close || loc(name),
+      declStart: loc(first), declEnd: bodyRange?.close || headerEnd,
       bodyRange,
     };
   }
@@ -561,16 +571,18 @@ export function createTokenParser(tokens, start = 0, end = tokens.length) {
   // Parses a class/object body as a sequence of member declarations. Enum
   // entries and stray tokens are skipped tolerantly; nested declarations are
   // full recursive parses. Returns the body's open/close positions.
-  function captureBalancedDeclarationBlock(members) {
+  function captureBalancedDeclarationBlock(members, entries = null) {
     const open = expect('{');
     while (!eof() && !at('}')) {
       const before = cursor;
       // init blocks and secondary constructors are members too.
       const declaration = parseDeclaration();
       if (declaration) { members.push(declaration); continue; }
-      // Enum entries: IDENTIFIER [(args)] [{ body }] [,|;]
+      // Enum entries: IDENTIFIER [(args)] [{ body }] [,|;]. Their names are
+      // member evidence: import pkg.Enum.ENTRY binds through the enum type.
       if (atIdentifier() && /^[A-Z0-9_]/.test(peek().image)) {
-        next();
+        entries?.push(next().image);
+        if (!entries) next();
         if (at('(')) skipBalancedGroup();
         if (at('{')) skipBalancedGroup();
         continue;
@@ -611,10 +623,13 @@ export function createTokenParser(tokens, start = 0, end = tokens.length) {
     expect('=', "expected '=' in a typealias declaration");
     const aliased = [];
     parseType(aliased);
+    // The aliased type is part of the declaration extent: type parameters
+    // stay in scope across the right-hand side.
+    const headerEnd = cursor > 0 && tokens[cursor - 1] ? loc(tokens[cursor - 1]) : loc(name);
     return {
       nodeName: 'typeAliasDeclaration', kind: 'typealias', name: name.image, modifiers, annotations,
       typeParameters, aliasedReferences: aliased, supertypes: [], typeBounds: [], members: [],
-      ...span(first, name), declStart: loc(first), declEnd: loc(name), bodyRange: null,
+      ...span(first, name), declStart: loc(first), declEnd: headerEnd, bodyRange: null,
     };
   }
 
@@ -671,6 +686,9 @@ export function createTokenParser(tokens, start = 0, end = tokens.length) {
     if (accept(':')) parseType(returnReferences);
     const typeBounds = [];
     parseWhereClauses(typeBounds);
+    // The header end covers return types and where clauses: an abstract
+    // function's type parameters stay in scope through all of them.
+    const headerEnd = cursor > 0 && tokens[cursor - 1] ? loc(tokens[cursor - 1]) : (close || loc(name));
     let bodyKind = 'none', bodyTokens = [], bodyRange = null;
     if (at('{')) {
       const body = captureBody();
@@ -690,7 +708,7 @@ export function createTokenParser(tokens, start = 0, end = tokens.length) {
       returnReferences, typeBounds, bodyKind, bodyTokens, bodyRange,
       parameterList: open ? { open, close } : null,
       ...span(first, name), declStart: loc(first),
-      declEnd: bodyRange?.close || close || loc(name),
+      declEnd: bodyRange?.close || headerEnd,
     };
   }
 
@@ -737,7 +755,7 @@ export function createTokenParser(tokens, start = 0, end = tokens.length) {
       const keyword = next();
       skipBalancedGroup();
       // A getter may declare its result type before the body: get(): Int = …
-      if (accept(':')) parseType([]);
+      if (accept(':')) parseType(typeReferences);
       let accKind = 'none', accTokens = [], accRange = null;
       if (at('{')) {
         const body = captureBody();

@@ -69,6 +69,23 @@ export function coveredChecker(covered) {
   return offset => covered.some(range => range.startOffset <= offset && range.endOffset >= offset);
 }
 
+// The end offset of the innermost brace block containing `offset` inside a
+// body token array, or `fallback` when no brace pair contains it. Kotlin
+// visibility of a local declaration ends with its containing block; the scan
+// is linear in the body, matching the rest of the evidence extraction.
+export function containingBlockEnd(tokens, offset, fallback) {
+  const stack = [];
+  let innermostClose = null;
+  for (const token of tokens) {
+    if (token.image === '{') stack.push(token);
+    else if (token.image === '}' && stack.length) {
+      const open = stack.pop();
+      if (innermostClose === null && open.startOffset < offset && token.endOffset >= offset) innermostClose = token.endOffset;
+    }
+  }
+  return innermostClose ?? fallback;
+}
+
 // Parse the type starting at tokens[index]. Only capitalized-path references
 // are meaningful type evidence; the probe stops where the type grammar ends.
 export function probeTypeAt(tokens, index, { stopAtBranchArrow = false } = {}) {
