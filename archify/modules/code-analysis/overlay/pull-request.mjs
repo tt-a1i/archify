@@ -54,7 +54,7 @@ export function buildPullRequestView({ pr, scope, changedFiles, manifests, sourc
   if (pr.local && ir && resolutionInputs) {
     checkDriftMapping(ir, map);
     const capture = (side, facts, graph, resolutionInputs) => ({ facts, graph, resolutionInputs,
-      omitted: new Map(manifests[side].skipped.map(entry => [entry.path, entry.mode])) });
+      omitted: new Map(manifests[side].skipped.map(entry => [entry.path, `${entry.mode}:${entry.oid}`])) });
     const { components, summary, coverage, edges } = compareArchitectureDrift({
       base: capture('base', baseFacts, baseGraph, new Map(read('resolution-inputs'))),
       head: capture('head', facts, graph, resolutionInputs),

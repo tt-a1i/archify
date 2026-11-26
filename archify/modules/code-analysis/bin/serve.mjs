@@ -132,7 +132,7 @@ async function createAnalysisSession({ root, ir, out, options, irBytes, doc, loc
     const deliveryInput = path.join(out, `.analysis-input-${randomBytes(12).toString('hex')}.json`);
     fs.writeFileSync(deliveryInput, options['--locale'] ? JSON.stringify(doc) : irBytes, { flag: 'wx' });
     try {
-      await execute(process.execPath, [archify, 'deliver', 'architecture', deliveryInput, delivered, '--quality', quality, ...evidenceArgs, '--json'], { maxBuffer: 16 * 1024 * 1024 });
+      await execute(process.execPath, [archify, 'deliver', 'architecture', deliveryInput, delivered, '--quality', quality, ...evidenceArgs, '--json'], { maxBuffer: 16 * 1024 * 1024, ...(pullRequest?.local ? { env: { ...process.env, ARCHIFY_UPDATE_CHECK_DISABLED: '1' } } : {}) });
     } catch (error) {
       // Archify refused the diagram. Show its receipt, not a bare "command failed": the IR needs
       // repair (validate → fix what the diagnostics point at → validate again) before it can be served.

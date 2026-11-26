@@ -120,7 +120,9 @@ export async function resolveLocalPullRequest(root, base, head, scope) {
     });
   }
   const context = await checkoutContext(root);
-  return { root: context.root, scope: normalizeScope(scope ?? context.scope), local: { base, head } };
+  const resolved = { root: context.root, scope: normalizeScope(scope ?? context.scope), local: { base, head } };
+  await validateLocalObjectsAndScope(resolved.root, resolved.local, resolved.scope);
+  return resolved;
 }
 
 async function localFiles(root, base, head, scope) {
@@ -142,7 +144,7 @@ async function localFiles(root, base, head, scope) {
   return files;
 }
 
-async function prepareLocalPullRequest({ root, out, local, scope }) {
+async function validateLocalObjectsAndScope(root, local, scope) {
   const readOptions = { noLazyFetch: true };
   const fixes = ['fetch the missing objects separately, then retry the same pinned comparison'];
   for (const [side, commit] of Object.entries(local)) {
@@ -156,6 +158,25 @@ async function prepareLocalPullRequest({ root, out, local, scope }) {
     }
     if (type !== 'commit') fail('pr/commit-invalid', 'A pinned object must be a commit.', { subject: { side }, evidence: { commit, type } });
   }
+  if (scope !== '.') {
+    const entries = await Promise.all(Object.entries(local).map(async ([side, sha]) => {
+      try { return await git(root, ['ls-tree', '-rz', '--full-tree', sha, '--', `${scope}/`], readOptions); }
+      catch (error) {
+        if (error.diagnostics?.[0]?.code !== 'pr/git-failed') throw error;
+        fail('pr/local-object-missing', 'The pinned source tree could not be read from the local Git object database.', {
+          subject: { side }, evidence: { commit: sha }, supportedFixes: fixes,
+        });
+      }
+    }));
+    if (entries.every(entry => !entry.length)) fail('pr/scope-invalid', 'The analysis scope has no entries in either pinned commit.', { subject: { scope }, evidence: { scope }, supportedFixes: ['choose a directory present in at least one pinned commit, or use --scope . for the repository root'] });
+    return Object.fromEntries(Object.keys(local).map((side, index) => [side, entries[index]]));
+  }
+  return null;
+}
+
+async function prepareLocalPullRequest({ root, out, local, scope }) {
+  const listings = await validateLocalObjectsAndScope(root, local, scope);
+  const fixes = ['fetch the missing objects separately, then retry the same pinned comparison'];
   const repository = path.basename(root);
   const pr = { repository, number: null, title: repository, url: null, local: true,
     baseSHA: local.base, mergeBaseSHA: local.base, headSHA: local.head, capturedAt: new Date().toISOString() };
@@ -164,7 +185,7 @@ async function prepareLocalPullRequest({ root, out, local, scope }) {
   const manifests = {};
   try {
     for (const [side, sha] of Object.entries(local)) {
-      try { manifests[side] = await materializeTree({ cache: root, sha, scope, target: roots[side], offline: true }); }
+      try { manifests[side] = await materializeTree({ cache: root, sha, scope, target: roots[side], offline: true, preflightListing: listings?.[side] }); }
       catch (error) {
         const diagnostic = error.diagnostics?.[0];
         if (!diagnostic || !['pr/git-failed', 'pr/local-object-missing'].includes(diagnostic.code)) throw error;
@@ -172,6 +193,9 @@ async function prepareLocalPullRequest({ root, out, local, scope }) {
           subject: { ...diagnostic.subject, side }, evidence: { ...diagnostic.evidence, commit: sha }, supportedFixes: fixes,
         });
       }
+    }
+    if (scope !== '.' && Object.values(manifests).every(manifest => !manifest.files.length && !manifest.skipped.length)) {
+      fail('pr/scope-invalid', 'The analysis scope has no entries in either pinned commit.', { subject: { scope }, evidence: { scope }, supportedFixes: ['choose a directory present in at least one pinned commit, or use --scope . for the repository root'] });
     }
     const changedFiles = await localFiles(root, local.base, local.head, scope);
     return { pr, scope, directory, roots, manifests, changedFiles, sourceGitRoot: root,

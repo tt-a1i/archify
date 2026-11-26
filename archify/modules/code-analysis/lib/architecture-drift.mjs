@@ -38,6 +38,16 @@ function project({ facts, graph, omitted }, ir, map) {
   }
   const components = new Set([...byModule.values()].filter(v => v.length === 1).flat());
   const owner = file => byModule.get(Object.hasOwn(graph.fileModules, file) ? graph.fileModules[file] : null) || [];
+  const omittedOwner = file => {
+    // Explicit groups can claim paths outside their directory, so a skipped
+    // path cannot be assigned safely from its nearest directory alone.
+    if (graph.grouping?.groups?.length) return null;
+    const matches = graph.modules.filter(module => module.path && (file === module.path || file.startsWith(module.path + '/')));
+    const depth = Math.max(0, ...matches.map(module => module.path.length));
+    const nearest = matches.filter(module => module.path.length === depth);
+    const owners = [...new Set(nearest.flatMap(module => byModule.get(module.id) || []))];
+    return nearest.length === 1 && owners.length === 1 ? owners[0] : null;
+  };
   const errors = new Set((facts.parse_errors || []).map(e => e.path));
   const relevantErrors = [...errors].filter(file => owner(file).length);
   const ambiguity = [...byModule].filter(([, owners]) => owners.length > 1)
@@ -81,7 +91,7 @@ function project({ facts, graph, omitted }, ir, map) {
       edges.set(key, record);
     }
   }
-  return { edges, uncertain, unresolved, components, ambiguity, owner, relevantErrors, omitted,
+  return { edges, uncertain, unresolved, components, ambiguity, owner, omittedOwner, relevantErrors, omitted,
     coverage: { files: facts.files.length, mappedComponents: components.size, ambiguousModules: ambiguity.length,
       unmappedModules: graph.modules.length - byModule.size, parseErrors: errors.size, scopedParseErrors: relevantErrors.length,
       unresolvedImports: facts.unresolved, skippedLinks: omitted.size } };
@@ -89,14 +99,11 @@ function project({ facts, graph, omitted }, ir, map) {
 
 const empty = () => ({ count: 0, locations: [] });
 const differs = (a = new Set(), b = new Set()) => a.size !== b.size || [...a].some(x => !b.has(x));
-function changedPaths(a, b) {
-  return [...new Set([...a.keys(), ...b.keys()])].some(k => a.get(k) !== b.get(k));
-}
 
 export function compareArchitectureDrift({ base, head, ir, map, pins, inputs, locale }) {
   const left = project(base, ir, map), right = project(head, ir, map);
   const declared = new Set(ir.connections.map(e => pair(e.from, e.to)));
-  const movedLink = changedPaths(left.omitted, right.omitted);
+  const changedOmissions = [...new Set([...left.omitted.keys(), ...right.omitted.keys()])].filter(file => left.omitted.get(file) !== right.omitted.get(file));
   // Files read for resolution can differ naturally as imports move. A
   // different value for a shared resolution input makes absence ambiguous.
   const resolutionChanged = [...base.resolutionInputs].some(([file, digest]) =>
@@ -115,7 +122,11 @@ export function compareArchitectureDrift({ base, head, ir, map, pins, inputs, lo
       if ([left, right].some(side => side.ambiguity.some(m => m.components.includes(from) || m.components.includes(to)))) reasons.push('ambiguous-ownership');
       if ([left, right].some(side => !side.components.has(from) || !side.components.has(to))) reasons.push('component-not-mapped-on-both-sides');
       if (differs(left.unresolved.get(from), right.unresolved.get(from))) reasons.push('unresolved-imports-changed');
-      if (movedLink) reasons.push('skipped-tree-entries-changed');
+      if (changedOmissions.some(file => {
+        const owners = [left.omitted.has(file) ? left.omittedOwner(file) : null, right.omitted.has(file) ? right.omittedOwner(file) : null].filter(Boolean);
+        const known = (!left.omitted.has(file) || left.omittedOwner(file)) && (!right.omitted.has(file) || right.omittedOwner(file));
+        return !known || owners.includes(from) || owners.includes(to) || (left.unresolved.get(from)?.size || 0) > 0 || (right.unresolved.get(from)?.size || 0) > 0;
+      })) reasons.push('skipped-tree-entries-changed');
       if (resolutionChanged) reasons.push('resolution-inputs-changed');
     }
     const inDiagram = declared.has(key);

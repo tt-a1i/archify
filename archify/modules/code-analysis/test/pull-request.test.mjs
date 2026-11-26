@@ -5,7 +5,7 @@ import path from 'node:path';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { test } from 'node:test';
-import { parsePullRequest, preparePullRequest, normalizeScope } from '../lib/pull-request.mjs';
+import { parsePullRequest, preparePullRequest, normalizeScope, resolveLocalPullRequest } from '../lib/pull-request.mjs';
 import { materializeTree } from '../lib/git-sources.mjs';
 import { startAnalysisView, parseArgs } from '../bin/serve.mjs';
 import { prepareAnalysisView } from '../bin/prepare.mjs';
@@ -159,4 +159,50 @@ test('pinned CLI reviews an exact base and head with renamed source and preserve
   assert.throws(() => git(partial, ['cat-file', '-e', oid]), 'no automatic fetch happened');
   assert.equal(fs.readFileSync(result.receipt.html, 'utf8'), original);
   assert.equal(fs.readdirSync(out).some(name => name.startsWith('analysis.next-')), false);
+});
+
+
+test('pinned reviews reject a scope absent from both trees', async t => {
+  const f = fixture(t);
+  await assert.rejects(preparePullRequest({ root: f.root, out: path.join(f.dir, 'bad-scope'), scope: 'not-a-directory', local: { base: f.base, head: f.head } }),
+    error => error.diagnostics?.some(diagnostic => diagnostic.code === 'pr/scope-invalid' && diagnostic.subject.scope === 'not-a-directory' && diagnostic.supportedFixes.length > 0));
+});
+
+test('scoped pinned preflight identifies a missing tree and gives root recovery guidance', async t => {
+  const f = fixture(t);
+  fs.mkdirSync(path.join(f.root, 'subdir'));
+  await assert.rejects(resolveLocalPullRequest(path.join(f.root, 'subdir'), f.base, f.head, 'missing'),
+    error => error.diagnostics?.some(d => d.code === 'pr/scope-invalid' && d.supportedFixes.some(fix => fix.includes('--scope .'))));
+  const root = await resolveLocalPullRequest(path.join(f.root, 'subdir'), f.base, f.head, '.');
+  assert.equal(root.scope, '.');
+
+  git(f.root, ['config', 'uploadpack.allowFilter', 'true']);
+  const partial = path.join(f.dir, 'treeless');
+  git(f.dir, ['clone', '--no-checkout', '--no-local', '--filter=tree:0', pathToFileURL(f.root).href, partial]);
+  const tree = git(f.root, ['rev-parse', f.base + '^{tree}']);
+  assert.throws(() => git(partial, ['cat-file', '-e', tree]), 'precondition: base tree is missing');
+  await assert.rejects(resolveLocalPullRequest(partial, f.base, f.head, 'src'),
+    error => error.diagnostics?.some(d => d.code === 'pr/local-object-missing' && d.subject.side === 'base' && d.evidence.commit === f.base && d.supportedFixes.length));
+  assert.throws(() => git(partial, ['cat-file', '-e', tree]), 'preflight must not fetch the tree');
+});
+
+test('scoped local preparation reuses each preflight tree listing', async t => {
+  const f = fixture(t);
+  fs.mkdirSync(path.join(f.root, 'src'));
+  fs.writeFileSync(path.join(f.root, 'src', 'sample.ts'), 'export const sample = 1;\n');
+  git(f.root, ['add', 'src']);
+  git(f.root, ['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-m', 'scoped']);
+  const head = git(f.root, ['rev-parse', 'HEAD']);
+  const trace = path.join(f.dir, 'git-trace.log');
+  const previous = process.env.GIT_TRACE;
+  process.env.GIT_TRACE = trace;
+  try {
+    const result = await preparePullRequest({ root: f.root, out: path.join(f.dir, 'scoped-out'), scope: 'src', local: { base: head, head } });
+    assert.deepEqual(result.manifests.base.files.map(item => item.path), ['sample.ts']);
+    assert.equal(fs.readFileSync(path.join(result.roots.head, 'sample.ts'), 'utf8'), 'export const sample = 1;\n');
+  } finally {
+    if (previous === undefined) delete process.env.GIT_TRACE; else process.env.GIT_TRACE = previous;
+  }
+  const invocations = fs.readFileSync(trace, 'utf8').split('\n').filter(line => /built-in: git ls-tree\b/.test(line));
+  assert.equal(invocations.length, 2, 'one preflight listing per pinned side; materialization does not re-scan');
 });
