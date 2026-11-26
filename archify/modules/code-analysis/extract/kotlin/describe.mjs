@@ -119,6 +119,13 @@ export function describeUnit(unit) {
       for (const member of decl.members || []) harvest(member, nestedOwners, local);
       return;
     }
+    if (decl.kind === 'enumEntry') {
+      // Entry-body members belong to the entry's anonymous subclass: harvest
+      // them as local declarations so their dependencies count without
+      // indexing the entry or its members as project classifiers.
+      for (const member of decl.members || []) harvest(member, [...owners, decl.name], true);
+      return;
+    }
     if (decl.kind === 'function' || decl.kind === 'constructor' || decl.kind === 'init') {
       for (const ref of decl.parameterTypeReferences || []) addReference(ref);
       for (const ref of decl.returnReferences || []) addReference(ref);

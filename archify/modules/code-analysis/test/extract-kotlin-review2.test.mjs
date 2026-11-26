@@ -172,3 +172,32 @@ test('kotlin review2: lowercase enum entries resolve and constructor arguments d
   // ONE is a constructor argument of the entry, never an entry itself.
   assert.equal(facts.imports.find(imp => imp.specifier === 'p.Mode.ONE').resolved, false);
 });
+
+test('kotlin review2: enum entry bodies feed dependencies and complexity', t => {
+  const root = fixture(t, {
+    'p/Dep.kt': 'package p\nclass Dep\n',
+    'p/Mode.kt': 'package p\nenum class Mode {\n  active {\n    override fun label(): Dep = Dep()\n  },\n  INACTIVE;\n  abstract fun label(): Dep\n}\n',
+  });
+  const { facts } = extractFacts(root, { language: 'kotlin', config: config() });
+  assert.equal(facts.parse_errors, undefined);
+  assert.equal(edges(facts, 'p/Mode.kt', 'Dep').length > 0, true);
+  assert.equal(facts.functions.some(f => (f.qualname || '').includes('active') && f.name === 'label'), true);
+});
+
+test('kotlin review2: entry-body members never become enum member evidence', t => {
+  const root = fixture(t, {
+    'p/Mode.kt': 'package p\nenum class Mode {\n  active {\n    fun special(): Int = 1\n  },\n  INACTIVE;\n  abstract fun label(): Int\n}\n',
+    'p/Use.kt': 'package p\nimport p.Mode.special\nclass Use(val mode: Mode)\n',
+  });
+  const { facts } = extractFacts(root, { language: 'kotlin', config: config() });
+  // special is declared only inside the entry body: it is not a member of the
+  // enum type, so the member import stays unresolved.
+  assert.equal(facts.imports.find(imp => imp.specifier === 'p.Mode.special').resolved, false);
+  // The entry itself remains valid member evidence.
+  const root2 = fixture(t, {
+    'p/Mode2.kt': 'package p\nenum class Mode2 {\n  active {\n    override fun label(): Int = 1\n  };\n  abstract fun label(): Int\n}\n',
+    'p/Use2.kt': 'package p\nimport p.Mode2.active\nclass Use2(val mode: Mode2)\n',
+  });
+  const r2 = extractFacts(root2, { language: 'kotlin', config: config() });
+  assert.equal(r2.facts.imports.find(imp => imp.specifier === 'p.Mode2.active').resolved, true);
+});

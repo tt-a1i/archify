@@ -590,7 +590,23 @@ export function createTokenParser(tokens, start = 0, end = tokens.length) {
         const entry = next();
         entries?.push(entry.image);
         if (at('(')) skipBalancedGroup();
-        if (at('{')) skipBalancedGroup();
+        // An entry body is an anonymous subclass of the enum: its members are
+        // never members of the enum type, but their complexity and dependencies
+        // are real. They parse into a synthetic carrier instead of being
+        // skipped, mirroring the Java adapter's enum-constant handling.
+        if (at('{')) {
+          const entryMembers = [];
+          const entryRange = captureBalancedDeclarationBlock(entryMembers);
+          if (entryMembers.length) {
+            members.push({
+              nodeName: 'enumEntryDeclaration', kind: 'enumEntry', name: entry.image,
+              modifiers: [], annotations: [], typeParameters: [], members: entryMembers,
+              supertypes: [], typeBounds: [],
+              ...span(entry, entryRange.close), declStart: loc(entry), declEnd: entryRange.close,
+              bodyRange: entryRange,
+            });
+          }
+        }
         continue;
       }
       if ([';', ','].includes(peek()?.image)) { next(); continue; }

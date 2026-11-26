@@ -73,6 +73,11 @@ export function measureFunctions(unit) {
 
   function walkDeclaration(decl, owners) {
     if (!decl) return;
+    if (decl.kind === 'enumEntry') {
+      const nestedOwners = decl.name ? [...owners, decl.name] : [...owners, '<anonymous>'];
+      for (const member of decl.members || []) walkDeclaration(member, nestedOwners);
+      return;
+    }
     if (TYPE_KINDS_MEASURE.has(decl.kind)) {
       const nestedOwners = decl.name ? [...owners, decl.name] : [...owners, '<anonymous>'];
       for (const member of decl.members || []) walkDeclaration(member, nestedOwners);
