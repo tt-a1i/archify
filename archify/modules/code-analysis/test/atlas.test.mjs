@@ -185,3 +185,29 @@ test('atlas: an internal-imports finding draws its cited imports and marks its m
   assert.deepEqual(entry.entries.map((i) => paths[i]), [entryFile], 'entry files outside the atlas are dropped');
   assert.match(entry.title, /^Internal imports · /);
 });
+
+test('atlas: same-named methods link each finding to its own declaration range', t => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-atlas-same-name-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const body = 'if(a) a++; '.repeat(20) + 'return a;';
+  fs.writeFileSync(path.join(dir, 'service.ts'), `export class Service {\n static dispatch(a,b,c,d,e,f,g,h,i,j) { ${body} }\n dispatch(a,b,c,d,e,f,g,h,i,j) { ${body} }\n}\n`);
+  const config = loadConfig();
+  const { facts } = extractFacts(dir, { language: 'ts', config });
+  const graph = buildGraph(facts, config);
+  const findings = evaluateGraph(graph, config, facts).diagnostics.filter(f => f.code === 'complexity/function');
+  const same = findings.filter(f => f.subject.function === 'Service.dispatch');
+  assert.equal(same.length, 2, JSON.stringify({functions:facts.functions.map(fn=>fn.qualname), findings:findings.map(f=>f.subject)}));
+  const atlas = buildAtlas({ graph, facts, findings });
+  for (const finding of same) {
+    const entry = atlas.findings.find(item => item.id === finding.id);
+    assert.notEqual(entry.fn, undefined, `missing function link for ${finding.id}`);
+    const fn = atlas.functions[entry.fn];
+    assert.equal(fn[2], finding.subject.line, `declaration line for ${finding.id}`);
+    assert.equal(atlas.findings[fn[6]].id, finding.id, 'function links back to its finding');
+  }
+  const ambiguousFacts = { ...facts, functions: facts.functions.map(fn => ({ ...fn, line: 2, endLine: 2 })) };
+  const ambiguousFindings = same.map(f => ({ ...f, subject: { ...f.subject, line: 2, endLine: 2 } }));
+  const ambiguous = buildAtlas({ graph, facts: ambiguousFacts, findings: ambiguousFindings });
+  assert.ok(ambiguous.findings.every(entry => entry.fn === undefined), 'indistinguishable declarations stay unlinked');
+  assert.ok(ambiguous.functions.every(fn => fn[6] === -1), 'ambiguous functions do not select a finding');
+});

@@ -405,6 +405,23 @@ test('Code Analysis marks baseline findings, re-analyzes without a restart, and 
     const restoredFinding = await run('window.__archifyAtlas3d.view.saveSelection()');
     assert.equal(restoredFinding?.type, 'finding', 'a stable function-backed finding keeps its selection type');
     assert.equal(restoredFinding?.id, findingId, 'a stable function-backed finding survives an unchanged run');
+    const decisions = Array.from({ length: 20 }, (_, i) => `if (value === ${i}) value++;`).join(' ');
+    write('same-methods.mjs', `export class Service {\n static dispatch(value) { ${decisions} return value; }\n dispatch(value) { ${decisions} return value + 1; }\n}\n`);
+    await refreshFromCurrentFocus();
+    const methodFindings = await run(`(() => {
+      const atlas = JSON.parse(document.getElementById('bauify-atlas-data').textContent);
+      return atlas.findings.filter(f => f.kind === 'function' && f.fn !== undefined
+        && atlas.files[atlas.functions[f.fn][0]][0] === 'same-methods.mjs')
+        .map(f => ({ id: f.id, line: atlas.functions[f.fn][2] }));
+    })()`);
+    assert.deepEqual(methodFindings.map(f => f.line).sort(), [2, 3], 'both same-named methods have distinct findings');
+    for (const finding of methodFindings) {
+      await run(`(() => { const atlas = JSON.parse(document.getElementById('bauify-atlas-data').textContent); const index = atlas.findings.findIndex(f => f.id === ${JSON.stringify(finding.id)}); window.__archifyAtlas3d.view.select({ type: 'finding', index }); })()`);
+      await refreshFromCurrentFocus();
+      const restored = await run('window.__archifyAtlas3d.view.saveSelection()');
+      assert.equal(restored?.type, 'finding');
+      assert.equal(restored?.id, finding.id, 'each same-named method restores its own finding');
+    }
     write('quoted.mjs', "const handlers = { '<anonymous>'() { return 'fallback'; } };\n");
     await refreshFromCurrentFocus();
     const quoted = await run(`(() => {

@@ -149,6 +149,10 @@ export function buildAtlas({ graph, facts, findings = [], review = null }) {
 
   const accepted = new Set(Object.entries(review?.findings || {}).filter(([, r]) => r.status === 'accepted').map(([id]) => id));
   const listed = [];
+  // A qualified name can identify multiple declarations in the same file.
+  // Link only a unique finding and function with the same declaration range.
+  const functionKey = (file, name, line, endLine) => file && name && Number.isInteger(line) && Number.isInteger(endLine) && endLine >= line
+    ? JSON.stringify([file, name, line, endLine]) : null;
   const functionFinding = new Map();
   for (const f of findings) {
     const s = f.subject || {};
@@ -162,7 +166,8 @@ export function buildAtlas({ graph, facts, findings = [], review = null }) {
       }
     } else if (f.code === 'complexity/function' && fileIndex.has(s.file)) {
       entry.kind = 'function';
-      functionFinding.set(`${s.file}\u0000${s.function}`, listed.length);
+      const key = functionKey(s.file, s.function, s.line, s.endLine);
+      if (key) functionFinding.set(key, functionFinding.has(key) ? -1 : listed.length);
     } else if (f.code === 'coupling/import-cycle' && Array.isArray(s.files)) {
       entry.kind = 'cycle';
       entry.files = s.files.filter((p) => fileIndex.has(p)).map((p) => fileIndex.get(p));
@@ -197,10 +202,16 @@ export function buildAtlas({ graph, facts, findings = [], review = null }) {
 
   // [file, name, line, complexity, nesting, length, finding index or -1]
   const expressions = boundExpressions(facts);
+  const functionCounts = new Map();
+  for (const fn of facts.functions || []) {
+    const key = functionKey(fn.file, fn.qualname || fn.name, fn.line, fn.endLine);
+    if (key) functionCounts.set(key, (functionCounts.get(key) || 0) + 1);
+  }
   const functions = (facts.functions || [])
     .filter((fn) => fileIndex.has(fn.file))
     .map((fn) => [fileIndex.get(fn.file), fn.qualname || fn.name, fn.line, fn.complexity, fn.nesting ?? 0, (fn.endLine ?? fn.line) - fn.line + 1,
-      functionFinding.has(`${fn.file}\u0000${fn.qualname}`) ? functionFinding.get(`${fn.file}\u0000${fn.qualname}`) : -1,
+      functionCounts.get(functionKey(fn.file, fn.qualname || fn.name, fn.line, fn.endLine)) === 1
+        ? functionFinding.get(functionKey(fn.file, fn.qualname || fn.name, fn.line, fn.endLine)) ?? -1 : -1,
       fn.sourceRange ? { column: fn.sourceRange.column, endLine: fn.sourceRange.endLine, endColumn: fn.sourceRange.endColumn } : null,
       fn.definition ? fn.definition.sourceRange?.sha256 || null : fn.sourceRange?.sha256 || null,
       // Display names of callbacks and Java anonymous owners are numbered by
