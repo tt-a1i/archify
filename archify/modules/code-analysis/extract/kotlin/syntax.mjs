@@ -89,6 +89,22 @@ export function createTokenParser(tokens, start = 0, end = tokens.length) {
   function parseTypeBase(out) {
     const token = peek();
     if (!token) return false;
+    if (token.image === '@') {
+      // Type-use annotations prefix any type — @Marker String, including in
+      // recursive positions like a function-type result ((Int) -> @Marker
+      // String). The annotation type is itself a classifier reference; its
+      // constructor arguments are expressions and never scan as types.
+      while (at('@')) {
+        next();
+        if (atIdentifier()) {
+          const before = out.length;
+          parseTypeBase(out);
+          if (at('(')) skipBalancedGroup();
+          if (out.length > before + 1) out.splice(before + 1);
+        }
+      }
+      return parseTypeBase(out);
+    }
     if (token.image === 'suspend' && token.tokenType.name === 'Identifier' && peek(1)?.image === '(') {
       next();
       return parseTypeBase(out);

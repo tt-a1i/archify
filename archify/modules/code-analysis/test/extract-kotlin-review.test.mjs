@@ -325,3 +325,20 @@ test('kotlin review: receiver lambda overloads keep stable finding ids when one 
   assert.equal(survivorOnly.length, 1);
   assert.equal(survivorOnly[0].id, survivorInBoth.id);
 });
+
+test('kotlin review: type-use annotations in nested function-type results parse and resolve', t => {
+  // ((Int) -> @Marker String) -> Unit — the annotation prefixes the result
+  // type inside a nested callback. Before type-use annotation support the
+  // parse error dropped the entire file: dependencies, plus the complexity
+  // measurement of unrelated functions.
+  const root = fixture(t, {
+    'demo/Marker.kt': 'package demo\n@Target(AnnotationTarget.TYPE)\nannotation class Marker\n',
+    'demo/Ext.kt': 'package demo\nfun register(block: ((Int) -> @Marker String) -> Unit) = Unit\nfun other(): Int {\n  if (1 < 2) return 1\n  return 0\n}\n',
+  });
+  const { facts } = extractFacts(root, { language: 'kotlin', config: config() });
+  assert.equal(facts.parse_errors?.length ?? 0, 0);
+  const edge = importsFrom(facts, 'demo/Ext.kt').find(imp => imp.to === 'demo/Marker.kt');
+  assert.equal(edge?.to, 'demo/Marker.kt');
+  const other = (facts.functions ?? []).find(fn => fn.name === 'other');
+  assert.equal(typeof other?.complexity, 'number');
+});
