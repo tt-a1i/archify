@@ -249,9 +249,17 @@ jobs:
         env:
           ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
           ARCHIFY_CHROME_NO_SANDBOX: '1'
+          ARCHIFY_STORY_EVIDENCE_DIR: ${{ runner.temp }}/archify-story-evidence
           CI_BROWSER_PROFILE: ${{ needs.scope.outputs.browserProfile }}
           CI_BROWSER_TESTS: ${{ needs.scope.outputs.browserTests }}
           CI_STORY_BROWSER_OWNER: ${{ needs.scope.outputs.webm == 'true' && needs.scope.outputs.webmProfile != 'viewer' && 'webm' || 'browser' }}
+      - name: Upload Story video diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+        with:
+          name: story-browser-diagnostics-${{ matrix.shard }}
+          path: ${{ runner.temp }}/archify-story-evidence
+          if-no-files-found: ignore
 
   webm-decode:
     needs: scope

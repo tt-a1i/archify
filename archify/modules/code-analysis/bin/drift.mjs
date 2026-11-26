@@ -127,6 +127,12 @@ async function run([repoArg, ...args]) {
       const tsconfig = 'tsconfig.json';
       if (!resolutionInputs.has(tsconfig)) resolutionInputs.set(tsconfig, null);
       if (!facts.files.length) fail('drift/no-sources', 'No JS/TS source files were selected.', { subject: { side } });
+      if (facts.languageScope?.unavailableProjects?.length) {
+        fail('drift/project-coverage-incomplete', 'Architecture drift requires TypeScript project coverage on both sides.', {
+          subject: { side }, evidence: { projects: facts.languageScope.unavailableProjects },
+          supportedFixes: ['select a scope whose TypeScript base configurations are available in both pinned trees'],
+        });
+      }
       if (facts.repository.sourceKind !== 'working-tree' || facts.repository.revision !== null || facts.repository.root !== '.') {
         fail('drift/capture-context', 'The isolated tree was interpreted as a different repository.');
       }

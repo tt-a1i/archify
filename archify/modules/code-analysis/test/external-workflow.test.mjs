@@ -74,6 +74,26 @@ function fixture(t) {
   return { dir, root, files, reports, config, configFile, out, baseline, args, cli, check, manifest, prepareComparison };
 }
 
+test('external workflow: a passing explicit comparison reseeds automatic checks after a tool upgrade', t => {
+  const f = fixture(t);
+  f.reports.eslint[0].messages = [];
+  write(path.join(f.root, 'reports/eslint.json'), f.reports.eslint);
+  write(path.join(f.root, 'reports/ruff.json'), []);
+  f.check(['--out', f.out, '--new-only']);
+  const manifest = f.manifest('eslint');
+  manifest.toolVersion = 'fixture-eslint-v2';
+  write(path.join(f.root, 'reports/eslint.manifest.json'), manifest);
+  f.check(['--out', f.out, '--new-only'], 2);
+  f.check(['--out', f.out]);
+  const fresh = path.join(f.dir, 'fresh.json');
+  fs.copyFileSync(path.join(f.out, 'findings.json'), fresh);
+  const oldGate = fs.readFileSync(path.join(f.out, 'gate-findings.json'));
+  f.check(['--out', f.out, '--new-only', '--compare', fresh, '--fail-on', 'never']);
+  assert.deepEqual(fs.readFileSync(path.join(f.out, 'gate-findings.json')), oldGate, 'inspection does not promote a comparator');
+  f.check(['--out', f.out, '--new-only', '--compare', fresh]);
+  f.check(['--out', f.out, '--new-only']);
+});
+
 test('external workflow: default TypeScript settings remain comparable with pre-C++ findings', async (t) => {
   const f = fixture(t);
   const originalInclude = ['**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}', '**/*.py', '**/*.java', '**/*.go', '**/*.rs'];
@@ -84,6 +104,32 @@ test('external workflow: default TypeScript settings remain comparable with pre-
   const after = f.check(['--compare', path.join(f.out, 'findings.json'), '--new-only', '--fail-on', 'warning']);
   assert.equal(after.review.comparison.comparable, true);
   assert.equal(after.review.comparison.new, 0);
+});
+
+test('external workflow: incomplete TypeScript projects still produce a new-only receipt', async t => {
+  const f = fixture(t);
+  const website = path.join(f.root, 'website');
+  fs.mkdirSync(website);
+  write(path.join(website, 'package.json'), { devDependencies: { 'shared-config': '1.0.0' } });
+  write(path.join(website, 'tsconfig.json'), { extends: 'shared-config/strict' });
+  fs.writeFileSync(path.join(website, 'entry.ts'), 'export const unavailable = 1;\n');
+  f.config.include = ['src/**/*.ts', 'website/**/*.ts'];
+  write(f.configFile, f.config);
+  await f.prepareComparison();
+  const out = path.join(f.dir, 'partial-comparison');
+  const result = f.check(['--compare', path.join(f.out, 'findings.json'), '--new-only', '--fail-on', 'never', '--out', out]);
+  assert.equal(result.status, 'incomplete');
+  assert.equal(result.coverage.unavailableTypeScriptFiles, 1);
+  assert.ok(result.comparisonReasons.some(reason => reason.code === 'typescript-project-coverage-incomplete'));
+  assert.ok(fs.existsSync(path.join(out, 'findings.json')));
+  const gated = f.check(['--compare', path.join(f.out, 'findings.json'), '--new-only', '--out', path.join(f.dir, 'partial-gate')], 2);
+  assert.equal(gated.status, 'incomplete');
+  assert.equal(gated.gate.blocked, 'typescript-project-coverage-incomplete');
+  const manifest = f.manifest('eslint');
+  manifest.configDigest = hash('changed eslint configuration');
+  write(path.join(f.root, 'reports/eslint.manifest.json'), manifest);
+  const unverified = f.check(['--compare', path.join(f.out, 'findings.json'), '--new-only', '--fail-on', 'never'], 2);
+  assert.equal(unverified.diagnostics[0].code, 'external/comparison-unverified');
 });
 
 test('external workflow: evaluateGraph validates combined findings and records checked sources even for valid empty reports', (t) => {

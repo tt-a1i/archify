@@ -374,6 +374,8 @@ html[data-bauify-focus="on"] #bauify-layer g.count.focus rect { opacity: 1; }
 #bauify-reader .health-primary > i { margin-left: auto; color: var(--text-muted); font-size: 12px; font-style: normal; }
 #bauify-reader .health-primary.positive > i { color: var(--backend-stroke); }
 #bauify-reader .health-primary.attention > i { color: #FB7185; }
+#bauify-reader .health-primary.incomplete > i { color: var(--text); font-weight: 600; }
+:is(#bauify-reader, #bauify-stage) .project-coverage-notice { margin: 10px 0 0; padding: 6px 8px; border-inline-start: 2px solid #d97706; background: color-mix(in srgb, #d97706 10%, transparent); color: var(--text); font-size: 12px; line-height: 1.5; }
 #bauify-reader .health-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--panel-border); }
 #bauify-reader .health-facts span { color: var(--text-muted); font-size: 12px; }
 #bauify-reader .health-facts b { display: block; margin-top: 5px; color: var(--text); font-size: 16px; font-variant-numeric: tabular-nums; }

@@ -314,7 +314,17 @@ test('CI media gates fail closed and run only for their affected responsibility'
     const job = jobs[name];
     assert.equal(job.needs, 'scope');
     assert.equal(job.if, `needs.scope.result == 'success' && needs.scope.outputs.${flag} == 'true'`);
-    assert.ok(job.steps.every(step => step.if === undefined), `${name} runs every step when requested`);
+    const diagnostic = name === 'browser-regression' && job.steps.find(step => step.name === 'Upload Story video diagnostics on failure');
+    if (name === 'browser-regression') assert.ok(diagnostic, 'Story diagnostics are retained on a failed shard');
+    assert.ok(job.steps.every(step => step === diagnostic || step.if === undefined), `${name} runs every required step when requested`);
+    if (diagnostic) {
+      assert.equal(diagnostic.if, 'failure()');
+      assert.match(diagnostic.uses, /^actions\/upload-artifact@/);
+      assert.equal(diagnostic.with.path, '${{ runner.temp }}/archify-story-evidence');
+      assert.equal(diagnostic.with['if-no-files-found'], 'ignore');
+      assert.equal(job.steps.find(step => step.name === 'Run shared browser regression gate').env.ARCHIFY_STORY_EVIDENCE_DIR,
+        '${{ runner.temp }}/archify-story-evidence');
+    }
   }
   const aggregate = jobs['webm-artifact'];
   assert.deepEqual(aggregate.needs, ['scope', 'browser-regression', 'webm-decode']);

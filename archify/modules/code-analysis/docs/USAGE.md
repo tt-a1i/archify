@@ -105,6 +105,26 @@ Language extraction has its own prerequisites:
 | `rust` | Cargo/rustc 1.71+, a root `Cargo.toml` and the locked helper dependencies; see [Rust scope and tooling](RUST.md). |
 | `c`, `cpp` | An existing `compile_commands.json`, Python clang bindings and libclang; see [C/C++ scope and tooling](C_CPP.md). |
 
+A clean checkout can contain a nested JS/TS package whose configuration extends
+an unavailable declared dependency. With the bundled SDK, analysis can omit that
+package's selected files and report its config and missing extends entries while
+showing results for the available scope. Omitted files do not supply imports or
+call targets. Root configuration errors, invalid configuration, and scans with
+no remaining source still fail. Installing missing dependencies belongs to the
+user's checkout setup, and analysis does not install or execute them.
+
+`prepare` and the workbench display incomplete coverage. `check` writes the
+available evidence and returns exit 2 when a finding gate would run with
+incomplete project coverage. `--fail-on never` returns the incomplete report for
+inspection. Incomplete project coverage makes comparisons inconclusive and
+prevents replacing the baseline. PR-attributed and architecture drift comparisons
+require project coverage for both pinned sides. Git capture uses only its own
+resolution inputs, so a dependency installed in the working tree may resolve a
+live check but remain unavailable to a pinned comparison.
+Partial recovery currently recognizes a missing base package only when the
+package is declared in the manifest beside the nested configuration. A package
+declared solely in an ancestor workspace manifest remains a configuration error.
+
 The Go and Rust adapters compile Archify's source helper, not the target
 project. Rust's first use may fetch the helper's locked dependencies; cached
 dependencies are required for `rust.offline`. These tools remain necessary
@@ -516,13 +536,13 @@ node bin/archify.mjs code-analysis check "/path/to/project" --baseline analysis-
 | --- | --- |
 | `--fail-on error\|warning\|info\|never` | Fail when an open finding reaches this level (default `warning`). |
 | `--baseline file` | Accepted findings do not fail the run unless their code changed. |
-| `--out dir` | Publish `raw-facts`, `module-graph`, `findings`, `review` and `overview` JSON together. The last complete run's `findings.json` in that directory is compared with automatically. |
+| `--out dir` | Publish `raw-facts`, `module-graph`, `findings`, `review` and `overview` JSON together. The previous `findings.json` is compared automatically; for `--new-only`, `gate-findings.json` retains the latest complete passing gate comparator. |
 | `--compare findings.json` | Compare with a specific earlier run instead. |
-| `--new-only` | Fail only on findings that are new since the comparison, for gating pull requests. Without a previous run to compare with, every open finding counts as new, so a missing comparison artifact cannot pass the gate. |
+| `--new-only` | Fail only on findings that are new since the comparison, for gating pull requests. With `--out`, a complete passing check can refresh the gate comparator; an explicit `--compare` must also be comparable. Incomplete, failing, and `--fail-on never` runs never replace it. An automatic run without external reports can refresh the comparator after a non-comparable configuration change. Without a previous run to compare with, every open finding counts as new, so a missing comparison artifact cannot pass the gate. |
 | `--update-baseline [--reason text]` | Write the baseline instead of checking. |
 | `--json` | Print a machine-readable receipt instead of the summary. |
 
-Exit codes: `0` passed, `1` the gate failed, `2` the analysis could not run (the diagnostic says why). A failing run without `--baseline` offers the command that records today's findings in `analysis-baseline.json`, for a first run or after a rule became stricter. If the baseline or drill-down command contains control characters, the summary points to the exact command in the `--json` receipt under `gate.adopt` or `investigation.drillDown`. The printed summary lists failing findings as `path:line` with their ids, the comparison counts, and stale baseline entries.
+Exit codes: `0` passed, `1` the gate failed, `2` the analysis could not run or project coverage was incomplete. With `--json`, incomplete TypeScript project coverage returns a receipt with `status: "incomplete"` and exit 2, while `--fail-on never` returns that incomplete receipt with exit 0. Other analysis errors return `status: "error"` and diagnostics. A failing run without `--baseline` offers the command that records today's findings in `analysis-baseline.json`, for a first run or after a rule became stricter. If the baseline or drill-down command contains control characters, the summary points to the exact command in the `--json` receipt under `gate.adopt` or `investigation.drillDown`. The printed summary lists failing findings as `path:line` with their ids, the comparison counts, and stale baseline entries.
 
 
 ### Keep the PR comparison fixed across retries
@@ -561,6 +581,13 @@ Keep the CLI exit status when the step ends. Save the attempt reports and
 receipt for exits `0` and `1`, including when findings block the gate.
 On exit `2`, save the error receipt. A missing or invalid file passed to
 `--compare` produces exit `2`.
+
+An explicit comparison briefly locks the directory containing the resolved
+report while reading it. If another analysis is publishing there or needs
+recovery, the comparison fails closed instead of reading an uncommitted file.
+The report directory must be writable; for a completed read-only report, copy
+it to a writable directory before comparing. Symbolic links are resolved before
+locking so they cannot bypass the producer's output lock.
 
 ## Config files
 

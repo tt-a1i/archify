@@ -765,6 +765,12 @@
     if (files.translationUnits !== undefined) lines.push(plural(files.translationUnits, 'translation unit') + tr(' in the compilation database') + (files.notCompiled ? ' · ' + plural(files.notCompiled, 'source file') + tr(' without a command') : ''));
     var pe = files.parseErrors || [];
     if (pe.length) lines.push(plural(pe.length, 'file') + tr(" could not be parsed: ") + pe.slice(0, 3).join(', ') + (pe.length > 3 ? ' …' : ''));
+    if (files.unavailableTypeScriptFiles) {
+      lines.push(tr('TypeScript files omitted because a base configuration is unavailable: {count}', { count: files.unavailableTypeScriptFiles }));
+      files.unavailableTypeScriptProjects.forEach(function (project) {
+        lines.push(tr('{config} requires {packages}', { config: project.config, packages: project.missingExtends.join(', ') }));
+      });
+    }
     var u = c.unresolved || {}, unresolved = (u.unknown || 0) + (u.opaque || 0);
     // Java counts each unresolved type reference as well as imports.
     if (unresolved) lines.push(plural(unresolved, c.language === 'java' ? 'dependency record' : 'import') + tr(" could not be resolved"));
@@ -781,7 +787,7 @@
     }
     var missing = [['complexity/', tr("complexity")], ['redundancy/', tr("duplication")], ['architecture/', tr("architecture boundaries (none configured)")]].filter(function (d) { return !run.some(function (r) { return r.indexOf(d[0]) === 0; }); }).map(function (d) { return d[1]; });
     if (missing.length) lines.push(tr("Not checked: ") + missing.join(', '));
-    var incomplete = (c.otherLanguages || []).length || files.notCompiled || pe.length || unresolved || off.length || (c.ambiguousModules || []).length || (dup && !dup.complete);
+    var incomplete = (c.otherLanguages || []).length || files.notCompiled || files.unavailableTypeScriptFiles || pe.length || unresolved || off.length || (c.ambiguousModules || []).length || (dup && !dup.complete);
     return ("<details class=\"coverage\">" + "<summary>" + tr("Analysis scope")) + ' · ' + esc(LANGS[c.language] || c.language || tr("Unknown")) + (incomplete ? tr(" · incomplete") : '') + '</summary><div class="ev cov">' + lines.map(function (l) { return '<div>' + esc(l) + '</div>'; }).join('') + '</div></details>';
   }
   // Duplicate detection reports its own file coverage: files it skipped (vendored,
@@ -917,11 +923,15 @@
     }
     h += reviewHtml(o.review);
     var rules = o.coverage && o.coverage.rules && o.coverage.rules.run || [];
+    var omittedTypeScriptFiles = o.coverage && o.coverage.files && o.coverage.files.unavailableTypeScriptFiles;
+    var healthTone = errors ? 'attention' : omittedTypeScriptFiles ? 'incomplete' : 'positive';
+    var healthStatus = !rules.length ? tr('No checks ran') : errors ? tr('{count} errors', { count: errors }) : omittedTypeScriptFiles ? tr('Incomplete project coverage') : tr('No errors');
     var fileCycles = data.findings.filter(function (f) { return f.code === 'coupling/import-cycle'; }).length;
     var moduleCycles = data.findings.filter(function (f) { return f.code === 'coupling/cycle'; }).length;
     var boundaryViolations = data.findings.filter(function (f) { return f.code === 'architecture/boundary'; }).length;
     if (data.pullRequest) h += '<details class="pr-head-checks"><summary>' + esc(tr('PR head checks · {errors} error-level findings', { errors: errors })) + '</summary>';
-    h += '<section class="health-summary" aria-label="' + esc(tr('Structural signals')) + '"><div class="health-primary ' + (errors ? 'attention' : 'positive') + '"><b>' + fmt(o.counts.findings) + '</b><span>' + esc(tr('findings')) + '</span><i>' + esc(!rules.length ? tr('No checks ran') : errors ? tr('{count} errors', { count: errors }) : tr('No errors')) + '</i></div>';
+    h += '<section class="health-summary" aria-label="' + esc(tr('Structural signals')) + '"><div class="health-primary ' + healthTone + '"><b>' + fmt(o.counts.findings) + '</b><span>' + esc(tr('findings')) + '</span><i>' + esc(healthStatus) + '</i></div>';
+    if (omittedTypeScriptFiles) h += '<p class="project-coverage-notice">' + esc(tr('TypeScript files omitted because a base configuration is unavailable: {count}', { count: omittedTypeScriptFiles })) + '</p>';
     h += '<div class="health-facts"><span>' + esc(tr('Import cycles')) + '<b>' + (rules.indexOf('coupling/import-cycle') !== -1 ? fmt(fileCycles) : tr('Not checked')) + '</b></span><span>' + esc(tr('Module cycles')) + '<b>' + (rules.indexOf('coupling/cycle') !== -1 ? fmt(moduleCycles) : tr('Not checked')) + '</b></span><span>' + esc(tr('Boundary violations')) + '<b>' + (!o.coverage.boundaries || !o.coverage.boundaries.rules ? tr('Not configured') : rules.indexOf('architecture/boundary') !== -1 ? fmt(boundaryViolations) : tr('Not checked')) + '</b></span></div>';
     if (o.counts.acceptedErrors) h += '<p class="scope-line">' + esc(tr('{open} open · {accepted} accepted error-level findings', { open: o.counts.error, accepted: o.counts.acceptedErrors })) + '</p>';
     // A thin ring is still a finding, not an all-clear: say what each ring weight means.
@@ -1515,7 +1525,10 @@
     if (top) rows += firstRow('component:' + top.id, 'amber', tr('{name} has the most open findings', { name: top.label }), tr('{files} files · {loc} lines', { files: fmt(top.files), loc: fmtK(top.loc) }), openOf(top).list.length);
     if (undeclared.length) rows += firstRow('code', 'red', tr('Code dependencies not drawn on the diagram'), tr('Largest: {from} → {to}', { from: compLabel(undeclared[0].from), to: compLabel(undeclared[0].to) }), undeclared.length);
     if (off) rows += firstRow('off:' + off.id, 'grey', tr('Code with no place on the diagram'), tr('{name} · {files} files', { name: off.label, files: fmt(off.files) }), off.files);
-    if (!rows) rows = '<p class="first-empty">' + esc(tr('Nothing stands out: no open findings, and the diagram matches the code dependencies.')) + '</p>';
+    var coverage = data.overview && data.overview.coverage;
+    var omittedTypeScriptFiles = coverage && coverage.files && coverage.files.unavailableTypeScriptFiles;
+    if (!rows && !omittedTypeScriptFiles) rows = '<p class="first-empty">' + esc(tr('Nothing stands out: no open findings, and the diagram matches the code dependencies.')) + '</p>';
+    var coverageNotice = omittedTypeScriptFiles ? '<p class="project-coverage-notice"><b>' + esc(tr('Incomplete project coverage')) + '</b><br>' + esc(tr('TypeScript files omitted because a base configuration is unavailable: {count}', { count: omittedTypeScriptFiles })) + '</p>' : '';
     var total = (data.findings || []).length;
     stage.innerHTML =
       '<div class="stage-tools">' +
@@ -1523,8 +1536,8 @@
         (undeclared.length ? '<div class="stage-seg"><button type="button" class="stage-code" aria-pressed="false"><i class="dot red"></i>' + esc(tr('Show code dependencies')) + '<em>' + undeclared.length + '</em></button></div>' : '') +
       '</div>' +
       '<div class="stage-depth" hidden><span class="depth-label"></span><div class="stage-seg" role="group" aria-label="' + esc(tr('Neighbourhood')) + '"><button type="button" data-depth="1" aria-pressed="true">' + esc(tr('1 hop')) + '</button><button type="button" data-depth="2" aria-pressed="false">' + esc(tr('2 hops')) + '</button><button type="button" data-depth="99" aria-pressed="false">' + esc(tr('All')) + '</button></div><button type="button" class="depth-clear" aria-label="' + esc(tr('Clear focus')) + '">×</button></div>' +
-      '<section class="stage-first" aria-label="' + esc(tr('Start here')) + '"><header><h3 title="' + esc(tr('What stands out after checking this diagram against the code')) + '">' + esc(tr('Start here')) + '</h3><button type="button" class="first-toggle" aria-expanded="true">' + esc(tr('Collapse')) + '</button></header><div class="first-body">' + rows +
-      (total ? '<button type="button" class="first-all">' + esc(tr('All {count} findings', { count: fmt(total) })) + ' →</button>' : '') +
+      '<section class="stage-first" aria-label="' + esc(tr('Start here')) + '"><header><h3 title="' + esc(tr('What stands out after checking this diagram against the code')) + '">' + esc(tr('Start here')) + '</h3><button type="button" class="first-toggle" aria-expanded="true">' + esc(tr('Collapse')) + '</button></header><div class="first-body">' + coverageNotice + rows +
+      (total || omittedTypeScriptFiles ? '<button type="button" class="first-all">' + esc(total ? tr('All {count} findings', { count: fmt(total) }) : tr('Analysis scope')) + ' →</button>' : '') +
       '<p class="stage-legend"><span><i class="ring amber"></i>' + esc(tr('Has findings')) + '</span><span><i class="ring green"></i>' + esc(tr('No findings')) + '</span><span><i class="ring grey"></i>' + esc(tr('No source mapped')) + '</span><span><i class="chip">n</i>' + esc(tr('Open findings')) + '</span><span><i class="line thick"></i>' + esc(tr('Thicker: more imports')) + '</span>' + (undeclared.length ? '<span><i class="line dash"></i>' + esc(tr('Not drawn')) + '</span>' : '') + '</p></div></section>';
     diagramContainer.appendChild(stage);
     // The canvas pans on pointer drags and zooms on wheel: keep those off the controls.

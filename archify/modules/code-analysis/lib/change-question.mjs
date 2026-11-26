@@ -422,8 +422,9 @@ function fileQuestion(sides, entry) {
     if (a.length !== 1 || b.length !== 1) {
       for (const [name, defs] of [['base', a], ['head', b]]) {
         const other = sides[name === 'base' ? 'head' : 'base'].files.get(entry);
+        const otherOmitted = sides[name === 'base' ? 'head' : 'base'].facts.languageScope?.excludedByProject?.some(item => item.file === entry);
         const otherCoverage = definitionCoverage[name === 'base' ? 'head' : 'base'];
-        const reason = a.length > 1 || b.length > 1 ? 'duplicate-slot' : (other && other.status !== 'valid') || otherCoverage === 'definition-regions-unavailable' ? 'counterpart-unavailable' : `${name}-only`;
+        const reason = a.length > 1 || b.length > 1 ? 'duplicate-slot' : otherOmitted || (other && other.status !== 'valid') || otherCoverage === 'definition-regions-unavailable' ? 'counterpart-unavailable' : `${name}-only`;
         for (const definition of defs) unpaired.push({ reason, ...describeDefinition(sides[name], definition) });
       }
       continue;
@@ -464,6 +465,8 @@ export function buildChangeQuestion({ question, entry, base, head, config }) {
   const sides = { base: inspectSide(base, 'base'), head: inspectSide(head, 'head') };
   const reasons = [];
   for (const [name, side] of Object.entries(sides)) {
+    const unavailableProjects = side.facts.languageScope?.unavailableProjects || [];
+    if (unavailableProjects.length) reasons.push({ code: 'typescript-project-coverage-incomplete', side: name, count: unavailableProjects.length, message: 'Some TypeScript projects were omitted because their configurations were unavailable.' });
     if (side.summary.unavailableFiles.total) reasons.push({ code: 'source-regions-unavailable', side: name, count: side.summary.unavailableFiles.total, message: 'Some captured source regions failed parsing or freshness checks; other valid regions remain available.' });
     if (!side.resolutionFresh) reasons.push({ code: 'resolution-input-changed', side: name, message: 'A configuration/package input changed after capture; call and dependency navigation for this side is unavailable.' });
     if (language === 'go' && !side.hasInterfaceEvidence) reasons.push({ code: 'interface-implementation-evidence-unavailable', side: name, message: 'This capture has no interface implementation edges. Direct references remain available; interface-mediated candidates are unavailable, not zero.' });
@@ -477,6 +480,7 @@ export function buildChangeQuestion({ question, entry, base, head, config }) {
   const fileChanges = [];
   for (const file of [...new Set([...sides.base.files.keys(), ...sides.head.files.keys()])].sort()) {
     const a = sides.base.files.get(file), b = sides.head.files.get(file);
+    if ([sides.base, sides.head].some(side => side.facts.languageScope?.excludedByProject?.some(item => item.file === file))) continue;
     if (a?.sourceText === b?.sourceText) continue;
     fileChanges.push({ file, status: !a ? 'head-only' : !b ? 'base-only' : 'text-changed',
       base: a ? { snapshotId: base.facts.repository.snapshotId, sha256: digest(a.sourceText), status: a.status } : null,

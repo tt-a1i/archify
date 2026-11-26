@@ -8,6 +8,7 @@ import { reviewMarkdown } from './pull-request-markdown.mjs';
 import { createTranslator, messagesFor } from './i18n.mjs';
 import { buildAtlas } from './atlas.mjs';
 import { buildPullRequestImpact } from '../lib/pull-request-impact.mjs';
+import { fail } from '../core/index.mjs';
 
 const count = atlas => ({ files: atlas.files.length, dependencies: atlas.edges.length, functions: atlas.functions.length, modules: atlas.modules.length });
 const histogram = atlas => {
@@ -43,6 +44,13 @@ function changedText(root, manifest, names, known) {
 export function buildPullRequestView({ pr, scope, changedFiles, manifests, sourceRoot, baseSourceRoot = null, sourceGitRoot, facts, graph, findings, ir, map, resolutionInputs, locale, base }) {
   const read = name => JSON.parse(fs.readFileSync(path.join(base, name + '.json'), 'utf8'));
   const baseFacts = read('raw-facts'), baseFindings = read('findings');
+  for (const [side, snapshot] of [['base', baseFacts], ['head', facts]]) {
+    const projects = snapshot.languageScope?.unavailableProjects;
+    if (projects?.length) fail('pr/project-coverage-incomplete', 'PR change analysis requires TypeScript project coverage on both sides.', {
+      subject: { side }, evidence: { projects },
+      supportedFixes: ['select a PR scope whose TypeScript base configurations are available in both pinned trees'],
+    });
+  }
   const baseGraph = read('module-graph');
   const before = buildAtlas({ facts: baseFacts, graph: baseGraph, findings: baseFindings.diagnostics });
   const after = buildAtlas({ facts, graph, findings: findings.diagnostics });

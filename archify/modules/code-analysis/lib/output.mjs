@@ -65,8 +65,15 @@ function claimOutput(lock) {
   const candidate = fs.mkdtempSync(path.join(path.dirname(lock), '.archify-analysis.claim-'));
   const claim = () => {
     try {
-      // An existing claimant's directory is nonempty and cannot be replaced.
-      fs.renameSync(candidate, lock);
+      // mkdir is exclusive even on Windows, where renaming a directory over
+      // an existing regular file can replace that file.
+      fs.mkdirSync(lock);
+      try {
+        fs.renameSync(path.join(candidate, label), workspace);
+      } catch (error) {
+        removeVacantLock(lock);
+        throw error;
+      }
       return true;
     } catch (error) {
       if (!['EEXIST', 'ENOTEMPTY', 'EPERM', 'EACCES', 'ENOTDIR'].includes(error.code)) throw error;
@@ -82,11 +89,9 @@ function claimOutput(lock) {
     } catch (error) {
       if (error.code !== 'ENOENT') throw error;
     }
-    if (owners.length === 0) {
-      removeVacantLock(lock);
-      if (claim()) return workspace;
-      busy(lock);
-    }
+    // Another claimant may have created the lock but not its owner yet. An
+    // unowned empty directory cannot safely be reclaimed automatically.
+    if (owners.length === 0) busy(lock);
     const [owner] = owners;
     const identity = owners.length === 1 && owner.isDirectory() ? OWNER.exec(owner.name)?.groups : null;
     const pid = identity ? Number(identity.pid) : null;

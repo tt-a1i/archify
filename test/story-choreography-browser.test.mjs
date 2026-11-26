@@ -532,6 +532,12 @@ test('story SVGs render in <img>/<picture>, settle under prefers-reduced-motion,
     const distance = (pixels, still) => pixels.reduce((sum, channel, i) => sum + Math.abs(channel - still[i]), 0);
     const frameDistances = [firstFrame, lastFrame].map(frame => stills.map(still => distance(frame, still)));
     const matchedStills = frameDistances.map(([first, second]) => first < second ? 0 : 1);
+    const videoData = ${Boolean(process.env.ARCHIFY_STORY_EVIDENCE_DIR)} ? await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(vidBlob);
+    }) : null;
     const supportsH264 = typeof VideoEncoder !== 'undefined' && (await VideoEncoder.isConfigSupported({
       codec: 'avc1.64002a', width: 1920, height: 1080, framerate: 30, bitrate: 12000000, latencyMode: 'quality', avc: { format: 'avc' },
     })).supported;
@@ -544,9 +550,14 @@ test('story SVGs render in <img>/<picture>, settle under prefers-reduced-motion,
         silentMp4Head = new TextDecoder().decode(await mp4.slice(4,12).arrayBuffer());
       } finally { window.AudioEncoder = originalAudioEncoder; }
     }
-    return { state, pngDims, head, videoDims, matchedStills, frameDistances, overlapMessage, supportsH264, silentMp4Head, themeAfterExport, presetAfterExport, timeAfterExport, presetOpenBeforeExport, controlsLocked, cancellations, invalidRangeRejected, controlsRestored: controls.every(el => !el.disabled) };
+    return { videoData, state, pngDims, head, videoDims, matchedStills, frameDistances, overlapMessage, supportsH264, silentMp4Head, themeAfterExport, presetAfterExport, timeAfterExport, presetOpenBeforeExport, controlsLocked, cancellations, invalidRangeRejected, controlsRestored: controls.every(el => !el.disabled) };
   })()`);
 
+  if (process.env.ARCHIFY_STORY_EVIDENCE_DIR && stageCheck.videoData) {
+    fs.mkdirSync(process.env.ARCHIFY_STORY_EVIDENCE_DIR, { recursive: true });
+    fs.writeFileSync(path.join(process.env.ARCHIFY_STORY_EVIDENCE_DIR, 'story-stage.webm'), Buffer.from(stageCheck.videoData.split(',')[1], 'base64'));
+    fs.writeFileSync(path.join(process.env.ARCHIFY_STORY_EVIDENCE_DIR, 'story-stage.json'), JSON.stringify({ dimensions: stageCheck.videoDims, distances: stageCheck.frameDistances }));
+  }
   await t.test('Stage rejects an overlapping export before it can change reader state', () => {
     assert.match(stageCheck.overlapMessage ?? '', /already running/i);
   });

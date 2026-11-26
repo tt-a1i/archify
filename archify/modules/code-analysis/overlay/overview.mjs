@@ -186,6 +186,7 @@ function coverageOf({ graph, facts, unmapped, ambiguousModules, run }) {
   const failedPaths = new Set(parseErrors);
   // Some extractors retain failed files for recovered facts and source navigation.
   const analyzedPaths = facts?.files.filter((file) => !excludedRoles.has(file.role) && !failedPaths.has(file.path)).map((file) => file.path);
+  const tsScope = facts?.languageScope?.language === 'ts' ? facts.languageScope : null;
   const rules = run.rules || [];
   return {
     language: graph?.repository?.language ?? null,
@@ -197,6 +198,10 @@ function coverageOf({ graph, facts, unmapped, ambiguousModules, run }) {
       // Files matching these patterns are never enumerated, so they are named, not counted.
       excludePatterns: run.exclude || [],
       parseErrors,
+      ...(tsScope?.unavailableProjects?.length ? {
+        unavailableTypeScriptFiles: tsScope.excludedByProject.length,
+        unavailableTypeScriptProjects: tsScope.unavailableProjects,
+      } : {}),
       ...(['c', 'cpp'].includes(facts?.repository?.language) ? {
         notCompiled: facts.languageScope?.excludedFiles?.length || 0,
         translationUnits: facts.languageScope?.build?.units?.length || 0,

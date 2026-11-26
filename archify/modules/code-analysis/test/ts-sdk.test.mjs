@@ -59,6 +59,94 @@ test('bundled SDK remains available for JS without a TypeScript dependency', t =
   assert.equal(facts.calls.length, 1);
 });
 
+test('a missing declared base config omits only its nested package and blocks cross-package bindings', t => {
+  const root = project(t, {
+    'website/package.json': '{"devDependencies":{"shared-config":"1.0.0"}}',
+    'website/tsconfig.json': '{"extends":"shared-config/strict"}',
+    'website/app.ts': 'export function load() {}',
+    'service/tsconfig.json': '{"compilerOptions":{"moduleResolution":"bundler","module":"esnext"}}',
+    'service/index.ts': 'import { load } from "../website/app"; load();',
+  });
+  const capture = options => extractFacts(root, { language: 'ts', config, ...options }).facts;
+  const partial = capture();
+  assert.deepEqual(partial.files.map(f => f.path), ['main.js', 'service/index.ts']);
+  assert.deepEqual(partial.languageScope.excludedByProject, [{ file: 'website/app.ts', config: 'website/tsconfig.json' }]);
+  assert.deepEqual(partial.languageScope.unavailableProjects, [{ config: 'website/tsconfig.json', missingExtends: ['shared-config/strict'] }]);
+  assert.deepEqual(partial.imports.map(i => [i.from, i.resolved]), [['service/index.ts', false]]);
+  assert.equal(partial.calls.find(call => call.file === 'service/index.ts').target, undefined);
+  assert.deepEqual(semanticErrors('raw-facts', partial), []);
+  assert.deepEqual(capture({ capturedOnly: true }).languageScope.excludedByProject, partial.languageScope.excludedByProject);
+  const installed = path.join(root, 'website/node_modules/shared-config');
+  fs.mkdirSync(installed, { recursive: true });
+  fs.writeFileSync(path.join(installed, 'package.json'), '{"name":"shared-config","version":"1.0.0"}');
+  fs.writeFileSync(path.join(installed, 'strict.json'), '{"compilerOptions":{"strict":true}}');
+  const complete = capture();
+  const context = facts => analysisContext({ graph: buildGraph(facts, config), config, facts, active: [] });
+  assert.equal(complete.languageScope.unavailableProjects, undefined);
+  assert.equal(complete.calls.find(call => call.file === 'service/index.ts').target.file, 'website/app.ts');
+  assert.equal(comparability(context(complete), context(complete)).comparable, true);
+  for (const [left, right] of [[partial, complete], [complete, partial], [partial, partial]]) {
+    const comparison = comparability(context(left), context(right));
+    assert.equal(comparison.comparable, false);
+    assert.ok(comparison.reasons.some(reason => reason.code === 'typescript-project-coverage-incomplete'));
+  }
+  assert.deepEqual(capture({ capturedOnly: true }).languageScope.excludedByProject, partial.languageScope.excludedByProject,
+    'pinned capture does not use a base config installed only in the working tree');
+});
+
+test('root, malformed, local, undeclared and cross-package config failures stay hard errors', t => {
+  const declared = '{"devDependencies":{"shared-config":"1.0.0"}}';
+  for (const files of [
+    { 'package.json': declared, 'tsconfig.json': '{"extends":"shared-config/strict"}' },
+    { 'website/package.json': declared, 'website/tsconfig.json': '{"extends": "shared-config/strict", broken:' },
+    { 'website/package.json': declared, 'website/tsconfig.json': '{"extends":"../base.json"}' },
+    { 'website/package.json': '{}', 'website/tsconfig.json': '{"extends":"shared-config/strict"}' },
+    { 'website/package.json': declared, 'website/tsconfig.json': '{"extends":"shared-config/strict","files":["../main.ts"]}', 'main.ts': 'export {}' },
+  ]) {
+    const root = project(t, { 'website/app.ts': 'export {}', ...files });
+    assert.throws(() => extract(root, config), error => error.diagnostics?.[0].code === 'extract/tsconfig-invalid');
+  }
+  const root = project(t, {
+    'website/package.json': declared,
+    'website/tsconfig.json': '{"extends":"shared-config/strict"}',
+    'website/app.ts': 'export {}',
+  });
+  fs.rmSync(path.join(root, 'main.js'));
+  assert.throws(() => extract(root, config), error => error.diagnostics?.[0].code === 'extract/tsconfig-invalid',
+    'an entirely omitted selection must not return empty success');
+});
+
+test('an installed config package with a missing subpath is a configuration error', t => {
+  const root = project(t, {
+    'website/package.json': '{"devDependencies":{"shared-config":"1.0.0"}}',
+    'website/tsconfig.json': '{"extends":"shared-config/strict"}',
+    'website/app.ts': 'export {}',
+    'node_modules/shared-config/package.json': '{"name":"shared-config","version":"1.0.0"}',
+    'node_modules/shared-config/base.json': '{}',
+  });
+  assert.throws(() => extract(root, config), error => error.diagnostics?.[0].code === 'extract/tsconfig-invalid');
+});
+
+test('unavailable nested configs do not hide inherited or referenced errors', t => {
+  const shared = {
+    'website/package.json': '{"devDependencies":{"shared-config":"1.0.0"}}',
+    'website/app.ts': 'export {}',
+  };
+  for (const files of [
+    {
+      'website/tsconfig.json': '{"extends":["shared-config/strict","../base.json"]}',
+      'base.json': '{"extends":"shared-config/strict"}',
+    },
+    {
+      'website/tsconfig.json': '{"extends":"shared-config/strict","references":[{"path":"../other"}]}',
+      'other/tsconfig.json': '{"compilerOptions": broken}',
+    },
+  ]) {
+    const root = project(t, { ...shared, ...files });
+    assert.throws(() => extract(root, config), error => error.diagnostics?.[0].code === 'extract/tsconfig-invalid');
+  }
+});
+
 test('default and explicit bundled mode follow project references without loading installed SDKs', t => {
   const parent = project(t, {
     'package.json': '{"devDependencies":{"typescript":"5.9.71"}}',

@@ -92,7 +92,7 @@ export function reviewFindings(diagnostics, { baseline = null, previous = null, 
       entries: accepted.size,
       accepted: ids((d) => findings[d.id].status === 'accepted'),
       changed: ids((d) => findings[d.id].status === 'accepted-changed'),
-      stale: [...accepted.values()].filter((e) => !current.has(e.id)).map((e) => ({ id: e.id, code: e.code, reason: e.reason })).sort((a, b) => compareText(a.id, b.id)),
+      stale: analysis?.coverage?.unavailableTypeScriptFiles ? [] : [...accepted.values()].filter((e) => !current.has(e.id)).map((e) => ({ id: e.id, code: e.code, reason: e.reason })).sort((a, b) => compareText(a.id, b.id)),
     } : null,
     comparison: before ? comparisonOf({ previous, before, current, findings, ids, analysis, files, measurement, matchedBefore: pairs.matchedBefore }) : null,
     findings,
@@ -232,6 +232,9 @@ export function comparability(before, after) {
   }
   const roles = (c) => (c?.excludedRoles || []).join(',');
   if (roles(before.coverage) !== roles(after.coverage)) add('scope-changed', 'Excluded file roles changed.');
+  if (before.coverage?.unavailableTypeScriptFiles || after.coverage?.unavailableTypeScriptFiles) {
+    add('typescript-project-coverage-incomplete', 'A scan omitted files from TypeScript projects with unavailable configurations. Missing findings do not establish a fix.');
+  }
   const newParseErrors = (after.coverage?.parseErrors || []).filter((f) => !(before.coverage?.parseErrors || []).includes(f));
   if (newParseErrors.length) add('parse-errors', `${newParseErrors.length} file${newParseErrors.length === 1 ? '' : 's'} failed to parse this time: ${newParseErrors.slice(0, 5).join(', ')}${newParseErrors.length > 5 ? ', …' : ''}.`);
   reasons.push(...externalComparisonReasons(before.external, after.external));

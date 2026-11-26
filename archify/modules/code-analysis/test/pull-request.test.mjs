@@ -12,7 +12,7 @@ import { prepareAnalysisView } from '../bin/prepare.mjs';
 
 const payload = html => JSON.parse(html.match(/id="bauify-analysis">([\s\S]*?)<\/script>/)[1]);
 const git = (root,args) => execFileSync('git',['-C',root,...args],{encoding:'utf8',windowsHide:true,env:{...process.env,GIT_NO_LAZY_FETCH:'1'},stdio:['ignore','pipe','pipe']}).trim();
-function fixture(t) {
+function fixture(t, { unavailableHead = false } = {}) {
   const dir=fs.mkdtempSync(path.join(os.tmpdir(),'archify-pr-native-'));
   t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
   const root=path.join(dir,'repo');fs.mkdirSync(root);git(root,['init']);
@@ -30,8 +30,16 @@ function fixture(t) {
   fs.mkdirSync(path.dirname(path.join(root, sdkManifest)), { recursive: true });
   write(sdkManifest, JSON.stringify({ name: 'typescript', version: '99.0.0' }));
   git(root, ['add', '-f', sdkManifest]);
+  const projects = [];
+  if (unavailableHead) {
+    fs.mkdirSync(path.join(root, 'website'));
+    write('website/package.json', '{"devDependencies":{"base-config":"1.0.0"}}');
+    write('website/tsconfig.json', '{"extends":"base-config/strict"}');
+    write('website/entry.ts', 'export function entry() {}');
+    projects.push('website/package.json', 'website/tsconfig.json', 'website/entry.ts');
+  }
   const head=commit();
-  const files=[{filename:'a.ts',status:'modified'},{filename:'b.ts',status:'modified'},{filename:'added.ts',status:'added'},{filename:'removed.ts',status:'removed'},{filename:sdkManifest,status:'added'}];
+  const files=[{filename:'a.ts',status:'modified'},{filename:'b.ts',status:'modified'},{filename:'added.ts',status:'added'},{filename:'removed.ts',status:'removed'},{filename:sdkManifest,status:'added'},...projects.map(filename=>({filename,status:'added'}))];
   const meta={number:42,title:'native PR flow',state:'open',changed_files:files.length,base:{sha:base,ref:'main'},head:{sha:head},updated_at:'2026-11-14T05:02:16Z'};
   let fail=false;
   const fetchJSON=async route=>{if(fail)throw Error('simulated capture failure');return route.includes('/files?')?files:route.includes('/compare/')?{merge_base_commit:{sha:base}}:meta;};
@@ -80,6 +88,19 @@ test('offline PR preparation uses native findings, localization, source markers 
   for(const item of Object.values(data.tasks))assert.equal(item.task.source.gitHead,f.head);
   assert.equal(git(f.root,['status','--porcelain']),dirtyBefore);
   assert.equal(git(f.root,['rev-parse','HEAD']),f.head);
+});
+
+test('pinned PR preparation does not attribute changes to an unavailable TypeScript project', async t => {
+  const f = fixture(t, { unavailableHead: true });
+  const out = path.join(f.dir, 'out');
+  await assert.rejects(prepareAnalysisView([f.root, '--out', out, ...f.args], f.dependencies), error => {
+    const failure = error.diagnostics?.[0];
+    assert.equal(failure?.code, 'pr/project-coverage-incomplete');
+    assert.deepEqual(failure?.subject, { side: 'head' });
+    assert.deepEqual(failure?.evidence.projects, [{ config: 'website/tsconfig.json', missingExtends: ['base-config/strict'] }]);
+    return true;
+  });
+  assert.equal(fs.existsSync(path.join(out, 'analysis/repo.analysis.html')), false);
 });
 
 test('live PR analysis verifies tasks against captured head, retains merge-base on review and preserves good results after failure',async t=>{
