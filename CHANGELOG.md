@@ -2,6 +2,14 @@
 
 All notable changes are documented here. Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [Unreleased]
+
+> Development identity: `v3.3.3-dev.1`. Not a stable release.
+
+### Fixed
+
+- Code Analysis output publication recovery (#1471, #1472).
+
 ## [3.3.2] — 2026-11-25
 
 ### Added
