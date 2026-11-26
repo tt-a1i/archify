@@ -1,0 +1,10 @@
+{
+  "templateVersion": 1,
+  "repository": "tt-a1i/archify",
+  "number": 1501,
+  "author": "tt-a1i",
+  "title": "fix(release): align v3.3.2 stable.json publishedAt with annotated tagger time",
+  "mergedAt": "2026-11-26T00:10:07Z",
+  "mergeCommit": "95586bc667fa97ed73588efc13d2f14a5b3c4241",
+  "url": "https://github.com/tt-a1i/archify/pull/1501"
+}
