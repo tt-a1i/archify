@@ -542,3 +542,11 @@ test('a prepare process killed during publication leaves both previous reports f
   assert.deepEqual(fingerprints(previous), lastGood);
   assert.equal(fs.existsSync(current), false, 'the retry did not publish over the interrupted state');
 });
+
+test('an empty output lock cannot be reclaimed during another claim', async t => {
+  const f = fixture(t);
+  fs.mkdirSync(path.join(f.out, '.archify-analysis.lock'), { recursive: true });
+  await assert.rejects(withAnalysisOutput(f.out, () => assert.fail('entered an unowned lock')),
+    error => error.diagnostics?.[0]?.code === 'analysis/output-busy');
+  assert.deepEqual(fs.readdirSync(path.join(f.out, '.archify-analysis.lock')), []);
+});

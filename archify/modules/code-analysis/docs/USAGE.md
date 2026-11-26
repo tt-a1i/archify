@@ -130,7 +130,7 @@ Use `--ir architecture.json` only for an existing relevant diagram or an explici
 
 Report publication and workbench review saves share an output-directory lock. A retry clears a stopped writer's staging before publication when it can verify the writer is gone. Linux retries check the system boot and process namespace before interpreting a PID. They also check the process start time when the same PID is still visible and its identity can be compared.
 
-If the lock owner is active or cannot be verified, `analysis/output-busy` leaves the lock in place. Use a separate `--out` for independently retried containers or machines, including when a retained lock predates this owner check. After `analysis/output-recovery-required`, keep the output, move plan, and backups together for recovery.
+If the lock owner is active or cannot be verified, `analysis/output-busy` leaves the lock in place. An empty lock is also retained because another process may be creating its owner; a crash during that brief creation window can therefore require manual inspection before retrying. Use a separate `--out` for independently retried containers or machines, including when a retained lock predates this owner check. After `analysis/output-recovery-required`, keep the output, move plan, and backups together for recovery.
 
 Under **Recheck after edits**, copy the saved start command and run it on the generating machine. It preserves language, locale, config, baseline and optional IR/map. Without IR, opening the printed URL starts analysis and compares with the captured result; with IR, click Code Analysis. Later edits use **Re-analyze**. The report never runs a command automatically. Tasks remain captured snapshots until current source is verified.
 
