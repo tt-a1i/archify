@@ -4,6 +4,7 @@
     "**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
     "**/*.py",
     "**/*.java",
+    "**/*.kt",
     "**/*.go",
     "**/*.rs"
   ],
@@ -12,6 +13,7 @@
     "**/dist/**",
     "**/build/**",
     "**/target/**/*.java",
+    "**/target/**/*.kt",
     "**/coverage/**",
     "**/*.d.ts",
     "**/venv/**",

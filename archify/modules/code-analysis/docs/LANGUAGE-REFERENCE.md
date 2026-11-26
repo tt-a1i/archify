@@ -1,7 +1,7 @@
 # Language Reference
 
 Each run selects one language. Run these commands from the repository root. The
-JavaScript/TypeScript, Python and Java examples use checked-in fixtures and do
+JavaScript/TypeScript, Python, Java and Kotlin examples use checked-in fixtures and do
 not build or execute the fixture projects. Go and Rust use a project path you
 supply because those adapters require their respective project metadata and
 installed toolchains.
@@ -52,6 +52,23 @@ includes declarations, imports and an external-supertype case whose inherited
 member type is deliberately left unresolved. Java cycles are structural
 dependencies; they do not claim class-initialization failure. See
 [Java support and limitations](JAVA.md) for parser and resolution boundaries.
+
+## Kotlin
+
+```sh
+node archify/bin/archify.mjs code-analysis check archify/modules/code-analysis/test/fixtures/kotlin-basic --language kotlin --out out/kotlin --fail-on never
+```
+
+Kotlin sources are parsed by a tolerant recursive-descent parser (no Kotlin
+compiler or SDK required). Packages, imports with aliases, classes, objects,
+companion objects, enum and annotation classes, typealiases, constructors,
+init blocks, extension functions and properties, string templates and nested
+comments are covered. Constructor invocations are type references, not calls;
+Kotlin never inherits nested classifiers, so lexical resolution needs no
+supertype analysis. Gradle source-set visibility (`src/main/kotlin` cannot
+see `src/test/kotlin`) is modeled without evaluating builds. See
+[Kotlin support and limitations](KOTLIN.md) for parser and resolution
+boundaries.
 
 ## Go
 

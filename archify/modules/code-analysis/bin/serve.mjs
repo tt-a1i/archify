@@ -67,7 +67,7 @@ export function missingAnalysisDependencies(root = moduleRoot) {
 
 export const USAGE = `Usage:
   archify code-analysis serve <repo-root> --out <dir> [--ir <architecture.json>] [--locale en|zh-CN]
-                              [--pr <GitHub-URL-or-number> [--repository OWNER/REPO] | --base <commit> --head <commit>] [--scope path] [--language ts|py|java|go|rust|c|cpp] [--map overlay-map.json] [--config file.json]
+                              [--pr <GitHub-URL-or-number> [--repository OWNER/REPO] | --base <commit> --head <commit>] [--scope path] [--language ts|py|java|kotlin|go|rust|c|cpp] [--map overlay-map.json] [--config file.json]
                               [--baseline baseline.json] [--quality standard|showcase]
 
 Without --ir, opens a standalone workbench with Atlas and analyzes on page load.

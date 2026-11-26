@@ -5,12 +5,13 @@ import * as goAdapter from './go/index.mjs';
 import * as rustAdapter from './rust/index.mjs';
 import * as cAdapter from './c/index.mjs';
 import * as cppAdapter from './cpp/index.mjs';
+import * as kotlinAdapter from './kotlin/index.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fail } from './shared/diagnostics.mjs';
 import { JAVA_BUILD_MARKERS } from './shared/files.mjs';
 
-const ADAPTERS = [tsAdapter, pyAdapter, javaAdapter, goAdapter, rustAdapter, cAdapter, cppAdapter];
+const ADAPTERS = [tsAdapter, pyAdapter, javaAdapter, kotlinAdapter, goAdapter, rustAdapter, cAdapter, cppAdapter];
 
 export function selectAdapter(root, config, requested) {
   const supported = ADAPTERS.map((a) => a.id);
@@ -32,7 +33,11 @@ export function selectAdapter(root, config, requested) {
   // support; the left-out Java files are reported like any other language's.
   // A root Maven/Gradle build or Gradle settings file keeps Java eligible.
   const javaProject = [...JAVA_BUILD_MARKERS, 'settings.gradle', 'settings.gradle.kts'].some((name) => fs.existsSync(path.join(root, name)));
-  const withoutJava = matched.length > 1 && !javaProject ? matched.filter((a) => a !== javaAdapter) : matched;
+  // A JS/TS or Python tree that also holds Kotlin sources (an Android folder,
+  // a build helper) keeps the language it was analyzed in before Kotlin
+  // support; the left-out Kotlin files are reported like any other language's.
+  // A root Maven/Gradle build keeps Java and Kotlin eligible.
+  const withoutJava = matched.length > 1 && !javaProject ? matched.filter((a) => a !== javaAdapter && a !== kotlinAdapter) : matched;
   // A C++ translation-unit selection also covers C translation units from the
   // same compilation database; a mixed C/C++ project is one adapter choice.
   const detected = withoutJava.includes(cppAdapter) ? withoutJava.filter((a) => a !== cAdapter) : withoutJava;

@@ -10,7 +10,7 @@ import { outputEntry, withAnalysisOutput, writeCheckOutputs } from '../lib/outpu
 import { baselineCommand, taskCommand } from '../lib/task-command.mjs';
 
 export const USAGE = `Usage:
-  archify code-analysis check <repo-root> [--language ts|py|java|go|rust|c|cpp] [--config file.json]
+  archify code-analysis check <repo-root> [--language ts|py|java|kotlin|go|rust|c|cpp] [--config file.json]
                               [--ir architecture.json [--map overlay-map.json]]
                               [--baseline baseline.json] [--compare findings.json] [--out dir]
                               [--fail-on error|warning|info|never] [--new-only]
@@ -266,7 +266,7 @@ export function formatText(r) {
   const c = r.counts;
   lines.push(`Code analysis: ${r.verdict} — ${c.findings} finding${c.findings === 1 ? '' : 's'} (${c.error} error, ${c.warning} warning, ${c.info} info open; ${c.accepted} accepted)`);
   if (c.acceptedErrors) lines.push(`  ${c.acceptedErrors} accepted error${c.acceptedErrors === 1 ? ' is' : 's are'} still present: the baseline keeps ${c.acceptedErrors === 1 ? 'it' : 'them'} from failing this run, the finding${c.acceptedErrors === 1 ? '' : 's'} remain${c.acceptedErrors === 1 ? 's' : ''}.`);
-  lines.push(`  ${({ py: 'Python', ts: 'JS/TS', java: 'Java', go: 'Go', rust: 'Rust', c: 'C', cpp: 'C++' })[r.language] || r.language} · ${r.files} files · rules: ${r.rules.join(', ')}`);
+  lines.push(`  ${({ py: 'Python', ts: 'JS/TS', java: 'Java', kotlin: 'Kotlin', go: 'Go', rust: 'Rust', c: 'C', cpp: 'C++' })[r.language] || r.language} · ${r.files} files · rules: ${r.rules.join(', ')}`);
   if (['c', 'cpp'].includes(r.coverage?.languageScope?.language)) {
     const scope = r.coverage.languageScope;
     lines.push(`  Compilation database: ${scope.build.units.length} translation units · ${scope.excludedFiles.length} source files without commands · ${r.coverage.parseErrors.length} parse failures`);
