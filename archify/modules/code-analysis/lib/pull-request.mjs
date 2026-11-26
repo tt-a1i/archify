@@ -169,11 +169,13 @@ async function validateLocalObjectsAndScope(root, local, scope) {
       }
     }));
     if (entries.every(entry => !entry.length)) fail('pr/scope-invalid', 'The analysis scope has no entries in either pinned commit.', { subject: { scope }, evidence: { scope }, supportedFixes: ['choose a directory present in at least one pinned commit, or use --scope . for the repository root'] });
+    return Object.fromEntries(Object.keys(local).map((side, index) => [side, entries[index]]));
   }
+  return null;
 }
 
 async function prepareLocalPullRequest({ root, out, local, scope }) {
-  await validateLocalObjectsAndScope(root, local, scope);
+  const listings = await validateLocalObjectsAndScope(root, local, scope);
   const fixes = ['fetch the missing objects separately, then retry the same pinned comparison'];
   const repository = path.basename(root);
   const pr = { repository, number: null, title: repository, url: null, local: true,
@@ -183,7 +185,7 @@ async function prepareLocalPullRequest({ root, out, local, scope }) {
   const manifests = {};
   try {
     for (const [side, sha] of Object.entries(local)) {
-      try { manifests[side] = await materializeTree({ cache: root, sha, scope, target: roots[side], offline: true }); }
+      try { manifests[side] = await materializeTree({ cache: root, sha, scope, target: roots[side], offline: true, preflightListing: listings?.[side] }); }
       catch (error) {
         const diagnostic = error.diagnostics?.[0];
         if (!diagnostic || !['pr/git-failed', 'pr/local-object-missing'].includes(diagnostic.code)) throw error;

@@ -43,11 +43,13 @@ export async function git(cwd, args, { input = null, noLazyFetch = false } = {})
   } catch (error) { fail(error.killed ? 'pr/git-timeout' : 'pr/git-failed', error.killed ? 'Git source preparation timed out.' : 'Git could not prepare the requested source objects.', { evidence: { operation: args[0], exitCode: error.code || null }, supportedFixes: ['check local Git and repository access; retry the requested PR'] }); }
 }
 
-export async function materializeTree({ cache, sha, scope, target, blobSource = null, offline = false }) {
+export async function materializeTree({ cache, sha, scope, target, blobSource = null, offline = false, preflightListing = null }) {
   if (!SHA.test(sha)) fail('pr/commit-invalid', 'A source snapshot needs an exact commit SHA.');
   scope = normalizeScope(scope);
   fs.mkdirSync(target, { recursive: true });
-  const listing = await git(cache, ['ls-tree', '-rz', '--full-tree', sha, ...(scope === '.' ? [] : ['--', `${scope}/`])], { noLazyFetch: offline });
+  // Local scoped preparation just scanned this exact immutable commit and scope
+  // for its write-safety preflight. Reuse that listing within this operation.
+  const listing = preflightListing ?? await git(cache, ['ls-tree', '-rz', '--full-tree', sha, ...(scope === '.' ? [] : ['--', `${scope}/`])], { noLazyFetch: offline });
   const records = [], skipped = [], names = new Set();
   for (const record of listing.toString('utf8').split('\0').filter(Boolean)) {
     const match = /^(\d+) (\w+) ([a-f0-9]{40})\t([\s\S]+)$/.exec(record);
