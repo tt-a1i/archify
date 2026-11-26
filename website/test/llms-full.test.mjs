@@ -33,7 +33,7 @@ test('llms-full.txt derives release identity from package metadata and covers ca
   for (const type of ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'class', 'tree', 'timeline', 'waterfall']) {
     assert.match(text, new RegExp(`\`${type}\``), `missing diagram type: ${type}`);
   }
-  for (const tool of ['Mermaid', 'Excalidraw', 'PlantUML', 'D2', 'LikeC4', 'Eraser.io']) assert.ok(text.includes(tool), tool);
+  for (const tool of ['Mermaid', 'draw.io', 'ProcessOn', 'Excalidraw', 'PlantUML', 'D2', 'LikeC4', 'Eraser.io']) assert.ok(text.includes(tool), tool);
   assert.match(text, /skills@latest add https:\/\/archify\.si/);
   assert.match(text, /482469\.html/);
   assert.match(text, /one-page (answer|explainer)/i);
