@@ -114,6 +114,19 @@ export function createTokenParser(tokens, start = 0, end = tokens.length) {
     out.push(reference);
     if (at('<')) { reference.hasTypeArguments = true; parseTypeArgumentList(out); }
     acceptNullableSuffixes();
+    // Receiver function type: T.(A) -> R — common in DSL builders. The dot
+    // continues the type rather than ending it; without this branch the
+    // parameter list parser chokes on the leftover '.' and the declaration
+    // is lost to recovery.
+    if (at('.') && peek(1)?.image === '(') {
+      next(); // '.'
+      const openParen = next(); // '('
+      scanBalancedTypeGroup(openParen, '(', ')', out);
+      acceptNullableSuffixes();
+      if (!accept('->')) throw new ParseError('expected -> in receiver function type', peek());
+      if (!parseTypeBase(out)) throw new ParseError('expected a result type after ->', peek());
+      return true;
+    }
     // Function-type tail: T -> R
     if (accept('->')) {
       if (!parseTypeBase(out)) throw new ParseError('expected a result type after ->', peek());
@@ -160,9 +173,15 @@ export function createTokenParser(tokens, start = 0, end = tokens.length) {
       else if (token.image === closeImage) depth--;
       else if (depth >= 1 && token.tokenType.name === 'Identifier') {
         // A name chain inside a function-type parameter list can be a type.
-        if (/^[A-Z]/.test(token.image)) {
-          const segments = [token];
-          while (at('.') && peek(1)?.tokenType.name === 'Identifier') { next(); segments.push(next()); }
+        // Scan chains from any identifier, then keep those with at least one
+        // uppercase segment: a lowercase-led chain like other.Payload is a
+        // package-qualified classifier and must keep its package prefix —
+        // recording only the suffix would resolve it as a same-package simple
+        // name. Pure lowercase chains are parameter names or values, never
+        // types, so they stay unrecorded.
+        const segments = [token];
+        while (at('.') && peek(1)?.tokenType.name === 'Identifier') { next(); segments.push(next()); }
+        if (segments.some(t => /^[A-Z]/.test(t.image))) {
           out.push({ name: segments.map(t => t.image).join('.'), ...span(segments[0], segments.at(-1)) });
           if (at('<')) parseTypeArgumentList(out);
         }
@@ -621,8 +640,15 @@ export function createTokenParser(tokens, start = 0, end = tokens.length) {
       }
       if (at(',')) { next(); continue; }
       if (at(';')) { next(); entryScan = false; continue; }
-      // Unrecognized member content: skip one token tolerantly.
-      if (cursor === before) next();
+      // Unrecognized member content: skip tolerantly. Balanced groups go as
+      // units — a failed member parse can leave the cursor before its body,
+      // and skipping braces one token at a time would mistake the body's
+      // closing brace for the end of this declaration block, displacing every
+      // member after it to the outer scope.
+      if (cursor === before) {
+        if (at('{') || at('(') || at('[')) skipBalancedGroup();
+        else next();
+      }
     }
     const close = expect('}', 'unterminated declaration block');
     return { open: loc(open), close: loc(close) };
@@ -804,7 +830,28 @@ export function createTokenParser(tokens, start = 0, end = tokens.length) {
       // is one accessor, not a member named set. Skip the modifiers before
       // recognizing the keyword so the member loop never misreads it.
       let lookahead = 0;
-      while (['private', 'protected', 'internal'].includes(peek(lookahead)?.image)) lookahead++;
+      for (;;) {
+        const ahead = peek(lookahead);
+        if (!ahead) break;
+        if (['private', 'protected', 'internal'].includes(ahead.image)) { lookahead++; continue; }
+        if (ahead.image !== '@') break;
+        // Accessor annotations (@Synchronized get, @Inject private set) sit
+        // before the keyword just like modifiers. Count the whole group —
+        // dotted name and optional argument list — so it is skipped wholesale.
+        lookahead++;
+        if (peek(lookahead)?.tokenType.name === 'Identifier') {
+          lookahead++;
+          while (peek(lookahead)?.image === '.' && peek(lookahead + 1)?.tokenType.name === 'Identifier') lookahead += 2;
+        }
+        if (peek(lookahead)?.image === '(') {
+          let depth = 0;
+          do {
+            if (peek(lookahead)?.image === '(') depth++;
+            else if (peek(lookahead)?.image === ')') depth--;
+            lookahead++;
+          } while (depth > 0 && peek(lookahead));
+        }
+      }
       const token = peek(lookahead);
       if (!token || token.tokenType.name !== 'Identifier') break;
       if (!['get', 'set'].includes(token.image) || peek(lookahead + 1)?.image !== '(') break;

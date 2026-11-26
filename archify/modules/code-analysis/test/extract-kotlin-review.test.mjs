@@ -228,3 +228,56 @@ test('kotlin review: invocations nested in call arguments are scanned', t => {
   const inner = facts.calls?.filter(site => site.target?.name === 'inner') || [];
   assert.equal(inner.length > 0, true);
 });
+
+test('kotlin review: annotated accessors do not displace later class members', t => {
+  // @Synchronized get() { … } is one accessor: without annotation-aware
+  // lookahead the accessor body terminates the class early and nested types
+  // leak to file scope, breaking cross-file references through the class.
+  const root = fixture(t, {
+    'p/Counter.kt': 'package p\nclass Counter {\n  val count: Int = 0\n    @Synchronized get() { return 1 }\n  class Snapshot\n}\n',
+    'p/Use.kt': 'package p\nclass Use(val s: Counter.Snapshot)\n',
+  });
+  const { facts } = extractFacts(root, { language: 'kotlin', config: config() });
+  assert.equal(facts.parse_errors?.length ?? 0, 0);
+  const edge = importsFrom(facts, 'p/Use.kt').find(imp => imp.to === 'p/Counter.kt');
+  assert.equal(edge?.to, 'p/Counter.kt');
+});
+
+test('kotlin review: annotated setter with arguments and modifier stays inside the class', t => {
+  const root = fixture(t, {
+    'p/Counter.kt': 'package p\nclass Counter {\n  var count: Int = 0\n    @Suppress("unused") private set(value) { field = value }\n  class Snapshot\n}\n',
+    'p/Use.kt': 'package p\nclass Use(val s: Counter.Snapshot)\n',
+  });
+  const { facts } = extractFacts(root, { language: 'kotlin', config: config() });
+  const edge = importsFrom(facts, 'p/Use.kt').find(imp => imp.to === 'p/Counter.kt');
+  assert.equal(edge?.to, 'p/Counter.kt');
+});
+
+test('kotlin review: receiver function type parameters parse without scope loss', t => {
+  // String.() -> Unit is the DSL-builder idiom: the dot continues the type.
+  // When it failed to parse, recovery skipped tokens one at a time and the
+  // function body's closing brace ended the class.
+  const root = fixture(t, {
+    'p/Builder.kt': 'package p\nclass Builder {\n  fun build(block: String.() -> Unit) { block() }\n  class Snapshot\n}\n',
+    'p/Use.kt': 'package p\nclass Use(val s: Builder.Snapshot)\n',
+  });
+  const { facts } = extractFacts(root, { language: 'kotlin', config: config() });
+  assert.equal(facts.parse_errors?.length ?? 0, 0);
+  const edge = importsFrom(facts, 'p/Use.kt').find(imp => imp.to === 'p/Builder.kt');
+  assert.equal(edge?.to, 'p/Builder.kt');
+});
+
+test('kotlin review: qualified types in parenthesized receivers keep their package', t => {
+  // Both demo.Payload and other.Payload exist: the receiver of the extension
+  // explicitly qualifies other.Payload, so only other/Payload.kt may receive
+  // the edge — never the same-package simple-name candidate.
+  const root = fixture(t, {
+    'demo/Payload.kt': 'package demo\nclass Payload\n',
+    'other/Payload.kt': 'package other\nclass Payload\n',
+    'demo/Ext.kt': 'package demo\nfun ((other.Payload) -> Unit).runAction() = Unit\n',
+  });
+  const { facts } = extractFacts(root, { language: 'kotlin', config: config() });
+  const edges = importsFrom(facts, 'demo/Ext.kt');
+  assert.equal(edges.some(imp => imp.to === 'other/Payload.kt'), true);
+  assert.equal(edges.some(imp => imp.to === 'demo/Payload.kt'), false);
+});
