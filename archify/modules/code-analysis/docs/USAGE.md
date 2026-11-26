@@ -582,6 +582,13 @@ receipt for exits `0` and `1`, including when findings block the gate.
 On exit `2`, save the error receipt. A missing or invalid file passed to
 `--compare` produces exit `2`.
 
+An explicit comparison briefly locks the directory containing the resolved
+report while reading it. If another analysis is publishing there or needs
+recovery, the comparison fails closed instead of reading an uncommitted file.
+The report directory must be writable; for a completed read-only report, copy
+it to a writable directory before comparing. Symbolic links are resolved before
+locking so they cannot bypass the producer's output lock.
+
 ## Config files
 
 `--config file.json` is merged into the defaults (`config/defaults.json`):

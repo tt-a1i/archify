@@ -100,7 +100,23 @@ export async function runCheck(argv) {
   }
   const compare = options['--compare'] ? path.resolve(options['--compare']) : null;
   if (compare && !fs.existsSync(compare)) fail('cli/input-invalid', `Not a file: ${options['--compare']}`, { subject: { option: '--compare' }, supportedFixes: ['pass the findings.json of an earlier run'] });
-  const explicitPrevious = compare ? loadPrevious(compare, { strict: true }) : null;
+  // A comparator can be a public file in another output directory. Own that
+  // directory while reading so an active or interrupted publication cannot
+  // expose an uncommitted candidate as an earlier passing gate.
+  let explicitPrevious = null;
+  if (compare) {
+    try {
+      const resolvedCompare = fs.realpathSync(compare);
+      explicitPrevious = await withAnalysisOutput(path.dirname(resolvedCompare),
+        () => loadPrevious(resolvedCompare, { strict: true }));
+    } catch (error) {
+      if (['EACCES', 'EPERM', 'EROFS'].includes(error.code)) fail('analysis/comparison-lock-unavailable', 'Cannot safely lock the comparison report directory.', {
+        subject: { option: '--compare', file: compare },
+        supportedFixes: ['use a writable report directory, or copy a completed report to a writable directory and compare that copy'],
+      });
+      throw error;
+    }
+  }
 
   const { facts, config, otherLanguages } = extractFacts(root, { language: options['--language'] || null, config: options['--config'] || null });
   const unavailableProjects = facts.languageScope?.unavailableProjects || [];

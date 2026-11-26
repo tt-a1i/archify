@@ -77,6 +77,39 @@ test('a regular file at the lock path yields an output path conflict', async t =
   assert.equal(fs.readFileSync(lock, 'utf8'), 'keep this file');
 });
 
+test('explicit comparison preserves a regular file at the comparison lock path', async t => {
+  const f = fixture(t);
+  assert.equal((await runCheck([...f.args, '--new-only'])).exitCode, 0);
+  const lock = path.join(f.out, '.archify-analysis.lock');
+  fs.writeFileSync(lock, 'keep this file');
+  await assert.rejects(runCheck([f.root, '--language', 'ts', '--compare', path.join(f.out, 'gate-findings.json'), '--new-only']),
+    error => error.diagnostics?.[0]?.code === 'analysis/output-path-conflict');
+  assert.equal(fs.readFileSync(lock, 'utf8'), 'keep this file');
+});
+
+test('an empty output lock cannot be reclaimed during another claim', async t => {
+  const f = fixture(t);
+  fs.mkdirSync(path.join(f.out, '.archify-analysis.lock'), { recursive: true });
+  await assert.rejects(withAnalysisOutput(f.out, () => assert.fail('entered an unowned lock')),
+    error => error.diagnostics?.[0]?.code === 'analysis/output-busy');
+  assert.deepEqual(fs.readdirSync(path.join(f.out, '.archify-analysis.lock')), []);
+});
+
+test('explicit comparison reports actionable diagnostics when its directory cannot be locked', async t => {
+  const f = fixture(t);
+  assert.equal((await runCheck([...f.args, '--new-only'])).exitCode, 0);
+  const mkdtemp = fs.mkdtempSync;
+  fs.mkdtempSync = (prefix, ...args) => {
+    if (prefix === path.join(f.out, '.archify-analysis.claim-')) throw Object.assign(new Error('read only'), { code: 'EACCES' });
+    return mkdtemp(prefix, ...args);
+  };
+  try {
+    await assert.rejects(runCheck([f.root, '--language', 'ts', '--compare', path.join(f.out, 'gate-findings.json'), '--new-only']),
+      error => error.diagnostics?.[0]?.code === 'analysis/comparison-lock-unavailable'
+        && error.diagnostics[0].supportedFixes.some(fix => fix.includes('writable')));
+  } finally { fs.mkdtempSync = mkdtemp; }
+});
+
 test('check rejects a directory at the automatic comparison path before reading it', async t => {
   const f = fixture(t);
   const findings = path.join(f.out, 'findings.json');
@@ -305,6 +338,54 @@ test('check owns the previous findings through publication and installs the new 
   const retry = checkAgain();
   assert.equal(retry.status, 1, retry.stdout + retry.stderr);
   assert.ok(JSON.parse(retry.stdout).gate.failing.some(finding => finding.code === 'coupling/import-cycle'));
+});
+
+test('explicit comparisons reject a gate comparator during and after an interrupted publication', { timeout: 45000 }, async t => {
+  const f = fixture(t);
+  const config = path.join(f.directory, 'config.json');
+  fs.writeFileSync(config, JSON.stringify({ rules: { complexity: { function: { warning: { complexity: 0 } } } } }));
+  const args = [...f.args, '--config', config];
+  assert.equal((await runCheck([...args, '--new-only'])).exitCode, 0);
+  fs.writeFileSync(path.join(f.root, 'a.ts'), 'export function a(x: boolean) { if (x) return 1; return 0; }');
+  const gate = path.join(f.out, 'gate-findings.json'), ready = path.join(f.directory, 'gate-published');
+  const hook = path.join(f.directory, 'hold-gate.cjs');
+  fs.writeFileSync(hook, `
+    const fs = require('node:fs'), path = require('node:path');
+    const rename = fs.renameSync;
+    fs.renameSync = (from, to) => {
+      const result = rename(from, to);
+      if (to === ${JSON.stringify(gate)} && path.basename(path.dirname(from)) === 'next') {
+        fs.writeFileSync(${JSON.stringify(ready)}, '');
+        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 30000);
+      }
+      return result;
+    };
+  `);
+  const child = spawn(process.execPath, ['--require', hook, check, ...args, '--new-only', '--fail-on', 'error', '--json']);
+  let childOutput = ''; child.stdout.on('data', bytes => { childOutput += bytes; }); child.stderr.on('data', bytes => { childOutput += bytes; });
+  const closed = once(child, 'close');
+  const compare = (out, source = gate) => spawnSync(process.execPath, [check, f.root, '--language', 'ts', '--config', config, '--new-only', '--compare', source, '--json', ...(out ? ['--out', out] : [])], { encoding: 'utf8', timeout: 12000 });
+  try {
+    try { await waitFor(ready); } catch (error) { throw new Error(`${error.message}: ${childOutput}`); }
+    for (const out of [null, path.join(f.directory, 'other-output')]) {
+      const active = compare(out);
+      assert.equal(active.status, 2, active.stdout + active.stderr);
+      assert.equal(JSON.parse(active.stdout).diagnostics[0].code, 'analysis/output-busy');
+    }
+    const alias = path.join(f.directory, 'alias.json');
+    try { fs.symlinkSync(gate, alias); } catch (error) { if (!['EPERM', 'EACCES'].includes(error.code)) throw error; }
+    if (fs.existsSync(alias)) {
+      const linked = compare(null, alias);
+      assert.equal(linked.status, 2, linked.stdout + linked.stderr);
+      assert.equal(JSON.parse(linked.stdout).diagnostics[0].code, 'analysis/output-busy');
+    }
+  } finally {
+    child.kill('SIGKILL');
+    await closed;
+  }
+  const interrupted = compare(null);
+  assert.equal(interrupted.status, 2, interrupted.stdout + interrupted.stderr);
+  assert.ok(['analysis/output-busy', 'analysis/output-recovery-required'].includes(JSON.parse(interrupted.stdout).diagnostics[0].code));
 });
 
 test('Linux reclaims a reused PID only when process and clock identities can be compared', {
