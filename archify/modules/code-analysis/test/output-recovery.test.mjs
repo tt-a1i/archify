@@ -542,3 +542,16 @@ test('a prepare process killed during publication leaves both previous reports f
   assert.deepEqual(fingerprints(previous), lastGood);
   assert.equal(fs.existsSync(current), false, 'the retry did not publish over the interrupted state');
 });
+
+test('verification history retains the previous report when current output is absent', async t => {
+  const f = fixture(t);
+  const current = path.join(f.out, 'analysis'), previous = path.join(f.out, 'analysis.previous');
+  await prepareAnalysisView(f.args);
+  const before = read(path.join(current, 'findings.json'));
+  fs.renameSync(current, previous);
+  f.write(true);
+  await prepareAnalysisView(f.args);
+  const history = read(path.join(current, 'verification-history.json'));
+  assert.ok(history.some(item => item.repository.snapshotId === before.repository.snapshotId));
+  assert.deepEqual(read(path.join(previous, 'findings.json')), before, 'recovery preserves the previous report');
+});

@@ -9,6 +9,7 @@ import { parsePullRequest, preparePullRequest, normalizeScope } from '../lib/pul
 import { materializeTree } from '../lib/git-sources.mjs';
 import { startAnalysisView, parseArgs } from '../bin/serve.mjs';
 import { prepareAnalysisView } from '../bin/prepare.mjs';
+import { evaluateVerification } from '../lib/verification.mjs';
 
 const payload = html => JSON.parse(html.match(/id="bauify-analysis">([\s\S]*?)<\/script>/)[1]);
 const git = (root,args) => execFileSync('git',['-C',root,...args],{encoding:'utf8',windowsHide:true,env:{...process.env,GIT_NO_LAZY_FETCH:'1'},stdio:['ignore','pipe','pipe']}).trim();
@@ -37,7 +38,7 @@ function fixture(t) {
   const fetchJSON=async route=>{if(fail)throw Error('simulated capture failure');return route.includes('/files?')?files:route.includes('/compare/')?{merge_base_commit:{sha:base}}:meta;};
   const dependencies={preparePRSources:options=>preparePullRequest(options,{fetchJSON})};
   const args=['--pr','https://github.com/example/project/pull/42','--locale','zh-CN'];
-  return {dir,root,base,head,args,dependencies,fail:()=>{fail=true;}};
+  return {dir,root,base,head,args,dependencies,meta,fail:()=>{fail=true;}};
 }
 
 test('PR options reuse native grammar and reject ambiguous sources',()=>{
@@ -99,6 +100,28 @@ test('live PR analysis verifies tasks against captured head, retains merge-base 
   const last=fs.readFileSync(path.join(view.out,'analysis/repo.analysis.html'),'utf8');
   f.fail();const failed=await post('/analyze',null,true);assert.equal(failed.status,500);
   assert.equal(fs.readFileSync(path.join(view.out,'analysis/repo.analysis.html'),'utf8'),last);
+});
+
+test('a refreshed PR verifies its prior head task while retaining the merge-base comparison', async t => {
+  const f = fixture(t), view = await startAnalysisView([f.root, '--out', path.join(f.dir, 'out'), ...f.args], f.dependencies);
+  t.after(() => { view.server.closeAllConnections(); view.server.close(); });
+  const post = (route, input, refresh = false) => fetch(view.url + route, { method: 'POST', headers: { Origin: view.url, 'X-Analysis-Token': view.token, 'Content-Type': 'application/json', ...(refresh ? { 'X-Analysis-Refresh': '1' } : {}) }, ...(input ? { body: JSON.stringify(input) } : {}) });
+  const first = await post('/analyze');
+  assert.equal(first.status, 200, await first.clone().text());
+  const initial = payload(await first.text()), finding = initial.findings[0];
+  const taskResponse = await post('/task', { ids: [finding.id], expected: { [finding.id]: finding.reviewTarget } });
+  assert.equal(taskResponse.status, 200, await taskResponse.clone().text());
+  const task = (await taskResponse.json()).task;
+  fs.writeFileSync(path.join(f.root, 'a.ts'), 'export function a() { return 2; }\n');
+  git(f.root, ['add', 'a.ts']);
+  git(f.root, ['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-m', 'next head']);
+  f.meta.head.sha = git(f.root, ['rev-parse', 'HEAD']);
+  const refreshed = await post('/analyze', null, true);
+  assert.equal(refreshed.status, 200, await refreshed.clone().text());
+  const result = payload(await refreshed.text());
+  assert.equal(result.pullRequest.baseSHA, f.base);
+  assert.equal(result.pullRequest.headSHA, f.meta.head.sha);
+  assert.ok((await evaluateVerification(result.verification, task)).receipt, 'the task uses its original PR head as verification baseline');
 });
 
 test('pinned CLI reviews an exact base and head with renamed source and preserves the last complete report', t => {

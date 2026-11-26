@@ -28,6 +28,7 @@
     "adapter": "pyright-parser@1.1.414/python-3.14",
     "sourceKind": "working-tree",
     "snapshotId": "f1c9bfd491749465032c6b9299dd131d39314bfd3bf4c6874ec3f06bfa494ad2",
+    "analysisSha256": "6486ddc927ef963749e21d4826d52388331051ff0d30a4726f286e4503f0ca32",
     "configDigest": "599882652663586cb0e066002b72326f877ae1c90d9e48907e424e422a98f502",
     "analyzer": {
       "name": "@archify/code-analysis",

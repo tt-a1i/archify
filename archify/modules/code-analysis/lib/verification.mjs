@@ -8,8 +8,12 @@ export async function evaluateVerification(context, task, reported, identifyTask
   if (task?.schema_version !== 1 || task.kind !== 'archify-code-analysis-task'
     || typeof task.taskId !== 'string' || !/^TASK-[a-f0-9]{12}$/.test(task.taskId) || !Array.isArray(task.findings)
     || !task.findings.length || task.findings.length > 100) return bad('invalid-task');
-  if (task.source?.snapshotId !== context.before.snapshotId || task.source?.root !== context.root
-    || (task.source?.configDigest ?? null) !== context.configDigest) return bad('wrong-task-snapshot');
+  const contexts = Array.isArray(context) ? context : [context];
+  const matches = contexts.filter((capture) => task.source?.snapshotId === capture.before.snapshotId
+    && task.source?.root === capture.root && (task.source?.configDigest ?? null) === capture.configDigest
+    && (!Object.hasOwn(task.source, 'analysisSha256') || task.source.analysisSha256 === capture.taskAnalysisSha256));
+  if (matches.length !== 1) return bad('wrong-task-snapshot');
+  context = matches[0];
 
   const selected = [], ids = new Set();
   for (const finding of task.findings) {
