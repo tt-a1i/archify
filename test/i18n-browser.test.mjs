@@ -188,6 +188,21 @@ const BROWSER_LOCALES = {
     },
     shareCardFailure: '2D-контекст Canvas недоступен для карточки для публикации',
   },
+  th: {
+    title: (type) => `การแปลในเบราว์เซอร์-${type}`,
+    toolbarLabel: 'ตัวควบคุมมุมมองไดอะแกรม',
+    finder: { hidden: false, title: 'ค้นหาโหนด', searchLabel: 'ค้นหาโหนดในไดอะแกรม' },
+    route: { hidden: false, title: 'คลิกจุดเริ่มต้นของเส้นทาง', label: 'ล้างเส้นทางที่ไล่ไว้' },
+    exportLabel: 'ส่งออกไดอะแกรม',
+    exportMenuLabel: 'ส่งออก',
+    exportMenuText: /คัดลอกไดอะแกรม/,
+    presetBadges: {
+      'signal-flow': { header: 'ซิกนัลโฟลว์', plate: 'none' },
+      blueprint: { header: 'พิมพ์เขียว / REV 01', plate: '' },
+      editorial: { header: 'เอดิทอเรียล / บันทึกภาคสนาม', plate: 'ARCHIFY / เพลต 04' },
+    },
+    shareCardFailure: 'ไม่พร้อมใช้งาน 2D canvas context สำหรับ การ์ดแชร์',
+  },
 };
 
 async function assertLocalizedViewer(browser, locale, expected) {
@@ -353,6 +368,17 @@ test('real Chrome keeps Russian Viewer controls, exports, and accessibility labe
   const browser = new ChromeVisualBrowser(chromePath);
   try {
     await assertLocalizedViewer(browser, 'ru', BROWSER_LOCALES.ru);
+  } finally {
+    await browser.close();
+  }
+});
+
+test('real Chrome keeps Thai Viewer controls, exports, and accessibility labels localized', {
+  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser localization regression.',
+}, async () => {
+  const browser = new ChromeVisualBrowser(chromePath);
+  try {
+    await assertLocalizedViewer(browser, 'th', BROWSER_LOCALES.th);
   } finally {
     await browser.close();
   }
