@@ -278,7 +278,7 @@ test('a phase border repair clears other arrows beyond the self-call', t => {
   render(t, doc);
 });
 
-test('a phase border repair clears fractional arrow positions after rounding', t => {
+test('a phase border repair clears fractional arrow positions using the same clearance bounds', t => {
   const doc = sequence([
     { from: 'left', to: 'left', y: 208, label: 'refresh' },
     { from: 'middle', to: 'right', y: 254.4, label: 'notify' },
@@ -286,9 +286,22 @@ test('a phase border repair clears fractional arrow positions after rounding', t
   doc.segments = [{ from: 204, to: 210, label: 'Phase' }];
   const diagnostic = failure(t, doc, 'sequence/segment-message-border-run');
   assert.deepEqual(diagnostic.supportedFixes, [
-    'set /segments/0/to to at least 259 to leave the message above it',
+    'set /segments/0/to to at least 258.4 to leave the message above it',
   ]);
-  doc.segments[0].to = Number(diagnostic.supportedFixes[0].match(/\b(\d+) to leave/)[1]);
+  doc.segments[0].to = 258.4;
+  render(t, doc);
+});
+
+test('a phase border repair can use a fractional gap without including the next phase message', t => {
+  const doc = sequence([
+    { from: 'left', to: 'left', y: 200.5, label: 'refresh' },
+    { from: 'middle', to: 'right', y: 250.75, label: 'notify' },
+  ], { meta: { viewBox: [920, 680] } });
+  doc.segments = [{ from: 150, to: 241.5, label: 'First phase' }, { from: 246.75, to: 400, label: 'Next phase' }];
+  const diagnostic = failure(t, doc, 'sequence/segment-message-border-run');
+  assert.equal(diagnostic.supportedFixes[0], 'set /segments/0/to to at least 246.5 to leave the message above it');
+  doc.segments[0].to = 246.5;
+  assert.ok(doc.segments[0].to < doc.segments[1].from && doc.segments[1].from < doc.messages[1].y);
   render(t, doc);
 });
 

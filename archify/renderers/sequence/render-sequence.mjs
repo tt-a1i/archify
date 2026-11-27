@@ -245,15 +245,12 @@ function messageArrowYs(message) {
 const PHASE_ARROW_CLEARANCE = 4;
 
 function phaseBorderCrowdsArrow(border, arrowY) {
-  return Math.abs(border - arrowY) < PHASE_ARROW_CLEARANCE;
+  // Compare the same bounds that repair uses, including fractional coordinates.
+  return border > arrowY - PHASE_ARROW_CLEARANCE && border < arrowY + PHASE_ARROW_CLEARANCE;
 }
 
 function clearPhaseBorderY(boundaryArrowY, sortedArrowYs, direction) {
-  const roundOutward = direction > 0 ? Math.ceil : Math.floor;
-  const clearOf = (arrowY) => {
-    const y = roundOutward(arrowY + direction * PHASE_ARROW_CLEARANCE);
-    return phaseBorderCrowdsArrow(y, arrowY) ? y + direction : y;
-  };
+  const clearOf = (arrowY) => arrowY + direction * PHASE_ARROW_CLEARANCE;
   // Walk in the same direction as the repair, including any newly crowded arrows.
   let y = clearOf(boundaryArrowY);
   const start = direction > 0 ? 0 : sortedArrowYs.length - 1;
