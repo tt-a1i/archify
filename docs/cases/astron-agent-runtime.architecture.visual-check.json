@@ -8,8 +8,8 @@
   "provenance": "unknown",
   "artifact": {
     "path": "docs/cases/astron-agent-runtime.architecture.html",
-    "sha256": "d42ca27aea4fbb5df886fdf57ad044c375f7e6475ebececf1039c6d2e0beef69",
-    "bytes": 953721
+    "sha256": "e723168ad8a302bc8fbd2c63b256d8e233767c31bbd8a3ddc8ff0762cdf27de9",
+    "bytes": 962446
   },
   "state": {
     "detail": "read",
@@ -904,23 +904,23 @@
         "file": "astron-agent-runtime.architecture.visual-check.html"
       },
       {
-        "sha256": "32eaf7a1325785af0d4f0466c10466e766ba7a201cfe6a609c39398fe01707e5",
-        "bytes": 128839,
+        "sha256": "71d38d781ebf5f4dedaff85c23e447e1f8a3a722f978a1612356efee11f130ca",
+        "bytes": 135330,
         "file": "astron-agent-runtime.architecture.visual-check.1440x900.light.png"
       },
       {
-        "sha256": "9acfed09ca7049d685b2a519ba600473eaaa250d363075813ab40f45fe194038",
-        "bytes": 140447,
+        "sha256": "5b90ecf274b721efc9d8411fbd21526b5ee99934ab0a09429186279dd5b9a3ea",
+        "bytes": 140019,
         "file": "astron-agent-runtime.architecture.visual-check.1440x900.dark.png"
       },
       {
-        "sha256": "5a1b57487d721d5838ef0105186fa990384f9910a174f954461a200a6922d434",
-        "bytes": 193397,
+        "sha256": "ceb3a918909bf4dd3aa5ca074a140a6bbf340901d614aca8475f5172f6ce73d5",
+        "bytes": 202257,
         "file": "astron-agent-runtime.architecture.visual-check.2048x1320.light.png"
       },
       {
-        "sha256": "0d296933860b4e11046267443e3af2abe508bc2addd38b4fcb14b03d1998a98d",
-        "bytes": 213904,
+        "sha256": "217274ac04c354ad78efeeba6b3c359e420be4aef83c65366b53eae9153ddd6f",
+        "bytes": 213203,
         "file": "astron-agent-runtime.architecture.visual-check.2048x1320.dark.png"
       }
     ]

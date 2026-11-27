@@ -249,11 +249,11 @@
 
         <div class="command-block">
           <div class="command-bar"><span data-en="Global install" data-zh="全局安装">Global install</span><button class="copy-button" type="button" data-copy-source="install-command" data-en="Copy" data-zh="复制">Copy</button></div>
-          <pre id="install-command">npx -y skills add tt-a1i/archify --skill archify --agent codex --global --copy --yes</pre>
+          <pre id="install-command">npx -y skills add tt-a1i/archify --skill archify --skill archify-pr --agent codex --global --copy --yes</pre>
         </div>
         <div class="command-block">
           <div class="command-bar"><span data-en="This repository only" data-zh="仅安装到当前仓库">This repository only</span><button class="copy-button" type="button" data-copy-source="project-command" data-en="Copy" data-zh="复制">Copy</button></div>
-          <pre id="project-command">npx -y skills add tt-a1i/archify --skill archify --agent codex --copy --yes</pre>
+          <pre id="project-command">npx -y skills add tt-a1i/archify --skill archify --skill archify-pr --agent codex --copy --yes</pre>
         </div>
         <p class="secondary-note" data-en="The Start link carries only your agent, language, diagram type, input mode, and a coarse source label. Journey events stay in this browser session and are never sent by Archify. No repository path, title, node, relationship, or source JSON is recorded." data-zh="Start 链接只携带 Agent、语言、图表类型、输入模式和粗粒度来源标签。转化步骤只保存在当前浏览器会话中，Archify 不会发送这些数据，也不会记录仓库路径、标题、节点、关系或源 JSON。">The Start link carries only your agent, language, diagram type, input mode, and a coarse source label. Journey events stay in this browser session and are never sent by Archify. No repository path, title, node, relationship, or source JSON is recorded.</p>
       </article>
@@ -275,7 +275,7 @@
     </section>
 
     <footer class="page-footer">
-      <span data-en="Archify v3.3.1-dev.1 · development · self-contained HTML · typed JSON source" data-zh="Archify v3.3.1-dev.1 · 开发版 · 独立 HTML · 类型化 JSON 源">Archify v3.3.1-dev.1 · development · self-contained HTML · typed JSON source</span>
+      <span data-en="Archify v3.3.3-dev.1 · development · self-contained HTML · typed JSON source" data-zh="Archify v3.3.3-dev.1 · 开发版 · 独立 HTML · 类型化 JSON 源">Archify v3.3.3-dev.1 · development · self-contained HTML · typed JSON source</span>
       <span id="copy-status" role="status" aria-live="polite"></span>
       <a href="https://github.com/tt-a1i/archify" data-en="View source on GitHub ↗" data-zh="在 GitHub 查看源码 ↗">View source on GitHub ↗</a>
     </footer>
@@ -394,8 +394,8 @@
         });
         var agentName = document.querySelector('[data-agent="' + agent + '"]').textContent;
         agentState.textContent = agentName + (language === 'zh' ? ' · 同一份 Skill' : ' · same Skill');
-        installCommand.textContent = 'npx -y skills add tt-a1i/archify --skill archify --agent ' + agent + ' --global --copy --yes';
-        projectCommand.textContent = 'npx -y skills add tt-a1i/archify --skill archify --agent ' + agent + ' --copy --yes';
+        installCommand.textContent = 'npx -y skills add tt-a1i/archify --skill archify --skill archify-pr --agent ' + agent + ' --global --copy --yes';
+        projectCommand.textContent = 'npx -y skills add tt-a1i/archify --skill archify --skill archify-pr --agent ' + agent + ' --copy --yes';
         title.textContent = copy.title;
         question.textContent = copy.question;
         prompt.textContent = currentPrompt();

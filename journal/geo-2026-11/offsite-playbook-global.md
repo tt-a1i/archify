@@ -481,3 +481,90 @@ npx -y skills@latest add https://archify.si --skill archify --agent claude-code 
 ````
 
 
+
+
+---
+
+## Draft 6 — Dev.to / Show HN: 100k Stars Milestone + v3.3 Architecture Diagnosis, Story 1080p Video & PR Walkthroughs (EN, Ready for 100k Day)
+
+> **Best for**: Dev.to, Show HN (`Show HN: Archify v3.3 — 100k stars, offline repo architecture diagnosis, 1080p story video, and PR walkthroughs for coding agents`), Hashnode, r/ClaudeAI.
+> **Note before posting**: Replace `[100,000+]` with the exact live star count on the day `tt-a1i/archify` crosses `100,000 ★`, and keep the maintainer disclosure intact.
+> **Suggested Dev.to tags**: `ai`, `architecture`, `devtools`, `opensource`
+
+````markdown
+# From 5 Diagram Types to [100,000+] Stars: How Archify v3.3 Expanded Beyond Diagrams into Offline Repo Diagnosis, 1080p Story Videos, and PR Walkthroughs
+
+*Disclosure: I maintain [Archify](https://github.com/tt-a1i/archify) (Apache-2.0). Everything below is grounded in the shipped v3.3 codebase and live artifacts on [archify.si](https://archify.si).*
+
+When Archify first spread in September 2026, most write-ups described it as "an Agent Skill with 5 diagram types that replaces Mermaid." By `v3.3`, as the repository approaches and crosses **[100,000+] GitHub stars**, people are using it for a much broader workflow than drawing boxes from prompts — from explaining everyday non-code plans to running offline architecture diagnostics and attaching visual diffs to pull requests.
+
+Here is what actually changed in `v3.3`, why we kept the entire toolchain local and zero-account, and where other tools still fit better.
+
+## 1. Ten native diagram types — plus 4-style one-page explainers
+
+Archify now covers **10 native diagram types** authored via typed JSON IR (`architecture`, `workflow`, `sequence`, `dataflow`, `lifecycle`, `erd`, `class`, `tree`, `timeline`, `waterfall`), with automatic layout mode (`"layout": {"mode": "auto"}`) available for new Architecture diagrams alongside automatic orthogonal routing and collision checks.
+
+Four newer diagram types are live to inspect in the gallery with no signup:
+
+- **Class diagram**: [Payment Module Types](https://archify.si/gallery/artifacts/payments.class)
+- **Tree diagram**: [Payment Platform Hierarchy](https://archify.si/gallery/artifacts/payment-platform.tree)
+- **Timeline diagram**: [Payment Incident Timeline](https://archify.si/gallery/artifacts/payment-incident.timeline)
+- **Waterfall diagram**: [Checkout Request Execution](https://archify.si/gallery/artifacts/checkout-request.waterfall)
+
+When one diagram still leaves readers asking *why*, `.archify.md` **one-page explainers** pair a conclusion-first summary with prose, tables, charts, and synced validated diagrams in **4 visual styles** — reading a step highlights the matching part of the diagram. And a repository is optional: see [Why P99 tail latency spikes](https://archify.si/cases/explainer/p99-tail-latency) alongside non-code examples like [First-time apartment rental checklist](https://archify.si/cases/explainer/first-rental) and a community-extended [4-day Shanghai CityWalk itinerary](https://archify.si/cases/community/shanghai-citywalk).
+
+## 2. Built-in Architecture Diagnosis (offline static Code Analysis)
+
+A recurring request from teams mapping real repositories was: *"Now that we see the modules, where are the dependency cycles, hotspots, and layer violations?"*
+
+In `v3.3`, **Architecture Diagnosis** is built directly into the Skill with no extra install. You can ask your agent to run Archify Code Analysis directly, or invoke the CLI from the installed Skill directory (for example `~/.claude/skills/archify` or `~/.codex/skills/archify`) while passing your target repository path:
+
+```sh
+node <installed-skill-dir>/bin/archify.mjs code-analysis prepare <repo> --out <dir>
+```
+
+It generates a single offline `repo.analysis.html` workbench containing:
+
+- A radial dependency star map (**Atlas**) and a rotatable **3D model**
+- Ranked static findings (dependency cycles, coupling, complexity hotspots, layer-rule breaks), each linked back to source files with a copyable fix task for your coding agent
+- Coverage across **JS/TS, Python, Java, Go, Rust, C, and C++** (Go, Rust, and C/C++ require their own local toolchains)
+- Optional pairing (`--ir <architecture.json>`) so each component in an authored architecture diagram displays its issue count and flags undrawn dependencies
+
+**Boundary:** Findings come from static analysis of one working-tree revision, not runtime traces or production telemetry.
+
+## 3. Story mode + 1080p 60 fps video export & cross-diagram drilldowns
+
+Large diagrams are still hard to present asynchronously in Slack, docs, or design reviews. `v3.3` adds two ways to guide readers without turning Archify into a hosted SaaS app:
+
+- **Story walkthroughs**: Attach a guided Story mode (timeline + captions) to any native diagram, or use `story stage|svg|video` to choreograph one or more diagrams into an offline stage page, dual-theme animated SVG, or **1080p 60 fps video (WebM / MP4)**.
+- **Cross-diagram navigation (drilldowns)**: Link overview nodes directly to same-directory detail HTML artifacts via `href` or `drilldowns`, with automatic header back-navigation (`meta.parentHref` or `?from=`).
+
+## 4. GitHub PR & GitLab MR walkthroughs
+
+Code reviews often bury structural changes inside hundreds of diff lines. `v3.3` adds **PR walkthroughs** (`pr validate` / `pr build` / `pr attach`) that mark additions, modifications, and removals directly on merged-superset diagrams and attach light/dark visuals to a **GitHub PR or GitLab MR** (with an optional `archify-pr` companion Skill for material diffs).
+
+## What validation does — and does not — guarantee
+
+Every native diagram runs through `archify finalize`: schema checks, layout/routing clearance checks, and headless real-browser checks by default (explainers run structural and delivery checks by default, with browser checks available via `--browser-check`). Automated validation checks structure and measured geometry; it does not replace perceptual visual review or prove runtime behavior in production.
+
+And if you only need a tiny 5-box flowchart inline in a Markdown README, **Mermaid** is still lighter; for real-time multiplayer freehand whiteboarding, pick **Excalidraw**; for hosted cloud permissions, pick **Eraser.io**. Full comparison at **[archify.si/compare](https://archify.si/compare)**.
+
+## Try Archify v3.3 with Claude Code, Codex, Cursor, OpenCode, or GitHub Copilot
+
+Inspect the package first (read-only):
+
+```sh
+npx -y skills@latest add https://archify.si --list --full-depth
+```
+
+Install globally (swap `--agent` to `codex`, `cursor`, `opencode`, or `github-copilot`, or omit `--global` for a project-local install):
+
+```sh
+npx -y skills@latest add https://archify.si --skill archify --agent claude-code --global --copy --yes
+```
+
+- Website & live gallery: https://archify.si/gallery
+- Tool comparison & boundaries: https://archify.si/compare
+- Full AI/LLM reference: https://archify.si/llms-full.txt
+- Source (Apache-2.0): https://github.com/tt-a1i/archify
+````

@@ -28,12 +28,13 @@ function visualEvidencePaths(file) {
   };
 }
 
-function copyInstalledSkill(target) {
-  fs.cpSync(skillRoot, target, {
+function copyInstalledSkill(target, sourceRoot = skillRoot) {
+  fs.cpSync(sourceRoot, target, {
     recursive: true,
     filter(source) {
-      const rel = path.relative(skillRoot, source);
-      return !rel.split(path.sep).includes('node_modules')
+      const rel = path.relative(sourceRoot, source);
+      return !rel.startsWith('.package-negative-')
+        && !rel.split(path.sep).includes('node_modules')
         && rel !== 'test' && !rel.startsWith(`test${path.sep}`)
         // Another test creates this short-lived directory under skillRoot so
         // Ajv resolves from the checkout. Never copy a concurrently removed
@@ -1789,8 +1790,30 @@ test('cli: validate --json --with-layout returns the verdict and the --layout-js
   }
 });
 
-test('cli: validate --with-layout starts the renderer and the artifact check once and fails closed without a layout report', () => {
+test('cli: --with-layout is the only way to request a layout report through the CLI environment', () => {
   const input = path.join(skillRoot, 'examples/agent-tool-call.workflow.json');
+  const callerReport = path.join(tmp, 'caller-layout-report.json');
+  const env = { ...process.env, ARCHIFY_LAYOUT_REPORT_PATH: callerReport };
+  const plain = run(['validate', 'workflow', input, '--json'], { env });
+  assert.equal(plain.status, 0, plain.stderr || plain.stdout);
+  assert.equal(JSON.parse(plain.stdout).layout, undefined);
+  assert.equal(fs.existsSync(callerReport), false);
+
+  const combined = run(['validate', 'workflow', input, '--json', '--with-layout'], { env });
+  assert.equal(combined.status, 0, combined.stderr || combined.stdout);
+  assert.equal(JSON.parse(combined.stdout).layout.diagram_type, 'workflow');
+  assert.equal(fs.existsSync(callerReport), false);
+
+  fs.writeFileSync(callerReport, 'caller-owned file');
+  const rendered = run(['render', 'workflow', input, path.join(tmp, 'ambient-layout-report.html')], { env });
+  assert.equal(rendered.status, 0, rendered.stderr || rendered.stdout);
+  assert.equal(fs.readFileSync(callerReport, 'utf8'), 'caller-owned file');
+});
+
+test('cli: validate --with-layout starts the renderer and checker once and rejects missing or invalid layout reports', () => {
+  const input = path.join(skillRoot, 'examples/agent-tool-call.workflow.json');
+  const validateTemp = fs.mkdtempSync(path.join(tmp, 'with-layout-failure-temp-'));
+  const env = { ...process.env, TMPDIR: validateTemp, TMP: validateTemp, TEMP: validateTemp };
   const wrapper = path.join(tmp, 'validate-with-layout-spawns.mjs');
   const log = path.join(tmp, 'validate-with-layout-spawns.log');
   fs.writeFileSync(wrapper, `
@@ -1800,29 +1823,52 @@ import { syncBuiltinESMExports } from 'node:module';
 const original = childProcess.spawnSync;
 childProcess.spawnSync = (executable, childArgs, options) => {
   fs.appendFileSync(${JSON.stringify(log)}, String(childArgs?.[0]) + '\\n');
-  if (process.env.DROP_LAYOUT_REPORT && options?.env) {
-    const { ARCHIFY_LAYOUT_REPORT_PATH, ...env } = options.env;
-    options = { ...options, env };
+  const result = original(executable, childArgs, options);
+  const reportPath = options?.env?.ARCHIFY_LAYOUT_REPORT_PATH;
+  if (result.status === 0 && reportPath) {
+    switch (process.env.LAYOUT_REPORT_FAULT) {
+      case 'missing': fs.unlinkSync(reportPath); break;
+      case 'unreadable':
+        fs.unlinkSync(reportPath);
+        fs.mkdirSync(reportPath);
+        break;
+      case 'malformed': fs.writeFileSync(reportPath, '{'); break;
+      case 'wrong-shape': fs.writeFileSync(reportPath, 'null'); break;
+    }
   }
-  return original(executable, childArgs, options);
+  return result;
 };
 syncBuiltinESMExports();
 process.argv = [process.execPath, ${JSON.stringify(cli)}, 'validate', 'workflow', ${JSON.stringify(input)}, '--json', '--with-layout'];
 await import(${JSON.stringify(pathToFileURL(cli).href)});
 `);
-  const passing = spawnSync(process.execPath, [wrapper], { cwd: skillRoot, encoding: 'utf8' });
+  const passing = spawnSync(process.execPath, [wrapper], { cwd: skillRoot, encoding: 'utf8', env });
   assert.equal(passing.status, 0, passing.stderr || passing.stdout);
   assert.equal(JSON.parse(passing.stdout).layout.diagram_type, 'workflow');
   const children = fs.readFileSync(log, 'utf8').trim().split('\n').map((entry) => path.basename(entry));
   assert.deepEqual(children, ['render-workflow.mjs', 'check-render-output.mjs']);
 
-  const missing = spawnSync(process.execPath, [wrapper], { cwd: skillRoot, encoding: 'utf8', env: { ...process.env, DROP_LAYOUT_REPORT: '1' } });
-  assert.equal(missing.status, 1, missing.stderr || missing.stdout);
-  const receipt = JSON.parse(missing.stdout);
-  assert.equal(receipt.ok, false);
-  assert.equal(receipt.stage, 'render');
-  assert.equal(receipt.diagnostics[0].code, 'validate/layout-report-unavailable');
-  assert.equal(receipt.layout, undefined);
+  for (const fault of ['missing', 'unreadable', 'malformed', 'wrong-shape']) {
+    const failed = spawnSync(process.execPath, [wrapper], {
+      cwd: skillRoot, encoding: 'utf8', env: { ...env, LAYOUT_REPORT_FAULT: fault },
+    });
+    assert.equal(failed.status, 1, `${fault}: ${failed.stderr || failed.stdout}`);
+    const receipt = JSON.parse(failed.stdout);
+    assert.equal(receipt.ok, false);
+    assert.equal(receipt.stage, 'render');
+    assert.equal(receipt.diagnostics[0].code, 'validate/layout-report-unavailable');
+    assert.equal(receipt.layout, undefined);
+    assert.deepEqual(fs.readdirSync(validateTemp), [], `${fault}: validate must remove its working directory`);
+  }
+
+  const gateEnv = { ...env, ARCHIFY_CHECK_MAX_BUFFER: '1024' };
+  const plain = run(['validate', 'workflow', input, '--json'], { env: gateEnv });
+  const combined = run(['validate', 'workflow', input, '--json', '--with-layout'], { env: gateEnv });
+  assert.equal(plain.status, 1, plain.stderr || plain.stdout);
+  assert.equal(JSON.parse(plain.stdout).stage, 'check');
+  assert.equal(combined.status, plain.status, combined.stderr || combined.stdout);
+  assert.equal(combined.stdout, plain.stdout);
+  assert.deepEqual(fs.readdirSync(validateTemp), [], 'a failed check must leave no temporary files');
 });
 
 test('cli: validate --with-layout requires --json, excludes --layout-json and explainer, and keeps failure receipts', () => {
@@ -2094,4 +2140,24 @@ test('render rejects an extra positional argument', () => {
 
   assert.notEqual(result.status, 0);
   assert.deepEqual(fs.readdirSync(dir), ['spec.json']);
+});
+
+
+test('installed Skill copy excludes concurrent package-test markers and nested dependencies', () => {
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-copy-marker-'));
+  const source = path.join(out, 'source');
+  const marker = '.package-negative-fixture.txt';
+  const nested = path.join(source, 'modules', 'code-analysis', 'node_modules', 'example');
+  try {
+    fs.mkdirSync(nested, { recursive: true });
+    fs.writeFileSync(path.join(source, marker), 'temporary fixture');
+    fs.writeFileSync(path.join(source, 'keep.txt'), 'runtime');
+    fs.writeFileSync(path.join(nested, 'dependency.txt'), 'dependency');
+    copyInstalledSkill(path.join(out, 'skill'), source);
+    assert.equal(fs.readFileSync(path.join(out, 'skill', 'keep.txt'), 'utf8'), 'runtime');
+    assert.equal(fs.existsSync(path.join(out, 'skill', marker)), false);
+    assert.equal(fs.existsSync(path.join(out, 'skill', 'modules', 'code-analysis', 'node_modules')), false);
+  } finally {
+    fs.rmSync(out, { recursive: true, force: true });
+  }
 });

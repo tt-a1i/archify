@@ -394,13 +394,13 @@ ${SOLID_TONES.map((tone) => `          svg[data-waterfall-ui] .wf-solid.c-${tone
           svg[data-waterfall-ui] [data-node-id][data-change="added"] > .wf-row { fill: color-mix(in srgb, var(--backend-fill) 32%, transparent); opacity: 1; }
           svg[data-waterfall-ui] [data-node-id][data-change="modified"] > .wf-row { fill: color-mix(in srgb, var(--cloud-fill) 32%, transparent); opacity: 1; }
           svg[data-waterfall-ui] [data-node-id][data-change="removed"] > .wf-row { fill: color-mix(in srgb, var(--security-fill) 32%, transparent); opacity: 1; }
-          svg[data-waterfall-ui] [data-node-id][data-change="added"] > :is(.wf-solid, .wf-span, .wf-open) { stroke: var(--backend-stroke); stroke-width: 2; }
-          svg[data-waterfall-ui] [data-node-id][data-change="modified"] > :is(.wf-solid, .wf-span, .wf-open) { stroke: var(--cloud-stroke); stroke-width: 2; }
-          svg[data-waterfall-ui] [data-node-id][data-change="removed"] > :is(.wf-solid, .wf-span, .wf-open) { stroke: var(--security-stroke); stroke-width: 1.6; stroke-dasharray: 5,4; }
-          svg[data-waterfall-ui] path.wf-guide[data-edge-from][data-change="added"] { stroke: var(--backend-stroke); stroke-width: 2.2; }
-          svg[data-waterfall-ui] path.wf-guide[data-edge-from][data-change="modified"] { stroke: var(--cloud-stroke); stroke-width: 2.2; }
-          svg[data-waterfall-ui] path.wf-guide[data-edge-from][data-change="removed"] { stroke: var(--security-stroke); stroke-width: 1.6; stroke-dasharray: 5,4; }` : ''}
-          svg[data-waterfall-ui] [data-node-id][data-emphasis] > :is(.wf-solid, .wf-span, .wf-open) { stroke-width: 2.8; }
+          svg[data-waterfall-ui] [data-node-id][data-change="added"] > :is(.wf-solid, .wf-span, .wf-open) { stroke: var(--backend-stroke); stroke-width: 1.75; }
+          svg[data-waterfall-ui] [data-node-id][data-change="modified"] > :is(.wf-solid, .wf-span, .wf-open) { stroke: var(--cloud-stroke); stroke-width: 1.75; }
+          svg[data-waterfall-ui] [data-node-id][data-change="removed"] > :is(.wf-solid, .wf-span, .wf-open) { stroke: var(--security-stroke); stroke-width: 1.6; stroke-dasharray: 0.1,3.4; stroke-linecap: round; }
+          svg[data-waterfall-ui] path.wf-guide[data-edge-from][data-change="added"] { stroke: var(--backend-stroke); stroke-width: 1.75; }
+          svg[data-waterfall-ui] path.wf-guide[data-edge-from][data-change="modified"] { stroke: var(--cloud-stroke); stroke-width: 1.75; }
+          svg[data-waterfall-ui] path.wf-guide[data-edge-from][data-change="removed"] { stroke: var(--security-stroke); stroke-width: 1.6; stroke-dasharray: 0.1,3.4; stroke-linecap: round; }` : ''}
+          svg[data-waterfall-ui] [data-node-id][data-emphasis] > :is(.wf-solid, .wf-span, .wf-open) { stroke-width: 2.4; }
         </style>
 
         <!-- Background Grid -->

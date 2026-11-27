@@ -32,6 +32,7 @@ The table describes default strengths, not rigid limits. Skilled authors can pol
 ## When another tool fits better
 
 - **Use Mermaid** when the diagram is small, must render natively inside GitHub READMEs or docs Markdown, and should stay editable as a few lines of inline text.
+- **Use draw.io (diagrams.net)** when you want a free browser-based GUI editor to drag standard flowchart, network, or org-chart shapes manually with no AI coding agent involved.
 - **Use Excalidraw (including Excalidraw via MCP)** when real-time collaborative whiteboarding, rough hand-drawn sketching in chat, or mouse drag-and-drop brainstorming is the primary goal.
 - **Use PlantUML or D2** when your team already maintains diagrams as plain text in Git, wants line-by-line DSL diffs in review, or needs deep formal UML notation beyond Archify's `class` and `sequence` modes.
 - **Use LikeC4** when your team wants a dedicated C4-style architecture-as-code DSL maintained as structured model files across a repository.
@@ -56,9 +57,9 @@ Paste messy Mermaid source into your configured agent and ask it to re-author th
 
 When one diagram still leaves readers asking "why?", an `.archify.md` one-page explainer leads with the conclusion first and explains each sub-question side by side with prose, tables, charts, code, and interactive diagrams — lighting up the exact part of the diagram each step refers to. Readers can switch among **four visual styles**, toggle light/dark mode, export long images or PDF, and trigger panel-scoped follow-up questions. Explore recorded examples: the [P99 tail-latency explainer](cases/explainer/p99-tail-latency.html) and the [first TLS visit explainer](cases/explainer/tls-first-visit.html).
 
-### 4. Map a real codebase with pinned source evidence
+### 4. Map, diagnose, and walk through a real codebase with pinned source evidence
 
-When understanding software matters, ask the agent to trace a concrete request or module at a specific revision and attach source file paths cleanly to diagram nodes. See the [MCO runtime case](cases/mco-runtime.html) and its [MCO architecture artifact](cases/mco-runtime.architecture.html), plus the [repository evidence checklist](agent-diagrams.html#repository-evidence).
+When understanding software matters, ask the agent to trace a concrete request or module at a specific revision and attach source file paths cleanly to diagram nodes. See the [MCO runtime case](cases/mco-runtime.html) and its [MCO architecture artifact](cases/mco-runtime.architecture.html), plus the [repository evidence checklist](agent-diagrams.html#repository-evidence). You can also run built-in **Architecture Diagnosis** (an offline dependency Atlas, rotatable 3D model, and ranked static findings across JS/TS, Python, Java, Go, Rust, and C/C++), link overview-to-detail HTML artifacts via cross-diagram drilldowns, add a **Story mode** walkthrough with 1080p 60 fps video export, or attach light/dark change diagrams to a **GitHub PR or GitLab MR**.
 
 <span id="limits" class="section-anchor" aria-hidden="true"></span>
 

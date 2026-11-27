@@ -248,6 +248,14 @@ test('visibility overrides apply after auto/all and empty legends leave no chrom
     assert.doesNotMatch(empty, />Legend</, type);
     assert.doesNotMatch(empty, /data-legend/, type);
   }
+
+  // An explicit visible: true keeps the lifecycle final key even when it is the only entry left.
+  const onlyFinal = Object.fromEntries(AUTO_KINDS.lifecycle
+    .filter((kind) => kind !== 'final').map((kind) => [kind, { visible: false }]));
+  onlyFinal.final = { visible: true };
+  const finalOnly = canonicalSvg(render('lifecycle', withLegend('lifecycle', { entries: onlyFinal })));
+  assert.match(finalOnly, />Legend</);
+  assert.deepEqual(attrValues(finalOnly.slice(finalOnly.indexOf('<!-- Legend -->')), 'data-legend-semantic-kind'), ['final']);
 });
 
 test('label overrides round-trip through all five public renderers', () => {

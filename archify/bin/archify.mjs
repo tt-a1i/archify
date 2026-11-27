@@ -2190,10 +2190,10 @@ function invalidProvenance(artifactPath, sidecar, reason, evidence = {}) {
 }
 
 const COMMAND_USAGE = {
-  start: '<repo-root> [--ir <architecture.json>] [--locale en|zh-CN] [--out <dir>] [--pr <URL-or-number>] [--repository OWNER/REPO] [--scope path] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
+  start: '<repo-root> [--ir <architecture.json>] [--locale en|zh-CN] [--out <dir>] [--pr <URL-or-number> [--repository OWNER/REPO] | --base <commit> --head <commit>] [--scope path] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
   'code-analysis': [
-    'prepare <repo-root> --out <dir> [--ir <architecture.json>] [--locale en|zh-CN] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
-    'serve <repo-root> --out <dir> [--ir <architecture.json>] [--locale en|zh-CN] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
+    'prepare <repo-root> --out <dir> [--ir <architecture.json>] [--locale en|zh-CN] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase] [--base <commit> --head <commit>] [--scope path]',
+    'serve <repo-root> --out <dir> [--ir <architecture.json>] [--locale en|zh-CN] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase] [--base <commit> --head <commit>] [--scope path]',
     'check <repo-root> [--language ts|py|java|go|rust] [--config file] [--ir <architecture.json> [--map file]] [--baseline file] [--compare findings.json] [--out dir] [--fail-on error|warning|info|never] [--new-only] [--update-baseline | --accept id | --revoke id] [--reason text] [--json]',
     'verify-change <analysis-dir> --task <task.json> [--checks <checks.json> | --checks-template]',
     'drift <git-repo> --base <full-sha> --head <full-sha> --ir <architecture.json> --out <new-directory> [--map file] [--config file] [--from-report <original-drift.json>] [--locale en|zh-CN] [--json]',
@@ -2214,9 +2214,9 @@ const COMMAND_USAGE = {
   ],
   render: '<type> <input.json> [output.html] [--quality standard|showcase] [--repo-root path]',
   compare: 'architecture <base.json> <head.json> [output.html] [--receipt path] [--json] [--quality standard|showcase] [--repo-root path]',
-  deliver: '<type> <input.json> [output.html] [--json] [--open] [--quality standard|showcase] [--repo-root path]',
+  deliver: '<type> <input.json> [output.html] [--json] [--open] [--no-update-notice] [--quality standard|showcase] [--repo-root path]',
   patch: 'explainer <artifact.html> <panel-id> <replacement-file> <output.html> [--json] [--quality standard|showcase] [--repo-root path]',
-  finalize: '<type> <input.json> <output.html> [--json] [--browser-check] [--receipt path] [--out-dir <dir>] [--quality standard|showcase] [--repo-root path] [--candidate-sha256 hex]',
+  finalize: '<type> <input.json> <output.html> [--json] [--browser-check] [--no-update-notice] [--receipt path] [--out-dir <dir>] [--quality standard|showcase] [--repo-root path] [--candidate-sha256 hex]',
   preview: '<type> <input.json> [output.html] [--no-open] [--quality standard|showcase] [--repo-root path]',
   validate: '<type> <input.json> [--json [--with-layout]] [--layout-json] [--quality standard|showcase] [--repo-root path]',
   'export-svg': '<type> <input.json> <output.svg|stem> [--theme both|light|dark] [--preset name] [--animate-flow] [--json] [--quality standard|showcase] [--repo-root path]',
@@ -4488,7 +4488,8 @@ async function commandDeliver(args) {
   repoArgs.rest = writingArgs.rest;
   const json = repoArgs.rest.includes('--json');
   const open = repoArgs.rest.includes('--open');
-  const knownOptions = new Set(['--json', '--open']);
+  const noUpdateNotice = repoArgs.rest.includes('--no-update-notice');
+  const knownOptions = new Set(['--json', '--open', '--no-update-notice']);
   const unknown = repoArgs.rest.filter((arg) => arg.startsWith('--') && !knownOptions.has(arg));
   if (unknown.length) rejectCliArgument(`Unknown deliver option "${unknown[0]}".`, {
     code: 'cli/unknown-option',
@@ -5006,6 +5007,31 @@ async function commandDeliver(args) {
     if (render.stderr) process.stderr.write(render.stderr);
     const localeWarnings = [...await specificationLocaleDiagnostics(type, specification), ...(explainerBundle?.diagnostics.filter(entry => entry.severity === 'warning') || [])];
     for (const warning of localeWarnings) process.stderr.write(`archify: ${warning.message}\n`);
+    // An outdated installation adds a small local notice to the page before
+    // the artifact check, so the check, receipt hash, and provenance all bind
+    // the bytes that are delivered. Any failure leaves the page unchanged.
+    let updateNotice = null;
+    const noticeCandidatePath = `${candidatePath}.update-notice`;
+    try {
+      const { injectUpdateNotice, resolveUpdateNotice } = await import('./update-notice.mjs');
+      const notice = await resolveUpdateNotice({ optOut: noUpdateNotice });
+      if (notice) {
+        const injected = injectUpdateNotice(fs.readFileSync(candidatePath, 'utf8'), notice);
+        if (injected.embedded) {
+          fs.writeFileSync(noticeCandidatePath, injected.html, { flag: 'wx' });
+          fs.renameSync(noticeCandidatePath, candidatePath);
+          updateNotice = {
+            embedded: true,
+            installedVersion: notice.installedVersion,
+            availableVersion: notice.availableVersion,
+          };
+        }
+      }
+    } catch {
+      // The notice is optional; the rendered candidate is still checked below.
+      updateNotice = null;
+      try { fs.rmSync(noticeCandidatePath, { force: true }); } catch {}
+    }
     try {
       const renderedCandidate = fs.readFileSync(candidatePath);
       if (preparedDeliveryTargets.artifact.mode !== null) {
@@ -5162,6 +5188,7 @@ async function commandDeliver(args) {
         },
       } : {}),
       ...(localeWarnings.length ? { diagnostics: localeWarnings } : {}),
+      ...(updateNotice ? { updateNotice } : {}),
     };
 
     const provenanceBytes = Buffer.from(`${JSON.stringify(deliverySuccessProvenance(receipt), null, 2)}\n`);
@@ -6023,7 +6050,7 @@ async function commandFinalize(rawArgs) {
   const writingArgs = extractExplainerWritingArgs(candidateArgs.rest);
   candidateArgs.rest = writingArgs.rest;
   const json = candidateArgs.rest.includes('--json');
-  const knownOptions = new Set(['--json','--browser-check']);
+  const knownOptions = new Set(['--json','--browser-check','--no-update-notice']);
   const unknown = candidateArgs.rest.filter((arg) => arg.startsWith('--') && !knownOptions.has(arg));
   if (unknown.length) rejectCliArgument(`Unknown finalize option "${unknown[0]}".`, {
     code: 'cli/unknown-option',
@@ -6068,6 +6095,7 @@ async function commandFinalize(rawArgs) {
       repoRoot: repoArgs.repoRoot,
       writingMode: writingArgs.writingMode,
       browserCheck: candidateArgs.rest.includes('--browser-check'),
+      updateNotice: !candidateArgs.rest.includes('--no-update-notice'),
       candidateSha256: candidateArgs.candidateSha256,
       outDir: outDirArgs.outDir,
       receiptPath: receiptArgs.receiptPath,
@@ -7109,7 +7137,8 @@ async function commandValidate(args, invocation = {}) {
   args = repoArgs.rest;
   const quality = qualityArgs.quality;
   const repoRoot = repoArgs.repoRoot;
-  const knownOptions = new Set(['--json', '--layout-json', '--with-layout']);
+  const knownOptions = new Set(['--json', '--layout-json']);
+  if (invokingCommand === 'validate') knownOptions.add('--with-layout');
   const unknown = args.filter((arg) => arg.startsWith('--') && !knownOptions.has(arg));
   if (unknown.length) rejectCliArgument(`Unknown ${invokingCommand} option "${unknown[0]}".`, {
     code: 'cli/unknown-option',
@@ -7293,19 +7322,25 @@ async function commandValidate(args, invocation = {}) {
         let layout;
         if (layoutReportPath) {
           try {
-            layout = JSON.parse(fs.readFileSync(layoutReportPath, 'utf8'));
+            const recorded = JSON.parse(fs.readFileSync(layoutReportPath, 'utf8'));
+            if (recorded?.ok !== true || recorded.diagram_type !== type
+              || !Array.isArray(recorded.viewBox) || recorded.viewBox.length !== 2) {
+              throw new Error(`Expected a successful ${type} layout report with a viewBox.`);
+            }
+            layout = recorded;
           } catch (error) {
             exitCode = 1;
+            const message = `The renderer did not record a readable layout report: ${error.message}`;
             report = () => reportFailure({
               json,
               stage: 'render',
               type,
               input: path.resolve(input),
-              error: `The renderer did not record a readable layout report: ${error.message}`,
+              error: message,
               diagnostics: [{
                 code: 'validate/layout-report-unavailable',
                 severity: 'error',
-                message: `The renderer did not record a readable layout report: ${error.message}`,
+                message,
                 subject: { type },
                 evidence: { reason: error.code || error.name },
                 supportedFixes: ['run validate <type> <input.json> --layout-json for the layout alone', 'report the renderer failure'],
@@ -7314,9 +7349,7 @@ async function commandValidate(args, invocation = {}) {
             });
           }
         }
-        if (exitCode !== 0) {
-          // A missing layout report replaces the verdict with its failure.
-        } else if (json) {
+        if (exitCode === 0 && json) {
           const candidate = {
             path: path.resolve(input),
             ...artifactIdentity(specification),
@@ -7348,10 +7381,10 @@ async function commandValidate(args, invocation = {}) {
             composition: result.composition,
             ...(engineeringProfile ? { engineeringProfile } : {}),
             ...(localeWarnings.length ? { diagnostics: localeWarnings } : {}),
-            ...(layout ? { layout } : {}),
+            ...(withLayout ? { layout } : {}),
           };
           report = () => console.log(JSON.stringify(receipt, null, 2));
-        } else {
+        } else if (exitCode === 0) {
           const engineering = engineeringProfile
             ? `; engineering ${engineeringProfile}: pass`
             : '';
@@ -7387,6 +7420,12 @@ async function commandValidate(args, invocation = {}) {
   if (exitCode !== 0) process.exitCode = exitCode;
 }
 
+// Only validate --with-layout may supply this internal path to a renderer.
+// Strip inherited spellings before dispatch, including Windows case aliases.
+for (const name of Object.keys(process.env)) {
+  if (name.toUpperCase() === 'ARCHIFY_LAYOUT_REPORT_PATH') delete process.env[name];
+}
+
 const [command, ...args] = process.argv.slice(2);
 // Reuse the canonical help metadata rather than a separate help registry.
 // Only the sole --help form bypasses command argument parsing and operations.
@@ -7403,7 +7442,7 @@ try {
       break;
     case 'start': {
       if (!args.length || args[0] === '--help' || args[0] === '-h') {
-        console.log('Usage: archify start <repo-root> [--ir <architecture.json>] [--locale en|zh-CN] [--out <dir>] [--pr <URL-or-number>] [--repository OWNER/REPO] [--scope path] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]');
+        console.log('Usage: archify start <repo-root> [--ir <architecture.json>] [--locale en|zh-CN] [--out <dir>] [--pr <URL-or-number> [--repository OWNER/REPO] | --base <commit> --head <commit>] [--scope path] [--language ts|py|java|go|rust] [--map file] [--config file] [--baseline file] [--quality standard|showcase]');
         break;
       }
       const { startAnalysisView } = await import('../modules/code-analysis/bin/serve.mjs');

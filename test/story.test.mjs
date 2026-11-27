@@ -234,7 +234,11 @@ test('authored figure captions and code references reach the presentation with p
 
 test('a package-only copy runs the full story chain outside the repository without dependencies',t=>{
   const dir=workspace(t),pack=path.join(dir,'package'),outside=path.join(dir,'outside');fs.mkdirSync(outside);
-  fs.cpSync(skill,pack,{recursive:true,filter:file=>!path.relative(skill,file).split(path.sep).some(part=>part==='node_modules'||part==='test'||part.startsWith('.validator-check-'))});
+  fs.cpSync(skill,pack,{
+    recursive:true,
+    filter:file=>!path.relative(skill,file).split(path.sep).some(part=>
+      part==='node_modules'||part==='test'||part.startsWith('.validator-check-')||part.startsWith('.package-negative-')),
+  });
   assert.equal(fs.existsSync(path.join(pack,'node_modules')),false);
   const entry=path.join(pack,'bin/archify.mjs'),input=path.join(root,'examples',cases.workflow),plan=path.join(outside,'brief.json'),output=path.join(outside,'story.html');
   const draft=run(['draft',input,plan],outside,entry);assert.equal(draft.status,0,draft.stderr+draft.stdout);

@@ -38,7 +38,10 @@ const MAX_CACHE_STATE_BYTES = 64 * 1_024;
 const MAX_CLAIM_OWNER_BYTES = 1_024;
 const LONGEST_ISO_TIMESTAMP = '+275760-09-13T00:00:00.000Z';
 const LOCK_STALE_MS = 30_000;
-const PREFERENCE_LOCK_WAIT_MS = 1_200;
+// A delivery's background refresh can hold the cache claim for up to 6s
+// (REFRESH_DEADLINE_MS in bin/delivery-update.mjs). A snooze or ignore requested
+// for the reminder it reported must outlast that refresh rather than be lost.
+const PREFERENCE_LOCK_WAIT_MS = 7_000;
 const LOCK_RETRY_DELAY_MS = 20;
 const DIGEST_PATTERN = /^sha256:[a-f0-9]{64}$/;
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -652,7 +655,7 @@ async function cacheRm(cacheDirectory, target, options) {
   });
 }
 
-async function prepareCacheDirectory(cacheDirectory) {
+async function prepareCacheDirectory(cacheDirectory, { create = true } = {}) {
   const absoluteTarget = path.resolve(cacheDirectory);
   const target = await canonicalizeTrustedDirectoryPrefix(absoluteTarget);
   const parsed = path.parse(target);
@@ -670,7 +673,7 @@ async function prepareCacheDirectory(cacheDirectory) {
     try {
       metadata = await fs.lstat(current, { bigint: true });
     } catch (error) {
-      if (error?.code !== 'ENOENT') throw error;
+      if (!create || error?.code !== 'ENOENT') throw error;
       try {
         await cacheMkdirWithToken(token, current, { mode: 0o700 }, []);
       } catch (mkdirError) {
@@ -1477,6 +1480,7 @@ export async function checkForUpdate({
   random = Math.random,
   timeoutMs = DEFAULT_TIMEOUT_MS,
   fetchDeadlineNs,
+  onNetworkCheck,
 } = {}) {
   if (updatesDisabled()) return silent('disabled');
   if (typeof fetchImpl !== 'function') return silent('runtime-unavailable');
@@ -1536,6 +1540,15 @@ export async function checkForUpdate({
       const remainingFetchMs = fetchDeadlineNs === undefined ? timeoutMs
         : Math.min(timeoutMs, Number(fetchDeadlineNs - process.hrtime.bigint()) / 1_000_000);
       if (remainingFetchMs <= 0) throw new Error('update fetch deadline expired during cache preparation');
+      // Let a caller with a shorter wait report the last validated candidate
+      // while this slower network request continues to completion.
+      if (typeof onNetworkCheck === 'function') {
+        try {
+          onNetworkCheck(state.candidate ? resultForCandidate(localRelease, state, { nowMs }) : null);
+        } catch {
+          // Reporting progress must not change the check or its persisted outcome.
+        }
+      }
       fetched = await fetchCandidate({
         fetchImpl,
         manifestUrl: localRelease.updateManifestUrl,
@@ -1692,6 +1705,33 @@ async function runCli() {
     return setUpdatePreference({ eventKey: argumentsList[1], mode: 'ignore' });
   }
   return silent('invalid-arguments');
+}
+
+// Read-only view of the last committed check for the in-page delivery notice.
+// It never fetches, claims an operation, or changes backoff and preferences,
+// so it cannot race or replace the bounded network check that owns the cache.
+export async function readCachedUpdate({
+  releasePath = defaultReleasePath,
+  cacheDirectory = defaultCacheDirectory(),
+  now = Date.now,
+} = {}) {
+  if (updatesDisabled()) return silent('disabled');
+  let localRelease;
+  try {
+    localRelease = validateLocalRelease(await readJsonFile(releasePath, MAX_LOCAL_RELEASE_BYTES));
+  } catch {
+    return silent('invalid-local-release');
+  }
+  const nowMs = Number(now());
+  if (!Number.isFinite(nowMs)) return silent('invalid-clock');
+  const stateDirectory = versionCacheDirectory(cacheDirectory, localRelease.version);
+  try {
+    const prepared = await prepareCacheDirectory(stateDirectory, { create: false });
+    const state = await readState(prepared, localRelease.version);
+    return state.candidate ? resultForCandidate(localRelease, state, { nowMs }) : silent('cache-empty');
+  } catch (error) {
+    return silent(error?.code === 'ENOENT' ? 'cache-empty' : 'cache-unavailable');
+  }
 }
 
 export function isMainModule({

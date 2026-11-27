@@ -2,17 +2,17 @@
   "schemaVersion": 1,
   "skillId": "archify",
   "channel": "stable",
-  "version": "3.3.0",
-  "publishedAt": "2026-11-22T17:32:23Z",
+  "version": "3.3.2",
+  "publishedAt": "2026-11-25T15:56:14Z",
   "source": {
     "repository": "https://github.com/tt-a1i/archify",
-    "ref": "v3.3.0",
-    "treeSha": "d3e9c89dd9510a64c1114d685b68ebf1887f135e"
+    "ref": "v3.3.2",
+    "treeSha": "e91df37318f9adec8b39150a2738beb4cd22bad5"
   },
   "artifact": {
-    "sha256": "00e4ff53267aee7dabf22ed333360cd3e380db20271a50264ae146ee25cf2538"
+    "sha256": "932d915f83fdbf44796cc6b20b085455a763491306e1b8dee92047e11dddc0ea"
   },
-  "summary": "Adds Code Analysis & Architecture Diagnosis, Story walkthroughs and 1080p video, PR walkthroughs, automatic architecture placement, and lighter installs.",
-  "releaseNotes": "https://github.com/tt-a1i/archify/releases/tag/v3.3.0",
+  "summary": "Includes archify-pr in default installs, adds offline in-page update notices with Agent prompts, speeds slow update checks, and polishes PR diagrams.",
+  "releaseNotes": "https://github.com/tt-a1i/archify/releases/tag/v3.3.2",
   "severity": "normal"
 }

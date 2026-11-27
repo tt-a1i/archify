@@ -230,11 +230,6 @@ function stageRenderedHtml(outputPath, html, mode) {
   throw error;
 }
 
-// `validate --with-layout` sets this to a file path in its owned temporary
-// directory. The renderer that writes the artifact then also records the
-// report `--layout-json` would print, so one render answers both (#1420).
-export const LAYOUT_REPORT_PATH_ENV = 'ARCHIFY_LAYOUT_REPORT_PATH';
-
 // Common CLI tail: fill the template and write the standalone HTML file.
 export function writeDiagram({ outPath, template, diagramType, meta, svg, cards, sourceEvidence = null, diagram = null, layoutReport = null }) {
   if (!START_TYPES.has(diagramType)) throw new Error(`writeDiagram: unknown diagram type ${JSON.stringify(diagramType)}`);
@@ -252,7 +247,8 @@ export function writeDiagram({ outPath, template, diagramType, meta, svg, cards,
     payloads: diagram ? collectPayloads(diagramType, diagram) : null,
   });
   publishOutputAtomically(outPath, html);
-  const layoutReportPath = process.env[LAYOUT_REPORT_PATH_ENV];
+  // The CLI supplies this private path only for an owned validation directory.
+  const layoutReportPath = process.env.ARCHIFY_LAYOUT_REPORT_PATH;
   if (layoutReportPath) {
     if (typeof layoutReport !== 'function') throw new Error(`writeDiagram: ${diagramType} provides no layout report`);
     fs.writeFileSync(layoutReportPath, `${JSON.stringify(layoutReport(), null, 2)}\n`, { flag: 'wx' });

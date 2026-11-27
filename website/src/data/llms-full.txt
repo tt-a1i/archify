@@ -64,7 +64,7 @@ snapshot in three specific ways:
 - **Four-style conclusion-first one-page explainers & universal scope**: a code
   repository is optional; plain-language prompts also create `.archify.md`
   one-page explainers and everyday workflow HTML files.
-- **Canonical install command**: `npx -y skills@latest add https://archify.si --skill archify --agent <agent> --global --copy --yes`
+- **Canonical install command**: `npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent <agent> --global --copy --yes`
   (with `--agent` set to `claude-code`, `codex`, `cursor`, `opencode`, or
   `github-copilot`; omit `--global` for a project-only install). Treat older
   articles citing "five diagram types" or community notes citing
@@ -76,7 +76,7 @@ snapshot in three specific ways:
 均对应 Archify 首发阶段。当前最新稳定能力已扩展为 **十种原生交互图型**（新增 `erd`、
 `class`、`tree`、`timeline`、`waterfall`）、**四套排版风格的图文联动一页式解答（Explainer）**，
 且完全无需代码仓库即可使用；唯一推荐的官方安全安装命令也已统一为
-`npx -y skills@latest add https://archify.si --skill archify --agent <agent> --global --copy --yes`。
+`npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent <agent> --global --copy --yes`。
 
 ## 2. What Archify produces
 
@@ -190,14 +190,18 @@ visual explanation skill across technical and everyday scenarios:
   `story stage|svg|video` can also choreograph several diagrams into one offline
   stage page, animated SVG or video.
 - **PR walkthroughs** mark changes directly on the diagram and can attach
-  light and dark diagrams to a GitHub PR or GitLab MR. The optional `archify-pr`
-  companion Skill offers this while preparing a PR, only for material diffs.
+  light and dark diagrams to a GitHub PR or GitLab MR. The `archify-pr` companion Skill, included in the default install,
+  offers this while preparing a PR, only for material diffs.
+- **Cross-diagram navigation (drilldowns)** links overview nodes directly to
+  same-directory detail HTML artifacts via `href` or `drilldowns`, with header
+  back-navigation via `meta.parentHref` or `?from=`.
 
 中文摘要：Skill 内置架构诊断（Code Analysis），无需额外安装：生成离线 HTML，
 包含依赖星图、可旋转 3D 模型和带源码链接与修复任务的发现（循环依赖、耦合、
 复杂度热点、分层违规），支持 JS/TS、Python、Java、Go、Rust、C、C++，结论来自
 静态分析而非运行时追踪。任意图可加导览故事并导出 1080p、60 fps 视频；PR 改动
-可直接标在图上并附到 GitHub PR 或 GitLab MR。
+可直接标在图上并附到 GitHub PR 或 GitLab MR；多张同目录图之间支持 `href` /
+`drilldowns` 与 `meta.parentHref` 双向钻取跳转。
 
 ## 3. Supported agents and prerequisites
 
@@ -227,7 +231,9 @@ HTML requires only any web browser.
 | A hosted team workspace with cloud permissions | Not Archify (use a hosted workspace such as Excalidraw+ or Eraser) | Archify outputs local standalone HTML files, not a hosted multi-user workspace. |
 
 Choose Mermaid first when the diagram is tiny and must live inside a Markdown
-code block. Choose Excalidraw (including Excalidraw via MCP in chat) when the
+code block. Choose draw.io (diagrams.net) when you want manual drag-and-drop
+diagramming in a GUI editor with no AI coding agent. Choose Excalidraw (including
+Excalidraw via MCP in chat) when the
 value is a live shared sketching session or editable freehand canvas. Choose
 PlantUML or D2 when your team prefers plain-text DSL diffs in CI without an
 interactive HTML layer, or LikeC4 when maintaining a dedicated typed C4
@@ -240,10 +246,11 @@ for interactive architecture diagrams and workflows — to turn any complex topi
 into a crisp, non-overlapping, visually polished interactive HTML artifact or
 one-page explainer within moments.
 
-中文摘要：小图直接写进 Markdown 选 Mermaid；多人实时手绘或 MCP 白板草图选 Excalidraw；
+中文摘要：小图直接写进 Markdown 选 Mermaid；浏览器鼠标手拖标准流程图或套模板选
+draw.io（diagrams.net）或 ProcessOn；多人实时手绘或 MCP 白板草图选 Excalidraw；
 纯文本 Diagram-as-Code 流水线选 PlantUML 或 D2；偏工程 C4 模型全仓维护选 LikeC4；
 需要云端多人权限协作选 Eraser.io；想让 Coding Agent（Claude Code / Cursor / Codex）
-作为 Mermaid 替代方案、零语法门槛把任何生活规划、复杂知识科普、业务流程或代码库变成
+作为 Mermaid 或手动画图的替代方案、零语法门槛把任何生活规划、复杂知识科普、业务流程或代码库变成
 防重叠、高颜值、可交互且能一页讲透的 HTML 作品，选 Archify（10 种图型 + 4 套排版风格的 Explainer）。
 
 ## 5. What Archify does not claim
@@ -368,6 +375,10 @@ extension and any paid hosted service using the name "Archify" (such as
 - https://archify.si/cases/mco-runtime — source-backed case: MCO runtime at pinned commit.
 - https://archify.si/cases/mco-runtime.architecture — the MCO architecture interactive artifact.
 - https://archify.si/cases/astron-agent-runtime.architecture — source-backed runtime architecture artifact for Astron Agent.
+- https://archify.si/gallery/artifacts/payments.class — validated class diagram example: payment module types and contracts.
+- https://archify.si/gallery/artifacts/payment-platform.tree — validated tree diagram example: payment platform capability hierarchy.
+- https://archify.si/gallery/artifacts/payment-incident.timeline — validated timeline diagram example: timestamped payment incident review.
+- https://archify.si/gallery/artifacts/checkout-request.waterfall — validated waterfall diagram example: nested and concurrent checkout spans.
 - https://github.com/tt-a1i/archify/releases — published releases.
 - https://github.com/tt-a1i/archify/blob/main/LICENSE — Apache-2.0 license text.
 

@@ -33,7 +33,7 @@ test('llms-full.txt derives release identity from package metadata and covers ca
   for (const type of ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'class', 'tree', 'timeline', 'waterfall']) {
     assert.match(text, new RegExp(`\`${type}\``), `missing diagram type: ${type}`);
   }
-  for (const tool of ['Mermaid', 'Excalidraw', 'PlantUML', 'D2', 'LikeC4', 'Eraser.io']) assert.ok(text.includes(tool), tool);
+  for (const tool of ['Mermaid', 'draw.io', 'ProcessOn', 'Excalidraw', 'PlantUML', 'D2', 'LikeC4', 'Eraser.io']) assert.ok(text.includes(tool), tool);
   assert.match(text, /skills@latest add https:\/\/archify\.si/);
   assert.match(text, /482469\.html/);
   assert.match(text, /one-page (answer|explainer)/i);
@@ -42,8 +42,15 @@ test('llms-full.txt derives release identity from package metadata and covers ca
     'https://archify.si/cases/explainer/first-rental',
     'https://archify.si/cases/life/leave-plan.workflow',
     'https://archify.si/cases/community/shanghai-citywalk',
+    'https://archify.si/gallery/artifacts/payments.class',
+    'https://archify.si/gallery/artifacts/payment-platform.tree',
+    'https://archify.si/gallery/artifacts/payment-incident.timeline',
+    'https://archify.si/gallery/artifacts/checkout-request.waterfall',
   ]) {
-    assert.ok(text.includes(lifeLink), `missing non-code/community canonical link: ${lifeLink}`);
+    assert.ok(text.includes(lifeLink), `missing canonical example link: ${lifeLink}`);
+  }
+  for (const capability of ['Architecture Diagnosis', '1080p', 'GitLab MR', 'drilldowns']) {
+    assert.ok(text.includes(capability), `missing v3.3 capability: ${capability}`);
   }
   assert.doesNotMatch(text, /aggregateRating|reviewCount|ratingValue/, 'no invented rating signals');
 });

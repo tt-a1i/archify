@@ -4,10 +4,56 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 ## [Unreleased]
 
-> Development identity: `v3.3.1-dev.1`. Not a stable release.
+> Development identity: `v3.3.3-dev.1`. Not a stable release.
 
 ### Added
-- **Verdict and layout from one run (#1420).** `validate <type> <input.json> --json --with-layout` returns the passing `--json` verdict with the `--layout-json` report under `layout`. The renderer that writes the checked artifact records the report, so the caller no longer starts a second CLI and renderer run. It works for all ten native types; failures keep their existing receipt, and existing outputs are unchanged. Thanks to [@HengYangDS](https://github.com/HengYangDS).
+
+- **Verdict and layout from one run (#1420).** `validate <type> <input.json> --json --with-layout` returns the passing `--json` verdict with the `--layout-json` report under `layout`. The renderer that writes the checked artifact also records the report. This works for all ten native types. Failed validations return the ordinary failure receipt. Thanks to [@HengYangDS](https://github.com/HengYangDS).
+
+### Fixed
+
+- Code Analysis output publication recovery (#1471, #1472).
+
+## [3.3.2] — 2026-11-25
+
+### Added
+
+- **In-page update notice (#1489).** Delivered diagrams show a cached update reminder in the Viewer header when there is room. Narrow or crowded diagrams and Explainers show it in the footer. The dismissible notice includes a one-click copy button for a localized Agent update prompt and a link to the official release notes. It works offline and stays out of embeds, print, and exports.
+- **Offline PR architecture drift review (#1443).** Use `--base` and `--head` to review pinned local commits against an authored architecture and inspect newly observed dependencies without contacting the PR host.
+
+### Changed
+
+- **Default install includes `archify-pr` (#1488).** The canonical install from `archify.si` installs both Skills. The companion offers diagrams for material PR diffs. Set `[archify pr: on-demand]` to disable offers.
+- **PR change diagrams (#1490, #1491).** Use lighter visual weights, aligned arrowheads, in-corner badges, and larger notes. Color highlights changed elements, and dotted outlines and lines identify removals.
+- **Website, search, and READMEs (#1477, #1478, #1480).** Refresh the website and localized READMEs, improve search metadata and indexing, and update the product and installation guidance.
+- **Release checklist (#1479).** Add an optional release video step.
+
+### Fixed
+
+- **Update reminders on slow networks (#1486, #1487).** Delivery waits up to about one second. A slow response can still refresh the cache in the background for the next delivery, while a previously found update remains available.
+- **Sequence WebM export (#1444).** Preserve Live playback order for message handoffs and participant pulses, and fit the complete sequence into the requested export.
+- **Story timeline seeking (#1439).** Keep the playback timeline usable on narrow screens.
+
+### Release follow-up
+
+- `docs/skill-updates/archify/stable.json` intentionally remains on `v3.3.1` until the `v3.3.2` GitHub Release asset is published and verified.
+- `archify-dsh` remains on `1.2.0` until the next DSH bundle cycle.
+
+## [3.3.1] — 2026-11-24
+
+### Changed
+- **Automatic Architecture layout, label ownership, and visual polish (#1473).**
+  - Inferred vertical columns (`layout.mode: "auto"`, up to 24 unpinned cards) harmonize card widths to flush left/right edges with comfortable sublabel breathing room.
+  - Unframed 1-bridge lateral pendant subtrees compact and lift into open vertical space alongside the main spine instead of trailing in lower corners.
+  - Multi-step vertical spines keep relationship labels on the cleaner side, reciprocal horizontal shafts place labels on their outer sides instead of between parallel lines, and parallel/vertical chain corridors reserve space for relationship labels.
+  - Dense unpinned graphs (9–12 cards) and framed topologies reduce avoidable crossings, fan-out hubs balance across recipients, shortcuts straighten past clear corridors, and blocked sink slots compact cleanly.
+  - Classic and Signal-Flow cards use `10px` corner radii, softened Classic light-mode semantic fills and strokes, borderless `6px` pill masks on edge labels, and unified `--arrow-security` / `--arrow-dashed` palette variables across strokes, markers, and labels.
+- **Explainer repeated-file deduplication (#1426, #1470).** Store each cited source file once per Explainer page rather than repeating identical file payloads across multiple citations.
+- **DeepSeek Harness 1.2.0 alignment (#1464, #1466, #1467).** Recorded and synchronized published `archify-dsh` `1.2.0` (bundling Archify `3.3.0` for DSH `0.2.2-rc.5`).
+
+### Release follow-up
+- The stable update manifest (`docs/skill-updates/archify/stable.json`) remains on `v3.3.0` until the `v3.3.1` GitHub Release is published and its `archify.zip` digest is verified.
+- The separately versioned DSH plugin (`integrations/deepseek-harness/release.json`, currently `1.2.0`) is explicitly deferred and remains on `1.2.0` until the next DSH bundle cycle.
 
 ## [3.3.0] — 2026-11-23
 
