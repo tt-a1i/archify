@@ -48,10 +48,10 @@ function route(html, id) {
 }
 
 function note(html) {
-  const match = html.match(/<text data-detail="context" x="([\d.]+)" y="([\d.]+)" class="[^"]+" font-size="7"( text-anchor="end")?>([\s\S]*?)<\/text>/);
+  const match = html.match(/<text data-detail="context" x="([\d.]+)" y="([\d.]+)" class="[^"]+" font-size="([\d.]+)"( text-anchor="end")?>([\s\S]*?)<\/text>/);
   assert.ok(match, 'self-call note is rendered');
-  const spans = [...match[4].matchAll(/<tspan[^>]*>([^<]*)<\/tspan>/g)];
-  return { x: Number(match[1]), y: Number(match[2]), anchor: match[3] ? 'end' : 'start', lines: spans.length ? spans.map(span => span[1]) : [match[4]] };
+  const spans = [...match[5].matchAll(/<tspan[^>]*>([^<]*)<\/tspan>/g)];
+  return { x: Number(match[1]), y: Number(match[2]), fontSize: Number(match[3]), anchor: match[4] ? 'end' : 'start', lines: spans.length ? spans.map(span => span[1]) : [match[5]] };
 }
 
 function failure(t, doc, code) {
@@ -165,7 +165,7 @@ test('self-call notes on either side wrap, preserve every word and clear phase b
     const gap = owner === 'left' ? 0 : 1;
     assert.equal(ownNote.anchor, owner === 'right' ? 'end' : 'start', 'notes align toward the loop owner');
     for (const line of ownNote.lines) {
-      const width = minimumNodeTextWidth(line, 7);
+      const width = minimumNodeTextWidth(line, ownNote.fontSize);
       const start = ownNote.anchor === 'end' ? ownNote.x - width : ownNote.x;
       assert.ok(start > lanes[gap] + 5, `${owner}: ${line} clears the preceding lifeline`);
       assert.ok(start + width <= lanes[gap + 1] - 10, `${owner}: ${line} clears the next lifeline`);
@@ -245,6 +245,17 @@ test('a loop spacing repair is withheld when either horizontal leg would follow 
   }
 });
 
+test('a phase border must clear the return leg of a self-call', t => {
+  const doc = sequence([{ from: 'left', to: 'left', y: 200, label: 'refresh' }]);
+  doc.segments = [{ from: 150, to: 244, label: 'Phase' }];
+  const diagnostic = failure(t, doc, 'sequence/segment-message-border-run');
+  assert.equal(diagnostic.subject.path, '/segments/0/to');
+  assert.equal(diagnostic.evidence.messageY, 242);
+  assert.equal(diagnostic.supportedFixes[0], 'set /segments/0/to to at least 246 to leave the message above it');
+  doc.segments[0].to = 246;
+  render(t, doc);
+});
+
 test('a simultaneous message on the opposite side of a loop remains valid', t => {
   render(t, sequence([
     { from: 'middle', to: 'middle', y: 200, label: 'refresh' },
@@ -272,6 +283,16 @@ test('a wrapped self-call note beyond an authored canvas reports the height it n
   assert.equal(diagnostic.subject.path, '/messages/0/note');
   doc.meta.viewBox[1] = diagnostic.evidence.requiredViewBoxHeight;
   render(t, doc);
+});
+
+test('a standard self-call cannot clip its wrapped note on a fixed canvas', t => {
+  const doc = sequence([{ from: 'left', to: 'left', y: 369, label: 'flush', note: 'W'.repeat(144) }], {
+    meta: { quality_profile: 'standard', column_fit: 'fixed', viewBox: [560, 480] },
+  });
+  const diagnostic = failure(t, doc, 'sequence/note-canvas-limit');
+  assert.equal(diagnostic.subject.path, '/messages/0/note');
+  doc.meta.viewBox[1] = diagnostic.evidence.requiredViewBoxHeight;
+  assert.equal(note(render(t, doc)).lines.join(''), doc.messages[0].note);
 });
 
 test('a self-call note that reaches a later message reuses the verified note-overlap repair', t => {

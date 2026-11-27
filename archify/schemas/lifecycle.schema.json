@@ -47,6 +47,10 @@
         "animation": {
           "$ref": "common.schema.json#/$defs/animation"
         },
+        "feedback_links": {
+          "type": "boolean",
+          "description": "false hides the page footer with feedback and GitHub star links."
+        },
         "visual_preset": {
           "$ref": "common.schema.json#/$defs/visualPreset"
         },
@@ -76,7 +80,8 @@
                 "success": { "$ref": "common.schema.json#/$defs/legendEntry" },
                 "failure": { "$ref": "common.schema.json#/$defs/legendEntry" },
                 "neutral": { "$ref": "common.schema.json#/$defs/legendEntry" },
-                "external": { "$ref": "common.schema.json#/$defs/legendEntry" }
+                "external": { "$ref": "common.schema.json#/$defs/legendEntry" },
+                "final": { "$ref": "common.schema.json#/$defs/legendEntry" }
               }
             }
           }
@@ -103,6 +108,8 @@
           "label"
         ],
         "properties": {
+          "change": { "$ref": "common.schema.json#/$defs/changeStatus" },
+          "emphasis": { "$ref": "common.schema.json#/$defs/emphasis" },
           "id": {
             "$ref": "common.schema.json#/$defs/id"
           },
@@ -155,6 +162,8 @@
           "to"
         ],
         "properties": {
+          "change": { "$ref": "common.schema.json#/$defs/changeStatus" },
+          "emphasis": { "$ref": "common.schema.json#/$defs/emphasis" },
           "id": {
             "$ref": "common.schema.json#/$defs/id"
           },

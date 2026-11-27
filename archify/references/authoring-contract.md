@@ -80,7 +80,7 @@ chooses one primary locale for the Viewer; follow an explicit primary-language
 request, then prompt order or conversation dominance.
 
 Bundled Viewer catalogs are enrolled in `locales/manifest.json`: currently
-`en`, `zh-CN`, `zh-TW`, `es`, `ko`, and `ar`. For these, `meta.locale` alone selects the full
+`en`, `zh-CN`, `zh-TW`, `es`, `ko`, `ar`, and `ru`. For these, `meta.locale` alone selects the full
 catalog. Tags match case-insensitively (`zh-cn` selects `zh-CN`), but region
 and script variants are distinct: `zh-Hant`, `es-MX`, or `ko-KR` select no
 bundled catalog.
@@ -234,9 +234,10 @@ semantic authoring choice, not a spacing repair. In workflow v2, let the compile
 allocate its measured mask before applying a diagnosed `labelAt`,
 `labelDx`/`labelDy`, or `labelSegment`. Apply one diagnosed geometry control at
 a time unless several edges share a constrained channel. In that case, plan the smallest coupled change from measured geometry and
-validate it together. Architecture/workflow provide layout evidence through
-`validate <type> <candidate.json> --layout-json`; for other types, use validation
-diagnostics and the rendered SVG geometry.
+validate it together. Architecture, workflow, sequence, dataflow, and lifecycle
+provide layout evidence through `validate <type> <candidate.json> --layout-json`
+(sequence/dataflow/lifecycle report node boxes and edge route points); for other
+types, use validation diagnostics and the rendered SVG geometry.
 Before adding manual routes, check whether unnecessary agent-added controls
 disable automatic port spread; preserve user-required route intent. Use the
 measured clearance rules above rather than guessing coordinates.
@@ -249,6 +250,10 @@ A measurable rejected layout also returns these fields, with `ok: false`,
 `contract: "archify-architecture-layout-v1"`, diagnostics, and exit 1. This is
 repair evidence, not artifact acceptance; it writes no HTML. Malformed input or
 an implementation failure retains the ordinary failure receipt without layout.
+Every native diagram type accepts `validate <type> <input.json> --layout-json`;
+each report carries `ok`, `diagram_type`, `viewBox`, and the measured element
+geometry for that type (nodes and edge routes for workflow, sequence, dataflow,
+and lifecycle; entities, types, segments, or bars for the remaining types).
 
 Use the measured failing side for `layout/boundary-out-of-bounds`. Left/top
 negative coordinates need an inward move; increasing viewBox width/height only
@@ -283,7 +288,22 @@ After every edit, rerun the complete `finalize` as the delivery contract require
 
 Choose overview or mechanism detail using [Composition and meaning](authoring-defaults.md#composition-and-meaning). Use one obvious primary reading path, which may step across meaningful rows when the requested topology needs room. Keep the overview readable at its chosen abstraction; expand implementation details when they answer the reader's question. Group only real ownership, trust, process, or deployment boundaries. Boundaries do not replace relationships.
 
-Grid placement is preferred when the schema supports it. Free positions are appropriate for a bounded exception, not for prose-level coordinate planning. Keep external actors outside the system boundary when that is factually true. A boundary is drawn as the padded box around all of its members, so place them as one compact axis-aligned cluster (no empty bay that lets a non-member sit inside the padded frame) and keep every non-member outside that box; `layout/boundary-encloses-non-member` reports a component the box swallows in showcase quality. Standard retains its existing acceptance behavior.
+For a fresh Architecture, set `"layout": {"mode": "auto"}` at the top level. Supply the real components and directed connections. The renderer computes positions for components without a `pos` and measures cards with no `size` from their text. Let it fit the canvas by omitting `meta.viewBox`. For example, these top-level fields place the two endpoints of a relationship:
+
+```json
+{
+  "layout": {"mode": "auto"},
+  "components": [
+    {"id": "client", "type": "frontend", "label": "Client"},
+    {"id": "api", "type": "backend", "label": "API"}
+  ],
+  "connections": [{"from": "client", "to": "api", "label": "HTTP"}]
+}
+```
+
+Keep a supplied absolute location in the component’s `pos`. Explicit sizes, connection sides, waypoints and label positions continue to constrain the drawing. Use `mode: "grid"` for row/column assignments. A document that omits the layout mode keeps its existing coordinate contract. Inspect resolved component boxes and connection paths with `validate architecture <source.json> --layout-json` when a branch is hard to follow.
+
+Keep external actors outside the system boundary when that is factually true. A boundary is drawn as the padded box around all of its members, so place them as one compact axis-aligned cluster (no empty bay that lets a non-member sit inside the padded frame) and keep every non-member outside that box; `layout/boundary-encloses-non-member` reports a component the box swallows in showcase quality. Standard retains its existing acceptance behavior.
 
 ### Workflow
 
@@ -319,7 +339,7 @@ not settle viewport fit. These are repair directions, not guaranteed coordinates
 
 ### Sequence
 
-Participants are ordered by conversation role. Messages own their vertical order. Use return/async/security variants for meaning, not decoration; sequence does not use Automatic Port Spread. A segment's `from`/`to` edges must stay at least 4px off every message arrow (`message.y`): an edge along an arrow leaves the reader unable to tell which phase the message belongs to, and showcase quality reports `sequence/segment-message-border-run`. Standard retains its existing acceptance behavior.
+Participants are ordered by conversation role. Messages own their vertical order. Use return/async/security variants for meaning, not decoration; sequence does not use Automatic Port Spread. A segment's `from`/`to` edges must stay at least 4px off every horizontal message arrow, including the return leg of a self-message. An edge along an arrow leaves the reader unable to tell which phase the message belongs to, and showcase quality reports `sequence/segment-message-border-run`. Standard retains its existing acceptance behavior for phase borders.
 
 First-draft shape: every message needs an `id`, `from`, `to`, `label`, and integer `y` at least 160. `from` and `to` may name the same participant for an internal operation: the renderer draws a loop and reserves its full height, label and note space. Leave room after the loop for the next message label and any wrapped note; see the [Sequence layout budget](../renderers/sequence/README.md#layout-budget). Optional phase bands are `segments[]` with only `from`, `to`, and `label` (no segment `id`). Inventing `pos`/`size` on participants fails schema validation — order alone places them. Omit `meta.viewBox` so automatic height fits the timeline + legend (minimum 327px readable band) instead of a fixed 760px floor, and so 2–3 participant spreads pack below the 920px default when labels fit (4+ stay at 920px; long labels still widen).
 
@@ -420,13 +440,17 @@ parent (`tree/missing-parent`), zero or several roots (`tree/root-count`), a
 parent cycle (`tree/cycle`, which also covers every node stranded beneath it),
 and duplicate ids are refused. Children read in declaration order.
 
-Use `layout.direction: "down"` (default) for a shallow, balanced breakdown and
-`"right"` for a deep or leaf-heavy tree such as a repository layout; a rightward
-tree aligns each parent with its first child and scrolls vertically in the
-reader. Labels wrap between words. `collapsed: true` makes a branch start
-collapsed in the Viewer; it never removes content from the artifact, and every
-export is the complete tree. For a real codebase, ground each node in the
-observed path and attach `sources`. See
+Use `layout.direction: "down"` (default) for a shallow breakdown and `"right"`
+for a deep or leaf-heavy tree such as a repository layout. A rightward tree
+whose automatic canvas is taller than it is wide starts near the root and
+scrolls vertically in the reader. Labels wrap between words. `collapsed: true`
+makes a branch start collapsed in the Viewer. Every export contains the
+complete tree. For a real codebase, ground each node in the observed path and
+attach `sources`.
+
+When a user asks for a decision tree, use Tree if each outcome has exactly one
+parent and the conditions fit in the child labels. Use Workflow for labeled
+transitions, joins, or loops. See
 [`../renderers/tree/README.md`](../renderers/tree/README.md).
 
 ### Class

@@ -1,7 +1,7 @@
 import path from 'node:path';
 
 // Both runners accept exact files, never infer coverage from changed sources.
-export function testRunnerOptions(argv, { repoRoot, testFiles, allowRequireFiles = false, defaultConcurrency = 2, allowShards = false }) {
+export function testRunnerOptions(argv, { repoRoot, testFiles, allowRequireFiles = false, defaultConcurrency = 2, allowShards = false, shardFirst }) {
   let concurrency = defaultConcurrency;
   let explicitConcurrency = false;
   let list = false;
@@ -66,8 +66,12 @@ export function testRunnerOptions(argv, { repoRoot, testFiles, allowRequireFiles
   if (namePattern !== undefined && !supportsNamePattern) {
     throw new Error('--test-name-pattern requires Node 18.11 or newer');
   }
+  // Start expensive suites on separate workers before filling the modulo shards.
+  const inventory = shard && shardFirst
+    ? [...testFiles.filter(file => shardFirst.has(file)), ...testFiles.filter(file => !shardFirst.has(file))]
+    : testFiles;
   const files = shard
-    ? testFiles.filter((_, index) => index % shard.count === shard.index - 1)
+    ? inventory.filter((_, index) => index % shard.count === shard.index - 1)
     : selected.length ? selected : testFiles;
   const args = ['--test'];
   if (supportsConcurrency) args.push(`--test-concurrency=${concurrency}`);

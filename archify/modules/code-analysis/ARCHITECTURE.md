@@ -1,0 +1,170 @@
+# Code Analysis Architecture
+
+Code Analysis is an integrated Archify module. This document describes the implemented pipeline and its current boundaries. For startup commands, see [the usage guide](docs/USAGE.md).
+
+## Entry point and lifecycle
+
+From the Archify package directory:
+
+```sh
+npm start -- "/path/to/project" --ir architecture.json
+```
+
+`bin/archify.mjs` dispatches `start` to this module's `bin/serve.mjs`. The legacy `archify code-analysis serve` command reaches the same implementation. The unified entry supplies a temporary output directory when `--out` is omitted.
+
+The server first invokes Archify's `deliver architecture` command with the authored JSON. If the input pins repository evidence, delivery checks it against the project's Git repository. Delivery failures stop startup before a page is served.
+
+The server serves the diagram on a loopback address with a Code Analysis button. Source extraction starts only when the reader clicks that button. Each analysis runs in a child process (`bin/analyze-run.mjs`), so the server stays responsive. Concurrent requests share a pending analysis, and the latest successful result is returned until the reader clicks **Re-analyze**. That runs a new analysis, which replaces the result only when it succeeds; the page then reloads and opens it. A failed analysis leaves the last good result and can be retried. Each run reads the config file again; only a changed architecture JSON requires a server restart.
+
+`POST /task` (same origin and token checks) builds an AI optimization task for finding ids of the current result and checks its evidence against the working tree. The request carries finding ids only; the result directory and repository root are fixed by the server.
+
+`archify code-analysis check` (`bin/check.mjs`) runs extract → graphs → evaluate without a diagram for terminals and CI, and exits non-zero when an open finding reaches the configured level.
+
+`archify code-analysis task` (`bin/task.mjs`) builds an AI optimization task from a finished run's `findings.json` and `raw-facts.json` (`lib/task.mjs`) and optionally checks its evidence against the working tree (`lib/evidence.mjs`).
+
+With `--question`, it instead prepares single-entry source orientation without requiring a finding (`lib/explain.mjs`, `lib/question-calls.mjs`). This mode checks captured source identity, direct imports and supported call locations, then points to the host Agent's [function analysis workflow](docs/FUNCTION-ANALYSIS.md). It does not run semantic analysis or execute the analyzed project.
+
+With `--base-root`, the question path freshly captures both JS/TS roots with the
+current extractor and one analysis configuration (`lib/change-question.mjs`). An
+optional extraction observer exposes effective compiler options and resolution
+reads for comparison and freshness checks; raw facts and revision 9 are unchanged.
+The required entry selects function text/position pairs, lexical call references
+and separate module-import reading locations. Declaration coverage remains explicit.
+Neither text pairing nor references prove runtime impact. This path does not save
+a raw-facts directory, infer renames or choose changed entries automatically.
+
+## Analysis pipeline
+
+`lib/analysis.mjs` provides the three data stages and `overlay/page.mjs` runs them and adds the fourth for a delivered page:
+
+1. **Extract facts** (`extract/`): select the Python, JS/TS, Java, Go or Rust adapter, read source files, and record files, imports, available symbol information, and unresolved dependencies. Python uses an AST extractor; JS/TS uses the TypeScript Compiler API; Java uses `java-parser` CSTs reduced to a declaration/reference index one file at a time. Go and Rust use source-only profiles; see the [language reference](docs/LANGUAGE-REFERENCE.md). Each run selects one adapter.
+2. **Build the module graph** (`graphs/module.mjs`): group files by explicit configuration, package boundaries, or directory depth (Java: build modules, or packages in a single-module build); aggregate dependencies between modules; calculate file ownership and module metrics. Root-level files form individual modules. Test and generated roles are excluded by default and counted in the output.
+3. **Evaluate rules** (`evaluate/`): run the import-cycle, module coupling-cycle, hub and concentration rules; function complexity (Python, JS/TS and Java); and architecture-boundary rules when the config declares them. Java cycles describe structural dependencies, without inferring class initialization risk. Findings include severity, subjects, and supporting evidence. Configured rule suppression is counted in the summary.
+4. **Build the analysis view** (`overlay/inject.mjs`): map authored components to code modules using source references or an explicit mapping, then add findings and source navigation to a copy of the delivered page.
+
+The orchestrator validates intermediate data against JSON schemas. It also checks that supplied raw facts and module graph data agree on repository metadata, file ownership, and dependency aggregates.
+
+For the conditional-null boundary in exact in-root JavaScript package imports/self exports, a bounded snapshot-backed selector preserves blocked, no-match, invalid, selected and unsupported outcomes before the usual source-boundary checks. It is not a Node loader; unsupported affected forms remain unknown. TypeScript/type-only resolution and unrelated keys retain their existing policy; see [Module resolution](docs/TECH-GUIDE.md#module-resolution).
+
+## Python call facts
+
+Current `python-source-v3` runs a transplanted Pyright tokenizer/parser in Node.
+Archify's binding pass, import collector, metrics and bounded source type shapes
+consume that tree. Full Pyright's Program, LSP, binder, evaluator and typeshed are
+not shipped. `python-source-declaration` extends lexical calls to captured
+receiver/signature declarations, source inheritance, bounded local flow, typed
+decorator contracts and generic factories. Explicit dependency declaration inputs
+can refine a receiver's type without adding project navigation targets. See
+[Python implementation and bounds](docs/PYTHON.md).
+
+The following `python-lexical-v1` contract describes historical captures, which
+remain readable without rebinding them. It inventories every `ast.Call` in parse-valid captured Python
+files. It conservatively binds Name calls to unique ordinary undecorated
+module-level definitions, or explicit static from-import aliases reaching such
+a direct captured definition. Function-local from-imports also bind when a single
+unconditional import precedes the call in the same function block, with no
+parameter collision or other write. Closure/class-local imports remain unknown.
+Binding events are collected before lookup, so
+parameters, later local writes, imports and pattern/catch/comprehension shadows
+cannot accidentally fall back to a module target. Attributes, classes, decorated
+targets, reexports, conditional/rebound/ambiguous bindings, global/nonlocal and
+annotation/generic contexts remain unresolved. No target code executes.
+
+Python functions additionally carry `sourceRange`: exact def/async def through
+AST end, one-based UTF-16 columns, exclusive end, SHA256 of the decoded slice
+encoded as UTF-8. It excludes preceding decorators; paired comparison uses the separate
+`definition.sourceRange` extent including owned headers. Saved question consumers verify this range
+against exact unchanged source without TypeScript reparsing. Calls physically
+inside it include defaults and nested bodies; these are source-contained sites,
+not a caller graph or runtime dispatch. Imported target freshness remains
+independent. A recognized fresh zero is known zero collected Calls; historical
+Python/Java captures without their recognized model stay unavailable. New spans
+are additive for current readers; older strict function schemas reject them.
+
+Java `java-static-lexical-v1` collects method invocations and bounds targets to
+unique same-file static source candidates. Java `sourceRange` supports call
+selection and target coordinates; `definition.sourceRange` preserves the owned
+header extent for paired comparison. Both coexist and use exact source hashes.
+Argument type applicability, compilation and runtime dispatch remain unknown.
+See [Java bounds](docs/JAVA.md#method-invocation-source-navigation).
+
+## JS/TS call facts
+
+Current `js-ts-lexical-v5` adds stable explicit ESM forwarding over captured module-acyclic value paths, with each forwarding statement retained in `calls[].via`; implementation bodies are distinguished from overload signatures. See [the technical guide](docs/TECH-GUIDE.md#explicit-esm-call-forwarding) for scope and unknowns. The v1/v2 contracts below describe historical captures and remain readable without rebinding them.
+
+The JS/TS adapter records `CallExpression` sites from parse-valid, non-declaration files. `callModel: "js-ts-lexical-v2"` explicitly identifies this coverage; an empty array without a recognized model does not establish that calls were collected. Adapter revisions identify extraction changes and are not capability flags. Python and Java do not emit this call model.
+
+The existing TypeScript checker supplies conservative lexical bindings: a unique ordinary function declaration with a body, a direct `const` arrow/function-expression initializer, or a relative static named import to a direct captured export of one of those forms. The v2 model also binds relative default imports (including `default as`) to direct default function declarations, named or anonymous, with exactly one implementation body. Import aliases and lexical shadowing are respected. Each target is tied to a measured function in captured source. Namespace/package imports, default export expressions, local export aliases, re-exports, mutable or wrapped initializers, member/dynamic dispatch and optional calls remain unresolved. Constructors and tagged templates are not collected. Records can include calls inside nested functions; neither a target nor a zero count establishes execution, reachability or complete impact.
+
+Parameter-default calls remain unresolved when the checker reports a declaration inside that same function's body: the body scope is unavailable to the initializer. This includes destructuring defaults and closures created in an initializer. Valid outer/import bindings and declarations within initializer-created function scopes retain their usual resolution; the adapter does not attempt to rebind a rejected body target to an outer declaration.
+
+Call and target positions are one-based UTF-16 coordinates; call ends are exclusive. Chained calls can share a start and have different ends. Semantic checks verify source bounds, measured functions and recorded static import edges, without rerunning binding analysis. `symbols` retains Python binding-order semantics; `unresolved` counters still count imports. Module graphs, rules, finding tasks and the UI do not consume the call records. Question orientation reads up to 40 records in the selected source range, including nested bodies, and reports total/included/omitted counts. Missing or unknown call models leave coverage unavailable, even for a numerically familiar adapter revision. Original facts stay intact; current navigation requires matching source text and no parse errors, checked separately for imported targets. These checks do not re-resolve imports after configuration or other source changes.
+
+Question orientation explicitly supports both v1 and v2 and reports their different binding coverage. The v1 model excludes default imports; it keeps its original facts when read by the newer consumer. A v1-only question consumer treats v2 as unavailable rather than assuming the newer contract. Historical empty arrays remain valid in the updated schema. Older strict schemas reject the additional `callModel` field, so consumers need the updated schema to read new captures. A reader must also account for parse errors, excluded files and declaration files before interpreting call coverage.
+
+## Current findings and presentation
+
+The implemented rules inspect file-level import cycles, module-level coupling cycles, and modules with high incoming and outgoing dependency counts. Import evidence distinguishes relevant loading conditions such as lazy, conditional, and type-only imports. Findings describe static structure and potential loading risks; they do not prove a runtime failure or certify safe execution.
+
+The analysis layer uses one reading column for the project overview, component pages, problem pages, and source pages. Desktop layouts reserve space beside that column for the architecture canvas; narrow windows show one reading page at a time and offer a View diagram / Show analysis toggle. Back buttons return to the previous page. Overview priorities include source locations and possible maintenance impact. Problem pages show the observed facts, up to two nine-line code excerpts, a suggested next step, and an expandable AI task preview. Relationships, metrics, and full rule evidence remain expandable. Function source views highlight the measured range as well as the selected line.
+
+The AI task preview uses the shared task generator's Markdown. Live pages request it from the authenticated local server and recheck evidence before copying or downloading. Static reports embed captured tasks and explicitly state that the current source has not been checked. A network failure can fall back to that labeled snapshot; an HTTP rejection remains an error requiring retry or re-analysis. Clipboard failure selects the preview for manual copying. Exporting a task does not modify source files. Comparisons say “no longer detected”; incompatible or unknown comparison context is shown with its reasons rather than claiming a fix.
+
+Source references with line numbers show a nine-line context window and highlight the cited line. References without a line number show a twelve-line file preview, explicitly labeled as opening lines rather than finding evidence. Readers can switch to the full captured file and back; excerpt lines wrap, while full-file mode retains original formatting. Unmapped modules retain their file evidence even without a component on the architecture diagram. Related components are highlighted and can be located using the Viewer camera while preserving the desktop zoom. The Code Analysis button toggles the layer after analysis succeeds.
+
+## Files and responsibilities
+
+- `bin/`: delivery, local server, and click-triggered analysis requests.
+- `config/`: default source inclusion, exclusions, and file-role patterns.
+- `extract/py/`: Python extraction and adapter integration.
+- `extract/ts/`: JavaScript and TypeScript extraction.
+- `extract/java/`: Java parsing, conservative source dependency resolution, and method/constructor metrics. See [Java support](docs/JAVA.md).
+- `core/`: dependency-free helpers every stage shares (structured diagnostics, glob matching, exact source ranges and line-range digests), imported through `core/index.mjs`. It imports no stage and no third-party package.
+- `extract/shared/`: file walking, file roles and Git metadata for the adapters. Its `diagnostics`, `glob`, `source-range`, `schema` and `semantics` files only re-export `core/` and `schemas/` so adapters keep one local import path.
+- `graphs/`: module grouping and dependency aggregation.
+- `evaluate/rules/index.mjs`: the rule registry; a new rule is its own file plus one line here.
+- `evaluate/rules/coupling/`: import-cycle, module-cycle, hub, concentration and internal-leak rules. Cycles are errors; see [Severity levels](docs/USAGE.md#severity-levels).
+- `evaluate/rules/architecture/`: opt-in layer boundary rules declared in the config.
+- `evaluate/rules/complexity/`: shared function complexity and nesting thresholds; measurements come from each language extractor.
+- `evaluate/rules/redundancy/`: the duplicate rule and its optional jscpd runner. `evaluate/` does not import `lib/`; the previous `lib/duplicates.mjs` entrypoint remains a compatibility re-export.
+- `lib/`: the data stages (extract → graph → evaluate), config merging, intermediate-data checks, review (`review.mjs`: baseline, run comparison and comparability), AI tasks (`task.mjs`: task model and Markdown rendering) and evidence checks (`evidence.mjs`: captured source against the working tree).
+- `bin/check.mjs`: headless analysis for terminals and CI; `bin/task.mjs`: AI task export and evidence check; `bin/analyze-run.mjs`: one analysis run in a child process for the server.
+- `overlay/`: mapping and browser presentation; `overlay/page.mjs` is the whole analysis for one delivered page; `overlay/client/` holds the browser scripts and styles as plain files, inlined at build time by `overlay/client-assets.mjs`. `overlay/` builds on `lib/`, never the reverse.
+- `schemas/`: raw-facts, module-graph, findings, baseline, and AI task contracts, with their validator (`validate.mjs`) and the cross-reference invariants a JSON schema cannot express (`semantics.mjs`), imported through `schemas/index.mjs`.
+- `test/`: regression tests, small source fixtures, and expected extraction results.
+- `docs/`: usage and technical documentation.
+
+## Outputs
+
+Before analysis, `<out>/architecture.html` contains Archify's delivered artifact. The server adds its startup button to the served response without overwriting that artifact.
+
+After successful analysis, `<out>/analysis/` contains:
+
+- `raw-facts.json`
+- `module-graph.json`
+- `findings.json`
+- `review.json` (baseline status and comparison with the previous run)
+- `overview.json`
+- `repo.analysis.html`
+
+Each run is written to a fresh staging directory inside the output lock. Once the return data is readable, the current result moves to `<out>/analysis.previous/` and the candidate becomes `<out>/analysis/`. A successful rollback restores both completed reports if publication fails.
+
+`check` also stages its complete output before publishing. Report publication and workbench review saves share an output-directory lock, covering the choice of automatic comparison through publication. Workers write to directories prepared by the lock owner. A retry discards staging before publication only after it can establish that the writer exited.
+
+The Linux lock label binds the writer to the current boot and PID namespace. When a PID remains visible, comparing start times requires a matching time namespace and a procfs view for the same PID namespace. A different or unverifiable identity, including a legacy lock label, leaves the lock in place. On other platforms, share a writable output directory only within one machine and its process view.
+
+An interrupted publication or a failed rollback retains the move plan and backups for recovery. A failed rollback records a terminal state so retries can report that recovery even while the workbench process is alive.
+
+The analysis HTML embeds source context for mapped and evidence files and can display existing results offline. It cannot rescan a project without the local server.
+
+## Runtime dependencies and boundaries
+
+The module uses `typescript` for JS/TS parsing, `java-parser` for Java parsing, and `ajv` for JSON schema checks. Python analysis also requires a Python interpreter. Java analysis requires no JVM. Archify's installation installs module dependencies; the server can install missing dependencies on first use.
+
+The local server checks the request host and requires the matching origin and per-server token for analysis requests. Embedded source collection is bounded to the analyzed source root. The `serve`, `check`, and `task` entry points all initialize missing module dependencies before loading the analysis libraries, including in a freshly extracted package.
+
+The analyzer does not execute the analyzed application or call an LLM. AI tasks are built from the analysis data by fixed templates; applying a change is left to the coding agent the reader hands the task to. It currently does not implement separate call, test, or Git-change graphs, duplication rules, taint analysis, concurrency or resource-safety verification, automatic fixes, or a composite quality score. Results identify a working-tree extraction with captured source text and a snapshot digest. Git HEAD is contextual base metadata, not the revision of the analyzed content; it is not a change-impact analysis.
+
+Python `python-lexical-v2` preserves the v1 inventory and adds one unique unconditional explicit from-import reexport, including aliases, to an ordinary undecorated function in another captured file. The existing binding-event scanner supplies eligible export bindings; the existing captured import resolver supplies both hops. Semantic checks require one or two recorded static import edges and exact target definition ranges. Longer chains, cycles back to the caller, conditional/rebound/wildcard exports, classes and runtime module initialization are outside this model. Saved v1 captures keep direct-only coverage.
+
+Rust `rust-source-direct-v3` retains prior direct/monomorphic coverage and adds `rust-specialized-inherent-source-candidate`: a bare path through an unbounded type-generic struct can identify one concrete specialization source function. Named type arguments in a nongeneric impl establish a source candidate only; applicability/inference, explicit generic call arguments, Self/aliases/traits/receivers and lifetime/const/bounded/defaulted owners remain unproved. Unsupported generic/receiver/otherwise competing inherent declarations keep selection unknown. The captured import resolver and source ranges are reused. Historical v1/v2 captures retain their original scope.

@@ -12,6 +12,8 @@
 
 <p align="center">从一个想法、一个问题或一份计划开始。把它描述给 AI Agent，Archify 就能生成可以探索、修改和分享的交互式 HTML。从旅行行程、知识地图到复杂系统，你都可以继续扩展，做成自己需要的样子。</p>
 
+<p align="center"><strong>10 种原生图型 · 4 种风格的一页式解答 · 架构诊断 · Story 演练与 1080p 视频 · PR / MR 变更图解</strong></p>
+
 <p align="center">看看社区正在创造什么，也想想你还能用它做些什么。</p>
 
 <p align="center">
@@ -32,8 +34,8 @@
   <a href="https://github.com/tt-a1i/archify/stargazers"><img src="https://img.shields.io/github/stars/tt-a1i/archify?style=flat-square&amp;color=E5B650&amp;logo=github&amp;label=Stars" alt="GitHub stars" /></a>
   <a href="https://skills.sh/tt-a1i/archify/archify"><img src="https://img.shields.io/badge/installs-130K%2B-0EA5E9?style=flat-square" alt="130K+ installs on skills.sh" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-22c55e?style=flat-square" alt="Apache License 2.0" /></a>
-  <a href="#安装方式"><img src="https://img.shields.io/badge/works_with-Claude_Code_%7C_Codex_%7C_Cursor_%7C_OpenCode-7C3AED?style=flat-square" alt="Works with Claude Code, Codex, Cursor, and OpenCode" /></a>
-  <a href="CHANGELOG.md#unreleased"><img src="https://img.shields.io/badge/version-3.2.1--dev.1-0891b2?style=flat-square" alt="Development version 3.2.1-dev.1" /></a>
+  <a href="#安装方式"><img src="https://img.shields.io/badge/works_with-Claude_Code_%7C_Codex_%7C_Cursor_%7C_OpenCode_%7C_Copilot-7C3AED?style=flat-square" alt="Works with Claude Code, Codex, Cursor, OpenCode, and GitHub Copilot" /></a>
+  <a href="CHANGELOG.md#unreleased"><img src="https://img.shields.io/badge/version-3.3.3--dev.1-0891b2?style=flat-square" alt="Development version 3.3.3-dev.1" /></a>
 </p>
 
 <p align="center">
@@ -51,9 +53,9 @@
 
 <!-- archify-launch-video -->
 
-https://github.com/user-attachments/assets/88cff7dd-bdf3-4b97-950c-37cc079898b1
+https://github.com/user-attachments/assets/88ec3f95-102b-417a-a392-0100b9daaca1
 
-**一句话，看懂你的项目。** 35 秒演示：探索交互图、查看源码关联、追踪完整路径。[试试可交互示例 ↗](https://archify.si/zh/gallery)
+**一句话，看懂你的项目。** 60 秒带你看完：整个仓库的依赖星图、标在架构图上的诊断结果、真实 PR 讲解，以及导出视频。[试试可交互示例 ↗](https://archify.si/zh/gallery)
 
 <a id="start"></a>
 
@@ -156,6 +158,33 @@ API 优先读取 Redis，缓存未命中时查询 PostgreSQL 并回填缓存。
 
 Archify 追踪 [`mco-org/mco`](https://github.com/mco-org/mco) 的 `9f1a1cf` 版本并生成这张校验地图。**[打开成品 ↗](https://archify.si/cases/mco-runtime.architecture.html?theme=dark&present=1)** · [追踪下游 ↗](https://archify.si/cases/mco-runtime.architecture.html?theme=dark#focus=router&reach=downstream) · [Typed Source](docs/cases/mco-runtime.architecture.json)
 
+### 诊断一个代码仓库
+
+<sub>CODE ANALYSIS · Skill 自带，无需额外安装</sub>
+
+| 依赖星图 | 同一次分析的 3D 模型 |
+|---|---|
+| [![Atlas 星图：模块排成一圈，文件依赖横穿其中，侧栏列出问题与耦合度](docs/assets/code-analysis-views/atlas.png)](archify/modules/code-analysis/docs/USAGE.md) | [![Atlas 3D：被依赖最多的模块作为树干，其他模块按依赖层级向上分枝](docs/assets/code-analysis-views/atlas-3d.png)](archify/modules/code-analysis/docs/USAGE.md) |
+
+**架构诊断**会读取仓库，告诉你代码实际上是怎么连在一起的：循环依赖、耦合过紧的模块、复杂度热点、违反分层规则的地方。每条发现都能点开对应源码，还附有可以直接交回给 Agent 的修复任务。和架构图一起使用时，每个组件上会标出问题数。支持 JS/TS、Python、Java、Go、Rust、C 和 C++，结果是一个可离线打开的 HTML 文件。
+
+```text
+用 archify 的 Code Analysis 分析这个仓库：看模块耦合、循环依赖和复杂度热点。
+```
+
+[Code Analysis 使用指南](archify/modules/code-analysis/docs/USAGE.md)
+
+### 讲成一段故事，或讲清一个 PR
+
+<sub>STORY · PR 导览</sub>
+
+- **Story 视频。** 让 Agent 给任意一张图加上导览故事。页面会多出 Story 模式，带时间轴和字幕；**导出 → Story video** 可录成 1080p、60 fps 的视频（WebM 或 MP4）。也可以把多张图编排进同一个舞台页面或视频。[Story 编写说明](archify/references/story-authoring.md)
+- **PR 导览。** 让 Agent 讲解一个 PR 或分支：Archify 直接在图上标出改动，还能把深浅两版图附到 GitHub PR 或 GitLab MR。默认安装已包含 `archify-pr` Skill，它会在你准备 PR 时主动询问，且只针对实质性改动。[PR 审阅说明](archify/references/pr-review.md)
+
+```text
+用 archify 给这张图加一段导览故事，并导出成视频。
+```
+
 ### 易于扩展，社区还在不断创造新用法
 
 <sub>COMMUNITY STORIES · 社区用户提供的部分案例</sub>
@@ -219,7 +248,7 @@ Export 菜单支持复制 PNG，并下载静态或动态格式：
 
 ## 快速开始
 
-**当前开发版本：** `v3.2.1-dev.1`。详见[版本历史](CHANGELOG.md#unreleased)。
+**当前开发版本：** `v3.3.3-dev.1`。详见[版本历史](CHANGELOG.md#unreleased)。
 
 ### 1. 安装
 
@@ -236,14 +265,16 @@ Install Archify for me by reading https://raw.githubusercontent.com/tt-a1i/archi
 只安装到 Cursor：
 
 ```bash
-npx -y skills@latest add https://archify.si --skill archify --agent cursor --global --copy --yes
+npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent cursor --global --copy --yes
 ```
 
 或者，仅在需要全部五个 Agent 时运行：
 
 ```bash
-npx -y skills@latest add https://archify.si --skill archify --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes
+npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes
 ```
+
+默认安装已包含 `archify-pr` 同伴 Skill。它对文档、锁文件、格式化等小改动保持静默，只在你准备 PR 且存在实质性 diff 时询问是否加图。在 Agent 全局规则文件写入 `[archify pr: on-demand]` 可关闭这些主动询问。若只想保留 `/archify`，可运行 `npx -y skills@latest remove archify-pr --agent cursor --global --yes` 移除同伴 Skill（项目级安装去掉 `--global`）。如果目前只安装了 `/archify`，可执行 `npx -y skills@latest add https://archify.si --skill archify-pr --agent cursor --global --copy --yes` 补上同伴 Skill。
 
 <details>
 <summary>更多安装方式与更新检查说明</summary>
@@ -254,9 +285,9 @@ npx -y skills@latest add https://archify.si --skill archify --agent cursor --age
 npx skills use tt-a1i/archify@archify --agent codex
 ```
 
-DeepSeek Harness（社区集成、显式启用）：运行 `dsh plugin --profile web add @tt-a1i/archify-dsh@1.1.0`；参见[兼容范围、限制与安全说明](integrations/deepseek-harness/README.md)。[Agent 切换器](https://archify.si/zh/start?agent=cursor&type=architecture)为 `cursor`、`codex`、`claude-code`、`opencode` 和 `github-copilot` 生成命令。
+DeepSeek Harness（社区集成、显式启用）：运行 `dsh plugin --profile web add @tt-a1i/archify-dsh@1.2.0`；参见[兼容范围、限制与安全说明](integrations/deepseek-harness/README.md)。[Agent 切换器](https://archify.si/zh/start?agent=cursor&type=architecture)为 `cursor`、`codex`、`claude-code`、`opencode` 和 `github-copilot` 生成命令。
 
-安装后的 Skill 包含一个低频、失败静默的发布检查，它最多只显示可选更新提醒，绝不会自行下载或安装更新。一次成功检查后，下次网络请求通常约在 24 小时（±20%）后发出；检查失败后，活跃使用可能在首次 6 小时、后续 24 小时退避到期时重试。请求只访问 `https://archify.si/skill-updates/archify/stable.json`。服务端会自然获得 IP、请求时间和常规 HTTP 元数据；检查器不会发送本地版本、Agent、项目数据、用户输入、账户/设备标识，也不会保存或回传 ETag。是否更新以及何时更新始终由你决定。如需完全关闭检查（包括网络请求和提醒状态写入），请在 Agent 环境中设置 `ARCHIFY_UPDATE_CHECK_DISABLED=1`。
+安装后的 Skill 包含一个低频、失败静默的发布检查，它最多只显示可选更新提醒，绝不会自行下载或安装更新。一次成功检查后，下次网络请求通常约在 24 小时（±20%）后发出；检查失败后，活跃使用可能在首次 6 小时、后续 24 小时退避到期时重试。请求只访问 `https://archify.si/skill-updates/archify/stable.json`。服务端会自然获得 IP、请求时间和常规 HTTP 元数据；检查器不会发送本地版本、Agent、项目数据、用户输入、账户/设备标识，也不会保存或回传 ETag。是否更新以及何时更新始终由你决定。如需完全关闭检查（包括网络请求和提醒状态写入），请在 Agent 环境中设置 `ARCHIFY_UPDATE_CHECK_DISABLED=1`。网络较慢时，检查可在后台完成，并在下次交付时显示提醒。已知有新版本时，如果图表页面够宽且顶部有足够空间，提醒会显示在顶部栏中央，其他情况则显示在页脚。提醒可以关闭，支持离线使用，不发出任何网络请求。你可以一键复制发给 Agent 的更新指令，或打开发布说明。传 `--no-update-notice` 或设置 `ARCHIFY_UPDATE_NOTICE_DISABLED=1` 可让页面保持不变。
 
 </details>
 
@@ -282,9 +313,31 @@ DeepSeek Harness（社区集成、显式启用）：运行 `dsh plugin --profile
 辅助信息放进说明卡片，不要继续增加连线。
 ```
 
+Archify 自带**架构诊断**，可以把仓库的依赖关系画成环形星图和可旋转的 3D 模型，还能在架构图上标出每个组件的问题数。循环依赖、图中遗漏的依赖等发现都能点开查看源码。交付基于仓库源码的架构图后，Archify 会在总结末尾列出架构诊断能做什么，架构图右上角也有「架构诊断」按钮可以随时查看介绍。得到你的同意后才会启动。无需额外安装。详见 [Code Analysis 使用指南](archify/modules/code-analysis/docs/USAGE.md)。
+
+```text
+用 archify 的 Code Analysis 分析这个仓库：看模块耦合、循环依赖和复杂度热点。
+```
+
 ### 3. 在对话中细调
 
 继续说：`增加 Redis`、`把鉴权移到左侧`、`突出回滚路径`。Archify 会保留 Typed Source，只修改相关部分。
+
+## 在 DeepSeek Harness 里试试
+
+<p align="center"><a href="integrations/deepseek-harness/README.md"><img src="docs/assets/archify-dsh-lockup.svg" alt="Archify × DSH" width="440" /></a></p>
+
+Archify 也能在 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（DSH）里使用，通过社区插件 **`@tt-a1i/archify-dsh`** 接入。1.2.0 版内置 Archify 3.3.0 Skill，一条命令就能在 dsh 会话里画图、生成一页式解答和做代码分析：
+
+```bash
+dsh plugin --profile web add @tt-a1i/archify-dsh@1.2.0
+```
+
+然后直接说：`Use the archify skill to map this repository's runtime architecture.`
+
+<p align="center"><a href="integrations/deepseek-harness/README.md#install"><img src="https://img.shields.io/badge/%E8%AF%95%E7%94%A8_Archify_%C3%97_DSH-%E5%AE%89%E8%A3%85%E6%8C%87%E5%8D%97_%E2%86%92-0856F5?style=for-the-badge" alt="试用 Archify × DSH：安装指南" /></a></p>
+
+<sub>社区集成，面向开发者预览版 `@deepseek-ai/dsh@0.2.2-rc.5`，Node `^22.19.0 || >=24.0.0`。不是 DeepSeek 官方产品。兼容范围、升级和卸载见[安装指南](integrations/deepseek-harness/README.md)。</sub>
 
 ## 选择合适的图表
 
@@ -379,7 +432,7 @@ Architecture 示例：[`Web App`](examples/web-app.html) · [`Archify Pipeline`]
 <summary>这些体验背后的工程能力</summary>
 
 
-- **用布局判断代替通用自动布局** —— Agent 根据故事选择层级、留白、线路和强调关系；共享的自动端点会确定性展开，不再让多支箭头堆在同一个中点。
+- **布局判断为主，按需自动摆放** —— Agent 根据故事选择层级、留白、线路和强调关系。架构图可以开启 `layout.mode: "auto"`，按组件关系自动摆放，你写定的位置和线路保持不变。共享的自动端点会确定性展开，不再让多支箭头堆在同一个中点。
 - **Typed JSON IR** —— 每种 Renderer 模式都有 Schema 和可复现的源文件。
 - **原子交付前校验** —— Schema、布局、HTML/SVG、线路和标签到其他路径的净空检查必须全部通过，Showcase 成品才会替换上一份可信结果。
 - **失败也有结构化修复回执** —— `validate --json` 和 `deliver --json` 会返回稳定规则码、准确对象、测量证据和真正支持的修复旋钮，不再让 Agent 从 Node 堆栈或自由文本里猜。
@@ -435,7 +488,7 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 }
 ```
 
-不设置 `animation` 时结果完全静态；`classic` 始终是默认视觉预设。设计评审、发布说明和技术文档可以显式选择 `editorial`，获得暖纸张与深墨色的编辑风格，同时保持几何完全不变。将 `meta.locale` 设为任意合法语言标签，可选择 `<html lang>`、默认图例、无障碍文案和所有固定 Viewer UI。`en`、`zh-CN`、`zh-TW`、`es`、`ko` 与 `ar` 已内置，只需设置 `meta.locale`；`meta.translations`（规范消息键到译文字符串的映射）可逐键覆盖，其余文案保持所选语言。其他语言需在该字段中提供完整目录（参见 `archify/examples/locales/`），否则渲染器回退为英文并在 stderr 中说明。作者编写的标题、节点、关系和卡片不会被机器翻译。未带该字段的旧文件仍然有效，并默认使用英文。对于既未内置也未提供 `meta.translations` 的创作语言，应省略 `meta.locale`、保持 authored content 使用用户要求的语言，并主动告知用户固定 Viewer UI 与 `<html lang>` 回退为英文，因此该成品不属于完整本地化。
+不设置 `animation` 时结果完全静态；`classic` 始终是默认视觉预设。设计评审、发布说明和技术文档可以显式选择 `editorial`，获得暖纸张与深墨色的编辑风格，同时保持几何完全不变。将 `meta.locale` 设为任意合法语言标签，可选择 `<html lang>`、默认图例、无障碍文案和所有固定 Viewer UI。`en`、`zh-CN`、`zh-TW`、`es`、`ko`、`ar` 与 `ru` 已内置，只需设置 `meta.locale`；`meta.translations`（规范消息键到译文字符串的映射）可逐键覆盖，其余文案保持所选语言。其他语言需在该字段中提供完整目录（参见 `archify/examples/locales/`），否则渲染器回退为英文并在 stderr 中说明。作者编写的标题、节点、关系和卡片不会被机器翻译。未带该字段的旧文件仍然有效，并默认使用英文。对于既未内置也未提供 `meta.translations` 的创作语言，应省略 `meta.locale`、保持 authored content 使用用户要求的语言，并主动告知用户固定 Viewer UI 与 `<html lang>` 回退为英文，因此该成品不属于完整本地化。
 
 </details>
 
@@ -450,6 +503,7 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 | 对比一种或两种语义角色 | <kbd>L</kbd> 或“透镜” |
 | 打开实时全局雷达 | <kbd>M</kbd> 或“地图” |
 | 进入 Presentation Stage | <kbd>F</kbd> |
+| 播放导览故事或导出视频（带故事的图） | 动效控件 → `Story` · 导出 → `Story video` |
 | 选择视觉风格（<kbd>S</kbd> 循环）/ 切换主题 / 打开 Export | <kbd>S</kbd> / <kbd>T</kbd> / <kbd>E</kbd> |
 | 缩放或复位 | <kbd>+</kbd> / <kbd>-</kbd> / <kbd>0</kbd> |
 
@@ -467,7 +521,7 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 | **Claude.ai** | Settings → Capabilities → Skills 中上传 `archify.zip` | 取决于沙箱是否提供 Node.js |
 | **Project Knowledge** | 把 `archify.zip` 上传到项目 | Prompt 驱动的 Architecture Fallback |
 | **Hermes Agent** | 显式启用：`hermes skills install skills-sh/tt-a1i/archify/archify -y` | 社区 Skill-only；Node `>=18`；不是 Nous 官方产品。没有遥测。非切换器目标。[详情](integrations/hermes-agent/README.md)。 |
-| **DeepSeek Harness** | 显式启用：`dsh plugin --profile web add @tt-a1i/archify-dsh@1.1.0`；调用：`Use the archify skill to map this repository's runtime architecture.`；卸载：`dsh plugin --profile web remove @tt-a1i/archify-dsh`。 | 面向开发者预览版 `@deepseek-ai/dsh@0.2.1-rc.2` 的社区集成；Node `^22.19.0 \|\| >=24.0.0`；不是 DeepSeek 官方产品。没有遥测；shell 文件不会自动进入 Web Produced Files，请返回精确工作区路径。[详情](integrations/deepseek-harness/README.md)。 |
+| **DeepSeek Harness** | 显式启用：`dsh plugin --profile web add @tt-a1i/archify-dsh@1.2.0`；调用：`Use the archify skill to map this repository's runtime architecture.`；卸载：`dsh plugin --profile web remove @tt-a1i/archify-dsh`。 | 面向开发者预览版 `@deepseek-ai/dsh@0.2.2-rc.5` 的社区集成；Node `^22.19.0 \|\| >=24.0.0`；不是 DeepSeek 官方产品。没有遥测；shell 文件不会自动进入 Web Produced Files，请返回精确工作区路径。[详情](integrations/deepseek-harness/README.md)。 |
 
 ## 参考与边界
 
@@ -479,7 +533,7 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 - [路线图](ROADMAP.md)
 - [自动生成的 Proof Lab](https://archify.si/zh/gallery)
 
-自动 Mermaid Parser、通用自动布局、托管分享服务和 WYSIWYG 编辑器目前都不在产品范围内。
+自动 Mermaid Parser、托管分享服务和 WYSIWYG 编辑器目前都不在产品范围内。架构图可以通过 `layout.mode: "auto"` 启用自动摆放。其他图型遵循各自渲染器的布局规则，例如树状图根据你定义的父子关系计算节点位置。
 
 ## 社区交流
 

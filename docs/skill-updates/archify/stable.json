@@ -2,17 +2,17 @@
   "schemaVersion": 1,
   "skillId": "archify",
   "channel": "stable",
-  "version": "3.2.0",
-  "publishedAt": "2026-10-19T00:20:11Z",
+  "version": "3.3.2",
+  "publishedAt": "2026-11-25T15:56:14Z",
   "source": {
     "repository": "https://github.com/tt-a1i/archify",
-    "ref": "v3.2.0",
-    "treeSha": "39069dd190f574064fe410aa3af1b6dfd98a522c"
+    "ref": "v3.3.2",
+    "treeSha": "e91df37318f9adec8b39150a2738beb4cd22bad5"
   },
   "artifact": {
-    "sha256": "70e210265c59f24dcbdf2a502ff671104b5454e7ee7d3554aecd86bad32384f5"
+    "sha256": "932d915f83fdbf44796cc6b20b085455a763491306e1b8dee92047e11dddc0ea"
   },
-  "summary": "Adds one-page answers with cited sources, interactive diagrams and image/PDF export, plus clearer node indexes, update notices and portability fixes.",
-  "releaseNotes": "https://github.com/tt-a1i/archify/releases/tag/v3.2.0",
+  "summary": "Includes archify-pr in default installs, adds offline in-page update notices with Agent prompts, speeds slow update checks, and polishes PR diagrams.",
+  "releaseNotes": "https://github.com/tt-a1i/archify/releases/tag/v3.3.2",
   "severity": "normal"
 }

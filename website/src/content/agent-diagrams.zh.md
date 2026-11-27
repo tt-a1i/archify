@@ -1,6 +1,6 @@
 # 用 Coding Agent 画出可检查的图
 
-Archify 是面向 Coding Agent 的开源交互式可视化技能，支持 Claude Code、Codex、Cursor、OpenCode 和 GitHub Copilot。无论是自然语言想法、日常生活规划、复杂概念拆解、Mermaid 草稿还是代码仓库，Agent 都能自动选择**十种原生图型**编写结构化 JSON，或编写 `.archify.md` 生成**四套风格的一页式解答（Explainer）**，经确定性防穿模布局与校验门禁（原生图表默认执行真实浏览器检查；一页式解答可通过 `--browser-check` 按需开启浏览器检查）后交付一份精致的独立交互 HTML。
+Archify 是面向 Coding Agent 的开源可视化技能，安装示例覆盖 Claude Code、Codex、Cursor、OpenCode 和 GitHub Copilot。你可以提供自然语言想法、日常计划、复杂主题、Mermaid 草稿或仓库证据，让 Agent 从**十种原生图型**中选一种编写类型化 JSON，或编写 `.archify.md` 草稿来制作**一页式解答（Explainer）**。Archify 渲染独立的交互式 HTML，并检查结构和布局。原生图表默认执行真实浏览器检查，一页式解答可通过 `--browser-check` 开启这项检查。
 
 它远不止用于画代码架构：从旅行攻略、租房签约避坑、年假/月薪规划，到科普机理、业务流转与真实仓库源码地图，都无需背任何画图语法、不用仓库即可直接开始，还能对生成的独立 HTML 对话扩展更多互动功能；需要追溯代码时，再让 Agent 对接仓库源码。
 
@@ -31,7 +31,9 @@ Archify 支持十种原生图型。Agent 先按问题选型，再编写对应的
 - **class（类图）**：类型、字段、方法，以及继承与组合。
 - **tree（树图）**：文件、组织或决策层级。
 - **timeline（时间线）**：带日期或顺序的事件及其关系。
-- **waterfall（瀑布图）**：分阶段的总量、构成与增减。
+- **waterfall（瀑布图）**：一次请求或 Agent 运行中各段的耗时、重叠和嵌套。
+
+新建架构图时，Skill 使用 `layout.mode: "auto"` 根据组件关系自动摆放组件，并保留你指定的位置和连线路径。此设置仅适用于架构图。
 
 先按问题选图型，不要反过来为了用某种图去凑问题。“系统概览”通常是架构图，“缓存未命中时发生了什么”通常是时序图。[场景指南](guide.html)提供精选入门配方，但不表示每种图型都拥有完全相同的交互和表示能力。
 
@@ -45,7 +47,7 @@ Archify 支持十种原生图型。Agent 先按问题选型，再编写对应的
 
 使用能够读写文件、通过 Node.js 执行命令的 Coding Agent 环境。“不需要代码库”是指可以只提供自然语言描述，不必已有源码；Agent 仍需工作目录来写入 JSON、HTML，并执行渲染和校验。查看生成的 HTML 则只需要浏览器。
 
-[安装说明](https://github.com/tt-a1i/archify/blob/main/README.md#installation-options)区分了这些入口：Claude Code 和 Codex CLI 支持完整渲染与校验流程；Claude.ai 取决于沙箱是否能使用 Node.js；向 Project Knowledge 上传 ZIP 是提示词驱动的回退方式，不等于具备相同执行环境。其他集成方式有各自的要求。
+[安装说明](https://github.com/tt-a1i/archify/blob/main/README.md#installation-options)区分了这些入口。Claude Code 和 Codex CLI 支持完整渲染与校验流程。Claude.ai 取决于沙箱是否能使用 Node.js。向 Project Knowledge 上传 ZIP 是绘制架构图时提示词驱动的回退方式。OpenCode 以及 Hermes Agent、DeepSeek Harness 的社区集成各有安装说明。
 
 <span id="setup-claude-code" class="section-anchor" aria-hidden="true"></span>
 
@@ -53,7 +55,7 @@ Archify 支持十种原生图型。Agent 先按问题选型，再编写对应的
 
 如果选择全局复制安装，在运行 Claude Code 的环境终端中执行：
 
-<pre><code>npx -y skills@latest add https://archify.si --skill archify --agent claude-code --global --copy --yes</code></pre>
+<pre><code>npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent claude-code --global --copy --yes</code></pre>
 
 Claude Code 的全局 Skill 目录是 `~/.claude/skills/`，项目目录是 `.claude/skills/`。如果只想在当前项目使用，打开 [Start 的 Claude Code 选项](start.html?agent=claude-code#install)，在目标项目目录中使用“仅安装到当前仓库”的命令。
 
@@ -63,7 +65,7 @@ Claude Code 的全局 Skill 目录是 `~/.claude/skills/`，项目目录是 `.cl
 
 如果选择全局复制安装，在运行 Codex CLI 的环境终端中执行：
 
-<pre><code>npx -y skills@latest add https://archify.si --skill archify --agent codex --global --copy --yes</code></pre>
+<pre><code>npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent codex --global --copy --yes</code></pre>
 
 Codex CLI 的全局 Skill 目录是 `~/.agents/skills/`，项目目录是 `.agents/skills/`。如果只想在当前项目使用，打开 [Start 的 Codex 选项](start.html?agent=codex#install)，在目标项目目录中使用“仅安装到当前仓库”的命令。
 
@@ -154,18 +156,27 @@ Codex CLI 的全局 Skill 目录是 `~/.agents/skills/`，项目目录是 `.agen
 
 [对照 MCO 源码：谁解码输出，谁写入文件 →](cases/mco-runtime.html)
 
+### 用架构诊断核对真实依赖
+
+架构诊断内置在 Skill 里，用于检查本地代码的依赖关系。基于仓库的架构图通过检查后，如果找到符合条件的源文件，Agent 会在总结末尾提出运行诊断，每个仓库只提一次。你同意后才会开始。带有仓库元数据的独立架构图也提供「架构诊断」按钮，可以从中复制提示词。你也可以直接要求：
+
+> 用 archify 的 Code Analysis 分析这个仓库：看模块耦合、循环依赖和复杂度热点。
+
+结果是一个可离线打开的 HTML 文件，包含依赖星图、可旋转的 3D 模型和按优先级排列的发现（循环依赖、耦合、复杂度热点、违反分层规则）。你可以查看采集的源码证据，并复制修复任务交给 Agent。搭配架构图使用时，组件会标出问题数。如果一条导入关系能明确归到两个组件，分析也会指出图中遗漏的这条关系。每次运行使用一种语言适配器，可选 JS/TS、Python、Java、Go、Rust、C 或 C++。Go、Rust 和 C/C++ 需要各自的工具。常规本地分析采集工作树（包括未提交的代码），提供静态分析证据。离线审查变更时，也可以指定两个本地提交进行比较。详见 [Code Analysis 使用指南](https://github.com/tt-a1i/archify/blob/main/archify/modules/code-analysis/docs/USAGE.md)。
+
+
 <span id="explainer" class="section-anchor" aria-hidden="true"></span>
 
 ## 画一张图，还是生成一页式解答？
 
-读者需要看结构时，用图。读者需要看论证时，用一页式解答：先给结论和理由，再为每个部分提供证据。一页式解答先给结论，再按面板回答一个子问题，可以混合文字、表格、步骤、图表、固定提交里的代码摘录和经过校验的图。结论标注编号来源，图表数据留空会报错，而不是画成零。
+读者需要看结构时，用图。读者需要看结论、理由和证据时，用一页式解答。页面先给结论，再按面板回答一个子问题，可以混合文字、表格、步骤、图表、固定提交里的代码摘录和经过校验的图。一页式解答支持带编号的来源引用，图表数据留空会报错。
 
 两个已经记录的示例可以说明这种格式，但它们不是为你即时生成的：
 
 - [首次 TLS 访问发生了什么](cases/explainer/tls-first-visit.html)按面板走完一次协议流程。
 - [P99 尾延迟为什么会飙升](cases/explainer/p99-tail-latency.html)把常见的性能问题变成结论先行的排查。
 
-一页式解答默认处于 `proactive`（主动）模式：除了你明确要求做成一页之外，遇到复杂流程、排障诊断、方案对比或评审报告时，Skill 也可以主动交付页面。如果你希望只在明确提出时才生成整页，可以在 Agent 规则文件中写入 `[archify explainer: on-demand]` 覆盖默认行为。成品仍是单个 HTML 文件；读者可以在四种排版样式间切换，并在环境支持时导出长图或 PDF。
+一页式解答默认处于 `proactive`（主动）模式。除了你明确要求做成一页之外，复杂流程、排障诊断、方案对比、测试或评审报告、计划等内容需要用表格、步骤或多个部分讲清时，Skill 也会主动生成页面。在 Agent 的全局规则文件中，`[archify explainer: on-demand]` 设为仅按明确请求生成，`[archify explainer: always-on]` 为符合条件且有结论的回复附上一页，最多四个面板。删除规则可恢复默认模式，也可以在对话中临时指定模式。成品是单个 HTML 文件，可切换四种排版样式，在环境支持时导出 PNG、WebP 或 JPG 长图，也可打印为 PDF。
 
 <span id="review-and-share" class="section-anchor" aria-hidden="true"></span>
 
@@ -175,7 +186,11 @@ Codex CLI 的全局 Skill 目录是 `~/.agents/skills/`，项目目录是 `.agen
 
 打开 HTML，分别检查内容是否准确、文字和连线是否可读。自动校验与人工视觉检查解决的是不同问题，不能彼此替代。
 
-读者需要交互时，分享 HTML；文档或幻灯片需要静态画面时，再导出图片。文档列出了 PNG、JPEG、WebP、SVG 和 WebM 等导出格式，但具体可用性取决于格式、浏览器及本地工具。先查看实际成品的导出菜单，再承诺交付格式。导出图片不会保留 HTML 中的交互控件。
+读者需要交互时，分享 HTML。文档或幻灯片需要静态画面时，导出图片。原生图的查看器支持导出 PNG、JPEG、WebP、SVG 和 WebM。可用性取决于格式、浏览器及本地工具，选定交付格式前先查看成品的导出菜单。
+
+可以让 Agent 为任意原生图添加 Story 导览。读者可以拖动时间轴、阅读字幕，并通过「导出 → Story 视频」录制 1080p、60 帧每秒的 WebM 或 MP4 视频。也可以让 Agent 把多张图编排成一个交互式播放页面或一段视频。
+
+审查拉取请求或分支变更时，可以让 Agent 制作导览，在图中标出改动。默认安装包含 `archify-pr`，在准备有实质变更的拉取请求时会提议配图。在 Agent 的全局规则文件中加入 `[archify pr: on-demand]`，即可改为只在明确请求时使用。Agent 可以把浅色和深色导览图附到 GitHub PR，也可以把两种主题的静态图附到 GitLab MR。
 
 分享仓库生成的图之前，检查标签、卡片、内嵌源文件和链接是否包含不宜外传的信息。单文件便于携带，并不表示适合公开。你使用的 Coding Agent 如何处理数据，也不能仅凭 Archify 的输出格式推断。
 

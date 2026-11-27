@@ -1,6 +1,6 @@
-# Archify vs Mermaid, Excalidraw, and PlantUML
+# Archify vs Mermaid, Excalidraw, PlantUML & D2 (Mermaid Alternatives for AI Coding Agents)
 
-**Short answer:** use Mermaid when a tiny diagram must sit inside a Markdown code block, Excalidraw when several people need live freehand whiteboarding, and PlantUML or D2 when diagrams are text files in a classic CI pipeline. Choose **Archify** when you want an AI coding agent to turn **anything you want to understand, plan, or share** — an everyday life decision, a travel route, a complex concept, a tangled Mermaid draft, or a codebase — quickly and without diagram syntax into a polished, layout-checked interactive HTML diagram (**10 diagram types**) or a **4-style, conclusion-first one-page explainer**.
+**Short answer:** use Mermaid when a tiny diagram must sit inside a Markdown code block, Excalidraw when several people need live freehand whiteboarding, and PlantUML, D2, or LikeC4 when architecture models stay as text files in a classic CI pipeline. Choose **Archify** as a **Mermaid alternative for AI coding agents** (Claude Code, Cursor, Codex, OpenCode, or GitHub Copilot) when you want an agent to turn **anything you want to understand, plan, or share** — an everyday life decision, a travel route, a complex concept, a tangled Mermaid draft, or a codebase — quickly and without diagram syntax into a polished, layout-checked interactive HTML diagram (**10 diagram types**) or a **4-style, conclusion-first one-page explainer**.
 
 <span id="answer" class="section-anchor" aria-hidden="true"></span>
 
@@ -32,10 +32,12 @@ The table describes default strengths, not rigid limits. Skilled authors can pol
 ## When another tool fits better
 
 - **Use Mermaid** when the diagram is small, must render natively inside GitHub READMEs or docs Markdown, and should stay editable as a few lines of inline text.
-- **Use Excalidraw** when real-time collaborative whiteboarding, rough hand-drawn sketching, or mouse drag-and-drop brainstorming is the primary goal.
+- **Use draw.io (diagrams.net)** when you want a free browser-based GUI editor to drag standard flowchart, network, or org-chart shapes manually with no AI coding agent involved.
+- **Use Excalidraw (including Excalidraw via MCP)** when real-time collaborative whiteboarding, rough hand-drawn sketching in chat, or mouse drag-and-drop brainstorming is the primary goal.
 - **Use PlantUML or D2** when your team already maintains diagrams as plain text in Git, wants line-by-line DSL diffs in review, or needs deep formal UML notation beyond Archify's `class` and `sequence` modes.
+- **Use LikeC4** when your team wants a dedicated C4-style architecture-as-code DSL maintained as structured model files across a repository.
 - **Use a BI or observability tool** when you need live metrics, telemetry dashboards, or real-time trace streaming. Archify produces an authored artifact, not a live monitor.
-- **Use a hosted collaboration service** when several users need simultaneous cloud editing and role permissions. Archify is not a hosted SaaS editor.
+- **Use a hosted collaboration service such as Eraser.io** when several users need simultaneous cloud editing, shared workspaces, and role permissions. Archify is not a hosted SaaS editor.
 
 Archify also does not promise lossless parsing of every Mermaid construct, automatic discovery of arbitrary systems without guidance, or proof that claims match runtime reality. Validation guarantees a clean, non-overlapping, browser-verified deliverable — human review still owns factual accuracy.
 
@@ -55,9 +57,9 @@ Paste messy Mermaid source into your configured agent and ask it to re-author th
 
 When one diagram still leaves readers asking "why?", an `.archify.md` one-page explainer leads with the conclusion first and explains each sub-question side by side with prose, tables, charts, code, and interactive diagrams — lighting up the exact part of the diagram each step refers to. Readers can switch among **four visual styles**, toggle light/dark mode, export long images or PDF, and trigger panel-scoped follow-up questions. Explore recorded examples: the [P99 tail-latency explainer](cases/explainer/p99-tail-latency.html) and the [first TLS visit explainer](cases/explainer/tls-first-visit.html).
 
-### 4. Map a real codebase with pinned source evidence
+### 4. Map, diagnose, and walk through a real codebase with pinned source evidence
 
-When understanding software matters, ask the agent to trace a concrete request or module at a specific revision and attach source file paths cleanly to diagram nodes. See the [MCO runtime case](cases/mco-runtime.html) and its [MCO architecture artifact](cases/mco-runtime.architecture.html), plus the [repository evidence checklist](agent-diagrams.html#repository-evidence).
+When understanding software matters, ask the agent to trace a concrete request or module at a specific revision and attach source file paths cleanly to diagram nodes. See the [MCO runtime case](cases/mco-runtime.html) and its [MCO architecture artifact](cases/mco-runtime.architecture.html), plus the [repository evidence checklist](agent-diagrams.html#repository-evidence). You can also run built-in **Architecture Diagnosis** (an offline dependency Atlas, rotatable 3D model, and ranked static findings across JS/TS, Python, Java, Go, Rust, and C/C++), link overview-to-detail HTML artifacts via cross-diagram drilldowns, add a **Story mode** walkthrough with 1080p 60 fps video export, or attach light/dark change diagrams to a **GitHub PR or GitLab MR**.
 
 <span id="limits" class="section-anchor" aria-hidden="true"></span>
 

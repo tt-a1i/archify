@@ -44,6 +44,10 @@
         "animation": {
           "$ref": "common.schema.json#/$defs/animation"
         },
+        "feedback_links": {
+          "type": "boolean",
+          "description": "false hides the page footer with feedback and GitHub star links."
+        },
         "visual_preset": {
           "$ref": "common.schema.json#/$defs/visualPreset"
         },
@@ -55,6 +59,15 @@
         },
         "views": {
           "$ref": "common.schema.json#/$defs/guidedViews"
+        },
+        "legend": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mode": {
+              "$ref": "common.schema.json#/$defs/legendMode"
+            }
+          }
         },
         "evidence": {
           "enum": [
@@ -101,6 +114,12 @@
           "id": {
             "$ref": "common.schema.json#/$defs/id"
           },
+          "change": {
+            "$ref": "common.schema.json#/$defs/changeStatus"
+          },
+          "emphasis": {
+            "$ref": "common.schema.json#/$defs/emphasis"
+          },
           "label": {
             "type": "string",
             "minLength": 1
@@ -122,6 +141,12 @@
         "properties": {
           "id": {
             "$ref": "common.schema.json#/$defs/id"
+          },
+          "change": {
+            "$ref": "common.schema.json#/$defs/changeStatus"
+          },
+          "emphasis": {
+            "$ref": "common.schema.json#/$defs/emphasis"
           },
           "at": {
             "type": "string",

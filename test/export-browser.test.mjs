@@ -79,9 +79,7 @@ test('Export preserves menu, clipboard, semantic cards and recording lifecycles'
     const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
     await send('Page.navigate', { url: pathToFileURL(file).href + '?theme=' + theme + extra });
     await loaded;
-    await run('document.fonts.ready');
-    await run('Archify.readerLayout.whenStable()');
-    await run('Archify.viewerChromeLayout.whenStable()');
+    await run('Archify.layoutStability.whenStable()');
   }
   async function key(key, code, windowsVirtualKeyCode) {
     await send('Input.dispatchKeyEvent', { type: 'keyDown', key, code, windowsVirtualKeyCode });
@@ -299,8 +297,7 @@ test('Export preserves menu, clipboard, semantic cards and recording lifecycles'
           const viewerWidths = [];
           for (const width of [640, 1440]) {
             await send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: false });
-            await run('Archify.readerLayout.whenStable()');
-            await run('Archify.viewerChromeLayout.whenStable()');
+            await run('Archify.layoutStability.whenStable()');
             viewerWidths.push(await run(`document.querySelector('.diagram-container svg').getBoundingClientRect().width`));
           }
           assert.notEqual(viewerWidths[0], viewerWidths[1], `${mode}: Viewer remains responsive`);
@@ -347,6 +344,37 @@ test('Export preserves menu, clipboard, semantic cards and recording lifecycles'
             assert.deepEqual(actual.viewBox, dimensions);
             assert.deepEqual(actual.rendered, dimensions, `${mode} ${theme}: intrinsic size at ${width}px viewport`);
           }
+          if (mode === 'architecture') {
+            const { labels, userTitle, userSublabel } = await run(`(() => {
+              const svg = document.documentElement;
+              svg.style.width = '830px';
+              svg.style.height = 'auto';
+              const scale = svg.getBoundingClientRect().width / svg.viewBox.baseVal.width;
+              const projectedSize = text => parseFloat(getComputedStyle(text).fontSize) * scale;
+              const labels = [...svg.querySelectorAll('g[data-edge-from] > text')].map(text => {
+                const bounds = text.getBBox();
+                const plate = text.previousElementSibling.getBBox();
+                return {
+                  label: text.textContent,
+                  size: projectedSize(text),
+                  fits: bounds.x >= plate.x && bounds.x + bounds.width <= plate.x + plate.width,
+                };
+              });
+              const users = svg.querySelector('g[data-node-id="users"]');
+              return {
+                labels,
+                userTitle: projectedSize(users.querySelector('text[data-node-label]')),
+                userSublabel: projectedSize(users.querySelector('text.t-muted')),
+              };
+            })()`);
+            assert.ok(labels.length > 0, 'the exported architecture has relationship labels');
+            for (const { label, size, fits } of labels) {
+              assert.ok(size >= 7.5, `${theme} ${label}: label is ${size}px at 830px`);
+              assert.ok(fits, `${theme} ${label}: text extends past the label background`);
+            }
+            assert.ok(userTitle >= 10.5, `${theme}: the roomy card title is ${userTitle}px at 830px`);
+            assert.ok(userSublabel >= 7.75, `${theme}: the roomy card sublabel is ${userSublabel}px at 830px`);
+          }
         }
       }
     } finally {
@@ -354,11 +382,13 @@ test('Export preserves menu, clipboard, semantic cards and recording lifecycles'
     }
   });
 
-  await t.test('SVG download declares UTF-8 and preserves CJK text', async () => {
+  await t.test('SVG download declares UTF-8 and preserves mixed-script label shapes', async () => {
     const originalInput = fs.readFileSync(input, 'utf8');
     try {
       const cjkSource = JSON.parse(originalInput);
       cjkSource.components[0].label = '用户入口';
+      const mixedLabels = ['OAuth 验证', 'API สวัสดี', 'HTTP إعادةُ', 'Cafe\u0301 OK', 'OK 🗄️'];
+      for (const [index, label] of mixedLabels.entries()) cjkSource.connections[[0, 1, 3, 5, 7][index]].label = label;
       fs.writeFileSync(input, JSON.stringify(cjkSource));
       execFileSync(process.execPath, [path.join(skillRoot, 'renderers/architecture/render-architecture.mjs'), input, file]);
       await load();
@@ -369,6 +399,21 @@ test('Export preserves menu, clipboard, semantic cards and recording lifecycles'
       assert.equal(download.type, 'image/svg+xml;charset=utf-8');
       assert.ok(download.text.startsWith('<?xml version="1.0" encoding="UTF-8"?>'), 'standalone SVG must declare its UTF-8 encoding');
       assert.ok(download.text.includes('用户入口'), 'CJK label must survive serialization');
+      const exported = await run(`exportDownloads[0].blob.text().then(source => {
+        const svg = new DOMParser().parseFromString(source, 'image/svg+xml');
+        return [...svg.querySelectorAll('g[data-edge-from] > text')].map(text => ({
+          label: text.textContent,
+          size: Number(text.getAttribute('font-size')),
+          fitted: text.hasAttribute('textLength'),
+        }));
+      })`);
+      for (const [index, label] of mixedLabels.entries()) {
+        const relationship = exported.find(entry => entry.label === label);
+        assert.ok(relationship, `${label}: SVG dropped the relationship text`);
+        assert.equal(relationship.fitted, false, `${label}: SVG must retain natural glyph proportions`);
+        if (index === 0) assert.ok(relationship.size > 8, `${label}: mixed CJK label should grow where space permits`);
+        else assert.equal(relationship.size, 8, `${label}: preserve the established size for fallback glyphs`);
+      }
       await record('svg-utf8');
     } finally {
       fs.writeFileSync(input, originalInput);

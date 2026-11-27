@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { ChromeVisualBrowser, findChrome, runVisualCheck } from '../archify/bin/visual-check.mjs';
+import { isolatedVisualBrowser } from './helpers/isolated-visual-browser.mjs';
 import {
   skillRoot, cli, EXAMPLES, example, localeDocument, FR_PARTIAL_TRANSLATIONS, createLocaleFixture,
 } from './helpers/i18n-fixture.mjs';
@@ -172,7 +173,21 @@ const BROWSER_LOCALES = {
     },
     shareCardFailure: 'سياقُ لوحة الرسم ثنائيِّ الأبعاد غير متاح لـبطاقة مشاركة',
   },
-
+  ru: {
+    title: (type) => `Локализация в браузере-${type}`,
+    toolbarLabel: 'Управление видом диаграммы',
+    finder: { hidden: false, title: 'Найти узел', searchLabel: 'Поиск узлов диаграммы' },
+    route: { hidden: false, title: 'Выберите начало пути', label: 'Очистить маршрут' },
+    exportLabel: 'Экспортировать диаграмму',
+    exportMenuLabel: 'Экспорт',
+    exportMenuText: /Копировать диаграмму/,
+    presetBadges: {
+      'signal-flow': { header: 'ПОТОК СИГНАЛОВ', plate: 'none' },
+      blueprint: { header: 'ЧЕРТЁЖ / РЕД. 01', plate: '' },
+      editorial: { header: 'РЕДАКЦИЯ / ЗАМЕТКА', plate: 'ARCHIFY / ЛИСТ 04' },
+    },
+    shareCardFailure: '2D-контекст Canvas недоступен для карточки для публикации',
+  },
 };
 
 async function assertLocalizedViewer(browser, locale, expected) {
@@ -268,8 +283,11 @@ async function assertLocalizedViewer(browser, locale, expected) {
     // Keep every locale/type's real viewport, theme, font and capture checks.
     // The delivered fixtures above retain the public visual-check CLI receipt
     // contract; this matrix calls the same checker without another CLI process.
-    // Its default factory still creates a fresh Chrome profile for each artifact.
-    const visual = await runVisualCheck({ artifactPath: result.output, chromePath });
+    // Each artifact gets a separate browser context and page.
+    const visual = await runVisualCheck({
+      artifactPath: result.output, chromePath,
+      browserFactory: () => isolatedVisualBrowser(browser),
+    });
     assert.ok([0, 1].includes(visual.exitCode), `${locale}/${type}: ${JSON.stringify(visual.receipt)}`);
     const receipt = visual.receipt;
     assert.equal(receipt.visualReview, 'pending', `${locale}/${type}`);
@@ -324,6 +342,17 @@ test('real Chrome keeps Arabic UI localized with mixed-script authored titles in
   const browser = new ChromeVisualBrowser(chromePath);
   try {
     await assertLocalizedViewer(browser, 'ar', BROWSER_LOCALES.ar);
+  } finally {
+    await browser.close();
+  }
+});
+
+test('real Chrome keeps Russian Viewer controls, exports, and accessibility labels localized', {
+  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser localization regression.',
+}, async () => {
+  const browser = new ChromeVisualBrowser(chromePath);
+  try {
+    await assertLocalizedViewer(browser, 'ru', BROWSER_LOCALES.ru);
   } finally {
     await browser.close();
   }

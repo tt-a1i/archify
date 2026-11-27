@@ -8,13 +8,13 @@ Use Node.js 22.12 or newer (CI uses Node 22).
 
 ```sh
 cd website
-npm ci
-npm run dev
+pnpm install --frozen-lockfile
+pnpm run dev
 # Open the printed local URL with /archify/ appended.
-npm run check
-npm run build
-npm test
-npm run preview
+pnpm run check
+pnpm run build
+pnpm test
+pnpm run preview
 ```
 
 TypeScript stays on the supported 6.x line because the Astro checker currently requires its programmatic API.
@@ -33,14 +33,14 @@ TypeScript stays on the supported 6.x line because the Astro checker currently r
 
 ## Validation and publishing
 
-`npm test` compares the built DOM, original CSS, text, scripts and accessibility attributes with the migration baseline and verifies byte-identical preservation of every existing non-page public file. Generated recipe JSON is compared semantically.
+`pnpm test` compares the built DOM, original CSS, text, scripts and accessibility attributes with the migration baseline and verifies byte-identical preservation of every existing non-page public file. Generated recipe JSON is compared semantically.
 
 The existing real Chrome integration suite can run against the built site, including its `/archify` deployment prefix:
 
 ```sh
 ARCHIFY_SITE_ROOT="$PWD/dist" ARCHIFY_SITE_INTEGRATION=1 \
 ARCHIFY_CHROME="/path/to/chrome" \
-npm run test:browser
+pnpm run test:browser
 ```
 
 CI builds/tests the website when website inputs change and on every main push. It uploads `website-dist`; the existing protected Pages deployment downloads that exact verified artifact. Build output, caches and staged assets are ignored by Git. Existing GitHub required checks and obsolete-deployment protection remain in place.
@@ -50,11 +50,11 @@ CI builds/tests the website when website inputs change and on every main push. I
 The same source can build a second static site for `https://archify.si/`:
 
 ```sh
-ARCHIFY_SITE_TARGET=cloudflare npm run build
+ARCHIFY_SITE_TARGET=cloudflare pnpm run build
 ARCHIFY_SITE_TARGET=cloudflare node --test test/deployment-target.test.mjs
 node scripts/check-cloudflare-output.mjs
 ARCHIFY_SITE_ROOT="$PWD/dist-cloudflare" ARCHIFY_SITE_BASE='' \
-ARCHIFY_SITE_INTEGRATION=1 ARCHIFY_CHROME="/path/to/chrome" npm run test:browser
+ARCHIFY_SITE_INTEGRATION=1 ARCHIFY_CHROME="/path/to/chrome" pnpm run test:browser
 ```
 
 This writes `dist-cloudflare/`; the default build still writes `dist/` for GitHub Pages. Cloudflare uses root asset paths, formal-domain sharing/canonical URLs, and a top-level `404.html` so unknown URLs do not silently return the homepage. Keep file-format pages: changing to directory-format pages would change the base used by relative proof and asset links. Pages redirects `.html` routes to extensionless routes; verify the actual Pages preview, especially `/gallery`, `/gallery.html`, `/gallery/`, standalone diagrams, query strings and fragments.
@@ -83,32 +83,36 @@ The ten main language pages contain their translated body text, metadata and rec
 
 `src/data/site-urls.mjs` defines the preferred `https://archify.si` URLs for both hosts. Each language has its own canonical and reciprocal `en`/`zh-Hans`/`x-default` links. GitHub Pages retains its `/archify` resource paths while pointing search engines to the official domain. Release identity and recipes come from this checkout: stable and development builds must not advertise each other's capabilities.
 
-The build produces `robots.txt` and `sitemap.xml` from the ten pages and the curated gallery inventory. It checks each advertised artifact's original manifest hashes before adding an explicitly marked metadata block in the deployed HTML head; exported source files, SVG, scripts and updater bytes retain their existing contracts. Source JSON remains accessible and receives `X-Robots-Tag: noindex` on Cloudflare. GitHub Pages cannot set that response header. Robots rules allow crawling these evidence URLs so their indexing headers can be read.
+The build produces `robots.txt` and `sitemap.xml` from the ten pages and the curated gallery inventory. It checks each advertised artifact's original manifest hashes before adding an explicitly marked metadata block in the deployed HTML head; exported source files, SVG, scripts and updater bytes retain their existing contracts. Source JSON remains accessible and receives `X-Robots-Tag: noindex` on Cloudflare. GitHub Pages cannot set that response header. Robots rules allow crawling these evidence URLs so their indexing headers can be read. `robots.txt` disallows only the synthetic RFC 6901 JSON Pointer prefixes (`/panels/`, `/answer/`, `/answer$`, `/meta/`, `/meta$`, `/sources/`) extracted from embedded Explainer source maps while leaving `/gallery/sources/` and `/cases/` crawlable so their `X-Robots-Tag: noindex` headers can be read.
 
 After publication, verify the actual Cloudflare response, including any managed robots rules, redirects, sitemap URLs and headers. Submit the deployed sitemap to verified Google Search Console and Bing Webmaster Tools properties, then inspect real crawl and index results. Google AI controls, search impressions and Bing AI citation reports are separate account observations; successful builds and submissions do not establish rankings or AI citations. Avoid fabricated ratings, install statistics or daily sitemap modification dates. Search access and AI training permissions are independent decisions.
 ## Lightweight Skill distribution
 
 The website build generates `/.well-known/agent-skills/index.json` and a
-content-addressed ZIP beside it. Both GitHub Pages (under `/archify`) and
-Cloudflare use relative archive URLs. The package comes from the same
-tracked-only `stage-clean-skill.mjs` selection used by the canonical ZIP and DSH;
-it contains `SKILL.md` at the archive root, as required by discovery schema 0.2.0.
-The original `archify.zip` format and GitHub installation source are unchanged.
+content-addressed ZIP for each published Skill beside it. Both GitHub Pages
+(under `/archify`) and Cloudflare use relative archive URLs. The core package
+comes from the same tracked-only `stage-clean-skill.mjs` selection used by the
+canonical ZIP and DSH; the `archify-pr` companion comes from
+`stage-clean-companion-skill.mjs`. Each archive contains `SKILL.md` at the root,
+as required by discovery schema 0.2.0. The original `archify.zip` format and
+GitHub installation source are unchanged.
 
 After deploying and verifying the endpoint, the lightweight source is:
 
 ```sh
 npx -y skills@latest add https://archify.si --list --full-depth
-npx -y skills@latest add https://archify.si --skill archify --agent codex --copy
+npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent codex --copy
 ```
 
-The second command selects a project installation; global installation requires
-an explicit `--global`. Skills CLI 1.7.4 is the validation baseline. It downloads
-the Skill archive instead of cloning the development repository, verifies its
-SHA-256 digest, and records the website source in its lock file. A project can
-apply subsequent updates with `npx -y skills@latest update archify --project`.
-An update replaces the installed Skill directory. Move any unmanaged files out
-of `.agents/skills/archify` before updating; this is not a read-only check.
+The second command selects a project installation of both `/archify` and
+`/archify-pr`; global installation requires an explicit `--global`. Skills CLI
+1.7.4 is the validation baseline. It downloads each Skill archive instead of
+cloning the development repository, verifies its SHA-256 digest, and records
+the website source in its lock file. A project can apply subsequent updates with
+`npx -y skills@latest update archify archify-pr --project`. An update replaces
+the installed Skill directory. Move any unmanaged files out of
+`.agents/skills/archify` and `.agents/skills/archify-pr` before updating; this
+is not a read-only check.
 Existing GitHub-source installations keep their original update source; a new
 website endpoint does not silently migrate them. Bare ZIP URLs are not a
 substitute for the discovery source because their update tracking differs.

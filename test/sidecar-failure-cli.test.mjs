@@ -10,7 +10,7 @@ const cli=path.join(root,'archify/bin/archify.mjs');
 function fixture(t){
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'archify-namespace-failure-'));
  t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
- const bytes=fs.readFileSync(path.join(root,'archify/examples/class-payments-rendered.html'));
+ const bytes=fs.readFileSync(path.join(root,'examples/class-payments-rendered.html'));
  return {dir,bytes};
 }
 function failedReceipt(args,dir,wrapper){

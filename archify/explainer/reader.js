@@ -298,7 +298,7 @@
       copyBoard.style.flexDirection = 'column';
       all('.board-spacer',copyBoard).forEach(spacer=>spacer.remove());
     }
-    clone.querySelectorAll('script,dialog,#toast,.skip-link,.tools,.ask-button,.ask-floating,.walk-bar,.walk-start,.interactive,.diagram-fit-status,.source-card').forEach(element=>element.remove());
+    clone.querySelectorAll('script,dialog,#toast,.skip-link,.tools,.ask-button,.ask-floating,.walk-bar,.walk-start,.interactive,.diagram-fit-status,.source-card,[data-archify-update-notice],[data-archify-update-notice-style]').forEach(element=>element.remove());
     clone.querySelectorAll('.reader-highlight').forEach(element=>element.classList.remove('reader-highlight'));
     clone.querySelectorAll('.focusing').forEach(element=>element.classList.remove('focusing'));
     // An exported image has no scroll interaction; retain the complete overview.
@@ -440,7 +440,7 @@
     viewerDialog.append(frame);
     nativeHtml(diagram).then(html=>{
       if (viewer?.frame !== frame) return;
-      const end = html.toLowerCase().lastIndexOf('</body>');
+      const end = html.toLowerCase().lastIndexOf('<\/body>');
       frame.srcdoc = end < 0 ? html + script : html.slice(0,end) + script + html.slice(end);
     },()=>notify(say('This diagram could not be opened.','无法打开此交互图。')));
   }
@@ -773,6 +773,31 @@
   setupWalks();
   setupAsk();
   setupSourceCards();
+  all('[data-feedback-menu]').forEach(menu=>{
+    const summary = menu.querySelector('summary'), copyBtn = menu.querySelector('[data-copy-email]');
+    let copyTimer;
+    document.addEventListener('click',event=>{ if (menu.open && !menu.contains(event.target)) menu.open = false; });
+    menu.addEventListener('keydown',event=>{
+      if (event.key === 'Escape' && menu.open) { event.stopPropagation(); menu.open = false; summary?.focus({preventScroll:true}); }
+    });
+    if (copyBtn) {
+      const label = copyBtn.querySelector('[data-copy-label]'), initialText = label?.textContent || '';
+      copyBtn.addEventListener('click',async()=>{
+        const email = copyBtn.dataset.copyEmail || '';
+        let ok = false;
+        try { await copyText(email); ok = true; } catch {
+          const area = document.createElement('textarea'); area.value = email; area.setAttribute('readonly','');
+          area.style.cssText = 'position:fixed;opacity:0;pointer-events:none'; document.body.appendChild(area); area.select();
+          try { ok = document.execCommand('copy'); } catch {} area.remove();
+        }
+        if (!label || !ok) return;
+        label.textContent = words.copied;
+        copyBtn.classList.add('is-copied');
+        clearTimeout(copyTimer);
+        copyTimer = setTimeout(()=>{ label.textContent = initialText; copyBtn.classList.remove('is-copied'); },1800);
+      });
+    }
+  });
   layoutBoard();
   const relayout = () => { layoutBoard(); ensureDiagramReadability(); };
   Promise.resolve(document.fonts?.ready).then(()=>requestAnimationFrame(()=>requestAnimationFrame(relayout)));

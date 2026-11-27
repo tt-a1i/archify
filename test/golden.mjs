@@ -1,6 +1,6 @@
 // Golden-file harness for the archify renderers. No test framework needed:
-// renderers are deterministic, so fresh renders must match both checked-in
-// development and packaged example HTML aside from platform checkout line endings. Also covers schema enforcement (negative cases),
+// renderers are deterministic, so fresh renders must match the checked-in
+// example HTML aside from platform checkout line endings. Also covers schema enforcement (negative cases),
 // template freshness of the architecture-mode example, and version sync.
 //
 // Run from the repository root: npm test
@@ -88,7 +88,11 @@ const GOLDEN = [
   ['timeline', 'payment-incident.timeline.json', 'timeline-payment-incident-rendered.html'],
   ['timeline', 'archify-dev-activity.timeline.json', 'timeline-archify-dev-activity-rendered.html'],
   ['waterfall', 'checkout-request.waterfall.json', 'waterfall-checkout-request-rendered.html'],
-  ['waterfall', 'example-rebuild.waterfall.json', 'waterfall-example-rebuild-rendered.html'],
+  ['waterfall', 'example-rebuild.waterfall.json', 'waterfall-example-rebuild-rendered.html'],  ['architecture', 'drilldown-overview.architecture.json', 'drilldown-overview.html'],
+  ['architecture', 'drilldown-platform.architecture.json', 'drilldown-platform.html'],
+  ['architecture', 'drilldown-integrations.architecture.json', 'drilldown-integrations.html'],
+  ['dataflow', 'drilldown-api.dataflow.json', 'drilldown-api-dataflow.html'],
+  ['sequence', 'drilldown-api.sequence.json', 'drilldown-api-sequence.html'],
 ];
 
 for (const [mode, input, golden] of GOLDEN) {
@@ -97,11 +101,8 @@ for (const [mode, input, golden] of GOLDEN) {
     render(mode, path.join(skillRoot, 'examples', input), out);
     const fresh = fs.readFileSync(out, 'utf8');
     const checked = fs.readFileSync(path.join(repoRoot, 'examples', golden), 'utf8');
-    const packaged = fs.readFileSync(path.join(skillRoot, 'examples', golden), 'utf8');
     check(`${mode}: ${golden}`, normalizeNewlines(fresh) === normalizeNewlines(checked),
       `fresh render differs from examples/${golden}; if the change is intentional, re-render the examples and commit them`);
-    check(`${mode}: packaged ${golden}`, normalizeNewlines(fresh) === normalizeNewlines(packaged),
-      `fresh render differs from archify/examples/${golden}; re-render the packaged examples and rebuild archify.zip`);
   } catch (err) {
     check(`${mode}: ${golden}`, false, String(err.stderr || err.message).slice(0, 300));
   }
@@ -216,9 +217,10 @@ const webApp = fs.readFileSync(path.join(repoRoot, 'examples/web-app.html'), 'ut
 // Viewer styles in the document head and executable scripts pass through
 // applyTemplate untouched. Renderer-owned SVG styles are covered by golden renders.
 for (const tag of ['style', 'script']) {
-  // The guided-view JSON script is generated from meta.views; compare only
-  // template-owned executable scripts, not per-diagram data payloads.
-  const isTemplateOwned = (block) => !block.includes('type="application/json"');
+  // Compare the shared Viewer blocks. This example has no repository pin,
+  // so it omits the Code Analysis launcher stylesheet as well as evidence data.
+  const isTemplateOwned = (block) => !block.includes('type="application/json"') &&
+    !block.startsWith('<style id="code-analysis-entry-style">');
   const t = blocks(template, tag).filter((b) => !b.includes('[PROJECT NAME]') && isTemplateOwned(b));
   const viewerHtml = tag === 'style' ? webApp.slice(0, webApp.indexOf('</head>')) : webApp;
   const w = blocks(viewerHtml, tag).filter((b) => !b.includes('Sample Web App') && isTemplateOwned(b));

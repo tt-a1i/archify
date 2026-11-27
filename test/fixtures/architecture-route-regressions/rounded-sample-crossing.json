@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Review architecture",
+    "output": "layout.html",
+    "quality_profile": "showcase",
+    "viewBox": [
+      600,
+      650
+    ]
+  },
+  "components": [
+    {
+      "id": "n0",
+      "label": "Service 0",
+      "type": "backend",
+      "size": [
+        80,
+        80
+      ],
+      "pos": [
+        60,
+        180
+      ]
+    },
+    {
+      "id": "n1",
+      "label": "Service 1",
+      "type": "backend",
+      "size": [
+        80,
+        80
+      ],
+      "pos": [
+        260,
+        420
+      ]
+    },
+    {
+      "id": "n2",
+      "label": "Service 2",
+      "type": "backend",
+      "size": [
+        80,
+        80
+      ],
+      "pos": [
+        125,
+        275
+      ]
+    },
+    {
+      "id": "n3",
+      "label": "Service 3",
+      "type": "backend",
+      "size": [
+        80,
+        80
+      ],
+      "pos": [
+        375,
+        105
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e0",
+      "to": "n1",
+      "fromSide": "right",
+      "toSide": "top",
+      "via": [
+        [
+          300,
+          220
+        ]
+      ],
+      "from": "n0"
+    },
+    {
+      "id": "e1",
+      "to": "n3",
+      "route": "straight",
+      "from": "n2"
+    }
+  ],
+  "boundaries": []
+}

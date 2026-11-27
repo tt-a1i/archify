@@ -14,6 +14,9 @@ const authoringContract = readFileSync(path.join(skillRoot, 'references', 'autho
 const explainerAuthoring = readFileSync(path.join(skillRoot, 'references', 'explainer-authoring.md'), 'utf8');
 const repositoryRoot = path.join(skillRoot, '..');
 const frontmatter = skill.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
+const companionRoot = path.join(repositoryRoot, 'archify-pr');
+const companionSkill = readFileSync(path.join(companionRoot, 'SKILL.md'), 'utf8');
+const companionFrontmatter = companionSkill.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
 
 test('skill description is portable across 1024-character runtimes and remains searchable', () => {
   assert.ok(frontmatter, 'SKILL.md must start with YAML frontmatter');
@@ -70,7 +73,7 @@ test('update awareness is notification-only and never replaces the requested wor
 test('language behavior stays within the bounded locale contract', () => {
   assert.match(defaults, /one primary authored language/);
   assert.match(defaults, /user's choice or the request\/conversation/);
-  assert.match(defaults, /`en`, `zh-CN`, `zh-TW`, `es`, `ko`, and `ar` select a bundled Viewer catalog/);
+  assert.match(defaults, /`en`, `zh-CN`, `zh-TW`, `es`, `ko`, `ar`, and `ru` select a bundled Viewer catalog/);
   assert.match(defaults, /meta\.translations/);
   assert.match(defaults, /exact product, code, protocol, command, API, and environment names/);
   assert.match(defaults, /Language consistency\]\(authoring-contract\.md#language-consistency\)/);
@@ -95,6 +98,59 @@ test('skill keeps the title hierarchy compact by default', () => {
 
 // The review Skill remains available to repository maintainers, but must not
 // enter an unfiltered consumer install from the repository root.
+test('main skill description does not claim pull-request or diff triggers', () => {
+  const metadata = parse(frontmatter[1]);
+  assert.doesNotMatch(metadata.description, /\bpull requests?\b|\bPRs?\b|\bdiffs?\b|\bgit diff\b/i);
+});
+
+test('companion PR skill frontmatter stays portable and owns the PR triggers', () => {
+  assert.ok(companionFrontmatter, 'archify-pr/SKILL.md must start with YAML frontmatter');
+  const metadata = parse(companionFrontmatter[1]);
+  const main = parse(frontmatter[1]);
+  assert.equal(metadata.name, 'archify-pr');
+  assert.equal(metadata.license, 'Apache-2.0');
+  assert.equal(metadata.metadata?.version, main.metadata?.version);
+  const description = metadata.description;
+  assert.equal(typeof description, 'string');
+  assert.ok(description.trim());
+  assert.ok(description.length <= 1024, `companion description is ${description.length} characters; maximum is 1024`);
+  assert.ok(Buffer.byteLength(description, 'utf8') <= 1024, 'companion description must also fit a 1024-byte runtime limit');
+  for (const trigger of ['git', 'diff', 'pull request']) {
+    assert.match(description, new RegExp(trigger, 'i'), `companion description must retain the ${trigger} trigger`);
+  }
+});
+
+test('companion PR skill stays bounded and resolves its packaged references', () => {
+  const lines = companionSkill.trimEnd().split('\n');
+  assert.ok(lines.length <= 160, `archify-pr/SKILL.md is ${lines.length} lines; keep it at 160 or fewer`);
+  const references = [...companionSkill.matchAll(/`((?:bin|references)\/[^`\s]+)`/g)]
+    .map((match) => match[1])
+    .filter((reference) => !/[<>{}*\[\]]/.test(reference));
+  assert.ok(references.length > 0, 'expected literal companion-skill references');
+  for (const reference of new Set(references)) {
+    assert.equal(existsSync(path.join(companionRoot, reference)), true,
+      `archify-pr/SKILL.md references missing packaged path ${reference}`);
+  }
+});
+
+test('companion PR skill keeps ask-first filtering, install boundaries and the rules switch', () => {
+  assert.match(companionSkill, /(?:default[^.\n]*`ask`|`ask`[^.\n]*default)/i);
+  assert.match(companionSkill, /Materiality filter[\s\S]*Stay silent/);
+  assert.match(companionSkill, /small single-point edit/);
+  assert.match(companionSkill, /at most three short lines/);
+  assert.match(companionSkill, /\[archify pr: on-demand\]/);
+  assert.match(companionSkill, /Never switch to `proactive` unasked/);
+  assert.match(companionSkill, /Never run `npx skills add`[\s\S]*unless the user explicitly asks/);
+  assert.match(companionSkill, /archify-pr\/core-skill-missing/);
+  assert.match(companionSkill, /bin\/archify-pr\.mjs/);
+  const workflow = readFileSync(path.join(companionRoot, 'references/pr-workflow.md'), 'utf8');
+  const documentation = `${companionSkill}\n${workflow}`;
+  for (const command of ['preflight', 'validate', 'build', 'attach']) {
+    assert.ok(documentation.includes(`pr ${command}`), `companion workflow must document pr ${command}`);
+  }
+  for (const rule of ['[archify pr: on-demand]', '[archify pr: proactive]', '[archify pr: ask, target=comment]']) assert.ok(companionSkill.includes(rule), `missing rule example: ${rule}`);
+});
+
 test('contributor review skill is internal and retains its repository references', () => {
   const reviewRoot = path.resolve(skillRoot, '..', '.agents', 'skills', 'archify-review');
   const review = readFileSync(path.join(reviewRoot, 'SKILL.md'), 'utf8');

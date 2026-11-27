@@ -221,10 +221,12 @@ A chart states where its numbers come from the same way text does: measured, fro
 
 ## Directive reference
 
+Inline diagrams inherit the page locale unless they set their own. The Explainer reader controls use Chinese for Chinese locales and English for other locales.
+
 | Directive | Header arguments | Rows |
 | --- | --- | --- |
 | `@answer` | `scope="..."`, optional `span=1..12` (exact desktop columns, like panel spans) | none |
-| `@meta` | `locale` (`en`, `zh-CN`, `zh-TW`, `es`, `ko`, `ar`), `quality_profile`, `style` (`clean`, `editorial`, `product`, `swiss`; readers can switch), `repo_url`, `repo_revision` | none |
+| `@meta` | `locale` (bundled diagram Viewer catalogs include `en`, `zh-CN`, `zh-TW`, `es`, `ko`, `ar`, `ru`), `quality_profile`, `style` (`clean`, `editorial`, `product`, `swiss`; readers can switch), `repo_url`, `repo_revision` | none |
 | `@source <id>` | `title`, `url`, or `path` with `lines=start:end` | none |
 | `@steps` | `id` | `id | title | detail? | diagram-id? | node? | from~to? | edge-ids?` (node and route are exclusive) |
 | `@callout` | `id`, `level=note|warning|open-question`, `title` | one cell per row; rows join into paragraphs |

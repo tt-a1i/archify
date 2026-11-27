@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "diagram_type": "erd",
+  "meta": {
+    "title": "Orders schema — ledger rollout",
+    "locale": "en",
+    "output": "examples/checkout-ledger-erd.html",
+    "quality_profile": "showcase"
+  },
+  "layout": { "mode": "grid", "gapX": 72, "gapY": 38 },
+  "entities": [
+    {
+      "id": "customers",
+      "label": "customers",
+      "tag": "accounts",
+      "row": 0,
+      "col": 0,
+      "attributes": [
+        { "name": "id", "type": "bigint", "key": "pk" },
+        { "name": "email", "type": "varchar(254)", "key": "uk" },
+        { "name": "created_at", "type": "timestamptz" }
+      ]
+    },
+    {
+      "id": "orders",
+      "label": "orders",
+      "tag": "checkout",
+      "row": 0,
+      "col": 1,
+      "change": "modified",
+      "emphasis": true,
+      "attributes": [
+        { "name": "id", "type": "bigint", "key": "pk" },
+        { "name": "customer_id", "type": "bigint", "key": "fk", "references": "customers.id" },
+        { "name": "status", "type": "varchar(32)" },
+        { "name": "total_amount", "type": "numeric(12,2)" },
+        { "name": "ledger_ref", "type": "uuid", "change": "added" },
+        { "name": "placed_at", "type": "timestamptz" }
+      ]
+    },
+    {
+      "id": "ledger_entries",
+      "label": "ledger_entries",
+      "tag": "ledger",
+      "row": 0,
+      "col": 2,
+      "change": "added",
+      "attributes": [
+        { "name": "id", "type": "uuid", "key": "pk" },
+        { "name": "order_id", "type": "bigint", "key": "fk", "references": "orders.id" },
+        { "name": "amount", "type": "numeric(12,2)" },
+        { "name": "currency", "type": "char(3)" },
+        { "name": "recorded_at", "type": "timestamptz" }
+      ]
+    },
+    {
+      "id": "audit_log",
+      "label": "audit_log",
+      "tag": "ledger",
+      "row": 1,
+      "col": 2,
+      "change": "removed",
+      "attributes": [
+        { "name": "id", "type": "bigint", "key": "pk" },
+        { "name": "order_id", "type": "bigint", "key": "fk", "references": "orders.id" },
+        { "name": "event", "type": "varchar(64)" },
+        { "name": "logged_at", "type": "timestamptz" }
+      ]
+    }
+  ],
+  "relationships": [
+    { "id": "orders_customers", "from": "orders", "to": "customers", "label": "placed by", "fromCardinality": "many", "toCardinality": "one" },
+    { "id": "ledger_orders", "from": "ledger_entries", "to": "orders", "label": "records", "fromCardinality": "many", "toCardinality": "one", "change": "added" },
+    { "id": "audit_orders", "from": "audit_log", "to": "orders", "label": "logged", "fromCardinality": "many", "fromOptional": true, "toCardinality": "one", "identifying": false, "change": "removed" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "What moved",
+      "items": [
+        "ledger_entries takes over from audit_log as the append-only record of accepted orders.",
+        "orders.ledger_ref points back at the ledger row once the write lands; it is nullable during rollout.",
+        "customers is unchanged and stays only because orders still points at it."
+      ]
+    }
+  ]
+}

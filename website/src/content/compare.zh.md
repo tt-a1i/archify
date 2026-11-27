@@ -1,6 +1,6 @@
-# Archify、Mermaid、Excalidraw、PlantUML 怎么选？
+# Archify 对比 Mermaid、Excalidraw、PlantUML 与 D2：AI Coding Agent 画图工具怎么选？
 
-**先说结论：** 只需在 Markdown 里嵌几行小图，选 Mermaid；一群人需要同屏自由拖框头脑风暴，选 Excalidraw；团队已有 CI 纯文本 DSL 流水线，选 PlantUML 或 D2。而当你想**零画图语法门槛、快速把任何复杂的事讲清楚**——不管是软件架构、科普原理、工作复盘，还是旅游攻略、租房避坑、理财/年假规划——想交给 Coding Agent 直接产出一份**不穿模、高颜值、可交互的单文件 HTML（10 种原生图型）**，或者**结论先行、图文联动、内置 4 套排版风格的一页式解答（Explainer）**，选 **Archify**。
+**先说结论：** 只需在 Markdown 里嵌几行小图，选 Mermaid；想直接打开浏览器用鼠标手工拖拽标准流程图或套现成模板，选 draw.io（diagrams.net）或 ProcessOn；一群人需要同屏自由拖框头脑风暴，选 Excalidraw；团队已有 CI 纯文本 DSL 或 C4 架构建模流水线，选 PlantUML、D2 或 LikeC4。而在寻找更适合 **AI Coding Agent（Claude Code、Cursor、Codex、OpenCode、GitHub Copilot）的 Mermaid / 传统手动画图替代方案**、希望**零画图语法、免手工对齐快速把任何复杂的事讲清楚**——不管是软件架构、科普原理、工作复盘，还是旅游攻略、租房避坑、理财/年假规划——想交给 Agent 直接产出一份**不穿模、高颜值、可交互的单文件 HTML（10 种原生图型）**，或者**结论先行、图文联动、内置 4 套排版风格的一页式解答（Explainer）**时，选 **Archify**。
 
 <span id="answer" class="section-anchor" aria-hidden="true"></span>
 
@@ -34,10 +34,12 @@ Agent 会在极短时间内帮你选定最贴合问题的结构——覆盖**十
 ## 什么时候不该选 Archify
 
 - **选 Mermaid**：图只有十几步、必须直接嵌入 GitHub / 博客 Markdown 代码块，且需要人手随时改几行文本。
-- **选 Excalidraw**：价值在于多人同屏实时手绘、随便拖放图形并保留轻松的草图感。
+- **选 draw.io（diagrams.net）或 ProcessOn**：需要打开浏览器用鼠标手工拖拽标准流程图、组织架构图、网络拓扑或直接套用中文模板，且不依赖 AI Coding Agent；Archify 主打由 Agent 从自然语言或代码库自动生成防穿模交互 HTML。
+- **选 Excalidraw（含 Excalidraw MCP）**：价值在于多人同屏实时手绘、对话直接生成可拖放的白板草图，保留轻松的手绘自由感。
 - **选 PlantUML 或 D2**：团队已将纯文本图表接入 CI 流水线，追求文本行级 diff 或高密度形式化 UML 记号。
+- **选 LikeC4**：团队需要专门面向 C4 架构分层的强类型 Architecture-as-Code DSL，并在代码库中持续维护模型关系。
 - **选 BI 或可观测性工具**：需要监控实时在线指标、告警大盘或实时链路采样；Archify 交付的是创作好的静态 HTML 成品，而非监控后端。
-- **选云端托管协作平台**：需要账号权限体系与多人同时编辑同一张云端画布；Archify 主打本地、免登录、无依赖交付。
+- **选云端托管协作平台（如 Eraser.io）**：需要账号权限体系与多人同时编辑同一张云端画布；Archify 主打本地、免登录、无依赖交付。
 
 同时，Archify 也不承诺无损解析全部 Mermaid 高级语法、无需引导就自动看懂任意超大型仓库，或仅靠结构校验替现实业务的真实性背书——工具保证排版干净与渲染可信，事实把关仍属于创作者。
 
@@ -57,9 +59,9 @@ Agent 会在极短时间内帮你选定最贴合问题的结构——覆盖**十
 
 科普原理解析、故障复盘、业务方案评审或深度教程，往往既要结论又要图和步骤对照。Archify 的 `.archify.md` 一页式解答会先给出明确结论与理由，再分成面板将文字、表格、步骤与已校验示意图左右并排——**读到哪一步，图上就自动高亮哪一部分**，支持 **4 套高颜值排版风格**、深浅主题、长图/PDF 导出及单面板追问。点击体验真实成品：[P99 尾延迟暴涨一页式解答](cases/explainer/p99-tail-latency.html)与[首次访问 HTTPS 发生了什么](cases/explainer/tls-first-visit.html)。
 
-### 4. 需要源码依据时：梳理真实代码仓库不靠猜
+### 4. 需要源码依据时：梳理、诊断并演示真实代码仓库
 
-落回软件工程场景时，可以让 Agent 沿固定 Git 提交读取真实代码片段并挂载文件依据，避免模型“幻觉画框”。见 [MCO 运行时案例](cases/mco-runtime.html)、[MCO 交互架构成品](cases/mco-runtime.architecture.html)与[仓库证据清单](agent-diagrams.html#repository-evidence)。
+落回软件工程场景时，可以让 Agent 沿固定 Git 提交读取真实代码片段并挂载文件依据，避免模型“幻觉画框”。见 [MCO 运行时案例](cases/mco-runtime.html)、[MCO 交互架构成品](cases/mco-runtime.architecture.html)与[仓库证据清单](agent-diagrams.html#repository-evidence)。此外，Skill 还内置了离线**架构诊断（Code Analysis）**（覆盖 JS/TS、Python、Java、Go、Rust、C/C++ 的静态依赖星图、可旋转 3D 模型与带源码链接的修复任务）、多图双向钻取跳转、任意原生图加**导览故事（Story 模式）并导出 1080p 60fps 视频**，以及直接附到 **GitHub PR / GitLab MR** 的变更图解。
 
 <span id="limits" class="section-anchor" aria-hidden="true"></span>
 

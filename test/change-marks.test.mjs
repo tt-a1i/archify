@@ -1,0 +1,386 @@
+import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import test from 'node:test';
+import { fileURLToPath } from 'node:url';
+import { changeReviewFor, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, frameChangeBadgePos, nodeChangeBadgePos, reviewLegendEntries, CHANGE_STATES } from '../archify/renderers/shared/change-marks.mjs';
+import { createScratchDirectory } from './helpers/scratch-directory.mjs';
+import { extractSvgs, parseXml } from './helpers/xml.mjs';
+
+const here = path.dirname(fileURLToPath(import.meta.url));
+const skillRoot = path.resolve(here, '..', 'archify');
+const cli = path.join(skillRoot, 'bin', 'archify.mjs');
+const scratch = createScratchDirectory(path.join(os.tmpdir(), 'archify-change-marks-'));
+
+const EXAMPLES = {
+  architecture: 'brand-aware-delivery.architecture.json',
+  workflow: 'agent-tool-call.workflow.json',
+  sequence: 'cache-miss-request.sequence.json',
+  dataflow: 'drilldown-api.dataflow.json',
+  lifecycle: 'agent-run.lifecycle.json',
+  erd: 'orders.erd.json',
+  class: 'payments.class.json',
+  tree: 'payment-platform.tree.json',
+  timeline: 'payment-incident.timeline.json',
+  waterfall: 'checkout-request.waterfall.json',
+};
+
+function example(type) {
+  return JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples', EXAMPLES[type]), 'utf8'));
+}
+
+function render(type, document, name) {
+  const input = path.join(scratch, `${name}.json`);
+  const output = path.join(scratch, `${name}.html`);
+  fs.writeFileSync(input, JSON.stringify({ ...document, meta: { ...document.meta, output: path.basename(output) } }));
+  const result = spawnSync(process.execPath, [cli, 'render', type, input, output], { cwd: scratch, encoding: 'utf8' });
+  assert.equal(result.status, 0, `${type} render failed:\n${result.stdout}\n${result.stderr}`);
+  const html = fs.readFileSync(output, 'utf8');
+  const [svg] = extractSvgs(html).direct;
+  assert.doesNotThrow(() => parseXml(svg), `${type} SVG stays well-formed XML`);
+  return { html, svg };
+}
+
+function count(text, pattern) {
+  return [...text.matchAll(pattern)].length;
+}
+
+const nodeCollection = {
+  architecture: 'components',
+  workflow: 'nodes',
+  sequence: 'participants',
+  dataflow: 'nodes',
+  lifecycle: 'states',
+  erd: 'entities',
+  class: 'types',
+  tree: 'nodes',
+  timeline: 'events',
+  waterfall: 'spans',
+};
+const edgeCollection = {
+  architecture: 'connections',
+  workflow: 'edges',
+  sequence: 'messages',
+  dataflow: 'flows',
+  lifecycle: 'transitions',
+  erd: 'relationships',
+  class: 'relationships',
+};
+const LABELLED_EDGE_TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'class']);
+
+function markedExample(type) {
+  const document = example(type);
+  const nodes = document[nodeCollection[type]];
+  if (type === 'class') {
+    nodes[3].change = 'added';
+    nodes[1].change = 'modified';
+    nodes[1].emphasis = true;
+    nodes[4].change = 'removed';
+    document.relationships[0].change = 'added';
+    document.relationships[3].change = 'removed';
+    document.relationships[3].label = 'legacy impl';
+    return document;
+  }
+  if (type === 'tree') {
+    nodes[1].change = 'added';
+    nodes[2].change = 'modified';
+    nodes[2].emphasis = true;
+    nodes.at(-1).change = 'removed';
+    return document;
+  }
+  if (type === 'timeline') {
+    document.lanes[0].change = 'modified';
+    nodes[0].change = 'added';
+    nodes[1].change = 'modified';
+    nodes[1].emphasis = true;
+    nodes[3].change = 'removed';
+    return document;
+  }
+  if (type === 'waterfall') {
+    nodes[1].change = 'added';
+    nodes[2].change = 'modified';
+    nodes[2].emphasis = true;
+    nodes[3].change = 'removed';
+    return document;
+  }
+  const edges = document[edgeCollection[type]];
+  const stableNode = type === 'lifecycle' ? 1 : 0;
+  nodes[stableNode].change = 'added';
+  nodes[stableNode + 1].change = 'modified';
+  nodes[stableNode + 1].emphasis = true;
+  nodes.at(-1).change = 'removed';
+  edges[0].change = 'added';
+  edges[1].change = 'removed';
+  return document;
+}
+
+test('changeReviewFor stays inert without marks and derives 1-hop context from marks', () => {
+  const inert = changeReviewFor({ nodes: [{ id: 'a' }, { id: 'b', change: 'unchanged' }], edges: [{ from: 'a', to: 'b' }] });
+  assert.equal(inert.active, false);
+  assert.equal(inert.nodeContext({ id: 'a' }), null);
+  assert.deepEqual(changeLegendEntries(inert, undefined, 'en'), []);
+
+  const review = changeReviewFor({
+    nodes: [{ id: 'a', change: 'modified' }, { id: 'b' }, { id: 'c' }, { id: 'd' }],
+    edges: [{ from: 'a', to: 'b' }, { from: 'c', to: 'd', change: 'removed' }],
+    frames: [{ wraps: ['d'] }],
+  });
+  assert.equal(review.active, true);
+  assert.equal(review.nodeContext({ id: 'a', change: 'modified' }), null);
+  assert.equal(review.nodeContext({ id: 'b' }), 'neighbour');
+  assert.equal(review.nodeContext({ id: 'c' }), 'neighbour', 'an endpoint of a removed edge is context');
+  assert.equal(review.edgeContext({ from: 'a', to: 'b' }), 'neighbour');
+  assert.equal(review.frameContext({ wraps: ['d'] }), 'subdued');
+  assert.equal(review.frameContext({ wraps: ['a', 'd'] }), 'neighbour');
+  const legend = changeLegendEntries(review, undefined, 'en');
+  assert.deepEqual(legend.map((entry) => entry.kind), CHANGE_STATES.map((state) => `change-${state}`));
+  assert.ok(legend.every((entry) => entry.interactive === false));
+  assert.deepEqual(changeLegendEntries(review, { mode: 'hidden' }, 'en'), []);
+});
+
+for (const type of Object.keys(EXAMPLES)) {
+  test(`${type}: examples without change marks render no change markup`, () => {
+    const { svg } = render(type, example(type), `${type}-plain`);
+    assert.doesNotMatch(svg, /data-change(?:-context|-badge)?=/);
+    assert.doesNotMatch(svg, /legend-semantic-kind="change-/);
+    assert.doesNotMatch(svg, /arrowhead-change-|-change-(?:added|modified|removed)"/);
+  });
+
+  test(`${type}: authored change marks render states, badges, ghosts, context, markers and legend`, () => {
+    const document = markedExample(type);
+    if (type === 'dataflow') document.meta.viewBox = [1400, 520];
+    const { svg, html } = render(type, document, `${type}-marked`);
+    for (const state of ['added', 'modified', 'removed']) {
+      assert.ok(count(svg, new RegExp(`data-change="${state}"`, 'g')) >= 1, `${type} marks ${state}`);
+      assert.match(svg, new RegExp(`data-change-badge="${state}"`), `${type} badges ${state}`);
+      assert.match(svg, new RegExp(`data-legend-semantic-kind="change-${state}"`), `${type} legend lists ${state}`);
+    }
+    const badges = [...svg.matchAll(/<g data-change-badge="(added|modified|removed)"[^>]*>[\s\S]*?<\/g>/g)];
+    assert.ok(badges.length >= 3, `${type} renders badge elements`);
+    for (const [badgeXml, state] of badges) {
+      assert.match(badgeXml, /<rect [^>]*class="c-mask"\/>/, `${type} badge includes opaque .c-mask underlay`);
+      assert.match(badgeXml, new RegExp(`class="c-change-badge-${state}"`), `${type} badge uses .c-change-badge-${state}`);
+    }
+    assert.match(svg, /data-legend-semantic-kind="change-unchanged"/);
+    assert.match(svg, /data-emphasis=""/);
+    assert.ok(count(svg, /data-change-context="(?:neighbour|subdued)"/g) >= 1, `${type} subdues untouched context`);
+    if (type === 'class') {
+      assert.match(svg, /marker-(?:end|start)="url\(#cl-[a-z-]+-added\)"/, `${type} added edges use change markers`);
+      assert.match(svg, /marker-(?:end|start)="url\(#cl-[a-z-]+-removed\)"/, `${type} removed edges use change markers`);
+    } else if (edgeCollection[type]) {
+      assert.match(svg, /marker-(?:end|start)="url\(#[a-z-]*change-added[a-z-]*\)"/, `${type} added edges use change markers`);
+      assert.match(svg, /marker-(?:end|start)="url\(#[a-z-]*change-removed[a-z-]*\)"/);
+    }
+    if (LABELLED_EDGE_TYPES.has(type)) {
+      assert.match(svg, /<tspan class="t-change-badge-(?:added|modified|removed)"[^>]*>[+~\u2212] <\/tspan>/, `${type} renders inline edge prefixes`);
+    }
+    assert.doesNotMatch(svg, /style="[^"]*#[0-9a-fA-F]{3,8}/, 'change marks use theme variables, not inline colours');
+    assert.doesNotMatch(html, /\b(SAFE|LOW RISK|MERGEABLE|NO IMPACT|VERIFIED PR)\b/);
+    const removedNodes = [...svg.matchAll(/<g [^>]*data-node-id="([^"]+)"[^>]*data-change="removed"/g)];
+    assert.ok(removedNodes.length >= 1, `${type} keeps removed nodes as ghosts at their position`);
+  });
+}
+
+test('class: member marks render previousType transitions, left diff gutter, and strike removed rows', () => {
+  const document = example('class');
+  const [first] = document.types;
+  first.attributes.push(
+    { name: 'version', type: 'bigint', previousType: 'int', visibility: 'private', change: 'modified' },
+    { name: 'legacyToken', type: 'string', visibility: 'private', change: 'removed' },
+  );
+  first.methods.push({ name: 'refundLegacy', parameters: 'id: string', returns: 'void', visibility: 'public', change: 'removed' });
+  const { svg } = render('class', document, 'class-members');
+  assert.match(svg, /int → bigint<\/text>/);
+  assert.match(svg, /<g data-class-row="" data-change="modified">[\s\S]*?data-change-badge="modified"/);
+  assert.match(svg, /<g data-class-row="" data-change="removed">[\s\S]*?>legacyToken<[\s\S]*?data-change-badge="removed"/);
+  assert.match(svg, /<g data-class-row="" data-change="removed">[\s\S]*?>refundLegacy<[\s\S]*?data-change-badge="removed"/);
+  assert.match(svg, new RegExp(`data-node-id="${first.id}"[^>]*data-change-context="neighbour"`), 'a class with changed members stays readable as review context');
+  assert.match(svg, /data-legend-semantic-kind="change-modified"/);
+});
+
+test('erd: column marks render the type change in the type slot and strike removed columns', () => {
+  const document = example('erd');
+  const [first] = document.entities;
+  first.attributes[1].change = 'modified';
+  first.attributes[1].previousType = 'int';
+  first.attributes[1].type = 'bigint';
+  first.attributes.push({ name: 'legacy_flag', type: 'bool', change: 'removed' });
+  const { svg } = render('erd', document, 'erd-columns');
+  assert.match(svg, /data-er-type-change=""[^>]*>int → bigint<\/text>/);
+  assert.match(svg, /<g data-detail="context" data-er-row="\d+" data-change="removed">[\s\S]*?>legacy_flag<\/text>/);
+  assert.match(svg, /data-er-row="\d+" data-change="removed">[\s\S]*?data-change-badge="removed"/);
+  assert.match(svg, new RegExp(`data-node-id="${first.id}"[^>]*data-change-context="neighbour"`), 'a table with changed columns is review context, not subdued');
+  assert.match(svg, /data-legend-semantic-kind="change-modified"/);
+});
+
+test('schema: change, emphasis, previousType and payload are optional and validated', () => {
+  const document = markedExample('sequence');
+  document.messages[0].payload = { summary: 'order', contentType: 'application/json', before: { total: 1 }, after: { total: 2 } };
+  const input = path.join(scratch, 'schema-valid.json');
+  fs.writeFileSync(input, JSON.stringify(document));
+  const valid = spawnSync(process.execPath, [cli, 'validate', 'sequence', input, '--json'], { cwd: scratch, encoding: 'utf8' });
+  assert.equal(valid.status, 0, valid.stdout + valid.stderr);
+  document.messages[0].change = 'renamed';
+  fs.writeFileSync(input, JSON.stringify(document));
+  const invalid = spawnSync(process.execPath, [cli, 'validate', 'sequence', input, '--json'], { cwd: scratch, encoding: 'utf8' });
+  assert.notEqual(invalid.status, 0);
+  assert.match(invalid.stdout + invalid.stderr, /change/);
+});
+
+for (const type of ['sequence', 'dataflow']) {
+  test(`${type}: payloads ship only in the reader-side JSON block and never in the SVG`, () => {
+    const document = example(type);
+    const edges = document[edgeCollection[type]];
+    edges[0].id = edges[0].id || 'flow-first';
+    edges[1].id = edges[1].id || 'flow-second';
+    const plain = render(type, document, `${type}-payload-none`);
+    assert.doesNotMatch(plain.html, /<script id="archify-payloads-data"/, 'no payloads means no payload block');
+
+    edges[0].payload = { summary: 'Secret-free review sample', contentType: 'application/json', before: { token: 'legacy-before-value' }, after: { token: 'rotated-after-value' } };
+    edges[1].payload = { sample: { marker: 'sample-only-marker' } };
+    const withPayload = render(type, document, `${type}-payload-some`);
+    const block = withPayload.html.match(/<script id="archify-payloads-data" type="application\/json">([\s\S]*?)<\/script>/);
+    assert.ok(block, 'payload block is emitted once payloads exist');
+    const payloads = JSON.parse(block[1]);
+    assert.deepEqual(Object.keys(payloads).sort(), [edges[0].id, edges[1].id].sort());
+    assert.equal(payloads[edges[0].id].role, type === 'dataflow' ? 'flow' : 'request');
+    assert.equal(payloads[edges[0].id].after.token, 'rotated-after-value');
+    for (const marker of ['legacy-before-value', 'rotated-after-value', 'sample-only-marker', 'Secret-free review sample']) {
+      assert.doesNotMatch(withPayload.svg, new RegExp(marker), `${marker} stays out of the canonical SVG`);
+    }
+    assert.ok(withPayload.svg.includes(`data-edge-id="${edges[0].id}"`), 'the SVG edge carries the authored id the Viewer resolves');
+
+    delete edges[0].id;
+    const input = path.join(scratch, `${type}-payload-noid.json`);
+    fs.writeFileSync(input, JSON.stringify(document));
+    const rejected = spawnSync(process.execPath, [cli, 'render', type, input, path.join(scratch, `${type}-payload-noid.html`)], { cwd: scratch, encoding: 'utf8' });
+    assert.notEqual(rejected.status, 0);
+    assert.match(rejected.stdout + rejected.stderr, /payload\/missing-id/);
+  });
+}
+
+for (const type of ['sequence', 'dataflow', 'lifecycle']) {
+  test(`${type}: validate --layout-json reports deterministic node boxes and edge routes`, () => {
+    const input = path.join(skillRoot, 'examples', EXAMPLES[type]);
+    const run = () => spawnSync(process.execPath, [cli, 'validate', type, input, '--layout-json'], { cwd: skillRoot, encoding: 'utf8' });
+    const first = run();
+    assert.equal(first.status, 0, first.stdout + first.stderr);
+    const report = JSON.parse(first.stdout);
+    assert.equal(report.contract, `archify-${type}-layout-v1`);
+    assert.equal(report.diagram_type, type);
+    assert.equal(report.viewBox.length, 2);
+    assert.ok(report.nodes.length >= 2 && report.nodes.every((node) => Number.isFinite(node.x) && Number.isFinite(node.width)));
+    assert.ok(report.edges.length >= 1 && report.edges.every((edge) => edge.points.length >= 2 && edge.points.every((point) => point.length === 2)));
+    assert.equal(run().stdout, first.stdout, 'layout evidence is deterministic');
+  });
+}
+
+test('change and emphasis arrowheads keep a fixed size while CSS widens their strokes', () => {
+  const review = changeReviewFor({ nodes: [{ id: 'a' }, { id: 'b' }], edges: [{ from: 'a', to: 'b', change: 'added' }, { from: 'b', to: 'a', emphasis: true }] });
+  const definitions = changeMarkerDefinitions(review);
+  const markers = [...definitions.matchAll(/<marker id="([^"]+)"([^>]*)>/g)];
+  assert.ok(markers.some(([, id]) => id === 'arrowhead-change-added'));
+  assert.ok(markers.some(([, id]) => id === 'arrowhead-emphasis-fixed'), 'an emphasised, unmarked edge gets a fixed marker');
+  for (const [, id, attributes] of markers) assert.match(attributes, /markerUnits="userSpaceOnUse"/, `${id} does not scale with stroke width`);
+  assert.equal(changeMarkerFor({ change: 'added', emphasis: true }, 'arrowhead'), 'arrowhead-change-added');
+  assert.equal(changeMarkerFor({ emphasis: true }, 'arrowhead-security'), 'arrowhead-security-fixed');
+  assert.equal(changeMarkerFor({}, 'arrowhead-security'), 'arrowhead-security', 'plain edges keep the stroke-scaled marker');
+  assert.equal(changeMarkerDefinitions(changeReviewFor({ nodes: [{ id: 'a' }] })), '', 'an unmarked diagram defines nothing new');
+});
+
+test('node badges sit inside tall cards and frame badges follow their title', () => {
+  const card = { x: 100, y: 50, width: 160, height: 60 };
+  const inside = nodeChangeBadgePos(card, { avoid: [{ x: 140, y: 72, width: 80, height: 14 }] });
+  assert.ok(inside.x + 9 <= card.x + card.width - 5 && inside.y - 6.5 >= card.y + 5, 'the badge stays inside the card corner');
+  assert.equal(nodeChangeBadgePos(card, { avoid: [{ x: 110, y: 56, width: 145, height: 14 }] }).y, card.y, 'a title under the corner keeps the badge on the edge');
+  assert.equal(nodeChangeBadgePos(card).y, card.y, 'callers that cannot measure their text keep the edge badge');
+  const row = { x: 100, y: 50, width: 160, height: 20 };
+  assert.equal(nodeChangeBadgePos(row, { avoid: [] }).y, row.y, 'a short row keeps the badge on its top edge');
+
+  const title = { x: 60, y: 20, width: 80, height: 16 };
+  const after = frameChangeBadgePos(title, { maxRight: 400, fallback: { x: 390, y: 30 } });
+  assert.ok(after.x - 9 >= title.x + title.width, 'the badge starts after the title');
+  assert.equal(after.y, title.y + title.height / 2, 'the badge is centred on the title row');
+  assert.deepEqual(frameChangeBadgePos(title, { maxRight: 150, fallback: { x: 390, y: 30 } }), { x: 390, y: 30 }, 'no room after the title falls back to the corner');
+});
+
+test('sequence segment badges follow the segment title', () => {
+  const document = example('sequence');
+  document.segments = [{ from: 150, to: 260, label: 'Lookup', change: 'added' }];
+  const { svg } = render('sequence', document, 'sequence-segment-badge');
+  const label = svg.match(/data-graph-role="segment-label"[^>]*>\s*<rect x="([\d.]+)" y="([\d.-]+)" width="([\d.]+)" height="([\d.]+)"[\s\S]*?<g data-change-badge="added"[^>]*><rect x="([\d.]+)" y="([\d.-]+)"/);
+  assert.ok(label, svg.slice(0, 200));
+  const [labelX, labelY, labelWidth, labelHeight, badgeX, badgeY] = label.slice(1).map(Number);
+  assert.ok(badgeX >= labelX + labelWidth && badgeX <= labelX + labelWidth + 8, 'the badge sits right after the title tab');
+  assert.ok(badgeY >= labelY - 1 && badgeY <= labelY + labelHeight, 'the badge shares the title row');
+});
+
+test('in a change review colour means change: type swatches leave the legend and line types turn neutral', () => {
+  const review = changeReviewFor({ nodes: [{ id: 'a', change: 'added' }, { id: 'b' }] });
+  const entries = [
+    { kind: 'backend', label: 'Backend' },
+    { kind: 'security', className: 'a-security', marker: 'arrowhead-security', label: 'Security' },
+    { kind: 'return', className: 'a-default', marker: 'arrowhead', dash: '3,5', label: 'Return' },
+  ];
+  const reviewed = reviewLegendEntries(review, entries, undefined, ['backend']);
+  assert.deepEqual(reviewed.map((entry) => entry.kind), ['security', 'return'], 'node-type colours leave the legend');
+  assert.deepEqual(reviewed.map(({ className, marker, dash }) => ({ className, marker, dash })), [
+    { className: 'a-default', marker: 'arrowhead', dash: '5,5' },
+    { className: 'a-default', marker: 'arrowhead', dash: '3,5' },
+  ], 'line types keep their dash, not their colour');
+  assert.deepEqual(reviewLegendEntries(review, entries, { mode: 'all' }, ['backend']).map((entry) => entry.kind), ['backend', 'security', 'return']);
+  assert.deepEqual(reviewLegendEntries(review, entries, { entries: { backend: { visible: true } } }, ['backend']).map((entry) => entry.kind), ['backend', 'security', 'return']);
+  assert.equal(reviewLegendEntries(changeReviewFor({ nodes: [{ id: 'a' }] }), entries, undefined, ['backend']), entries, 'an unmarked diagram keeps its legend');
+
+  assert.equal(changeMarkerFor({}, 'arrowhead-security', review), 'arrowhead', 'an unchanged security edge takes the neutral arrowhead');
+  assert.equal(changeMarkerFor({ emphasis: true }, 'arrowhead-emphasis', review), 'arrowhead-fixed');
+  assert.equal(changeMarkerFor({ change: 'removed' }, 'arrowhead-security', review), 'arrowhead-change-removed');
+});
+
+for (const type of ['architecture', 'workflow', 'lifecycle']) {
+  test(`${type}: a change-marked diagram drops node-type legend swatches`, () => {
+    const plain = render(type, example(type), `${type}-type-legend-plain`).svg;
+    const marked = render(type, markedExample(type), `${type}-type-legend-marked`).svg;
+    const kinds = (svg) => [...svg.matchAll(/data-legend-semantic-kind="([^"]+)"/g)].map((match) => match[1]);
+    assert.ok(kinds(plain).some((kind) => !kind.startsWith('change-') && kind !== 'start' && kind !== 'final'), `${type} lists node types without marks`);
+    assert.deepEqual(kinds(marked).filter((kind) => !kind.startsWith('change-') && kind !== 'start' && kind !== 'final'), [], `${type} lists only change states once marked`);
+  });
+}
+
+test('sequence: activation bars stay neutral in a change review', () => {
+  const plain = render('sequence', example('sequence'), 'sequence-activation-plain').svg;
+  const marked = render('sequence', markedExample('sequence'), 'sequence-activation-marked').svg;
+  assert.doesNotMatch(plain, /c-activation-review/);
+  assert.match(marked, /<rect [^>]*width="10" [^>]*class="c-activation-review"/);
+  assert.doesNotMatch(marked, /<rect [^>]*width="10" [^>]*class="c-(?:frontend|backend|database|cloud|security|messagebus|external)" stroke-width="1"\/>/);
+});
+
+test('tree: a changed root uses readable theme text on its tinted fill', () => {
+  const document = example('tree');
+  document.nodes[0].change = 'modified';
+  const { svg } = render('tree', document, 'tree-changed-root');
+  assert.match(svg, /<g [^>]*data-node-id="platform"[^>]*data-change="modified"[^>]*data-tree-depth="0"/);
+  assert.match(svg, /\[data-tree-depth="0"\]\[data-change\] \.tree-label \{ fill: var\(--text\); \}/);
+  assert.match(svg, /\[data-tree-depth="0"\]\[data-change\] \.tree-sublabel \{ fill: var\(--text-muted\); opacity: 1; \}/);
+});
+
+test('lifecycle: terminal states retain their legend key when start and node types are hidden', () => {
+  const document = markedExample('lifecycle');
+  document.meta.legend = { entries: { start: { visible: false } } };
+  const { svg } = render('lifecycle', document, 'lifecycle-final-legend');
+  assert.deepEqual(
+    [...svg.matchAll(/data-legend-semantic-kind="([^"]+)"/g)].map((match) => match[1]),
+    ['final', ...CHANGE_STATES.map((state) => `change-${state}`)],
+  );
+
+  document.meta.legend.entries.final = { visible: false };
+  const hiddenFinal = render('lifecycle', document, 'lifecycle-final-hidden').svg;
+  assert.doesNotMatch(hiddenFinal, /data-legend-semantic-kind="final"/);
+  assert.match(hiddenFinal, /data-legend-semantic-kind="change-removed"/);
+
+  document.meta.legend = { mode: 'hidden' };
+  const hiddenLegend = render('lifecycle', document, 'lifecycle-legend-hidden').svg;
+  assert.doesNotMatch(hiddenLegend, /data-legend-semantic-kind=/);
+});

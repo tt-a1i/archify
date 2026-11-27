@@ -13,7 +13,7 @@ import {fixture as repositoryFixture} from './helpers/repository-evidence-fixtur
 
 const root=fileURLToPath(new URL('../',import.meta.url)),skill=path.join(root,'archify'),cli=path.join(skill,'bin/archify.mjs');
 const cases={architecture:'web-app-rendered.html',workflow:'workflow-agent-tool-call-rendered.html',sequence:'sequence-cache-miss-request.html',dataflow:'dataflow-product-analytics.html',lifecycle:'lifecycle-agent-run.html',erd:'erd-orders-rendered.html',class:'class-payments-rendered.html',tree:'tree-payment-platform-rendered.html',timeline:'timeline-payment-incident-rendered.html',waterfall:'waterfall-checkout-request-rendered.html'};
-const native=path.join(skill,'examples',cases.workflow);
+const native=path.join(root,'examples',cases.workflow);
 function workspace(t){const dir=fs.mkdtempSync(path.join(os.tmpdir(),'archify-story-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));return dir;}
 function fileSymlink(t,target,file){
   try{fs.symlinkSync(target,file,'file');return true;}
@@ -202,7 +202,7 @@ test('streamed soundtrack blocks preserve samples and cues across a block bounda
 test('all ten native families retain their source notation and valid default actions',t=>{
   const dir=workspace(t);
   for(const [type,name]of Object.entries(cases)){
-    const input=path.join(skill,'examples',name),facts=scanStory(input),plan=brief(facts),file=path.join(dir,type+'.json'),output=path.join(dir,type+'.html');fs.writeFileSync(file,JSON.stringify(plan));
+    const input=path.join(root,'examples',name),facts=scanStory(input),plan=brief(facts),file=path.join(dir,type+'.json'),output=path.join(dir,type+'.html');fs.writeFileSync(file,JSON.stringify(plan));
     buildStory(input,file,output);assert.equal(fs.existsSync(output),true);
     assert.ok(facts.nodes.length,type);if(['erd','class','tree','timeline','waterfall'].includes(type))assert.equal(facts.defaultAction,'relation',type);
     if(type==='erd')assert.ok(facts.edges.every(edge=>edge.ends));if(type==='class')assert.ok(facts.edges.every(edge=>edge.kind));
@@ -236,7 +236,7 @@ test('a package-only copy runs the full story chain outside the repository witho
   const dir=workspace(t),pack=path.join(dir,'package'),outside=path.join(dir,'outside');fs.mkdirSync(outside);
   fs.cpSync(skill,pack,{recursive:true,filter:file=>!path.relative(skill,file).split(path.sep).some(part=>part==='node_modules'||part==='test'||part.startsWith('.validator-check-'))});
   assert.equal(fs.existsSync(path.join(pack,'node_modules')),false);
-  const entry=path.join(pack,'bin/archify.mjs'),input=path.join(pack,'examples',cases.workflow),plan=path.join(outside,'brief.json'),output=path.join(outside,'story.html');
+  const entry=path.join(pack,'bin/archify.mjs'),input=path.join(root,'examples',cases.workflow),plan=path.join(outside,'brief.json'),output=path.join(outside,'story.html');
   const draft=run(['draft',input,plan],outside,entry);assert.equal(draft.status,0,draft.stderr+draft.stdout);
   const facts=JSON.parse(fs.readFileSync(JSON.parse(draft.stdout).sourceMap,'utf8'));fs.writeFileSync(plan,JSON.stringify(brief(facts)));
   const attached=run(['attach',input,plan,output],outside,entry);assert.equal(attached.status,0,attached.stderr+attached.stdout);assert.ok(embedded(fs.readFileSync(output,'utf8')).includes(facts.nodes[0].label));

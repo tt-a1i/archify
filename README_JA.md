@@ -12,6 +12,8 @@
 
 <p align="center">アイデア、疑問、計画のどれから始めても構いません。AI エージェントに説明すれば、Archify が探索・カスタマイズ・共有できるインタラクティブな HTML を生成します。旅行の行程や学習マップから複雑なシステムまで、あなた自身のものに作り込めます。</p>
 
+<p align="center"><strong>10 種類の図 · 4 スタイルの 1 ページ解説 · アーキテクチャ診断 · 1080p 動画付き Story · PR/MR 変更ウォークスルー</strong></p>
+
 <p align="center">コミュニティが何を作っているかを見て、自分なら次に何を作れるかを考えてみてください。</p>
 
 <p align="center">
@@ -32,8 +34,8 @@
   <a href="https://github.com/tt-a1i/archify/stargazers"><img src="https://img.shields.io/github/stars/tt-a1i/archify?style=flat-square&amp;color=E5B650&amp;logo=github&amp;label=Stars" alt="GitHub stars" /></a>
   <a href="https://skills.sh/tt-a1i/archify/archify"><img src="https://img.shields.io/badge/installs-130K%2B-0EA5E9?style=flat-square" alt="130K+ installs on skills.sh" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-22c55e?style=flat-square" alt="Apache License 2.0" /></a>
-  <a href="#インストール方法"><img src="https://img.shields.io/badge/works_with-Claude_Code_%7C_Codex_%7C_Cursor_%7C_OpenCode-7C3AED?style=flat-square" alt="Works with Claude Code, Codex, Cursor, and OpenCode" /></a>
-  <a href="CHANGELOG.md#unreleased"><img src="https://img.shields.io/badge/version-3.2.1--dev.1-0891b2?style=flat-square" alt="Development version 3.2.1-dev.1" /></a>
+  <a href="#インストール方法"><img src="https://img.shields.io/badge/works_with-Claude_Code_%7C_Codex_%7C_Cursor_%7C_OpenCode_%7C_Copilot-7C3AED?style=flat-square" alt="Works with Claude Code, Codex, Cursor, OpenCode, and GitHub Copilot" /></a>
+  <a href="CHANGELOG.md#unreleased"><img src="https://img.shields.io/badge/version-3.3.3--dev.1-0891b2?style=flat-square" alt="Development version 3.3.3-dev.1" /></a>
 </p>
 
 <p align="center">
@@ -49,9 +51,9 @@
 
 <!-- archify-launch-video -->
 
-https://github.com/user-attachments/assets/78570807-ba1d-4737-953f-55504a378a87
+https://github.com/user-attachments/assets/6a0d6637-e3af-43af-a733-4b4b53da0542
 
-**ひと言で、リポジトリを可視化。** 約35秒の英語デモで、図の操作、ソースコードへのリンク、経路の追跡をご覧ください。[インタラクティブな作例を試す ↗](https://archify.si/gallery.html)
+**ひと言で、リポジトリを可視化。** 約60秒の英語ツアーで、リポジトリ全体の可視化、アーキテクチャ図上の診断結果、実際の PR の解説、動画書き出しをご覧ください。[インタラクティブな作例を試す ↗](https://archify.si/gallery.html)
 
 <a id="start"></a>
 
@@ -130,6 +132,33 @@ Archify で 1 ページにまとめて答えて：API の P99 が 80 ms から 6
 
 Archify は [`mco-org/mco`](https://github.com/mco-org/mco) の `9f1a1cf` を解析し、この検証済みマップを生成しました。**[開く ↗](https://archify.si/cases/mco-runtime.architecture.html?theme=dark&present=1)** · [到達範囲をトレース ↗](https://archify.si/cases/mco-runtime.architecture.html?theme=dark#focus=router&reach=downstream) · [型付きソース](docs/cases/mco-runtime.architecture.json)
 
+### リポジトリを診断する
+
+<sub>CODE ANALYSIS · Skill に組み込み済み、追加インストール不要</sub>
+
+| 依存関係の星図 | 同じ解析の 3D モデル |
+|---|---|
+| [![Atlas 星図：モジュールを円周に並べ、ファイル間の依存を内側に描き、サイドパネルに検出結果と結合度を表示](docs/assets/code-analysis-views/atlas.png)](archify/modules/code-analysis/docs/USAGE.md) | [![Atlas 3D：最も依存されるモジュールを幹に、他のモジュールが依存の層の高さで枝分かれする](docs/assets/code-analysis-views/atlas-3d.png)](archify/modules/code-analysis/docs/USAGE.md) |
+
+**アーキテクチャ診断**はリポジトリを読み、コードが実際にどうつながっているかを示します。循環依存、結合の強すぎるモジュール、複雑度のホットスポット、レイヤールール違反を、それぞれ根拠のソースへのリンクと、Agent にそのまま渡せる修正タスク付きで一覧にします。アーキテクチャ図と組み合わせると、各コンポーネントに問題の件数が表示されます。JS/TS、Python、Java、Go、Rust、C、C++ に対応し、結果はオフラインで開ける 1 つの HTML ファイルです。
+
+```text
+Use archify Code Analysis on this repository: show module coupling, dependency cycles and hotspots.
+```
+
+[Code Analysis ガイド](archify/modules/code-analysis/docs/USAGE.md)
+
+### ストーリーや PR として見せる
+
+<sub>STORY · PR ウォークスルー</sub>
+
+- **Story 動画。** Agent に頼むと、どの図にもガイド付きのストーリーを追加できます。ページにはタイムラインと字幕付きの Story モードが加わり、**Export → Story video** で 1080p・60 fps の動画（WebM または MP4）に書き出せます。複数の図を 1 つのステージページや動画にまとめることもできます。[Story の書き方](archify/references/story-authoring.md)
+- **PR ウォークスルー。** Agent に PR やブランチの説明を頼むと、Archify が変更点を図の上に直接マークし、ライト／ダークの図を GitHub PR や GitLab MR に添付できます。既定のインストールには `archify-pr` Skill が含まれ、PR の準備中に実質的な変更があるときだけ提案します。[PR レビュー](archify/references/pr-review.md)
+
+```text
+Use archify to add a guided story to this diagram and export it as a video.
+```
+
 ### 拡張しやすい。自分のものにする方法はいくつもある。
 
 <sub>COMMUNITY STORIES · ユーザーが共有してくれた事例の一部</sub>
@@ -193,7 +222,7 @@ Export メニューから PNG をクリップボードにコピーしたり、�
 
 ## クイックスタート
 
-**現在の開発版:** `v3.2.1-dev.1`。[変更履歴](CHANGELOG.md#unreleased)を参照してください。
+**現在の開発版:** `v3.3.3-dev.1`。[変更履歴](CHANGELOG.md#unreleased)を参照してください。
 
 ### 1. インストール
 
@@ -210,14 +239,16 @@ Install Archify for me by reading https://raw.githubusercontent.com/tt-a1i/archi
 Cursor のみにインストールする場合:
 
 ```bash
-npx -y skills@latest add https://archify.si --skill archify --agent cursor --global --copy --yes
+npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent cursor --global --copy --yes
 ```
 
 または、5 つすべてのエージェントが必要な場合のみ:
 
 ```bash
-npx -y skills@latest add https://archify.si --skill archify --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes
+npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes
 ```
+
+既定のインストールには `archify-pr` コンパニオンが含まれます。ドキュメント、ロックファイル、整形などの小さな変更では静かに待機し、PR の準備中で実質的な diff があるときだけ図を提案します。エージェントのグローバルルールファイルに `[archify pr: on-demand]` を書くと提案を止められます。`/archify` だけを残す場合は `npx -y skills@latest remove archify-pr --agent cursor --global --yes` でコンパニオンを削除できます（プロジェクトのみのインストールでは `--global` を省きます）。すでに `/archify` だけを入れている場合は、`npx -y skills@latest add https://archify.si --skill archify-pr --agent cursor --global --copy --yes` でコンパニオンを追加できます。
 
 <details>
 <summary>その他のインストール方法と更新チェックの詳細</summary>
@@ -228,11 +259,11 @@ npx -y skills@latest add https://archify.si --skill archify --agent cursor --age
 npx skills use tt-a1i/archify@archify --agent codex
 ```
 
-[DSH コミュニティ版（任意）](integrations/deepseek-harness/README.md): `dsh plugin --profile web add @tt-a1i/archify-dsh@1.1.0`
+[DSH コミュニティ版（任意）](integrations/deepseek-harness/README.md): `dsh plugin --profile web add @tt-a1i/archify-dsh@1.2.0`
 
 [エージェント切り替え](https://archify.si/start.html?agent=cursor&type=architecture)は `cursor`、`codex`、`claude-code`、`opencode`、`github-copilot` に対応しています。
 
-Archify は固定の安定版マニフェストを GET して任意の更新リマインダーを表示することがありますが、更新をダウンロードしたりインストールしたりすることはありません。チェックに成功すると次回まで約 24 時間（±20%）待機し、失敗した場合はアクティブに使用していれば 6 時間後、その後は 24 時間後に再試行します。サーバーが受け取るのは通常の HTTP メタデータ（IP と時刻）だけで、バージョン、Agent、プロジェクトデータ、プロンプト、アカウント／デバイス ID、ETag は送信されません。更新するかどうか、いつ更新するかは常にあなたが決めます。`ARCHIFY_UPDATE_CHECK_DISABLED=1` を設定すると、ネットワーク通信とリマインダー状態の書き込みを無効化できます。
+Archify は固定の安定版マニフェストを GET して任意の更新リマインダーを表示することがありますが、更新をダウンロードしたりインストールしたりすることはありません。チェックに成功すると次回まで約 24 時間（±20%）待機し、失敗した場合はアクティブに使用していれば 6 時間後、その後は 24 時間後に再試行します。サーバーが受け取るのは通常の HTTP メタデータ（IP と時刻）だけで、バージョン、Agent、プロジェクトデータ、プロンプト、アカウント／デバイス ID、ETag は送信されません。更新するかどうか、いつ更新するかは常にあなたが決めます。`ARCHIFY_UPDATE_CHECK_DISABLED=1` を設定すると、ネットワーク通信とリマインダー状態の書き込みを無効化できます。時間のかかる確認はバックグラウンドで完了し、次回の納品時に通知できます。更新がある場合、幅と空きに余裕のある図では上部バーに、その他のページではフッターに閉じられる通知が表示されます。通知はオフラインで動作し、通信は行いません。Agent 用の更新プロンプトをワンクリックでコピーでき、リリースノートへのリンクもあります。`--no-update-notice` を指定するか `ARCHIFY_UPDATE_NOTICE_DISABLED=1` を設定すると、ページは変更されません。
 
 </details>
 
@@ -250,9 +281,31 @@ Show 8–12 core components, one primary path, external dependencies, and trust 
 Put supporting detail in cards instead of adding more edges.
 ```
 
+Archify の組み込み機能 **アーキテクチャ診断**では、リポジトリ内の依存関係を放射状の星図と回転できる 3D モデルで確認できます。アーキテクチャ図の各コンポーネントに指摘件数を表示し、循環依存や図にない依存関係の根拠となるソースコードを開けます。リポジトリに基づくアーキテクチャ図を作成すると、Archify は要約の最後に診断でできることを示し、図の右上にも説明を開くボタンが表示されます。診断は同意を得てから起動します。追加のインストールは不要です。[Code Analysis の使い方](archify/modules/code-analysis/docs/USAGE.md)を参照してください。
+
+```text
+Use archify Code Analysis on this repository: show module coupling, dependency cycles and hotspots.
+```
+
 ### 3. チャットで調整する
 
 `add Redis`、`move auth to the left`、`highlight the rollback path` のように、焦点を絞った依頼を続けてください。Archify は型付きソースを保持しているため、狙った箇所だけを反復できます。
+
+## DeepSeek Harness で試す
+
+<p align="center"><a href="integrations/deepseek-harness/README.md"><img src="docs/assets/archify-dsh-lockup.svg" alt="Archify × DSH" width="440" /></a></p>
+
+Archify はコミュニティプラグイン **`@tt-a1i/archify-dsh`** を通じて [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（DSH）でも動きます。1.2.0 は Archify 3.3.0 Skill を同梱しており、コマンド 1 つで dsh セッションに図、1 ページの解説、コード分析が加わります。
+
+```bash
+dsh plugin --profile web add @tt-a1i/archify-dsh@1.2.0
+```
+
+あとは `Use the archify skill to map this repository's runtime architecture.` と頼むだけです。
+
+<p align="center"><a href="integrations/deepseek-harness/README.md#install"><img src="https://img.shields.io/badge/Archify_%C3%97_DSH_%E3%82%92%E8%A9%A6%E3%81%99-%E3%82%A4%E3%83%B3%E3%82%B9%E3%83%88%E3%83%BC%E3%83%AB%E3%82%AC%E3%82%A4%E3%83%89_%E2%86%92-0856F5?style=for-the-badge" alt="Archify × DSH を試す：インストールガイド" /></a></p>
+
+<sub>開発者プレビュー版 `@deepseek-ai/dsh@0.2.2-rc.5`、Node `^22.19.0 || >=24.0.0` 向けのコミュニティ統合です。DeepSeek 公式製品ではありません。互換性、アップグレード、削除は[インストールガイド](integrations/deepseek-harness/README.md)を参照してください。</sub>
 
 ## 適切な図を選ぶ
 
@@ -344,7 +397,7 @@ Architecture の例: [`web-app`](examples/web-app.html) · [`Archify pipeline`](
 <summary>この体験を支えているエンジニアリング</summary>
 
 
-- **汎用オートレイアウトではなくレイアウトの判断** — 階層、余白、経路、強調をエージェントが選択します。共有される自動接続点は決定論的に分散し、1 点に矢印が集中することはありません。
+- **レイアウトの判断を基本に、必要なら自動配置** — 階層、余白、経路、強調をエージェントが選択します。アーキテクチャ図では `layout.mode: "auto"` を指定すると、関係からコンポーネントを自動配置し、指定済みの位置と経路はそのまま保ちます。共有される自動接続点は決定論的に分散し、1 点に矢印が集中することはありません。
 - **型付き JSON IR** — レンダラーが担うすべてのモードにスキーマと再現可能なソースがあります。
 - **提供前のアトミックな検証** — スキーマ、レイアウト、HTML/SVG、経路、ラベルと経路のクリアランスのすべてのチェックに合格して初めて、ショーケース成果物が直前の正常な出力を置き換えます。
 - **失敗には修復レシートが付く** — `validate --json` と `deliver --json` は、Node のスタックトレースや当てずっぽうのリトライではなく、安定したルールコード、対象、計測された根拠、サポートされている修復手段のみを返します。
@@ -415,6 +468,7 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 | 1〜2 個のセマンティックロールを比較 | <kbd>L</kbd> または `LENS` |
 | ライブの全体レーダーを開く | <kbd>M</kbd> または `MAP` |
 | プレゼンテーションステージに入る | <kbd>F</kbd> |
+| ガイド付きストーリーを再生、または動画に書き出す（ストーリー付きの図） | モーション操作 → `Story` · Export → `Story video` |
 | ビジュアルスタイルを選択（`S` で循環）/ テーマ切り替え / Export を開く | <kbd>S</kbd> / <kbd>T</kbd> / <kbd>E</kbd> |
 | ズーム / リセット | <kbd>+</kbd> / <kbd>-</kbd> / <kbd>0</kbd> |
 
@@ -432,7 +486,7 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 | **Claude.ai** | Settings → Capabilities → Skills から `archify.zip` をアップロード | サンドボックスでの Node.js 利用可否に依存 |
 | **Project Knowledge** | プロジェクトに `archify.zip` をアップロード | プロンプト駆動のアーキテクチャフォールバック |
 | **Hermes Agent** | 明示的に有効化: `hermes skills install skills-sh/tt-a1i/archify/archify -y` | コミュニティ版の Skill のみの統合。Node `>=18`。Nous 公式製品ではありません。テレメトリはありません。切り替え対象には含まれません。[詳細](integrations/hermes-agent/README.md)。 |
-| **DeepSeek Harness** | 明示的に有効化: `dsh plugin --profile web add @tt-a1i/archify-dsh@1.1.0`。呼び出し: `Use the archify skill to map this repository's runtime architecture.` 削除: `dsh plugin --profile web remove @tt-a1i/archify-dsh` | 開発者プレビュー版 `@deepseek-ai/dsh@0.2.1-rc.2` 向けのコミュニティ統合。Node `^22.19.0 \|\| >=24.0.0`。DeepSeek 公式製品ではなく、テレメトリもありません。シェルファイルには Web Produced Files ではなく、正確なワークスペースパスが必要です。[詳細](integrations/deepseek-harness/README.md)。 |
+| **DeepSeek Harness** | 明示的に有効化: `dsh plugin --profile web add @tt-a1i/archify-dsh@1.2.0`。呼び出し: `Use the archify skill to map this repository's runtime architecture.` 削除: `dsh plugin --profile web remove @tt-a1i/archify-dsh` | 開発者プレビュー版 `@deepseek-ai/dsh@0.2.2-rc.5` 向けのコミュニティ統合。Node `^22.19.0 \|\| >=24.0.0`。DeepSeek 公式製品ではなく、テレメトリもありません。シェルファイルには Web Produced Files ではなく、正確なワークスペースパスが必要です。[詳細](integrations/deepseek-harness/README.md)。 |
 
 ## リファレンスとスコープ
 
@@ -441,7 +495,7 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 - [ロードマップ](ROADMAP.md)
 - [生成された Proof Lab](https://archify.si/gallery.html)
 
-Mermaid の自動パース、汎用オートレイアウト、ホスティング型の共有、WYSIWYG 編集は、現時点では意図的にスコープ外としています。
+Mermaid の自動パース、ホスティング型の共有、WYSIWYG 編集は、現時点では意図的にスコープ外としています。アーキテクチャ図では `layout.mode: "auto"` で自動配置を有効にできます。他の図はそれぞれのレンダラーのレイアウト規則に従います。たとえばツリー図では、指定した親子関係からノードの位置を計算します。
 
 ## コミュニティ
 

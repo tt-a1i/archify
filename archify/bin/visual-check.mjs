@@ -8,6 +8,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { REMOVE_UPDATE_NOTICE_SCRIPT } from './update-notice.mjs';
 import {
   DESKTOP_READABILITY_VIEWPORT,
   MIN_PROJECTED_NODE_TEXT_PX,
@@ -1627,6 +1628,10 @@ export class ChromeVisualBrowser {
     const targets = await this.cdp.send(
       'Target.getTargets', {}, undefined, this.startupTimeoutMs,
     );
+    // Deny downloads across this browser, including pages created by resetPage.
+    // If the browser rejects the policy, stop before loading an artifact whose
+    // exports could leave partial files in the user's Downloads folder (#1371).
+    await this.cdp.send('Browser.setDownloadBehavior', { behavior: 'deny' });
     let target = targets.targetInfos?.find((item) => item.type === 'page');
     if (!target) {
       const created = await this.cdp.send('Target.createTarget', { url: 'about:blank' });
@@ -1676,6 +1681,7 @@ export class ChromeVisualBrowser {
     if (navigation.errorText) throw new Error(`Chrome navigation failed: ${navigation.errorText}`);
     await loaded;
     await evaluate(this.cdp, sessionId, `(function () {
+      ${REMOVE_UPDATE_NOTICE_SCRIPT}
       document.documentElement.setAttribute('data-motion', 'still');
       var panel = document.querySelector('.diagram-container');
       if (panel) panel.setAttribute('data-detail-level', 'read');
@@ -1842,8 +1848,9 @@ export class ChromeVisualBrowser {
         scrollWidth: Math.ceil(document.documentElement.scrollWidth),
         // Bottom notes and index are reading material below the fold; the
         // Reader excludes them from the one-screen fit, and so does this check.
+        // The feedback footer always sits last, below the fold, for the same reason.
         scrollHeight: Math.max(window.innerHeight, Math.ceil(document.documentElement.scrollHeight - (
-          notesBelowFold ? outerHeight(reader.querySelector('.reader-rail')) : 0))),
+          notesBelowFold ? outerHeight(reader.querySelector('.reader-rail')) : 0) - outerHeight(document.querySelector('.page-feedback')))),
         resolvedTheme: document.documentElement.getAttribute('data-theme') || '',
         readerLayout: document.documentElement.getAttribute('data-reader-layout') || null,
         readerOverflow: document.documentElement.getAttribute('data-reader-overflow') || null,

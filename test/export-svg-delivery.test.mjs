@@ -1,0 +1,40 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { findChrome } from '../archify/bin/visual-check.mjs';
+
+const helper = path.resolve('archify/bin/export-svg.mjs');
+const input = path.resolve('examples/drilldown-platform.html');
+const run = (args, env = process.env) => spawnSync(process.execPath, [helper, ...args], { encoding: 'utf8', env });
+
+test('SVG delivery exports the offline Viewer and preserves existing output', { skip: !findChrome() }, (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-svg-test-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const output = path.join(dir, 'diagram with spaces.svg');
+  const result = run([input, output, 'light']);
+  assert.equal(result.status, 0, result.stderr);
+  const svg = fs.readFileSync(output, 'utf8');
+  assert.match(svg, /<svg\b/);
+  assert.match(svg, /archify-software-notices/);
+  assert.match(svg, /data-theme="light"/);
+  assert.notEqual(run([input, output]).status, 0);
+  assert.equal(fs.readFileSync(output, 'utf8'), svg);
+  assert.notEqual(run([input, path.join(dir, 'bad.png')]).status, 0);
+  assert.notEqual(run([input, path.join(dir, 'missing.svg')], { ...process.env, ARCHIFY_CHROME: '/missing/chrome' }).status, 0);
+  assert.equal(fs.existsSync(path.join(dir, 'missing.svg')), false);
+  const unsupported = path.join(dir, 'plain.html');
+  fs.writeFileSync(unsupported, '<!doctype html><p>Plain HTML</p>');
+  assert.notEqual(run([unsupported, path.join(dir, 'plain.svg')]).status, 0);
+  assert.equal(fs.existsSync(path.join(dir, 'plain.svg')), false);
+  const broken = path.join(dir, 'broken.html');
+  const html = fs.readFileSync(input, 'utf8');
+  fs.writeFileSync(broken, html.replace('</body>', "<script>URL.createObjectURL = () => { throw new Error('Broken URL creation'); };</script></body>"));
+  const failedOutput = path.join(dir, 'broken.svg');
+  const failure = run([broken, failedOutput]);
+  assert.notEqual(failure.status, 0);
+  assert.match(failure.stderr, /Viewer export failed.*Broken URL creation/);
+  assert.equal(fs.existsSync(failedOutput), false);
+});

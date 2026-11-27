@@ -116,6 +116,42 @@ test('main path is one row, loops arc above it and other states sit one row per 
   assert.equal((result.svg.match(/style="fill: none" stroke-width="1"/g) || []).length, 2, 'done and archived are final');
 });
 
+test('a crowded return to the initial state leaves the branch routes clear', () => {
+  const result = render(base({
+    mainPath: ['queued', 'submitted', 'working', 'idle'],
+    states: [
+      state('queued', 'start', 'Queued'), state('submitted', 'active', 'Submitted'),
+      state('working', 'active', 'Working'), state('idle', 'success', 'Idle'),
+      state('parked', 'waiting', 'Parked'), state('deferred', 'waiting', 'Deferred'),
+      state('cancelled', 'failure', 'Cancelled'), state('stopped', 'neutral', 'Stopped'),
+    ],
+    transitions: [
+      { from: 'queued', to: 'submitted', label: 'claim' },
+      { from: 'submitted', to: 'working', label: 'paste ack' },
+      { from: 'queued', to: 'parked', label: 'no run', variant: 'dashed' },
+      { from: 'parked', to: 'submitted', label: 'replay', variant: 'emphasis' },
+      { from: 'queued', to: 'deferred', label: 'not ready', variant: 'dashed' },
+      { from: 'deferred', to: 'submitted', label: 'barrier' },
+      { from: 'submitted', to: 'queued', label: 'repark', variant: 'dashed' },
+      { from: 'queued', to: 'cancelled', label: 'failed', variant: 'security' },
+      { from: 'submitted', to: 'cancelled', label: 'cancel', variant: 'security' },
+      { from: 'working', to: 'cancelled', label: 'cancel', variant: 'security' },
+      { from: 'idle', to: 'stopped', label: 'stop' },
+      { from: 'stopped', to: 'queued', label: 'new send', variant: 'dashed' },
+      { from: 'working', to: 'idle', label: 'finish' },
+    ],
+  }));
+  assert.equal(result.code, 0, result.stderr);
+  assert.equal(result.check.ok, true, JSON.stringify(result.check.composition.issues));
+  assert.ok(result.check.composition.metrics.resolvedCrossovers <= 3);
+  const route = points(result.svg, 'stopped', 'queued');
+  const [queued, parked, stopped] = ['queued', 'parked', 'stopped'].map((id) => box(result.svg, id));
+  assert.equal(route[0][1], stopped.y + stopped.height, 'leaves the bottom of the last row');
+  assert.ok(Math.min(...route.map(([x]) => x)) < parked.x, 'passes outside the waiting states');
+  assert.equal(route.at(-1)[0], queued.x, 'enters the initial state from its left edge');
+  assert.match(result.svg, />new send<\/text>/);
+});
+
 test('an exit shared by consecutive phases leaves one composite frame', () => {
   const result = render(base({
     mainPath: ['queued', 'starting', 'running', 'success'],

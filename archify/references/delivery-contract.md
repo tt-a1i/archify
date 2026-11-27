@@ -275,7 +275,7 @@ Use final verified delivery only after the candidate is frozen:
 node bin/archify.mjs deliver <type> <candidate.json> <output.html> --quality showcase --json
 ```
 
-Deliver reads the specification once, writes those exact bytes to a private same-directory candidate snapshot, renders that snapshot, runs the complete artifact checker, and only replaces the target after all artifact checks pass. The JSON receipt includes SHA-256 and byte counts for both `specification` and `artifact`.
+Deliver reads the specification once, writes those exact bytes to a private same-directory candidate snapshot, renders that snapshot, runs the complete artifact checker, and only replaces the target after all artifact checks pass. The JSON receipt includes SHA-256 and byte counts for both `specification` and `artifact`. Deliver adds a required [update notice](update-awareness.md) before running the checker. The hash binds the delivered bytes, and the receipt records `updateNotice`. The dismissible notice uses the top bar on wide Viewer diagrams when the title and toolbar leave space, and the footer otherwise. It includes a one-click copy button for a localized Agent update prompt and the official release notes link. Opening the page and copying the prompt work offline and make zero network requests.
 
 For the ordinary agent handoff path, prefer the finalizer:
 
@@ -417,6 +417,57 @@ The delivery interface exposes four separate claims:
 4. Perceptual visual review records a human or image-capable reviewer's judgment.
 
 Passing one claim never implies the others. Never claim that the deterministic receipt includes browser or perceptual review evidence.
+
+## Architecture Diagnosis offer
+
+After a passing `finalize architecture` with `--repo-root`, the full receipt
+and compact summary include `codeAnalysisOffer` if a bounded scan finds
+sources eligible for the default analysis. The offer includes the effective
+finalize `quality`, passes it in `start.argv`, and records a `dependencies`
+status of `installed` or `missing`. Finalize performs these checks without
+starting analysis or installing anything.
+
+End the delivery summary with the capability section below, in the user's
+language, once per repository in the task. It is part of the summary, not a
+separate question, so users learn what Diagnosis does even if they never
+reply. Skip it if the user already asked for or declined analysis in this
+task. Keep the bullets; adapt only wording, not the claims. If `dependencies`
+is `missing`, the installed Skill copy is incomplete: replace the closing line
+with the reinstall line, because analysis cannot start. If the offer includes
+`linkedDiagrams: true`, add that sibling-diagram links work from the original
+delivered diagram, not from the Diagnosis server. Mention the diagram button
+only when `codeAnalysisOffer.diagramButton` is `true`; otherwise drop that
+sentence. Start only after the user agrees.
+
+**中文**
+
+**还可以：架构诊断**（Archify 自带，在本机运行）
+- **环形星图**：几千个文件、几万个函数之间的依赖一眼看全
+- **可旋转的 3D 模型**：换个角度看模块怎么连在一起
+- **组件问题数**：直接标在这张架构图上，哪里最拥挤、哪里有循环依赖、哪些依赖图里没画
+- 每条发现都能点开看源码，也能一键交给 AI 修
+
+回复「好」我就启动。图右上角的「架构诊断」按钮也随时能看到这个功能。
+（依赖缺失时，最后一句改为：分析组件缺失，需要先重新安装 Archify 才能使用。）
+
+**English**
+
+**Also available: Architecture Diagnosis** (built into Archify, runs locally)
+- **Radial star map**: dependencies across thousands of files and functions at a glance
+- **Rotatable 3D model**: see how modules connect from any angle
+- **Issue counts per component**, right on this diagram: where things are most crowded, where dependencies cycle, and which dependencies the diagram doesn't show
+- Every finding opens its source and can be handed to an AI as a fix task
+
+Reply "yes" and I'll start it. The **Code Analysis** button at the top right of the diagram shows this anytime.
+(If dependencies are missing, the closing line becomes: The analysis components are missing; reinstall Archify to use it.)
+
+After consent, run `start.argv`. Add `--locale zh-CN` for Chinese or
+`--locale en` for English if needed. For a repository with several supported
+languages, select the adapter with `--language` as described in the
+[Code Analysis guide](../modules/code-analysis/docs/USAGE.md#agent-entry-and-investigation).
+Share the printed local URL. The original architecture diagram appears first.
+Click **Code Analysis** (**架构诊断** in Chinese) to run analysis and open the
+component findings, radial star map, and Atlas 3D views.
 
 ## Comparison presentation changes
 
@@ -631,8 +682,10 @@ Never start it by default. Do not use it for CI, unattended agents, remote shari
 The automated path ends with the deterministic browser gate and reports
 `visual_review: not_requested`. Ordinary generation does not require screenshots
 or an image-reading step, including newly authored or repositioned Architecture.
-Perceptual review is optional; use it for an explicit request or a concrete visual
-investigation. Possible reasons include:
+When the requested output is for a README or project document, open it at the
+intended reading size and follow the path that answers the reader's question.
+For a project README, deliver a static SVG by default unless the user specifically asks for a link or interactive HTML. For other project documents, deliver an SVG when a static image is requested. Run `node <skill-dir>/bin/export-svg.mjs <diagram.html> <image.svg> [auto|light|dark]`. This uses the standalone Viewer’s SVG export and requires Chrome or Chromium (`ARCHIFY_CHROME` can select its executable). It refuses to replace an existing output. Inspect the exported image in a document column using its natural size and a maximum width of 100%. When an answer depends on small labels or Viewer cards, supply a paste-ready Markdown image followed by a short caption. State the requested names, outcomes, or conditions in ordinary document text. Reasons to capture
+screenshots for a reproducible visual review include:
 
 - the compact finalizer includes `visualReviewRecommendation` for crossings or detours (advisory, not a delivery gate);
 - the user explicitly requests an aesthetic or visual review;
