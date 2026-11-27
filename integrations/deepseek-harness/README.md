@@ -2,7 +2,9 @@
 
 Community DeepSeek Harness integration for [Archify](https://github.com/tt-a1i/archify). This is **not** an official DeepSeek product and does not imply DeepSeek endorsement.
 
-The currently published npm package is **v1.1.0**. It bundles Archify Skill **3.2.0** and supports the exact developer-preview **`@deepseek-ai/dsh@0.2.1-rc.2`** on Node.js **`^22.19.0 || >=24.0.0`**. The 1.1 adapter contract covers this exact DSH host version; it does not make the host stable or guarantee compatibility with other DSH versions.
+The currently published npm package is **v1.2.0**. It bundles Archify Skill **3.3.0** and supports the exact developer-preview **`@deepseek-ai/dsh@0.2.2-rc.5`** on Node.js **`^22.19.0 || >=24.0.0`**. The 1.2 adapter contract covers this exact DSH host version; it does not make the host stable or guarantee compatibility with other DSH versions.
+
+Version 1.2.0 was published on 2026-11-23: [npm package](https://www.npmjs.com/package/@tt-a1i/archify-dsh/v/1.2.0) · [release and verified tarball](https://github.com/tt-a1i/archify/releases/tag/archify-dsh-v1.2.0). It is a Skill-only bundle: it inserts one filesystem Skill provider named `archify-plugin` and exposes **Archify 3.3.0**, pinned to stable `main` commit `af3aaf3c36762f2afb62a4a09533f6c7273b07e5` (the `v3.3.0` tag). It adds Code Analysis & Architecture Diagnosis, Story walkthroughs and 1080p video, PR change walkthroughs, automatic architecture placement, cross-diagram drilldown, Russian locale, a lighter Skill package without pre-rendered example HTML, and the unified colophon, while retaining `includeDefaultRoots: true`. The adapter remains MIT-licensed; the bundled Skill is Apache-2.0 and retains historical MIT grants and third-party notices. Inspect `LICENSE`, `LICENSE-MIT`, `NOTICE` and `THIRD_PARTY_NOTICES.md` in the actual bundled Skill, not just the outer package's license field.
 
 Version 1.1.0 was published on 2026-11-08: [npm package](https://www.npmjs.com/package/@tt-a1i/archify-dsh/v/1.1.0) · [release and verified tarball](https://github.com/tt-a1i/archify/releases/tag/archify-dsh-v1.1.0). It is a Skill-only bundle: it inserts one filesystem Skill provider named `archify-plugin` and exposes **Archify 3.2.0**, pinned to stable `main` commit `edf158c4e7a1d18d20cc329840f864289634c090`. This snapshot includes the Apache-2.0 transition (`9c306ee89`) and the standalone third-party notice fix (`edf158c4e`) that landed after the `v3.2.0` tag; it is not a byte-for-byte copy of that tag. Both bundled version manifests declare 3.2.0. It adds the ERD, Class, Tree, Timeline and Waterfall types from 3.1 and the one-page explainer from 3.2, and it is the first adapter release that sets `includeDefaultRoots: true`. The adapter remains MIT-licensed; the bundled Skill is Apache-2.0 and retains historical MIT grants and third-party notices. Inspect `LICENSE`, `LICENSE-MIT`, `NOTICE` and `THIRD_PARTY_NOTICES.md` in the actual bundled Skill, not just the outer package's license field.
 
@@ -22,9 +24,11 @@ When diagnosing a real installation, inspect the effective `archify` source path
 
 Published **1.1.0** sets `includeDefaultRoots: true`, retaining the host's default personal and project roots alongside the packaged Archify root. The provider name and bundle directory are unchanged. Published **1.0.0** set `includeDefaultRoots: false`; when its `archify-plugin` provider was the profile's only live filesystem Skill source, personal and project Skills disappeared while Archify remained available. That was reported on macOS Desktop `0.2.0-rc.2` in [#906](https://github.com/tt-a1i/archify/issues/906) and is fixed by 1.1.0.
 
+The same `true` has a cost where the host's own `skill-filesystem` row is already live. Both providers then scan the same four default roots in the same registry layer, so the host logs one shadowing warning per personal or project Skill on every uncached catalog read even though only one copy exists on disk, and both providers keep a watcher on each of those roots. The warning reads `skill "<name>" from <source> ignored because a higher-priority skill already exists`. On the `web` template the global `archify-plugin` provider also carries the default roots into every preset scope, including presets whose own `skill-filesystem` sets `includeDefaultRoots: false`. That tradeoff is reported in [#1336](https://github.com/tt-a1i/archify/issues/1336) and reproduced against the pinned `0.2.1-rc.2` host with four fixture Skills: four warnings on the first read and four again after one invalidation. There is no patch-side switch for it; the provider flag is all-or-nothing, so removing the duplication needs a host-side change.
+
 The acceptance script seeds distinct Skills in both DSH and shared-agent personal/project roots and checks their actual loaded bodies and paths after clean installation and same-profile upgrade. It repeats those checks with the base filesystem provider disabled, so the Archify provider must preserve the roots by itself. The immutable 0.1.0 and 1.0.0 upgrade baselines retain their original `false` expectation; 1.1.0 requires `true`.
 
-The 1.1.0 automated checks target the exact npm CLI host in `release.json` (`0.2.1-rc.2`). They do not establish macOS Desktop `0.2.0-rc.2` acceptance or explain why the reporter's original provider was inactive. That native Desktop verification remains pending, and no support range is claimed for all `0.2.x` hosts.
+The 1.2.0 automated checks target the exact npm CLI host in `release.json` (`0.2.2-rc.5`), retaining `includeDefaultRoots: true` from 1.1.0. Neither 1.1.0 (`0.2.1-rc.2`) nor 1.2.0 establishes macOS Desktop `0.2.0-rc.2` acceptance or explains why the reporter's original provider was inactive. That native Desktop verification remains pending, and no support range is claimed for all `0.2.x` hosts.
 
 ## Patch execution boundary
 
@@ -37,12 +41,12 @@ The current expression is intentionally limited to Node's built-in `path` and `m
 Use the prebuilt npm package with an exact version. Do not install from Git source.
 
 ```bash
-dsh plugin --profile web add @tt-a1i/archify-dsh@1.1.0
+dsh plugin --profile web add @tt-a1i/archify-dsh@1.2.0
 ```
 
 ## Upgrade
 
-The 1.1.0 release gate covers a clean installation and upgrading the previous plugin releases 0.1.0 and 1.0.0 to 1.1.0 in the same isolated profile on `@deepseek-ai/dsh@0.2.1-rc.2`. Older hosts are not 1.1 targets: update the host separately before upgrading the plugin. The Node requirement remains `^22.19.0 || >=24.0.0`; the three-platform release gate runs on Node 22. See the [adapter changelog](CHANGELOG.md) for the bundled Archify change.
+The 1.2.0 release gate covers a clean installation and upgrading the previous plugin releases 0.1.0, 1.0.0, and 1.1.0 to 1.2.0 in the same isolated profile on `@deepseek-ai/dsh@0.2.2-rc.5`. Older hosts are not 1.2 targets: update the host separately before upgrading the plugin. The Node requirement remains `^22.19.0 || >=24.0.0`; the three-platform release gate runs on Node 22. See the [adapter changelog](CHANGELOG.md) for the bundled Archify change.
 
 Run the same exact-version install command above in each profile that uses Archify. Updating DSH itself or the Archify repository does not update an already installed plugin.
 
@@ -72,14 +76,14 @@ Publishing runs in CI without a long-lived npm token or an OTP: after the three-
 
 Run it from a Git checkout with full history (CI uses `fetch-depth: 0`), not an exported source archive: packaging needs the source commit in `release.json`, and the shadowing fixture reads `archify/SKILL.md` from historical commit `7158026e852f3aa6578c741e673b46d7878c92c1`. If that object is missing from a shallow checkout, fetch the repository history before acceptance; the script does not silently substitute the current Skill or fetch a moving branch.
 
-Acceptance installs the real pinned DSH runtime and tarball in temporary profiles, checks discovery and loading, runs `doctor` and `demo` through the installed CLI, and checks uninstall. It also installs each integrity-pinned published baseline (0.1.0 and 1.0.0) in a separate temporary profile, upgrades that same profile to the release under test, checks both Skill identities and loading, exercises the upgraded CLI, and verifies removal preserves the base profile. The full source-version package smoke runs on a temporary copy of the installed Skill because it rewrites bundled examples; the copy preserves pnpm store hard links in the actual installation. Release CI runs this on Linux, macOS, and Windows. Publish only the tested tarball as a new version; tag the corresponding adapter commit as `archify-dsh-v<version>`. After each publication is publicly verified, update the public install examples and community metadata to the verified version. Rebuilding a released adapter uses its tag and recorded Skill commit, not a moving branch.
+Acceptance installs the real pinned DSH runtime and tarball in temporary profiles, checks discovery and loading, runs `doctor` and `demo` through the installed CLI, and checks uninstall. It also installs each integrity-pinned published baseline (0.1.0, 1.0.0, and 1.1.0) in a separate temporary profile, upgrades that same profile to the release under test, checks both Skill identities and loading, exercises the upgraded CLI, and verifies removal preserves the base profile. The full source-version package smoke runs on a temporary copy of the installed Skill because it rewrites bundled examples; the copy preserves pnpm store hard links in the actual installation. Release CI runs this on Linux, macOS, and Windows. Publish only the tested tarball as a new version; tag the corresponding adapter commit as `archify-dsh-v<version>`. After each publication is publicly verified, update the public install examples and community metadata to the verified version. Rebuilding a released adapter uses its tag and recorded Skill commit, not a moving branch.
 
 ## Host migration review
 
 <details>
 <summary>Review procedure, 0.2 host findings, and support-evidence matrix</summary>
 
-Use this review within the [central DSH release checklist](../../CONTRIBUTING.md#release-checklist-dsh-synchronization), without creating another release pipeline. Keep three identities separate: the **adapter version**, the **bundled Archify version / immutable source**, and the **exact DSH host**. The historical review below concerns 1.0.0 / 3.0.1; the 1.1.0 host acceptance is recorded in the evidence matrix. `release.json.dshVersion` pins this repository's acceptance runtime; it is not a host-enforced minimum version or a promise about later hosts.
+Use this review within the [central DSH release checklist](../../CONTRIBUTING.md#release-checklist-dsh-synchronization), without creating another release pipeline. Keep three identities separate: the **adapter version**, the **bundled Archify version / immutable source**, and the **exact DSH host**. The historical review below concerns 1.0.0 / 3.0.1; the 1.1.0 and 1.2.0 host acceptances are recorded in the evidence matrix. `release.json.dshVersion` pins this repository's acceptance runtime; it is not a host-enforced minimum version or a promise about later hosts.
 
 For each new target:
 
@@ -87,6 +91,23 @@ For each new target:
 2. Compare the adapter's consumed surface against both exact official host revisions: bundle metadata, patch parsing/activation and `baseUrl`, filesystem provider configuration and Skill loading, and manifest/dependency compatibility checks. Separate Host, Web Client and standalone Skill CLI APIs. A migration card applies only if this adapter uses that surface; record missing version edges rather than treating a zero-hit scan as a complete audit.
 3. Baseline the existing package contracts. For an approved implementation change, rerun affected checks and real isolated installation, discovery/load, installed CLI smoke, same-profile upgrade and uninstall. Keep dependency cohorts coherent. Do not run a community verifier or its install lifecycle scripts implicitly, widen peer ranges, grant version exemptions, or disable security scanning to obtain a pass.
 4. Attach the tested artifact digest, source/host coordinates, date and results to the release record. Explicitly distinguish reused results from new-head checks and missing native-platform coverage. Change the support statement only after the proposed scope has its own acceptance evidence; publication remains a separate action.
+
+### Review recorded on 2026-11-23 (`0.2.1-rc.2` → `0.2.2-rc.5`)
+
+Official DeepSeek Harness tags compared for the 1.2.0 release:
+
+| Host | Official source commit |
+| --- | --- |
+| `0.2.1-rc.2` | [`687f282e8625c6b8d11ff58211a90524be2e4317`](https://github.com/deepseek-ai/deepseek-harness/tree/687f282e8625c6b8d11ff58211a90524be2e4317) |
+| `0.2.2-rc.5` | [`9c2670d3bce5275e0d1610272958121af87787bb`](https://github.com/deepseek-ai/deepseek-harness/tree/9c2670d3bce5275e0d1610272958121af87787bb) |
+
+| Actual touchpoint | Finding across those sources | Consequence for this adapter |
+| --- | --- | --- |
+| `packages/boot/app-boot/src/plugin-compatibility.ts` | Byte-identical (`2e4ca5736a`). | No peer compatibility change; adapter keeps zero `@deepseek-ai/dsh*` peer dependencies. |
+| `vendor/loader/src/config/utils.ts` | Byte-identical (`8e28be0c4c`). | `!!js` expression context (`baseUrl` / `createRequire`) is unchanged. |
+| `packages/boot/app-boot/src/profile.ts` | Moves shipped templates into `@deepseek-ai/dsh-official-bundles`, reads `optionalDependencies`, and adds optional `assertBundlePlatform(bundle.platforms, process.platform)`. | Single `dsh.bundle.patch` string and `cordis.patch.yml` loading are unchanged; adapter omits `platforms` and stays cross-platform. |
+| `packages/skill/skill-filesystem/src/index.ts` | Adds `AbortSignal` checks and catches individual root discovery errors without aborting remaining roots. | `providerName`, `includeDefaultRoots`, and `bundledSkillDir` options are unchanged; the [#1336](https://github.com/tt-a1i/archify/issues/1336) double-scan tradeoff remains. |
+| `vendor/include/src/index.ts` | Adds atomic temp-file/rename config writes and stable anonymous entry IDs. | Patch application (`applyPatches`) remains compatible. |
 
 ### Review recorded on 2026-10-05
 
@@ -115,17 +136,18 @@ The actual official npm `@deepseek-ai/dsh-app-boot` checker was also exercised w
 | `^0.2.0-rc.1` | Accepted | Accepted |
 | `>=0.1.0 <0.2.0` | Accepted | Rejected |
 
-In particular, prerelease inclusion does not lower `^0.2.0`'s stable lower bound, while the literal upper bound `<0.2.0` admits `0.2.0-rc.2`. Do not infer a safe support range from its spelling or from one passing install. That review left the then-published manifest and the `0.1.2-rc.1` contract unchanged; the 1.1.0 release moves the declared support to `0.2.1-rc.2`.
+In particular, prerelease inclusion does not lower `^0.2.0`'s stable lower bound, while the literal upper bound `<0.2.0` admits `0.2.0-rc.2`. Do not infer a safe support range from its spelling or from one passing install. That review left the then-published manifest and the `0.1.2-rc.1` contract unchanged; the 1.1.0 release moved declared support to `0.2.1-rc.2`, and 1.2.0 moves declared support to `0.2.2-rc.5`.
 
 The adapter has no Web Client, custom Remote service, session-fork hook, toolview renderer, schedule bundle or host native-command integration. Changes to those APIs in the reviewed community cards do not call for adapter changes. The bundled Skill's Node CLI and platform opener are a separate execution surface; they still need native-platform smoke when that surface or its claimed coverage changes.
 
 ### Evidence matrix and outstanding work
 
-The first row is the current **1.1.0** release. The remaining rows are historical 1.0.0 evidence for tarball SHA256 `d009c4709000915e254d709b8f023b20d2cced142cd086e56f03d96baf370b50`, adapter tag commit `594f6087358610bd16e64e5602976020871b6bff`; they are not re-certified by this documentation revision.
+The first row is the current **1.2.0** release. The remaining rows are historical 1.1.0 and 1.0.0 evidence (1.0.0 tarball SHA256 `d009c4709000915e254d709b8f023b20d2cced142cd086e56f03d96baf370b50`, adapter tag commit `594f6087358610bd16e64e5602976020871b6bff`); they are not re-certified by this documentation revision.
 
 | Exact host / carrier | Environment and procedure | Evidence / status |
 | --- | --- | --- |
-| Published **1.1.0** tarball, SHA256 `e65d77e4d7ca34562d33f22480b0b4eae2b1e51ef13cd542c2618b228830b20d`, adapter tag commit `cfca6b601`, Archify 3.2.0 | Three-platform tag gate on `@deepseek-ai/dsh@0.2.1-rc.2`, Node 22: adapter staging regressions and the real tarball install, discovery/full load, `doctor`/`demo`, package smoke, uninstall, and same-profile upgrades from both 0.1.0 and 1.0.0. The same script also passed on macOS under official Node 22.23.2. No running Desktop updater. | Current support baseline: [three-platform tag gate](https://github.com/tt-a1i/archify/actions/runs/42499004935), [release record dated 2026-11-08](https://github.com/tt-a1i/archify/releases/tag/archify-dsh-v1.1.0). |
+| Published **1.2.0** tarball, SHA256 `6dbe684f5723d7ea07b1d66a0d3b1d4f810f4c58b889d3f2db1ea41d1f4d342a`, adapter tag commit `428ca6765`, Archify 3.3.0 | Three-platform tag gate on `@deepseek-ai/dsh@0.2.2-rc.5`, Node 22: adapter staging regressions and the real tarball install, discovery/full load, `doctor`/`demo`, package smoke, uninstall, and same-profile upgrades from 0.1.0, 1.0.0, and 1.1.0, plus npm Trusted Publishing (OIDC provenance). The same script also passed on macOS under Node 22.23.3. No running Desktop updater. | Current support baseline: [three-platform tag gate & npm publish](https://github.com/tt-a1i/archify/actions/runs/45095276646), [release record dated 2026-11-23](https://github.com/tt-a1i/archify/releases/tag/archify-dsh-v1.2.0). |
+| Published **1.1.0** tarball, SHA256 `e65d77e4d7ca34562d33f22480b0b4eae2b1e51ef13cd542c2618b228830b20d`, adapter tag commit `cfca6b601`, Archify 3.2.0 | Three-platform tag gate on `@deepseek-ai/dsh@0.2.1-rc.2`, Node 22: adapter staging regressions and the real tarball install, discovery/full load, `doctor`/`demo`, package smoke, uninstall, and same-profile upgrades from both 0.1.0 and 1.0.0. The same script also passed on macOS under official Node 22.23.2. No running Desktop updater. | Previous support baseline: [three-platform tag gate](https://github.com/tt-a1i/archify/actions/runs/42499004935), [release record dated 2026-11-08](https://github.com/tt-a1i/archify/releases/tag/archify-dsh-v1.1.0). |
 | Official npm CLI `0.1.2-rc.1` | Linux/macOS/Windows, Node 22, isolated profiles; clean install, load, installed CLI smoke, 0.1.0 → 1.0.0 upgrade, uninstall/base-profile preservation. No running Desktop updater. | Published support baseline: [three-platform tag gate](https://github.com/tt-a1i/archify/actions/runs/37219862967), [release record dated 2026-10-04](https://github.com/tt-a1i/archify/releases/tag/archify-dsh-v1.0.0). |
 | Official npm CLI `0.2.0-rc.2` | macOS, Node 26.8.1, pnpm 11.5.2, isolated `web` profile; clean install, unique discovery/full load, `doctor`/`demo`, uninstall, same-profile 0.1.0 → 1.0.0 upgrade and repeat checks. CLI probes stop before package mutation. | Passed in the 2026-10-05 investigation; [maintainer evidence](https://github.com/tt-a1i/archify/issues/716#issuecomment-5991963398). Reused, not an expansion of support. |
 | Official npm CLI `0.2.1-alpha.1` | Same isolated macOS procedure and Node/pnpm versions as the preceding row. | Passed in the same [2026-10-05 investigation](https://github.com/tt-a1i/archify/issues/716#issuecomment-5991963398); reused, not an expansion of support. |

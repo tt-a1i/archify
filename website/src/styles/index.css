@@ -193,7 +193,7 @@
     /* ══════════════════════════════════════
        SECTION HEADS
     ══════════════════════════════════════ */
-    #answers, #types, #trust, #quickstart { padding:6.5rem 0 0; }
+    #answers, #types, #insight, #trust, #quickstart { padding:6.5rem 0 0; }
     .section-head { max-width:760px; margin-bottom:3.5rem; }
     .section-head-row { max-width:none; display:grid; grid-template-columns:minmax(0,7fr) minmax(0,5fr); align-items:end; gap:3rem; margin-bottom:3rem; }
     .section-head-row .section-body { max-width:440px; margin:0 0 .4rem; justify-self:end; }
@@ -360,16 +360,6 @@
     @keyframes caret { 50% { opacity:0; } }
 
     /* SUPPORT */
-    #support { padding:4.5rem 0 4.25rem; border-top:1px solid var(--line); scroll-margin-top:calc(var(--nav-h) + 1.25rem); }
-    .support-inner { text-align:center; }
-    .support-heading { font-family:var(--font-grot); font-size:clamp(1.75rem,3vw,2.5rem); font-weight:500; letter-spacing:-.03em; color:var(--text); }
-    html[lang^="zh"] .support-heading { letter-spacing:-.015em; }
-    .support-body { max-width:42rem; margin:1rem auto 0; font-size:1rem; line-height:1.65; color:var(--text-2); text-wrap:pretty; }
-    .support-cards { display:flex; flex-wrap:wrap; justify-content:center; gap:2.5rem; margin:2.25rem 0 1.5rem; }
-    .support-card { margin:0; }
-    .support-card figcaption { margin-bottom:.85rem; font-family:var(--font-mono); font-size:.6875rem; letter-spacing:.12em; text-transform:uppercase; color:var(--text-2); }
-    .support-card img { width:240px; height:auto; display:block; border-radius:12px; border:1px solid var(--line-hi); background:#fff; }
-    .support-also { max-width:36rem; margin:0 auto; font-size:.875rem; line-height:1.65; color:var(--text-3); text-wrap:pretty; }
 
     /* FOOTER */
     footer { border-top:1px solid var(--line); padding:2.5rem 2rem; }
@@ -394,11 +384,39 @@
     .demo-video-box { aspect-ratio:16 / 9; background:#000; }
     .demo-video-box video { width:100%; height:100%; display:block; }
 
+    /* ══════════════════════════════════════
+       INSIGHT — Architecture Diagnosis, Story, PR
+    ══════════════════════════════════════ */
+    .insight-layout { display:grid; grid-template-columns:minmax(0,14fr) minmax(0,10fr); gap:3rem; align-items:start; }
+    .insight-plate { position:relative; margin:0; padding-bottom:2.75rem; }
+    .insight-plate img { display:block; height:auto; border-radius:16px; border:1px solid var(--line-hi); background:#05070f; }
+    .insight-main { width:100%; box-shadow:0 40px 100px -30px rgba(var(--shadow-rgb),calc(.8 * var(--shadow-k))); }
+    .insight-inset { position:absolute; right:-1.25rem; bottom:0; width:44%; border-radius:12px; box-shadow:0 24px 60px -20px rgba(var(--shadow-rgb),calc(.9 * var(--shadow-k))); }
+    .insight-plate figcaption { position:absolute; left:0; bottom:.35rem; max-width:52%; font-family:var(--font-mono); font-size:.6875rem; letter-spacing:.06em; color:var(--text-3); }
+    .insight-list { list-style:none; border-top:1px solid var(--line-hi); }
+    .insight-item { padding:1.35rem 0 1.5rem; border-bottom:1px solid var(--line-hi); }
+    .insight-k { margin-bottom:.5rem; font-family:var(--font-mono); font-size:.625rem; font-weight:500; letter-spacing:.14em; text-transform:uppercase; color:var(--accent-text); }
+    .insight-item h3 { font-family:var(--font-grot); font-size:1.2rem; font-weight:500; letter-spacing:-.02em; line-height:1.3; color:var(--text); text-wrap:balance; }
+    .insight-item h3 + p { margin-top:.5rem; font-size:.9375rem; line-height:1.65; color:var(--text-2); text-wrap:pretty; }
+    .insight-prompt { display:flex; gap:.6rem; margin-top:.9rem; padding:.75rem .9rem; border:1px solid var(--line-hi); border-radius:10px; background:var(--surface); font-family:var(--font-mono); font-size:.75rem; line-height:1.6; color:var(--text-2); }
+    .insight-prompt > span { color:var(--accent); }
+    .insight-prompt code { font:inherit; overflow-wrap:anywhere; }
+    .insight-more { margin-top:2.5rem; }
+    @media(max-width:900px) {
+      .insight-layout { grid-template-columns:1fr; gap:2rem; }
+      .insight-inset { right:-.5rem; }
+    }
+    @media(max-width:560px) {
+      .insight-plate { padding-bottom:0; }
+      .insight-inset { display:none; }
+      .insight-plate figcaption { position:static; max-width:none; margin-top:.75rem; }
+    }
+
     /* Scroll-driven arrival: CSS only and transform only, so nothing is ever hidden and browsers
        without view timelines simply show the page as it is. */
     @supports (animation-timeline: view()) {
       @media (prefers-reduced-motion: no-preference) {
-        .section-head, .page-card, .types-list, .type-preview, .gates, .run, .terminal, .steps, .receipt {
+        .section-head, .page-card, .types-list, .type-preview, .insight-plate, .insight-list, .gates, .run, .terminal, .steps, .receipt {
           animation:arrive linear both; animation-timeline:view(); animation-range:entry 0% entry 60%;
         }
         .page-card:nth-child(2), .receipt:nth-child(2) { animation-range:entry 5% entry 68%; }
@@ -473,7 +491,7 @@
       .receipt { padding:0 1rem; }
       .receipt:nth-child(odd) { border-left:0; padding-left:0; }
       .receipt:nth-child(4) { border-left:1px solid var(--line-hi); padding-left:1rem; }
-      #answers, #types, #trust, #quickstart { padding-top:5rem; }
+      #answers, #types, #insight, #trust, #quickstart { padding-top:5rem; }
       .section-head { margin-bottom:2.25rem; }
       .terminal-body { padding:1.25rem; font-size:.75rem; }
       .shortcut-rows { grid-template-columns:1fr 1fr; gap:.6rem 1.25rem; }
@@ -481,7 +499,6 @@
       #cta { padding:6rem 0 5rem; }
       .cta-actions { flex-direction:column; width:100%; }
       .cta-actions .btn { width:100%; }
-      #support { padding:3rem 0 3.25rem; }
       footer { padding:2rem 1.25rem; }
       .footer-left { flex-direction:column; align-items:flex-start; gap:1rem; }
     }

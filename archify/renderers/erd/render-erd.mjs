@@ -21,6 +21,7 @@ import {
 } from '../shared/legend.mjs';
 import { nodeTextFit, fittedNodeFontSize } from '../shared/text-fit.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
+import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeItemAttrs, changeLegendEntries, changeNodeAttrs, changeReviewFor, changeStrokeVar, isChangeMarked, nodeChangeBadgePos, renderChangeBadge, renderChangeEdgePrefix, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
 import {
   DEFAULT_ER_GRID,
   bandedLayout,
@@ -143,12 +144,16 @@ const autoGridGeometry = grid && !Array.isArray(er.meta?.viewBox)
 
 function rowTextWidth(attribute) {
   const nameWidth = textUnits(attribute.name) * nodeTextFit.widthFactor * layout.rowFont;
-  const typeWidth = textUnits(attribute.type || '') * nodeTextFit.widthFactor * layout.typeFont;
+  const typeWidth = textUnits(attributeTypeText(attribute)) * nodeTextFit.widthFactor * layout.typeFont;
   return nameWidth + (typeWidth ? typeWidth + 8 : 0);
 }
 
+function entityDiffGutter(entity) {
+  return asArray(entity.attributes).some(isChangeMarked) ? 18 : 0;
+}
+
 function rowInsets(entity) {
-  return layout.padX * 2 + keyColumnWidth(entity);
+  return layout.padX * 2 + entityDiffGutter(entity) + keyColumnWidth(entity);
 }
 
 const measuredEntities = asArray(er.entities).map((entity) => {
@@ -176,7 +181,7 @@ const RELATIONSHIP_LABEL_FONT = 9;
 // legend measures must be the same rectangle, or a label can sit on a table edge
 // with no diagnostic (the checks would be measuring a narrower box than the ink).
 const RELATIONSHIP_LABEL_ADVANCE = 0.62;
-const relationshipLabelWidth = (label) => Math.max(30, textUnits(label) * RELATIONSHIP_LABEL_FONT * RELATIONSHIP_LABEL_ADVANCE + 10);
+const relationshipLabelWidth = (label, relationship = null) => Math.max(30, textUnits(label) * RELATIONSHIP_LABEL_FONT * RELATIONSHIP_LABEL_ADVANCE + 10) + changeEdgeLabelExtraWidth(relationship);
 
 // A label between two neighbouring columns is drawn in the gap between them:
 // on the straight line of a same-row relationship, or across the channel of a
@@ -198,7 +203,7 @@ function labelColumnGaps() {
     const to = byId.get(relationship.to);
     if (![from?.col, to?.col].every(Number.isInteger) || Math.abs(from.col - to.col) !== 1) continue;
     const gap = Math.min(from.col, to.col);
-    const demand = Math.ceil(relationshipLabelWidth(relationship.label) + LABEL_GLYPH_CLEARANCE * 2);
+    const demand = Math.ceil(relationshipLabelWidth(relationship.label, relationship) + LABEL_GLYPH_CLEARANCE * 2);
     gaps.set(gap, Math.max(gaps.get(gap) || 0, demand));
   }
   return gaps.size ? gaps : null;
@@ -372,7 +377,8 @@ function markerStyleOf(relationship) {
 function cardinalityMarkerId(relationship, endpoint) {
   const cardinality = cardinalityOf(relationship, endpoint);
   const optional = optionalOf(relationship, endpoint) ? '-optional' : '';
-  return `er-${cardinality}${optional}-${endpoint === 'from' ? 'start' : 'end'}`;
+  const change = changeStrokeVar(relationship) ? `-change-${relationship.change}` : '';
+  return `er-${cardinality}${optional}-${endpoint === 'from' ? 'start' : 'end'}${change}`;
 }
 
 // Crow's foot notation: the foot opens toward the entity whose cardinality it
@@ -396,6 +402,7 @@ const MARKER_CIRCLE_X = 3.5;
 // The glyph spans y 1..15, so two ports closer than this draw overlapping
 // symbols and the side reads as one lattice instead of N cardinalities.
 const MARKER_HEIGHT = 14;
+const MARKER_STROKE_WIDTH = 1.75;
 // One glyph source for the relationship markers and the legend swatches, so the
 // legend can never teach a different symbol than the lines draw.
 function cardinalityGlyphParts({ cardinality, optional, mirror = false }) {
@@ -416,9 +423,9 @@ function cardinalityGlyphParts({ cardinality, optional, mirror = false }) {
   return parts;
 }
 
-function cardinalityMarkerMarkup(id, { cardinality, optional, mirror }) {
+function cardinalityMarkerMarkup(id, { cardinality, optional, mirror, strokeVar = '--text-muted' }) {
   const refX = mirror ? 0 : MARKER_TOE_X;
-  return `          <marker id="${esc(id)}" markerWidth="${MARKER_GLYPH_WIDTH}" markerHeight="18" refX="${refX}" refY="8" orient="auto" markerUnits="userSpaceOnUse" class="a-default" style="stroke: var(--text-muted)" stroke-width="1.75">
+  return `          <marker id="${esc(id)}" markerWidth="${MARKER_GLYPH_WIDTH}" markerHeight="18" refX="${refX}" refY="8" orient="auto" markerUnits="userSpaceOnUse" class="a-default" style="stroke: var(${strokeVar})" stroke-width="${MARKER_STROKE_WIDTH}">
             ${cardinalityGlyphParts({ cardinality, optional, mirror }).join('\n            ')}
           </marker>`;
 }
@@ -439,6 +446,22 @@ function renderCardinalityDefs() {
   }
   const markup = ids.filter((entry) => used.has(entry.key))
     .map((entry) => cardinalityMarkerMarkup(entry.id, entry));
+  const changed = new Map();
+  for (const relationship of relationships) {
+    const strokeVar = changeStrokeVar(relationship);
+    if (!strokeVar) continue;
+    for (const endpoint of ['from', 'to']) {
+      const id = cardinalityMarkerId(relationship, endpoint);
+      if (changed.has(id)) continue;
+      changed.set(id, cardinalityMarkerMarkup(id, {
+        cardinality: cardinalityOf(relationship, endpoint),
+        optional: optionalOf(relationship, endpoint),
+        mirror: endpoint === 'from',
+        strokeVar,
+      }));
+    }
+  }
+  markup.push(...changed.values());
   if (!markup.length) return '';
   return `\n          <!-- Cardinality symbols -->\n${markup.join('\n')}`;
 }
@@ -482,16 +505,40 @@ const LEGEND_GROUP_LEAD = 10;
 // The shared renderer sets labels two units above the measured font size, so
 // each entry reserves that difference and the hover pill never overlaps its
 // neighbour. Computed from the resolved label, so an authored label is measured.
-const erLegendEntries = resolveLegend(er.meta?.legend, LEGEND_CATALOG, presentKinds).map((entry, index, all) => {
-  const isKey = KEY_KINDS.has(entry.kind);
-  const lead = !isKey && index > 0 && KEY_KINDS.has(all[index - 1].kind) ? LEGEND_GROUP_LEAD : 0;
-  return {
-    ...entry,
-    lead,
-    swatchWidth: (isKey ? LEGEND_KEY_SWATCH : LEGEND_END_SWATCH) + lead,
-    trailingWidth: Math.ceil(textUnits(entry.label) * 2 * 0.62),
-  };
+// A table whose columns changed is itself part of the change, so the review
+// treats it as modified for context purposes even without an authored mark.
+const entitiesWithChangedColumns = new Set(
+  [...entities.values()]
+    .filter((entity) => asArray(entity.attributes).some((attribute) => attribute.change && attribute.change !== 'unchanged'))
+    .map((entity) => entity.id),
+);
+const changeReview = changeReviewFor({
+  nodes: [...entities.values()].map((entity) => (
+    entity.change || !entitiesWithChangedColumns.has(entity.id) ? entity : { ...entity, change: 'modified' }
+  )),
+  edges: relationships,
 });
+
+function entityChangeAttrs(entity) {
+  if (!entity.change && entitiesWithChangedColumns.has(entity.id)) {
+    return `${entity.emphasis === true ? ' data-emphasis=""' : ''} data-change-context="neighbour"`;
+  }
+  return changeNodeAttrs(changeReview, entity);
+}
+
+const erLegendEntries = [
+  ...resolveLegend(er.meta?.legend, LEGEND_CATALOG, presentKinds).map((entry, index, all) => {
+    const isKey = KEY_KINDS.has(entry.kind);
+    const lead = !isKey && index > 0 && KEY_KINDS.has(all[index - 1].kind) ? LEGEND_GROUP_LEAD : 0;
+    return {
+      ...entry,
+      lead,
+      swatchWidth: (isKey ? LEGEND_KEY_SWATCH : LEGEND_END_SWATCH) + lead,
+      trailingWidth: Math.ceil(textUnits(entry.label) * 2 * 0.62),
+    };
+  }),
+  ...changeLegendEntries(changeReview, er.meta?.legend, er.meta.locale).map((entry) => ({ ...entry, lead: 0, trailingWidth: Math.ceil(textUnits(entry.label) * 2 * 0.62) })),
+];
 
 // One layout object for the reserved legend band, shared by the sizing probe
 // and the render call so the drawing area is never sized against a different
@@ -548,7 +595,7 @@ const LANE_STEP = 12;
 
 function relationshipLabelBox(relationship) {
   const [lx, ly] = erLabelPoint(relationship);
-  const width = relationshipLabelWidth(relationship.label);
+  const width = relationshipLabelWidth(relationship.label, relationship);
   return { x: lx - width / 2, y: ly - 10, width, height: 14 };
 }
 
@@ -585,6 +632,7 @@ const { ports, pathFor, inferredSides, connectionEndpointSide } = createRouter(e
   // A cardinality glyph is 14 units tall, so ports must clear it (see
   // ERD_PORT_SPACING, which the trunk bridge is derived from).
   maxPortSpacing: ERD_PORT_SPACING,
+  minimumPortSpacing: Math.ceil(MARKER_HEIGHT + MARKER_STROKE_WIDTH),
   // Greedy planning routes each relationship against only the earlier ones, so
   // a later route could cross an earlier corridor while an empty side of the
   // table was free. Architecture's bounded readability sweep re-plans one
@@ -983,7 +1031,7 @@ function cardinalityGlyphBox(point, side) {
   const placeable = relationships.filter(renderableRelationship);
   const labels = placeable.filter((relationship) => relationship.label).map((relationship) => {
     const [lx, ly] = defaultErLabelPoint(relationship);
-    const width = relationshipLabelWidth(relationship.label);
+    const width = relationshipLabelWidth(relationship.label, relationship);
     return {
       relation: relationship, relationIndex: relationships.indexOf(relationship), label: relationship.label,
       x: lx - width / 2, y: ly - 10, width, height: 14, lx, ly,
@@ -1368,6 +1416,7 @@ function validateEr() {
 
 function buildLayoutReport() {
   return {
+    ok: true,
     diagram_type: 'erd',
     viewBox,
     layout,
@@ -1383,8 +1432,15 @@ function buildLayoutReport() {
 }
 
 // ---- Rendering ---------------------------------------------------------------
+// A column whose type changed shows both types in its type slot.
+function attributeTypeText(attribute) {
+  if (!attribute.type) return '';
+  return attribute.previousType ? `${attribute.previousType} \u2192 ${attribute.type}` : attribute.type;
+}
+
 function renderEntityColumnRows(entity) {
   const keyColumn = keyColumnWidth(entity);
+  const diffGutter = entityDiffGutter(entity);
   return entity.attributes.map((attribute, index) => {
     const rowTop = entity.y + metrics.headerH + index * metrics.rowH;
     const baseline = rowTop + metrics.rowH - 5;
@@ -1392,28 +1448,31 @@ function renderEntityColumnRows(entity) {
     // it: the Viewer's reader sizes the diagram from the texts that declare the
     // level themselves, so a field that is only context inside a group would be
     // shrunk past the readable floor on a tall schema.
-    const keyGlyph = renderKeyGlyphs(attribute, entity.x + layout.padX, baseline);
-    const nameX = entity.x + layout.padX + keyColumn;
-    const typeSpace = attribute.type ? Math.min(96, textUnits(attribute.type) * layout.typeFont * nodeTextFit.widthFactor) : 0;
+    const keyGlyph = renderKeyGlyphs(attribute, entity.x + layout.padX + diffGutter, baseline);
+    const nameX = entity.x + layout.padX + diffGutter + keyColumn;
+    const typeText = attributeTypeText(attribute);
+    const typeSpace = typeText ? textUnits(typeText) * layout.typeFont * nodeTextFit.widthFactor : 0;
+    const changeBadge = renderChangeBadge(attribute, { x: entity.x + layout.padX + 7, y: baseline - 4, size: 'row' });
+    const nameAvailable = Math.max(40, entity.x + entity.width - layout.padX - typeSpace - (typeSpace ? 8 : 0) - nameX);
     const nameFontSize = fittedNodeFontSize(
       attribute.name,
-      Math.max(40, entity.x + entity.width - layout.padX - typeSpace - nameX),
+      nameAvailable + nodeTextFit.horizontalPadding,
       layout.rowFont,
       layout.rowFontMinimum,
     );
-    const type = attribute.type
-      ? `<text data-detail="context" x="${entity.x + entity.width - layout.padX}" y="${baseline}" class="er-type" font-size="${layout.typeFont}" text-anchor="end">${esc(attribute.type)}</text>`
+    const type = typeText
+      ? `<text data-detail="context" x="${entity.x + entity.width - layout.padX}" y="${baseline}" class="er-type"${attribute.previousType ? ' data-er-type-change=""' : ''} font-size="${layout.typeFont}" text-anchor="end">${esc(typeText)}</text>`
       : '';
     const zebra = index % 2
       ? `<rect x="${entity.x + 4}" y="${rowTop + 1}" width="${entity.width - 8}" height="${metrics.rowH - 2}" rx="4" class="er-zebra"/>`
       : '';
     const primary = keyRoles(attribute).includes('pk');
-    return `          <g data-detail="context" data-er-row="${index}">
+    return `          <g data-detail="context" data-er-row="${index}"${changeItemAttrs(attribute)}>
             <line x1="${entity.x}" y1="${rowTop}" x2="${entity.x + entity.width}" y2="${rowTop}" class="c-grid er-row-rule" stroke-width="0.5"/>
             ${zebra}
             ${keyGlyph}
             <text data-detail="context" x="${nameX}" y="${baseline}" class="t-primary${primary ? ' er-name-pk' : ''}" font-size="${nameFontSize}">${esc(attribute.name)}</text>
-            ${type}
+            ${type}${changeBadge ? `\n            ${changeBadge}` : ''}
           </g>`.replace(/[ \t]+$/gm, '');
   }).join('\n');
 }
@@ -1429,7 +1488,8 @@ function renderEntity(entity) {
   };
   const rows = renderEntityColumnRows(entity);
   const r = 8;
-  return `        <g ${focusNodeAttrs(entity.id, entity.label, passport, er.meta.locale)} class="${hueClassOf(entity.tag)}">
+  const changeBadge = renderChangeBadge(entity, nodeChangeBadgePos(entity, { rx: 8 }));
+  return `        <g ${focusNodeAttrs(entity.id, entity.label, passport, er.meta.locale)}${entityChangeAttrs(entity)} class="${hueClassOf(entity.tag)}">
           ${focusNodeTitle(entity.label, passport)}
           <rect x="${entity.x}" y="${entity.y}" width="${entity.width}" height="${entity.height}" rx="${r}" class="c-mask"/>
           <rect x="${entity.x}" y="${entity.y}" width="${entity.width}" height="${entity.height}" rx="${r}" class="c-database er-table"${animateAttr(er.meta, 'node', entitySteps.get(entity.id))} stroke-width="1.2"/>
@@ -1438,7 +1498,7 @@ function renderEntity(entity) {
           ${renderSemanticSigil('database', { x: entity.x + 8, y: entity.y + 7, size: 14 })}
           <text data-node-label="" x="${labelX}" y="${entity.y + labelY}" class="t-primary er-title" font-size="${labelFont}" font-weight="700" text-anchor="middle">${esc(entity.label)}</text>
           <line x1="${entity.x}" y1="${header}" x2="${entity.x + entity.width}" y2="${header}" class="c-grid er-header-rule" stroke-width="1"/>
-${rows}
+${rows}${changeBadge ? `\n          ${changeBadge}` : ''}
         </g>`;
 }
 
@@ -1447,16 +1507,16 @@ function renderRelationshipPath(relationship, index) {
   const routed = pathFor(relationship);
   const d = bundledRelationshipD(routed, relationshipTrunkRuns(relationship));
   const strokeWidth = relationshipStrokeWidth(relationship);
-  return `        <path ${focusEdgeAttrs(relationship.from, relationship.to, relationship.label, index, relationship.id)} data-er-ends="${relationshipEnds(relationship).join(' ')}" data-composition-points="${routePointsValue(routed.points)}" d="${d}" class="${cls}"${animateAttr(er.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-start="url(#${cardinalityMarkerId(relationship, 'from')})" marker-end="url(#${cardinalityMarkerId(relationship, 'to')})"/>`;
+  return `        <path ${focusEdgeAttrs(relationship.from, relationship.to, relationship.label, index, relationship.id)}${changeEdgeAttrs(changeReview, relationship)} data-er-ends="${relationshipEnds(relationship).join(' ')}" data-composition-points="${routePointsValue(routed.points)}" d="${d}" class="${cls}"${animateAttr(er.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-start="url(#${cardinalityMarkerId(relationship, 'from')})" marker-end="url(#${cardinalityMarkerId(relationship, 'to')})"/>`;
 }
 
 function renderRelationshipLabel(relationship, index) {
   if (!relationship.label) return '';
   const [lx, ly] = erLabelPoint(relationship);
   const box = relationshipLabelBox(relationship);
-  return `        <g data-detail="context" ${focusEdgeAttrs(relationship.from, relationship.to, relationship.label, index, relationship.id)} data-er-ends="${relationshipEnds(relationship).join(' ')}">
+  return `        <g data-detail="context" ${focusEdgeAttrs(relationship.from, relationship.to, relationship.label, index, relationship.id)}${changeEdgeAttrs(changeReview, relationship)} data-er-ends="${relationshipEnds(relationship).join(' ')}">
           <rect x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" rx="3" class="c-mask"/>
-          <text x="${lx}" y="${ly}" class="${variantAccent(relationship.variant)}" font-size="${RELATIONSHIP_LABEL_FONT}" text-anchor="middle">${esc(relationship.label)}</text>
+          <text x="${lx}" y="${ly}" class="${variantAccent(relationship.variant)}" font-size="${RELATIONSHIP_LABEL_FONT}" text-anchor="middle">${renderChangeEdgePrefix(relationship)}${esc(relationship.label)}</text>
         </g>`;
 }
 
@@ -1464,6 +1524,8 @@ function renderRelationshipLabel(relationship, index) {
 // route meeting a table edge, carrying the marker's own glyph, ink, and weight,
 // so the legend shows the symbol in the context the diagram draws it.
 function legendSwatch(entry) {
+  const changeSwatch = renderChangeLegendSwatch(entry);
+  if (changeSwatch) return changeSwatch;
   const x = entry.x + entry.lead;
   const centerY = entry.baseline - 4;
   const hit = `<rect class="er-legend-hit" tabindex="0" role="img" aria-label="${esc(entry.label)}" x="${x - 6}" y="${entry.baseline - 15}" width="${entry.width - entry.lead + 12}" height="22" rx="11"/>`;
@@ -1525,7 +1587,12 @@ ${svgAccessibleText(er.meta, 'erd')}
 ${renderDefinitions(renderCardinalityDefs())}
         <style>
 ${DOMAIN_HUES.map((hue) => `          svg[data-erd-ui="cards"] .er-hue-${hue} { --er-hue: var(--${hue}-stroke); --er-wash: var(--${hue}-fill); }`).join('\n')}
-          svg[data-erd-ui="cards"] .er-band { fill: color-mix(in srgb, var(--er-hue) 4%, transparent); stroke: color-mix(in srgb, var(--er-hue) 20%, transparent); stroke-dasharray: none; }
+${changeReview.active ? `          svg[data-erd-ui="cards"] [data-domain-band] { --er-hue: var(--text-dim); --er-wash: color-mix(in srgb, var(--text-dim) 10%, var(--mask)); }
+          svg[data-erd-ui="cards"] [data-node-id][data-change-context] { --er-hue: var(--text-dim); --er-wash: color-mix(in srgb, var(--text-dim) 8%, var(--mask)); }
+          svg[data-erd-ui="cards"] [data-node-id][data-change="added"] { --er-hue: var(--backend-stroke); --er-wash: color-mix(in srgb, var(--backend-stroke) 14%, var(--mask)); }
+          svg[data-erd-ui="cards"] [data-node-id][data-change="modified"] { --er-hue: var(--cloud-stroke); --er-wash: color-mix(in srgb, var(--cloud-stroke) 15%, var(--mask)); }
+          svg[data-erd-ui="cards"] [data-node-id][data-change="removed"] { --er-hue: var(--security-stroke); --er-wash: color-mix(in srgb, var(--security-stroke) 9%, var(--mask)); }
+` : ''}          svg[data-erd-ui="cards"] .er-band { fill: color-mix(in srgb, var(--er-hue) 4%, transparent); stroke: color-mix(in srgb, var(--er-hue) 20%, transparent); stroke-dasharray: none; }
           svg[data-erd-ui="cards"] .er-band-pill { fill: var(--er-wash); stroke: color-mix(in srgb, var(--er-hue) 30%, transparent); stroke-width: .8; }
           svg[data-erd-ui="cards"] .er-band-label { fill: var(--er-hue); letter-spacing: .08em; text-transform: uppercase; }
           svg[data-erd-ui="cards"] .er-table { fill: var(--mask); stroke: color-mix(in srgb, var(--er-hue) 34%, var(--lane-stroke)); }

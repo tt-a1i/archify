@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "layout": {
+    "mode": "auto"
+  },
+  "meta": {
+    "title": "reciprocal-two-cards",
+    "output": "output.html",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "components": [
+    {
+      "id": "n0",
+      "type": "backend",
+      "label": "Service 0",
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "n1",
+      "type": "backend",
+      "label": "Service 1",
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "r0",
+      "to": "n1",
+      "label": "Publish",
+      "from": "n0"
+    },
+    {
+      "id": "r1",
+      "to": "n0",
+      "from": "n1"
+    }
+  ]
+}

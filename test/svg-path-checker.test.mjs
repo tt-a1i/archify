@@ -183,6 +183,29 @@ test('readable-v2 仍检出圆角后可见直线上的真实交叉', async t => 
   assert.deepEqual(result.receipt.composition.issues.find(item => item.code === 'composition/proper-crossing').point, [100, 70]);
 });
 
+test('architecture checking finds a crossing at an exact rounded-corner sample', async t => {
+  const result = await check(t, arrow('M20 20H92Q100 20 100 28V120')
+    + arrow('M98 5V160', { id: 'other', from: 'c', to: 'd' }), {
+    publicCli: true, rootAttrs: 'data-diagram-type="architecture"',
+  });
+  assert.equal(result.code, 1);
+  const crossing = result.receipt.composition.issues.find(item => item.code === 'composition/proper-crossing');
+  assert.deepEqual(crossing?.point, [98, 22]);
+});
+
+test('architecture checking flags a label over a neighboring arrowhead without requiring a shaft hit', async t => {
+  const another = arrow('M60 145H160', { id: 'other', from: 'c', to: 'd', extra: 'data-edge-key="1"' });
+  const label = '<g data-edge-key="1" data-edge-from="c" data-edge-to="d" data-edge-label="Return"><rect class="c-mask" x="86.7" y="104.2" width="4" height="4"/></g>';
+  const result = await check(t, arrow('M20 100H100') + another + label, {
+    rootAttrs: 'data-diagram-type="architecture"', profile: 'standard',
+  });
+  assertPass(result);
+  assert.equal(result.receipt.composition.metrics.labelRouteClearanceIssues, 0);
+  const issue = result.receipt.composition.issues.find(item => item.code === 'composition/label-arrowhead-mask');
+  assert.equal(issue?.labelRelationship.id, 'other');
+  assert.equal(issue?.otherRelationship.id, 'route');
+});
+
 const disconnected = 'M20 20L100 20M100 100L200 100';
 const acrossGap = arrow('M80 60L120 60', { id: 'other', from: 'c', to: 'd', extra: 'data-edge-key="1"' });
 for (const rootAttrs of ['', 'data-layout-contract="readable-v2"']) {
@@ -237,11 +260,17 @@ test('交叉分析关系对预算只接受安全正整数环境变量', async t 
   // 318 relationships produce 50,403 eligible pairs, so invalid overrides
   // must fall back to the production 50,000-pair limit rather than merely
   // differing from an explicitly tiny valid override.
-  const body = Array.from({ length: 318 }, (_, index) => arrow('M20 20H80', {
-    id: `fallback-${index}`,
-    from: `source-${index}`,
-    to: `target-${index}`,
-  })).join('');
+  // Spread the routes across the canvas so the checker spends its budget
+  // on eligible pairs without reporting thousands of unrelated overlaps.
+  const body = Array.from({ length: 318 }, (_, index) => {
+    const x = 8 + (index % 18) * 22;
+    const y = 8 + Math.floor(index / 18) * 13;
+    return arrow(`M${x} ${y}H${x + 12}`, {
+      id: `fallback-${index}`,
+      from: `source-${index}`,
+      to: `target-${index}`,
+    });
+  }).join('');
   for (const [value, expectedLimit] of [
     ['', 50_000],
     ['not-a-number', 50_000],
@@ -256,6 +285,7 @@ test('交叉分析关系对预算只接受安全正整数环境变量', async t 
     assert.equal(result.code, 1);
     const issue = result.receipt.composition.issues.find(item => item.code === 'composition/crossing-analysis-budget');
     assert.equal(issue?.exhaustedBudget, 'relationship-pairs');
+    assert.equal(issue?.pairLimit, expectedLimit);
     assert.equal(issue?.attemptedPairs, expectedLimit);
     assert.match(issue?.detail || '', new RegExp(`relationship pairs \\(limit ${expectedLimit}\\)`));
   }

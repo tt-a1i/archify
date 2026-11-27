@@ -1,0 +1,444 @@
+TAP version 13
+# Subtest: core smoke: public CLI diagrams, compatibility and delivery safety
+    # Subtest: architecture: validate, render and deliver the official example
+    ok 1 - architecture: validate, render and deliver the official example
+      ---
+      duration_ms: 610.726875
+      type: 'test'
+      ...
+    # Subtest: workflow: validate, render and deliver the official example
+    ok 2 - workflow: validate, render and deliver the official example
+      ---
+      duration_ms: 820.09925
+      type: 'test'
+      ...
+    # Subtest: sequence: validate, render and deliver the official example
+    ok 3 - sequence: validate, render and deliver the official example
+      ---
+      duration_ms: 577.60675
+      type: 'test'
+      ...
+    # Subtest: dataflow: validate, render and deliver the official example
+    ok 4 - dataflow: validate, render and deliver the official example
+      ---
+      duration_ms: 520.568041
+      type: 'test'
+      ...
+    # Subtest: lifecycle: validate, render and deliver the official example
+    ok 5 - lifecycle: validate, render and deliver the official example
+      ---
+      duration_ms: 483.130375
+      type: 'test'
+      ...
+    # Subtest: erd: validate, render and deliver the official example
+    ok 6 - erd: validate, render and deliver the official example
+      ---
+      duration_ms: 491.242708
+      type: 'test'
+      ...
+    # Subtest: tree: validate, render and deliver the official example
+    ok 7 - tree: validate, render and deliver the official example
+      ---
+      duration_ms: 450.695667
+      type: 'test'
+      ...
+    # Subtest: class: validate, render and deliver the official example
+    ok 8 - class: validate, render and deliver the official example
+      ---
+      duration_ms: 462.435833
+      type: 'test'
+      ...
+    # Subtest: timeline: validate, render and deliver the official example
+    ok 9 - timeline: validate, render and deliver the official example
+      ---
+      duration_ms: 492.143875
+      type: 'test'
+      ...
+    # Subtest: waterfall: validate, render and deliver the official example
+    ok 10 - waterfall: validate, render and deliver the official example
+      ---
+      duration_ms: 480.195125
+      type: 'test'
+      ...
+    # Subtest: explainer: validate, render and deliver the official example
+    ok 11 - explainer: validate, render and deliver the official example
+      ---
+      duration_ms: 408.116625
+      type: 'test'
+      ...
+    # Subtest: architecture: frozen schema-v1 input remains valid and renderable
+    ok 12 - architecture: frozen schema-v1 input remains valid and renderable
+      ---
+      duration_ms: 287.524791
+      type: 'test'
+      ...
+    # Subtest: workflow: frozen schema-v1 input remains valid and renderable
+    ok 13 - workflow: frozen schema-v1 input remains valid and renderable
+      ---
+      duration_ms: 268.425083
+      type: 'test'
+      ...
+    # Subtest: sequence: frozen schema-v1 input remains valid and renderable
+    ok 14 - sequence: frozen schema-v1 input remains valid and renderable
+      ---
+      duration_ms: 296.346333
+      type: 'test'
+      ...
+    # Subtest: dataflow: frozen schema-v1 input remains valid and renderable
+    ok 15 - dataflow: frozen schema-v1 input remains valid and renderable
+      ---
+      duration_ms: 271.4085
+      type: 'test'
+      ...
+    # Subtest: unknown diagram types return a structured diagnostic
+    ok 16 - unknown diagram types return a structured diagnostic
+      ---
+      duration_ms: 25.964417
+      type: 'test'
+      ...
+    # Subtest: strict provenance binds the delivered artifact bytes
+    ok 17 - strict provenance binds the delivered artifact bytes
+      ---
+      duration_ms: 125.259625
+      type: 'test'
+      ...
+    # Subtest: invalid schema preserves the last artifact and marks its delivery as failed
+    ok 18 - invalid schema preserves the last artifact and marks its delivery as failed
+      ---
+      duration_ms: 217.992166
+      type: 'test'
+      ...
+    1..18
+ok 1 - core smoke: public CLI diagrams, compatibility and delivery safety
+  ---
+  duration_ms: 7296.086875
+  type: 'test'
+  ...
+# Subtest: release prevents manifest preannouncement and smokes the exact archive before upload
+ok 2 - release prevents manifest preannouncement and smokes the exact archive before upload
+  ---
+  duration_ms: 1.538292
+  type: 'test'
+  ...
+# Subtest: an exact tag fetch restores an annotated object after a SHA-only checkout
+ok 3 - an exact tag fetch restores an annotated object after a SHA-only checkout
+  ---
+  duration_ms: 238.132334
+  type: 'test'
+  ...
+# Subtest: CI binds a public notifier manifest to the Release asset, tagged archive, and tag tree build
+ok 4 - CI binds a public notifier manifest to the Release asset, tagged archive, and tag tree build
+  ---
+  duration_ms: 0.546375
+  type: 'test'
+  ...
+# Subtest: release docs disclose that mutable Release assets are verified only at deployment time
+ok 5 - release docs disclose that mutable Release assets are verified only at deployment time
+  ---
+  duration_ms: 0.531833
+  type: 'test'
+  ...
+# Subtest: GitHub Pages deploys the verified website artifact only after every repository gate succeeds
+ok 6 - GitHub Pages deploys the verified website artifact only after every repository gate succeeds
+  ---
+  duration_ms: 13.749291
+  type: 'test'
+  ...
+# Subtest: release tags with a SemVer prerelease are marked prerelease and never become latest
+ok 7 - release tags with a SemVer prerelease are marked prerelease and never become latest
+  ---
+  duration_ms: 0.177375
+  type: 'test'
+  ...
+# Subtest: package smoke rejects every dependency or repository-only artifact
+ok 8 - package smoke rejects every dependency or repository-only artifact
+  ---
+  duration_ms: 152.209166
+  type: 'test'
+  ...
+# Subtest: package smoke rejects a missing or modified distribution license
+ok 9 - package smoke rejects a missing or modified distribution license
+  ---
+  duration_ms: 400.421959
+  type: 'test'
+  ...
+# Subtest: package smoke rejects missing, modified, or incomplete third-party notices
+ok 10 - package smoke rejects missing, modified, or incomplete third-party notices
+  ---
+  duration_ms: 345.678708
+  type: 'test'
+  ...
+# Subtest: package smoke increments an arbitrary-precision SemVer patch without Number coercion
+ok 11 - package smoke increments an arbitrary-precision SemVer patch without Number coercion
+  ---
+  duration_ms: 316.057042
+  type: 'test'
+  ...
+# Subtest: clean package staging rejects non-portable tracked names and entry collisions before copying
+ok 12 - clean package staging rejects non-portable tracked names and entry collisions before copying
+  ---
+  duration_ms: 240.516041
+  type: 'test'
+  ...
+# Subtest: archive build rejects unsafe native output paths before creating files
+ok 13 - archive build rejects unsafe native output paths before creating files
+  ---
+  duration_ms: 949.556709
+  type: 'test'
+  ...
+# Subtest: archive build keeps unsafe-path diagnostics ahead of the canonical Node gate
+ok 14 - archive build keeps unsafe-path diagnostics ahead of the canonical Node gate
+  ---
+  duration_ms: 507.988208
+  type: 'test'
+  ...
+# Subtest: archive output rejection preserves an existing unsafe target byte-for-byte
+ok 15 - archive output rejection preserves an existing unsafe target byte-for-byte
+  ---
+  duration_ms: 31.8215
+  type: 'test'
+  ...
+# Subtest: package smoke rejects every dependency metadata field in a built package
+ok 16 - package smoke rejects every dependency metadata field in a built package
+  ---
+  duration_ms: 1920.405709
+  type: 'test'
+  ...
+# Subtest: built archives contain the embedded notifier runtime
+ok 17 - built archives contain the embedded notifier runtime
+  ---
+  duration_ms: 1644.090458
+  type: 'test'
+  ...
+# Subtest: archive build excludes untracked files and external symlinks from the live working tree
+ok 18 - archive build excludes untracked files and external symlinks from the live working tree
+  ---
+  duration_ms: 1590.390167
+  type: 'test'
+  ...
+# Subtest: archive build rejects an unmerged index and preserves an existing archive
+ok 19 - archive build rejects an unmerged index and preserves an existing archive
+  ---
+  duration_ms: 176.108708
+  type: 'test'
+  ...
+# Subtest: archive build rejects incompatible zlib before publishing output
+ok 20 - archive build rejects incompatible zlib before publishing output
+  ---
+  duration_ms: 66.0115
+  type: 'test'
+  ...
+# Subtest: archive build rejects non-canonical Node/zlib toolchains before publishing output
+ok 21 - archive build rejects non-canonical Node/zlib toolchains before publishing output # SKIP requires a non-canonical Node/zlib toolchain
+  ---
+  duration_ms: 0.024708
+  type: 'test'
+  ...
+# Subtest: archive build is byte-for-byte reproducible across caller time zones without system zip
+ok 22 - archive build is byte-for-byte reproducible across caller time zones without system zip
+  ---
+  duration_ms: 3149.336708
+  type: 'test'
+  ...
+# Subtest: archive build accepts Windows-style absolute output paths
+ok 23 - archive build accepts Windows-style absolute output paths # SKIP Windows drive paths only reach build-zip.sh on win32
+  ---
+  duration_ms: 0.032458
+  type: 'test'
+  ...
+# Subtest: archive writer publishes over a maximum-length output component without an oversized candidate name
+ok 24 - archive writer publishes over a maximum-length output component without an oversized candidate name
+  ---
+  duration_ms: 51.668042
+  type: 'test'
+  ...
+# Subtest: archive writer records Git index modes from the manifest, not filesystem bits
+ok 25 - archive writer records Git index modes from the manifest, not filesystem bits
+  ---
+  duration_ms: 67.910041
+  type: 'test'
+  ...
+# Subtest: archive writer fails closed when the mode manifest and the staged tree disagree
+ok 26 - archive writer fails closed when the mode manifest and the staged tree disagree
+  ---
+  duration_ms: 100.096292
+  type: 'test'
+  ...
+# Subtest: archive writer rejects existing and dangling output symlinks without mutation
+ok 27 - archive writer rejects existing and dangling output symlinks without mutation
+  ---
+  duration_ms: 48.875
+  type: 'test'
+  ...
+# Subtest: archive writer rejects a special output entry without replacing it
+ok 28 - archive writer rejects a special output entry without replacing it
+  ---
+  duration_ms: 27.626041
+  type: 'test'
+  ...
+# Subtest: archive writer rejects a hard-linked output without changing either name
+ok 29 - archive writer rejects a hard-linked output without changing either name
+  ---
+  duration_ms: 25.661917
+  type: 'test'
+  ...
+# Subtest: archive writer verifies the output binding immediately before publication
+ok 30 - archive writer verifies the output binding immediately before publication
+  ---
+  duration_ms: 31.239333
+  type: 'test'
+  ...
+# Subtest: archive writer preserves a target claimant that arrives after the previous output is backed up
+ok 31 - archive writer preserves a target claimant that arrives after the previous output is backed up
+  ---
+  duration_ms: 34.94025
+  type: 'test'
+  ...
+# Subtest: archive writer rejects a candidate changed while the final output state is checked
+ok 32 - archive writer rejects a candidate changed while the final output state is checked
+  ---
+  duration_ms: 32.038417
+  type: 'test'
+  ...
+# Subtest: archive writer preserves a successor that replaces its temporary candidate
+ok 33 - archive writer preserves a successor that replaces its temporary candidate
+  ---
+  duration_ms: 33.97125
+  type: 'test'
+  ...
+# Subtest: archive writer keeps the candidate identity bound through commit and preserves a release-time successor
+ok 34 - archive writer keeps the candidate identity bound through commit and preserves a release-time successor
+  ---
+  duration_ms: 36.591208
+  type: 'test'
+  ...
+# Subtest: archive writer preserves an existing regular output mode despite a restrictive umask
+ok 35 - archive writer preserves an existing regular output mode despite a restrictive umask
+  ---
+  duration_ms: 68.801625
+  type: 'test'
+  ...
+# Subtest: archive writer rejects non-portable manifest entries and collisions before publication
+ok 36 - archive writer rejects non-portable manifest entries and collisions before publication
+  ---
+  duration_ms: 51.100334
+  type: 'test'
+  ...
+# Subtest: archive build hands the recorded Git index modes from the stager to the writer
+ok 37 - archive build hands the recorded Git index modes from the stager to the writer
+  ---
+  duration_ms: 0.14025
+  type: 'test'
+  ...
+# Subtest: CI tests the declared Node floor plus every maintained current lane
+ok 38 - CI tests the declared Node floor plus every maintained current lane
+  ---
+  duration_ms: 0.491541
+  type: 'test'
+  ...
+# Subtest: CI and tagged releases keep real Windows paths on both Nodes and detailed matrices on canonical Node
+ok 39 - CI and tagged releases keep real Windows paths on both Nodes and detailed matrices on canonical Node
+  ---
+  duration_ms: 117.809875
+  type: 'test'
+  ...
+# Subtest: distributed ZIP carries the same valid Skill frontmatter as source
+ok 40 - distributed ZIP carries the same valid Skill frontmatter as source
+  ---
+  duration_ms: 210.391916
+  type: 'test'
+  ...
+# Subtest: real Skills CLI keeps source and ZIP installs scoped to the requested Skill
+    # Subtest: source: default and full-depth discovery expose only archify
+    ok 1 - source: default and full-depth discovery expose only archify
+      ---
+      duration_ms: 134.997666
+      type: 'test'
+      ...
+    # Subtest: source: explicit and unfiltered --yes installs copy only archify
+    ok 2 - source: explicit and unfiltered --yes installs copy only archify
+      ---
+      duration_ms: 716.36175
+      type: 'test'
+      ...
+    # Subtest: ZIP: default and full-depth discovery expose only archify
+    ok 3 - ZIP: default and full-depth discovery expose only archify
+      ---
+      duration_ms: 126.868292
+      type: 'test'
+      ...
+    # Subtest: ZIP: explicit and unfiltered --yes installs copy only archify
+    ok 4 - ZIP: explicit and unfiltered --yes installs copy only archify
+      ---
+      duration_ms: 606.058709
+      type: 'test'
+      ...
+    # Subtest: maintainers can still explicitly select the internal review Skill
+    ok 5 - maintainers can still explicitly select the internal review Skill
+      ---
+      duration_ms: 60.492792
+      type: 'test'
+      ...
+    # Subtest: malformed frontmatter fails without falling back to review or writing a lock
+    ok 6 - malformed frontmatter fails without falling back to review or writing a lock
+      ---
+      duration_ms: 131.392
+      type: 'test'
+      ...
+    1..6
+ok 41 - real Skills CLI keeps source and ZIP installs scoped to the requested Skill
+  ---
+  duration_ms: 2344.97725
+  type: 'test'
+  ...
+# Subtest: skill description is portable across 1024-character runtimes and remains searchable
+ok 42 - skill description is portable across 1024-character runtimes and remains searchable
+  ---
+  duration_ms: 3.444584
+  type: 'test'
+  ...
+# Subtest: literal packaged-skill path references resolve inside the installed skill root
+ok 43 - literal packaged-skill path references resolve inside the installed skill root
+  ---
+  duration_ms: 0.256
+  type: 'test'
+  ...
+# Subtest: main skill stays a bounded authoring router with progressive references
+ok 44 - main skill stays a bounded authoring router with progressive references
+  ---
+  duration_ms: 0.133667
+  type: 'test'
+  ...
+# Subtest: update awareness is notification-only and never replaces the requested workflow
+ok 45 - update awareness is notification-only and never replaces the requested workflow
+  ---
+  duration_ms: 0.326625
+  type: 'test'
+  ...
+# Subtest: language behavior stays within the bounded locale contract
+ok 46 - language behavior stays within the bounded locale contract
+  ---
+  duration_ms: 0.452709
+  type: 'test'
+  ...
+# Subtest: skill keeps the title hierarchy compact by default
+ok 47 - skill keeps the title hierarchy compact by default
+  ---
+  duration_ms: 0.083083
+  type: 'test'
+  ...
+# Subtest: contributor review skill is internal and retains its repository references
+ok 48 - contributor review skill is internal and retains its repository references
+  ---
+  duration_ms: 0.89675
+  type: 'test'
+  ...
+1..48
+# tests 72
+# suites 0
+# pass 70
+# fail 0
+# cancelled 0
+# skipped 2
+# todo 0
+# duration_ms 12544.345375

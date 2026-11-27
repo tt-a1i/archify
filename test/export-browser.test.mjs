@@ -79,9 +79,7 @@ test('Export preserves menu, clipboard, semantic cards and recording lifecycles'
     const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
     await send('Page.navigate', { url: pathToFileURL(file).href + '?theme=' + theme + extra });
     await loaded;
-    await run('document.fonts.ready');
-    await run('Archify.readerLayout.whenStable()');
-    await run('Archify.viewerChromeLayout.whenStable()');
+    await run('Archify.layoutStability.whenStable()');
   }
   async function key(key, code, windowsVirtualKeyCode) {
     await send('Input.dispatchKeyEvent', { type: 'keyDown', key, code, windowsVirtualKeyCode });
@@ -299,8 +297,7 @@ test('Export preserves menu, clipboard, semantic cards and recording lifecycles'
           const viewerWidths = [];
           for (const width of [640, 1440]) {
             await send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: false });
-            await run('Archify.readerLayout.whenStable()');
-            await run('Archify.viewerChromeLayout.whenStable()');
+            await run('Archify.layoutStability.whenStable()');
             viewerWidths.push(await run(`document.querySelector('.diagram-container svg').getBoundingClientRect().width`));
           }
           assert.notEqual(viewerWidths[0], viewerWidths[1], `${mode}: Viewer remains responsive`);

@@ -28,6 +28,10 @@ test('every page graph binds the software entity, public source, and license wit
     assert.equal(app.license, 'https://www.apache.org/licenses/LICENSE-2.0');
     assert.equal(app.softwareVersion, '1.2.3');
     assert.deepEqual(app.sameAs, ['https://github.com/tt-a1i/archify', 'https://skills.sh/tt-a1i/archify/archify']);
+    assert.deepEqual(app.subjectOf.map(item => [item['@type'], item.url]), [
+      ['NewsArticle', 'https://www.qbitai.com/2026/09/482469.html'],
+      ['NewsArticle', 'https://www.qbitai.com/2026/09/488519.html'],
+    ]);
     const source = nodeOf(schema, 'SoftwareSourceCode');
     assert.equal(source.targetProduct['@id'], app['@id']);
     const article = nodeOf(schema, 'TechArticle');
@@ -38,7 +42,7 @@ test('every page graph binds the software entity, public source, and license wit
 });
 
 test('homepages expose the visible FAQ answers as FAQPage entries from one shared source', () => {
-  assert.equal(faqFacts.length, 5);
+  assert.equal(faqFacts.length, 7);
   for (const lang of ['en', 'zh']) {
     const schema = pageMetadata('index', lang, '1.2.3').schema;
     const faq = nodeOf(schema, 'FAQPage');

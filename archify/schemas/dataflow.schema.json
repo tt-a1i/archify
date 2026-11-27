@@ -46,6 +46,10 @@
         "animation": {
           "$ref": "common.schema.json#/$defs/animation"
         },
+        "feedback_links": {
+          "type": "boolean",
+          "description": "false hides the page footer with feedback and GitHub star links."
+        },
         "visual_preset": {
           "$ref": "common.schema.json#/$defs/visualPreset"
         },
@@ -127,6 +131,8 @@
           "row"
         ],
         "properties": {
+          "change": { "$ref": "common.schema.json#/$defs/changeStatus" },
+          "emphasis": { "$ref": "common.schema.json#/$defs/emphasis" },
           "id": {
             "$ref": "common.schema.json#/$defs/id"
           },
@@ -186,6 +192,9 @@
           "label"
         ],
         "properties": {
+          "change": { "$ref": "common.schema.json#/$defs/changeStatus" },
+          "emphasis": { "$ref": "common.schema.json#/$defs/emphasis" },
+          "payload": { "$ref": "common.schema.json#/$defs/payload" },
           "id": {
             "$ref": "common.schema.json#/$defs/id"
           },

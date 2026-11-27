@@ -472,7 +472,7 @@
     agentRevision++;
     agentTabs.forEach(t => { const on = t === tab; t.setAttribute('aria-selected', String(on)); t.tabIndex = on ? 0 : -1; });
     $('agent-copy-status').textContent = '';
-    agentCommand.textContent = `npx -y skills@latest add https://archify.si --skill archify --agent ${tab.dataset.agent} --global --copy --yes`;
+    agentCommand.textContent = `npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent ${tab.dataset.agent} --global --copy --yes`;
     if (focus) tab.focus();
   }
   agentTabs.forEach((tab, i) => {
@@ -504,7 +504,7 @@
   });
 
   /* ══ Demo lightbox — zero network cost until the trigger is pressed ══ */
-  const DEMO_SRC = 'https://github.com/user-attachments/assets/78570807-ba1d-4737-953f-55504a378a87';
+  const DEMO_SRC = 'https://github.com/user-attachments/assets/6a0d6637-e3af-43af-a733-4b4b53da0542';
   const demoOpen = $('demo-open');
   const demoDialog = $('demo-dialog');
   const demoVideo = $('demo-video');

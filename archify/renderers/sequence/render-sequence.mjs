@@ -8,6 +8,8 @@ import { componentFill, arrowClassMap, rectsOverlap, cleanFlowProblems, cleanCro
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
+import { layoutReportFromSvg } from '../shared/layout-report.mjs';
+import { changeEdgeAttrs, changeEdgeLabelExtraWidth, changeFrameAttrs, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeNodeAttrs, centredTextBox, changeReviewFor, reviewLegendEntries, frameChangeBadgePos, nodeChangeBadgePos, renderChangeBadge, renderChangeEdgePrefix, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
 import { DESKTOP_READER_DIAGRAM_WIDTH, MIN_PROJECTED_NODE_TEXT_PX, minimumReadableSourceTextPx } from '../shared/desktop-readability.mjs';
 
 const participantTextFit = {
@@ -36,9 +38,26 @@ const LEGEND_CATALOG = [
   label: i18nText(sequence.meta.locale, `legend.sequence.${entry.kind}`),
 }));
 
+// A segment frames the messages inside its time range; its 1-hop context is
+// the participants those messages connect.
+const segmentFrame = (segment) => ({
+  ...segment,
+  members: asArray(sequence.messages)
+    .filter((message) => message.y >= segment.from && message.y <= segment.to)
+    .flatMap((message) => [message.from, message.to]),
+});
+const changeReview = changeReviewFor({
+  nodes: asArray(sequence.participants),
+  edges: asArray(sequence.messages),
+  frames: asArray(sequence.segments).map(segmentFrame),
+});
+
 function legendEntries() {
   const presentKinds = new Set(asArray(sequence.messages).map((message) => message.variant || 'default'));
-  return resolveLegend(sequence.meta?.legend, LEGEND_CATALOG, presentKinds);
+  return [
+    ...reviewLegendEntries(changeReview, resolveLegend(sequence.meta?.legend, LEGEND_CATALOG, presentKinds), sequence.meta?.legend),
+    ...changeLegendEntries(changeReview, sequence.meta?.legend, sequence.meta.locale),
+  ];
 }
 
 // The legend sits below the timeline content: the last message and its note,
@@ -115,6 +134,8 @@ const participantCount = Math.max(1, asArray(sequence.participants).length);
 // Resolve the actual final-canvas text floor before choosing header geometry.
 // Notes and automatic height must use the resulting column gaps below.
 const readableMessages = sequence.meta?.quality_profile === 'showcase';
+const messageUnitWidth = readableMessages ? 6.6 : 5.2;
+const messageLabelHeight = readableMessages ? 18 : 16;
 const readableAutomaticSublabel = readableMessages && automaticWidth !== null && columnFit === 'spread';
 const readableSublabelMinimum = readableAutomaticSublabel
   ? Math.max(participantTextFit.sublabelMinimum, Math.ceil(minimumReadableSourceTextPx(canvasWidth) * 10) / 10)
@@ -164,8 +185,15 @@ function participantX(index) {
 // crosses an unrelated lifeline or activation bar (#676). Every character
 // stays visible, including in image exports: long unbroken text (a URL or
 // path) breaks after its punctuation, otherwise at any character.
-const NOTE_FONT_SIZE = 7;
-const NOTE_LINE_HEIGHT = NOTE_FONT_SIZE + 4;
+// Notes read at 8.5px, above the reader's 7.5px legibility floor, when every
+// note keeps its original line count or better and still clears the later
+// messages it cleared at 7px in showcase. Otherwise all notes stay at 7px.
+const NOTE_FONT_SIZE = 8.5;
+const NOTE_FALLBACK_FONT_SIZE = 7;
+// The line advance and first baseline keep their original values, so a note's
+// vertical footprint (message.y + 22 per line set) never changes with its size.
+const NOTE_LINE_HEIGHT = NOTE_FALLBACK_FONT_SIZE + 4;
+const NOTE_BASELINE_OFFSET = 18;
 // The first line keeps its original position: 12px past the arrow start,
 // which sits 7px from the lifeline.
 const NOTE_ARROW_INSET = 7;
@@ -180,8 +208,8 @@ const noteSegmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' })
 let noteWordSegmenter;
 const noteLayouts = new Map();
 
-function noteTextWidth(text) {
-  return minimumNodeTextWidth(text, NOTE_FONT_SIZE);
+function noteTextWidth(text, fontSize) {
+  return minimumNodeTextWidth(text, fontSize);
 }
 
 // Index after the last punctuation break in `piece`, or its full length.
@@ -192,8 +220,8 @@ function noteBreakIndex(piece) {
   return piece.length;
 }
 
-function wrapNoteText(text, width) {
-  const original = wrapNoteWords(String(text).match(/\s+|\S+/gu) || [], width);
+function wrapNoteText(text, width, fontSize) {
+  const original = wrapNoteWords(String(text).match(/\s+|\S+/gu) || [], width, fontSize);
   if (!/\p{Script=Han}/u.test(text)) return original;
 
   // Space-only tokens can waste half a line before a Chinese phrase. Split Han
@@ -209,12 +237,12 @@ function wrapNoteText(text, width) {
       words.push(token);
     }
   }
-  const compact = wrapNoteWords(words, width);
+  const compact = wrapNoteWords(words, width, fontSize);
   // Never grow a note or change a same-height wrap merely to rebalance lines.
   return compact.length < original.length ? compact : original;
 }
 
-function wrapNoteWords(words, width) {
+function wrapNoteWords(words, width, fontSize) {
   const lines = [];
   let line = '';
   const flush = () => {
@@ -227,14 +255,14 @@ function wrapNoteWords(words, width) {
       if (line) line += ' ';
       continue;
     }
-    if (noteTextWidth(line + word) <= width) {
+    if (noteTextWidth(line + word, fontSize) <= width) {
       line += word;
       continue;
     }
     flush();
     let piece = '';
     for (const { segment } of noteSegmenter.segment(word)) {
-      while (piece && noteTextWidth(piece + segment) > width) {
+      while (piece && noteTextWidth(piece + segment, fontSize) > width) {
         const cut = noteBreakIndex(piece);
         lines.push(piece.slice(0, cut));
         piece = piece.slice(cut);
@@ -260,32 +288,91 @@ function noteGapIndex(fromIndex, toIndex) {
   return best?.gap ?? null;
 }
 
-function noteRect(message) {
-  const note = noteLayout(message);
+function noteRect(message, note = noteLayout(message)) {
   return note && { x: note.x, y: note.top, width: note.width, height: note.bottom - note.top };
 }
 
-function noteLayout(message) {
-  if (noteLayouts.has(message)) return noteLayouts.get(message);
-  let result = null;
+function noteGeometry(message) {
   const fromIndex = participantIndexById.get(message.from);
   const toIndex = participantIndexById.get(message.to);
-  if (message.note && typeof message.y === 'number' && fromIndex !== undefined && toIndex !== undefined && fromIndex !== toIndex) {
-    const gap = noteGapIndex(fromIndex, toIndex);
-    const x = participantX(gap) + NOTE_ARROW_INSET + NOTE_TEXT_INSET;
-    const maxWidth = Math.max(1, participantX(gap + 1) - NOTE_LIFELINE_CLEARANCE - x);
-    const lines = noteTextWidth(message.note) <= maxWidth ? [message.note] : wrapNoteText(message.note, maxWidth);
-    const baseline = message.y + 18;
-    result = {
-      x,
-      baseline,
-      lines,
-      width: Math.max(...lines.map(noteTextWidth)),
-      // Include fallback-font ascent in the same bounds used for title clearance.
-      top: baseline - NOTE_FONT_SIZE * 1.2,
-      bottom: message.y + 22 + (lines.length - 1) * NOTE_LINE_HEIGHT,
-    };
+  if (!message.note || typeof message.y !== 'number' || fromIndex === undefined || toIndex === undefined || fromIndex === toIndex) return null;
+  const gap = noteGapIndex(fromIndex, toIndex);
+  const x = participantX(gap) + NOTE_ARROW_INSET + NOTE_TEXT_INSET;
+  return { x, maxWidth: Math.max(1, participantX(gap + 1) - NOTE_LIFELINE_CLEARANCE - x) };
+}
+
+function noteLines(text, maxWidth, fontSize) {
+  return noteTextWidth(text, fontSize) <= maxWidth ? [text] : wrapNoteText(text, maxWidth, fontSize);
+}
+
+function measureNote(message, geometry, fontSize) {
+  const lines = noteLines(message.note, geometry.maxWidth, fontSize);
+  const baseline = message.y + NOTE_BASELINE_OFFSET;
+  return {
+    x: geometry.x,
+    baseline,
+    lines,
+    fontSize,
+    width: Math.max(...lines.map((line) => noteTextWidth(line, fontSize))),
+    // Include fallback-font ascent in the same bounds used for title clearance.
+    top: baseline - fontSize * 1.2,
+    bottom: message.y + 22 + (lines.length - 1) * NOTE_LINE_HEIGHT,
+  };
+}
+
+function noteObstacles(message, note = noteRect(message)) {
+  return [
+    ['message label', messageLabelBox(message)],
+    ['message route', messageRouteBox(message)],
+    ['note', note],
+  ];
+}
+
+function largerNotesLoseClearance(preferred, fallback) {
+  const obstacles = asArray(sequence.messages).map((message) => ({
+    message,
+    preferred: noteObstacles(message, noteRect(message, preferred.get(message) ?? null)),
+    fallback: noteObstacles(message, noteRect(message, fallback.get(message) ?? null)),
+  }));
+  for (const [message, note] of preferred) {
+    const larger = noteRect(message, note);
+    const smaller = noteRect(message, fallback.get(message));
+    for (const other of obstacles) {
+      if (typeof other.message.y !== 'number' || other.message.y <= message.y) continue;
+      if (other.preferred.some(([, rect], index) => {
+        const original = other.fallback[index][1];
+        return rect && rectsOverlap(larger, rect, 2) && (!original || !rectsOverlap(smaller, original, 2));
+      })) return true;
+    }
   }
+  return false;
+}
+
+// Choose one size for the whole diagram before calculating its height.
+function selectNoteFontSize() {
+  const preferred = new Map();
+  const fallback = new Map();
+  for (const message of asArray(sequence.messages)) {
+    const geometry = noteGeometry(message);
+    if (!geometry) continue;
+    const larger = measureNote(message, geometry, NOTE_FONT_SIZE);
+    const smaller = measureNote(message, geometry, NOTE_FALLBACK_FONT_SIZE);
+    if (larger.lines.length > smaller.lines.length) return NOTE_FALLBACK_FONT_SIZE;
+    preferred.set(message, larger);
+    fallback.set(message, smaller);
+  }
+  if (readableMessages && preferred.size && largerNotesLoseClearance(preferred, fallback)) {
+    return NOTE_FALLBACK_FONT_SIZE;
+  }
+  return NOTE_FONT_SIZE;
+}
+
+const noteFontSize = selectNoteFontSize();
+
+function noteLayout(message) {
+  if (noteLayouts.has(message)) return noteLayouts.get(message);
+  const geometry = noteGeometry(message);
+  const result = geometry ? measureNote(message, geometry, noteFontSize) : null;
   noteLayouts.set(message, result);
   return result;
 }
@@ -319,7 +406,6 @@ const viewBox = sequence.meta?.viewBox || [automaticWidth, automaticHeight];
 
 // Showcase is the fast-authoring default; standard retains legacy label geometry.
 const messageFontSize = readableMessages ? 11 : 9;
-const messageUnitWidth = readableMessages ? 6.6 : 5.2;
 const layout = {
   topY: 72,
   participantW,
@@ -334,7 +420,6 @@ const layout = {
   legendY: viewBox[1] - 54,
   leftX,
   colGap,
-  labelH: readableMessages ? 18 : 16,
 };
 
 const participantBoxWidthNote = automaticWidth
@@ -363,19 +448,21 @@ const participants = new Map(asArray(sequence.participants).map((participant, in
 ]));
 
 function messageGeometry(message) {
-  const from = participants.get(message.from);
-  const to = participants.get(message.to);
-  if (!from || !to || typeof message.y !== 'number') return null;
-  const direction = to.cx > from.cx ? 1 : -1;
-  const start = from.cx + direction * 7;
-  const end = to.cx - direction * 7;
+  const fromIndex = participantIndexById.get(message.from);
+  const toIndex = participantIndexById.get(message.to);
+  if (fromIndex === undefined || toIndex === undefined || typeof message.y !== 'number') return null;
+  const from = participantX(fromIndex);
+  const to = participantX(toIndex);
+  const direction = to > from ? 1 : -1;
+  const start = from + direction * 7;
+  const end = to - direction * 7;
   return { start, end, center: (start + end) / 2 };
 }
 
 function messageLabelBox(message, relationIndex = null) {
   const geometry = messageGeometry(message);
   if (!geometry) return null;
-  const width = Math.max(34, textUnits(message.label) * messageUnitWidth + 12);
+  const width = Math.max(34, textUnits(message.label) * messageUnitWidth + 12) + changeEdgeLabelExtraWidth(message);
   return {
     relation: message,
     relationIndex,
@@ -383,7 +470,7 @@ function messageLabelBox(message, relationIndex = null) {
     x: geometry.center - width / 2,
     y: message.y - 20,
     width,
-    height: layout.labelH,
+    height: messageLabelHeight,
   };
 }
 
@@ -808,11 +895,7 @@ function validateSequence() {
       const blocker = messages
         .map((other, otherIndex) => {
           if (otherIndex === messageIndex || typeof other.y !== 'number' || other.y <= message.y) return null;
-          const hit = [
-            ['message label', messageLabelBox(other)],
-            ['message route', messageRouteBox(other)],
-            ['note', noteRect(other)],
-          ].find(([, rect]) => rect && rectsOverlap(ownRect, rect, 2));
+          const hit = noteObstacles(other).find(([, rect]) => rect && rectsOverlap(ownRect, rect, 2));
           return hit ? { message: other, index: otherIndex, kind: hit[0], rect: hit[1] } : null;
         })
         .filter(Boolean)
@@ -936,8 +1019,11 @@ function renderParticipant(participant) {
   const labelFontSize = fittedNodeFontSize(participant.label, brandLabelFitWidth(participant, layout.participantW), 11, 8);
   // Fitting a smaller title moves its top down; lift the whole text block equally.
   const fittedTextOffset = (11 - labelFontSize) / 2;
+  const sublabelFontSize = hasSub ? fittedNodeFontSize(participant.sublabel, layout.participantW, readableSublabelPreferred, readableSublabelMinimum) : 0;
+  const labelY = layout.topY + (hasSub ? layout.participantLabelY : layout.participantSingleLabelY) - fittedTextOffset;
+  const sublabelY = layout.topY + layout.participantSublabelY - fittedTextOffset;
   const sub = hasSub
-    ? `\n          <text data-detail="context" x="${participant.cx}" y="${layout.topY + layout.participantSublabelY - fittedTextOffset}" class="t-muted" font-size="${fittedNodeFontSize(participant.sublabel, layout.participantW, readableSublabelPreferred, readableSublabelMinimum)}" text-anchor="middle">${esc(participant.sublabel)}</text>`
+    ? `\n          <text data-detail="context" x="${participant.cx}" y="${sublabelY}" class="t-muted" font-size="${sublabelFontSize}" text-anchor="middle">${esc(participant.sublabel)}</text>`
     : '';
   const brand = renderBrandMark(participant, { x: participant.x + layout.participantW - 22, y: layout.topY + 6 });
   // drilldowns / href 简写一并解析：单目标会包 <a> + 角标，多目标只写 Passport 属性
@@ -953,12 +1039,22 @@ function renderParticipant(participant) {
   const mark = drilldowns.length
     ? `\n          ${renderDrilldownMark({ x: participant.x, y: layout.topY, width: layout.participantW, height: layout.participantH })}`
     : '';
-  return wrapSingleChildAnchor(`        <g ${focusNodeAttrs(participant.id, participant.label, passport, sequence.meta.locale)}>
+  const changeBadge = renderChangeBadge(participant, nodeChangeBadgePos({
+    x: participant.x,
+    y: layout.topY,
+    width: layout.participantW,
+    height: layout.participantH,
+  }, { rx: 6, rightInset: brand ? 26 : 0, avoid: [
+    centredTextBox(participant.cx, labelY, labelFontSize, participant.label),
+    hasSub && centredTextBox(participant.cx, sublabelY, sublabelFontSize, participant.sublabel),
+  ] }));
+  const badge = changeBadge ? `\n          ${changeBadge}` : '';
+  return wrapSingleChildAnchor(`        <g ${focusNodeAttrs(participant.id, participant.label, passport, sequence.meta.locale)}${changeNodeAttrs(changeReview, participant)}>
           ${focusNodeTitle(participant.label, passport)}
           <rect x="${participant.x}" y="${layout.topY}" width="${layout.participantW}" height="${layout.participantH}" rx="6" class="c-mask"/>
           <rect x="${participant.x}" y="${layout.topY}" width="${layout.participantW}" height="${layout.participantH}" rx="6" class="${fill}"${animateAttr(sequence.meta, 'node', participant.index)} stroke-width="1.5"/>
           ${renderSemanticSigil(participant.type, { icon: participant.icon, x: participant.x + 6, y: layout.topY + 6 })}${brand ? `\n          ${brand}` : ''}
-          <text data-node-label=""${hasSub ? ' data-detail-anchor=""' : ''} x="${participant.cx}" y="${layout.topY + (hasSub ? layout.participantLabelY : layout.participantSingleLabelY) - fittedTextOffset}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(participant.label)}</text>${sub}${mark}
+          <text data-node-label=""${hasSub ? ' data-detail-anchor=""' : ''} x="${participant.cx}" y="${labelY}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(participant.label)}</text>${sub}${mark}${badge}
         </g>`, drilldowns);
 }
 
@@ -974,20 +1070,28 @@ function renderLifeline(participant, end) {
 }
 
 function renderSegment(segment, index) {
-  return `        <rect data-graph-role="structural-frame" data-composition-frame-kind="segment" data-composition-frame-id="${index}" x="48" y="${segment.from}" width="${viewBox[0] - 96}" height="${segment.to - segment.from}" rx="10" class="c-lane" stroke-width="1"/>`;
+  return `        <rect data-graph-role="structural-frame" data-composition-frame-kind="segment" data-composition-frame-id="${index}"${changeFrameAttrs(changeReview, segmentFrame(segment))} x="48" y="${segment.from}" width="${viewBox[0] - 96}" height="${segment.to - segment.from}" rx="10" class="c-lane" stroke-width="1"/>`;
 }
 
 function renderSegmentLabel(segment, index) {
   const label = segmentLabelBox(segment);
-  return `        <g data-graph-role="segment-label" data-segment-id="${index}">
+  const frame = { x: 48, y: segment.from, width: viewBox[0] - 96, height: segment.to - segment.from };
+  const badge = renderChangeBadge(segment, frameChangeBadgePos(label, {
+    maxRight: frame.x + frame.width - 8,
+    fallback: nodeChangeBadgePos(frame, { rx: 10 }),
+  }));
+  return `        <g data-graph-role="segment-label" data-segment-id="${index}"${changeFrameAttrs(changeReview, segmentFrame(segment))}>
           <rect x="${label.x}" y="${label.y}" width="${label.width}" height="${label.height}" rx="3" class="c-mask"/>
-          <text x="${label.x + 6}" y="${label.y + 13}" class="t-muted" font-size="9" font-weight="600">${esc(segment.label)}</text>
+          <text x="${label.x + 6}" y="${label.y + 13}" class="t-muted" font-size="9" font-weight="600">${esc(segment.label)}</text>${badge ? `\n          ${badge}` : ''}
         </g>`;
 }
 
 function renderActivation(activation) {
   const participant = participants.get(activation.participant);
-  const fill = componentFill[activation.type] || componentFill[participant.type] || 'c-external';
+  // In a change review colour means change, so activation bars stay neutral.
+  const fill = changeReview.active
+    ? 'c-activation-review'
+    : componentFill[activation.type] || componentFill[participant.type] || 'c-external';
   const x = participant.cx - 5;
   const height = activation.to - activation.from;
   return `        <rect x="${x}" y="${activation.from}" width="10" height="${height}" rx="3" class="c-mask"/>
@@ -998,13 +1102,13 @@ function messageLabel(message, x1, x2) {
   const box = messageLabelBox(message);
   const center = box ? box.x + box.width / 2 : (x1 + x2) / 2;
   const y = message.y - 10;
-  const labelW = box?.width || Math.max(34, textUnits(message.label) * messageUnitWidth + 12);
+  const labelW = box?.width || (Math.max(34, textUnits(message.label) * messageUnitWidth + 12) + changeEdgeLabelExtraWidth(message));
   // A colored line gets a label in the same color, as in the legend swatches.
   // Gray lines (default and return) keep the readable muted text color.
   const accent = ['emphasis', 'security', 'dashed'].includes(message.variant) ? edgeLabelAccent(message.variant) : 't-muted';
   return `        <g data-detail="context">
-          <rect x="${center - labelW / 2}" y="${y - 10}" width="${labelW}" height="${layout.labelH}" rx="3" class="c-mask"/>
-          <text x="${center}" y="${y}" class="${accent}" font-size="${messageFontSize}" text-anchor="middle">${esc(message.label)}</text>
+          <rect x="${center - labelW / 2}" y="${y - 10}" width="${labelW}" height="${messageLabelHeight}" rx="3" class="c-mask"/>
+          <text x="${center}" y="${y}" class="${accent}" font-size="${messageFontSize}" text-anchor="middle">${renderChangeEdgePrefix(message)}${esc(message.label)}</text>
         </g>`;
 }
 
@@ -1036,10 +1140,10 @@ function renderMessage(message, index) {
   // Notes carry message conditions and already reserve timeline space. Keep
   // them readable at the default depth; Map still hides context without reflow.
   const note = noteBox
-    ? `\n        <text data-detail="context" x="${noteBox.x}" y="${noteBox.baseline}" class="t-muted" font-size="${NOTE_FONT_SIZE}">${noteContent}</text>`
+    ? `\n        <text data-detail="context" x="${noteBox.x}" y="${noteBox.baseline}" class="t-muted" font-size="${noteBox.fontSize}">${noteContent}</text>`
     : '';
-  return `        <g ${focusEdgeAttrs(message.from, message.to, message.label, index, message.id)}>
-          <path data-composition-edge-from="${esc(message.from)}" data-composition-edge-to="${esc(message.to)}"${message.id ? ` data-composition-edge-id="${esc(message.id)}"` : ''} data-composition-points="${routePointsValue([[start, message.y], [end, message.y]])}" d="M ${start} ${message.y} L ${end} ${message.y}" class="${cls}"${animateAttr(sequence.meta, 'edge', index)} stroke-width="${strokeWidth}"${dash} marker-end="url(#${marker})"/>
+  return `        <g ${focusEdgeAttrs(message.from, message.to, message.label, index, message.id)}${changeEdgeAttrs(changeReview, message)}>
+          <path data-composition-edge-from="${esc(message.from)}" data-composition-edge-to="${esc(message.to)}"${message.id ? ` data-composition-edge-id="${esc(message.id)}"` : ''} data-composition-points="${routePointsValue([[start, message.y], [end, message.y]])}" d="M ${start} ${message.y} L ${end} ${message.y}" class="${cls}"${animateAttr(sequence.meta, 'edge', index)} stroke-width="${strokeWidth}"${dash} marker-end="url(#${changeMarkerFor(message, marker, changeReview)})"/>
 ${messageLabel(message, start, end)}${noteBackdrop(message)}${note}
         </g>`;
 }
@@ -1063,7 +1167,8 @@ function renderLegend() {
     entries: legendEntries(),
     locale: sequence.meta.locale,
     layout: legendLayout(),
-    renderSwatch: (entry) => `<path d="M ${entry.x} ${entry.baseline - 3} L ${entry.x + 34} ${entry.baseline - 3}" class="${entry.className}" stroke-width="${entry.strokeWidth || 1.4}"${entry.dash ? ` stroke-dasharray="${entry.dash}"` : ''} marker-end="url(#${entry.marker})"/>`,
+    renderSwatch: (entry) => renderChangeLegendSwatch(entry)
+      || `<path d="M ${entry.x} ${entry.baseline - 3} L ${entry.x + 34} ${entry.baseline - 3}" class="${entry.className}" stroke-width="${entry.strokeWidth || 1.4}"${entry.dash ? ` stroke-dasharray="${entry.dash}"` : ''} marker-end="url(#${entry.marker})"/>`,
   });
 }
 
@@ -1075,7 +1180,7 @@ function renderSvg() {
   const readerFit = sequence.meta?.viewBox ? '' : ' data-reader-fit="width-first"';
   return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" data-sequence-column-fit="${columnFit}"${readerFit} ${svgRootAttrs(sequence.meta)} data-motion-choreography="sequence">
 ${svgAccessibleText(sequence.meta, 'sequence')}
-${renderDefinitions()}
+${renderDefinitions(changeMarkerDefinitions(changeReview))}
 
         <!-- Background Grid -->
         <rect width="100%" height="100%" fill="url(#grid)" />
@@ -1104,13 +1209,17 @@ ${renderLegend()}
 }
 
 validateSequence();
-writeDiagram({
-  outPath,
-  template,
-  diagramType: 'sequence',
-  meta: sequence.meta,
-  svg: renderSvg(),
-  cards: sequence.cards,
-  sourceEvidence,
+if (process.argv.includes('--layout-json')) {
+  console.log(JSON.stringify(layoutReportFromSvg(renderSvg(), 'sequence'), null, 2));
+} else {
+  writeDiagram({
+    outPath,
+    template,
+    diagramType: 'sequence',
+    meta: sequence.meta,
+    svg: renderSvg(),
+    cards: sequence.cards,
+    sourceEvidence,
     diagram: sequence,
-});
+  });
+}

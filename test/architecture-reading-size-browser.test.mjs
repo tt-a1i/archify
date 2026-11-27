@@ -16,7 +16,7 @@ test('short architecture cards keep all text inside their authored borders', asy
   const input = path.join(dir, 'input.json');
   const output = path.join(dir, 'output.html');
   const components = [
-    { id: 'short', type: 'backend', label: 'UI', sublabel: 'API', tag: 'R', pos: [30, 70], size: [84, 24] },
+    { id: 'short', type: 'backend', label: 'Checkout API', sublabel: 'API', tag: 'R', pos: [30, 70], size: [84, 24], change: 'modified' },
     { id: 'brand', type: 'backend', label: 'AI', sublabel: 'UI', tag: 'L', brand: 'openai', pos: [185, 64], size: [68, 36] },
     { id: 'detail', type: 'backend', label: '网关', sublabel: '队列', tag: '批次', href: 'gateway.html', pos: [30, 130], size: [105, 36] },
   ];
@@ -46,7 +46,8 @@ test('short architecture cards keep all text inside their authored borders', asy
           return { text: text.textContent, l: cx - ink.actualBoundingBoxLeft, r: cx + ink.actualBoundingBoxRight,
             t: cy - ink.actualBoundingBoxAscent, b: cy + ink.actualBoundingBoxDescent };
         });
-        return { bounds: [x, y, width, height], rows };
+        const badge = card.querySelector(':scope > [data-change-badge] rect')?.getBBox();
+        return { bounds: [x, y, width, height], rows, badge: badge && [badge.x, badge.y, badge.width, badge.height] };
       }) };
   })()` }, await browser.sessionPromise);
   assert.equal(observed.exceptionDetails, undefined);
@@ -56,9 +57,14 @@ test('short architecture cards keep all text inside their authored borders', asy
   assert.deepEqual(points.split(';'), ['114,82', '145,82', '185,82']);
   assert.ok(marker);
   assert.deepEqual(pin, [150, 68]);
-  for (const { bounds: [x, y, width, height], rows } of cards) rows.forEach((row, index) => {
+  assert.ok(cards[0].badge, 'the compact marked card keeps its change badge');
+  for (const { bounds: [x, y, width, height], rows, badge } of cards) rows.forEach((row, index) => {
     assert.ok(row.l >= x && row.r <= x + width && row.t >= y && row.b <= y + height, JSON.stringify(row));
     assert.ok(rows.slice(index + 1).every(other => row.r <= other.l || row.l >= other.r || row.b <= other.t || row.t >= other.b), JSON.stringify(rows));
+    if (badge) {
+      const [left, top, width, height] = badge;
+      assert.ok(row.r <= left || row.l >= left + width || row.b <= top || row.t >= top + height, `change badge covers ${row.text}`);
+    }
   });
 });
 

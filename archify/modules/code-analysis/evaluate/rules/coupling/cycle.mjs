@@ -1,0 +1,114 @@
+import { cyclicComponents } from './scc.mjs';
+import { partitionEdges, shortestCycle } from './cycle-graph.mjs';
+// coupling/cycle — module-level (package / directory) strongly connected
+// components. A module cycle says two directories each need something from
+// the other; it does NOT by itself mean a file imports itself back, which is
+// what coupling/import-cycle checks.
+//
+// Severity (version 2, product plan section 0.2): a cyclic dependency is the
+// structural problem the analysis reports first, so it is an error. The
+// modules cannot be understood, tested or changed independently, whether or
+// not a file cycle exists underneath. That is a statement about structure, not
+// proof of a runtime failure.
+//   - error:   every edge of the cycle has a module-scope import, or the
+//              language is Java (structural references);
+//   - warning: the component only closes through deferred, conditional or
+//              type-only edges, so it is coupling without a load-time cycle;
+//   - info:    Rust. Modules of one crate compile together and mutual `use`
+//              is ordinary there, so the cycle is recorded without a verdict.
+export const code = 'coupling/cycle';
+export const dimension = 'coupling';
+export const severity = 'error';
+export const confidence = 1.0;
+export const version = 2;
+
+// An edge is "lazy-only" when every import behind it sits inside a function
+// body. This is lexical evidence only; the function may run at import time.
+const lazyOnly = (e) => (e.kinds.lazy || 0) > 0 && e.kinds.lazy === e.weight;
+
+/** Explicit counts take precedence; legacy mixed flags remain conservatively unverified. */
+const isEager = (e) => e.kinds.eager !== undefined ? e.kinds.eager > 0
+  : !['lazy', 'typeOnly', 'conditional'].some((flag) => e.kinds[flag] > 0);
+
+export function run({ graph, facts }) {
+  if (['c', 'cpp'].includes(graph.repository?.language)) {
+    if (!facts) return [];
+    const contexts = [...new Set(facts.imports.flatMap(edge => edge.contexts || []))].sort();
+    const findings = new Map();
+    for (const context of contexts) {
+      const edges = new Map();
+      for (const imp of facts.imports) {
+        if (!imp.resolved || !imp.contexts?.includes(context)) continue;
+        const from = graph.fileModules?.[imp.from], to = graph.fileModules?.[imp.to];
+        if (!from || !to || from === to) continue;
+        const key = JSON.stringify([from, to]);
+        if (!edges.has(key)) edges.set(key, { from, to, weight: 0, kinds: { eager: 0, static: 0 }, evidence: [] });
+        const edge = edges.get(key);
+        edge.weight += 1; edge.kinds.static += 1;
+        if (edge.evidence.length < 5) edge.evidence.push({ file: imp.from, line: imp.line, to: imp.to });
+      }
+      const scoped = { ...graph, repository: { ...graph.repository, language: 'java' }, edges: [...edges.values()] };
+      for (const finding of run({ graph: scoped })) {
+        const key = JSON.stringify(finding.subject.modules);
+        const previous = findings.get(key);
+        if (previous) { previous.evidence.contexts.push(context); continue; }
+        finding.message = `${finding.subject.modules.length} C/C++ modules form an include dependency cycle in recorded translation-unit contexts. Example from ${context}: ${finding.evidence.path.map(id => graph.modules.find(module => module.id === id)?.label || id).join(' → ')}. This is a structural relationship, not runtime loading evidence.`;
+        finding.severity = 'warning';
+        finding.evidence.contexts = [context];
+        finding.evidence.exampleContext = context;
+        finding.supportedFixes = ['review whether the mutual include dependency is intentional', 'move shared declarations or use forward declarations where possible'];
+        findings.set(key, finding);
+      }
+    }
+    return [...findings.values()].sort((a, b) => JSON.stringify(a.subject).localeCompare(JSON.stringify(b.subject)));
+  }
+  const java = ['java', 'rust'].includes(graph.repository?.language);
+  const rust = graph.repository?.language === 'rust';
+  const ids = graph.modules.map((m) => m.id).sort();
+  const sccsOf = (edges) => cyclicComponents(ids, edges);
+  const all = sccsOf(graph.edges);
+  const eagerEdges = graph.edges.filter(isEager);
+  const eager = eagerEdges.length === graph.edges.length ? all : sccsOf(eagerEdges);
+  const eagerKey = new Set(eager.map((scc) => scc.join(' ')));
+  const parts = partitionEdges(all, graph.edges);
+
+  const labelOf = new Map(graph.modules.map((m) => [m.id, m.label]));
+  return all.sort((a, b) => b.length - a.length || (a[0] < b[0] ? -1 : 1)).map((scc) => {
+    const internal = parts.get(scc[0]);
+
+    // Check this whole component. A smaller module-scope SCC may still be
+    // nested inside it, so a mixed component is never described as safe.
+    const eagerSurvives = eagerKey.has(scc.join(' '));
+    const lazyEdges = internal.filter(lazyOnly);
+    const kind = java ? 'structural' : eagerSurvives ? 'eager' : 'mixed';
+    const level = rust ? 'info' : kind === 'mixed' ? 'warning' : severity;
+    const pathEdges = eagerSurvives ? internal.filter(isEager) : internal;
+    const pathOut = new Map(scc.map((id) => [id, []]));
+    for (const edge of pathEdges) pathOut.get(edge.from).push(edge.to);
+    for (const targets of pathOut.values()) targets.sort();
+    const path = shortestCycle(scc[0], node => pathOut.get(node));
+    return {
+      code, dimension, severity: level, confidence,
+      message: java
+        ? `${scc.length} modules form a structural ${rust ? 'Rust' : 'Java'} dependency cycle: ${path.map(id => labelOf.get(id)).join(' → ')} → ${labelOf.get(path[0])}. ${rust ? 'Source references do not establish runtime import order or partial initialization.' : 'Directory grouping does not establish file cycles or class initialization behavior.'}`
+        : eagerSurvives
+        ? `${scc.length} modules depend on each other at package level: ${path.map((id) => labelOf.get(id)).join(' → ')} → ${labelOf.get(path[0])}. See coupling/import-cycle for whether any file actually cycles.`
+        : `${scc.length} modules form a package-level dependency component containing deferred, conditional, or type-only edges: ${path.map((id) => labelOf.get(id)).join(' → ')} → ${labelOf.get(path[0])}. This grouping does not establish initialization behavior; it may also contain module-scope subcycles.`,
+      subject: { modules: scc },
+      evidence: {
+        kind,
+        path,
+        edges: internal.map((e) => ({ from: e.from, to: e.to, weight: e.weight, lazy: e.kinds.lazy || 0, ...(!java ? { deferred: !isEager(e) } : {}) })),
+        closingLazyImports: lazyEdges.flatMap((e) => e.evidence.map((v) => ({ file: v.file, line: v.line, to: v.to }))).slice(0, 8),
+        imports: internal.flatMap((e) => e.evidence.slice(0, 2).map((v) => ({ file: v.file, line: v.line, to: v.to, ...Object.fromEntries(['lazy', 'conditional', 'typeOnly', 'deferred'].filter((flag) => v[flag]).map((flag) => [flag, true])) }))).slice(0, 12),
+        totalImports: internal.reduce((n, e) => n + e.weight, 0),
+        threshold: null,
+      },
+      supportedFixes: [
+        'move the shared piece both sides need into a new leaf module',
+        'invert one edge by passing the dependency in as a parameter',
+        java ? 'review package boundaries and public APIs before moving types' : 'if one direction is a single import, check whether it is a convenience re-export that can be dropped',
+      ],
+    };
+  });
+}

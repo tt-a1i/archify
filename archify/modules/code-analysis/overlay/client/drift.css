@@ -1,0 +1,47 @@
+
+#architecture-drift-panel[hidden] { display: none; }
+#architecture-drift-panel {
+  position: relative;
+  box-sizing: border-box; width: 100%; max-height: calc(100dvh - 7rem);
+  overflow: auto; padding: 1rem; border-radius: 12px;
+  color: var(--text, #182233); background: var(--panel, #f9fbff);
+  border: 1px solid var(--border, #8290a5); box-shadow: 0 8px 30px #0004;
+  font: 14px/1.45 system-ui, sans-serif; text-align: start;
+}
+#architecture-drift-panel header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: .5rem; }
+#architecture-drift-panel :is(h2,h3,h4) { margin: .4rem 0; }
+#architecture-drift-panel h2 { font-size: 1.15rem; }
+#architecture-drift-panel :is(p,details,pre) { margin: .45rem 0; }
+#architecture-drift-panel :is(button,select) {
+  padding: .34rem .55rem; margin: .16rem .25rem .16rem 0; border: 1px solid currentColor;
+  border-radius: .4rem; color: inherit; background: inherit; font: inherit; cursor: pointer;
+  overflow-wrap: anywhere; text-align: start;
+}
+#architecture-drift-panel [aria-pressed="true"] { outline: 2px solid #9a6aff; outline-offset: 1px; }
+#architecture-drift-panel summary { cursor: pointer; }
+#architecture-drift-panel .drift-summary { font-weight: 650; }
+#architecture-drift-panel ul { padding: 0; margin: .3rem 0 0; list-style: none; }
+#architecture-drift-panel li button { width: 100%; }
+#architecture-drift-panel :is(.drift-location,.drift-pin,pre) { overflow-wrap: anywhere; }
+#architecture-drift-panel pre { white-space: pre-wrap; padding: .6rem; border: 1px solid currentColor; border-radius: .4rem; }
+.diagram-container > svg.drift-geometry {
+  position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; min-width: 0;
+  margin: 0; pointer-events: none; overflow: visible; fill: none; stroke: #aa48ff; stroke-width: 3; stroke-linecap: round;
+}
+.drift-geometry path { stroke-dasharray: 5 4; }
+.diagram-container > svg.drift-confirmed { stroke: #079687; }
+
+@media (min-width: 1050px) {
+  .architecture-drift-layout.architecture-drift-open {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(285px, 375px); gap: 0 1rem; align-items: start;
+    max-width: 1440px;
+  }
+  .architecture-drift-layout.architecture-drift-open > :not(.diagram-container, #architecture-drift-panel) { grid-column: 1 / -1; }
+  .architecture-drift-layout.architecture-drift-open > .diagram-container > svg { max-width: 100%; }
+}
+@media (max-width: 1049px) {
+  #architecture-drift-panel { max-height: none; margin: 1rem auto; }
+}
+@media print {
+  #architecture-drift-panel, #architecture-drift-toggle, .drift-geometry { display: none !important; }
+}

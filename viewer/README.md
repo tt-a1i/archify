@@ -17,9 +17,9 @@ in the shell because it carries its license notice and embedded font data.
 unchanged by all ten renderers and the installed Skill. These maintainer
 sources live outside the packaged `archify/` directory.
 
-From `archify/`, run `npm run generate:viewer` after editing any source.
-`npm run check:viewer` verifies freshness without writing; root
-`npm run test:generated` and `npm run test:full` include that check. Shared Viewer changes also require rebuilding the checked-in
+From `archify/`, run `pnpm run generate:viewer` after editing any source.
+`pnpm run check:viewer` verifies freshness without writing; root
+`pnpm run test:generated` and `pnpm run test:full` include that check. Shared Viewer changes also require rebuilding the checked-in
 Checkout comparison from its tracked snapshots. From the repository root, run:
 
 ```sh

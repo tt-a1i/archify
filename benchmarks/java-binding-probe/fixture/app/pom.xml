@@ -1,0 +1,8 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <parent><groupId>probe</groupId><artifactId>parent</artifactId><version>1</version></parent>
+  <artifactId>app</artifactId>
+  <dependencies>
+    <dependency><groupId>probe</groupId><artifactId>api</artifactId><version>1</version></dependency>
+  </dependencies>
+</project>

@@ -9,13 +9,13 @@ import { faqFacts } from '../data/faq-facts.mjs';
       <p class="facts-identity"><span data-en="This Archify is the open-source diagram skill at " data-zh="这里的 Archify 指 ">This Archify is the open-source diagram skill at </span><a href={canonicalUrl('index')}>archify.si</a><span data-en=", maintained in the " data-zh=" 上的开源画图技能，项目源码位于 ">, maintained in the </span><a href="https://github.com/tt-a1i/archify">tt-a1i/archify</a><span data-en=" repository." data-zh=" 仓库。"> repository.</span></p>
       <details class="facts-drawer" open>
         <summary class="facts-summary">
-          <span data-en="Read frequent questions, supported inputs, and scope boundaries (5)" data-zh="展开常见问题、支持输入与能力边界说明（5 项）">Read frequent questions, supported inputs, and scope boundaries (5)</span>
+          <span data-en={`Read frequent questions, supported inputs, and scope boundaries (${faqFacts.length})`} data-zh={`展开常见问题、支持输入与能力边界说明（${faqFacts.length} 项）`}>Read frequent questions, supported inputs, and scope boundaries ({faqFacts.length})</span>
           <i aria-hidden="true">+</i>
         </summary>
         <div class="facts-grid">
           {faqFacts.map(fact => <article><h3 data-en={fact.question[0]} data-zh={fact.question[1]}>{fact.question[0]}</h3><p data-en={fact.answer[0]} data-zh={fact.answer[1]}>{fact.answer[0]}</p></article>)}
         </div>
-        <p class="facts-exports" data-en="Exports include PNG, JPEG, WebP, SVG, and WebM. Availability depends on the format and browser or local tooling; open a proof artifact to check the export menu before choosing a delivery format." data-zh="导出格式包含 PNG、JPEG、WebP、SVG 和 WebM。具体可用性取决于格式、浏览器或本地工具；选择交付格式前，可先打开成品检查导出菜单。">Exports include PNG, JPEG, WebP, SVG, and WebM. Availability depends on the format and browser or local tooling; open a proof artifact to check the export menu before choosing a delivery format.</p>
+        <p class="facts-exports" data-en="Diagrams export PNG, JPEG, WebP, SVG, and WebM; a diagram with a Story also exports 1080p WebM or MP4 video, and one-page answers export a long image or PDF. Availability depends on the format and browser or local tooling; open a proof artifact to check the export menu before choosing a delivery format." data-zh="图可以导出 PNG、JPEG、WebP、SVG 和 WebM；带 Story 的图还能导出 1080p 的 WebM 或 MP4 视频，一页式解答可以导出长图或 PDF。具体可用性取决于格式、浏览器或本地工具；选择交付格式前，可先打开成品检查导出菜单。">Diagrams export PNG, JPEG, WebP, SVG, and WebM; a diagram with a Story also exports 1080p WebM or MP4 video, and one-page answers export a long image or PDF. Availability depends on the format and browser or local tooling; open a proof artifact to check the export menu before choosing a delivery format.</p>
       </details>
       <nav class="facts-links" aria-label="Product sources">
         <a href="https://github.com/tt-a1i/archify/blob/main/archify/SKILL.md" data-en="Read the stable Skill ↗" data-zh="阅读稳定版 Skill ↗">Read the stable Skill ↗</a>
