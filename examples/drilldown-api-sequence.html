@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="dark light">
-  <meta name="generator" content="archify 3.3.2-dev.1">
+  <meta name="generator" content="archify 3.3.3-dev.1">
   <meta name="archify-reader-contract" content="declared-wide-v1">
   <title>API Cache Miss Sequence Diagram</title>
   <script>
@@ -8077,12 +8077,15 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             };
           }).filter(function (edge) { return edge && edge.points.length > 1; });
 
-          var nodes = Array.prototype.slice.call(root.querySelectorAll('[data-node-id][data-animate="node"]')).map(function (element, index) {
+          var nodeSelector = sequence ? '[data-animate="node"]' : '[data-node-id][data-animate="node"]';
+          var nodes = Array.prototype.slice.call(root.querySelectorAll(nodeSelector)).map(function (element, index) {
+            var wrapper = sequence ? element.closest('[data-node-id]') : element;
+            if (!wrapper) return null;
             var box;
             try { box = element.getBBox(); } catch (_) { return null; }
             var painted = element.querySelector('[class*="c-"]') || element;
             var computed = getComputedStyle(painted);
-            var windows = sequence && sequence.nodes[element.getAttribute('data-node-id')];
+            var windows = sequence && sequence.nodes[wrapper.getAttribute('data-node-id')];
             return {
               x: box.x,
               y: box.y,

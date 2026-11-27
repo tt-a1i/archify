@@ -124,7 +124,7 @@ Use archify to add a guided story to this diagram and export it as a video.
 
 ## 빠른 시작
 
-**현재 개발 버전:** `v3.3.2-dev.1` (안정 릴리스가 아닙니다). [변경 이력](CHANGELOG.md#unreleased)을 확인하세요.
+**현재 개발 버전:** `v3.3.3-dev.1`. [변경 이력](CHANGELOG.md#unreleased)을 확인하세요.
 
 ### 1. 설치
 

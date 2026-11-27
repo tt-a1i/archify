@@ -5948,7 +5948,7 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
   &lt;meta charset=&quot;UTF-8&quot;&gt;
   &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;
   &lt;meta name=&quot;color-scheme&quot; content=&quot;dark light&quot;&gt;
-  &lt;meta name=&quot;generator&quot; content=&quot;archify 3.3.2-dev.1&quot;&gt;
+  &lt;meta name=&quot;generator&quot; content=&quot;archify 3.3.3-dev.1&quot;&gt;
   &lt;meta name=&quot;archify-reader-contract&quot; content=&quot;declared-wide-v1&quot;&gt;
   &lt;title&gt;Checkout Platform — Baseline Diagram&lt;/title&gt;
   &lt;script&gt;
@@ -14092,12 +14092,15 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             };
           }).filter(function (edge) { return edge &amp;&amp; edge.points.length &gt; 1; });
 
-          var nodes = Array.prototype.slice.call(root.querySelectorAll(&#39;[data-node-id][data-animate=&quot;node&quot;]&#39;)).map(function (element, index) {
+          var nodeSelector = sequence ? &#39;[data-animate=&quot;node&quot;]&#39; : &#39;[data-node-id][data-animate=&quot;node&quot;]&#39;;
+          var nodes = Array.prototype.slice.call(root.querySelectorAll(nodeSelector)).map(function (element, index) {
+            var wrapper = sequence ? element.closest(&#39;[data-node-id]&#39;) : element;
+            if (!wrapper) return null;
             var box;
             try { box = element.getBBox(); } catch (_) { return null; }
             var painted = element.querySelector(&#39;[class*=&quot;c-&quot;]&#39;) || element;
             var computed = getComputedStyle(painted);
-            var windows = sequence &amp;&amp; sequence.nodes[element.getAttribute(&#39;data-node-id&#39;)];
+            var windows = sequence &amp;&amp; sequence.nodes[wrapper.getAttribute(&#39;data-node-id&#39;)];
             return {
               x: box.x,
               y: box.y,
@@ -22925,7 +22928,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   &lt;meta charset=&quot;UTF-8&quot;&gt;
   &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;
   &lt;meta name=&quot;color-scheme&quot; content=&quot;dark light&quot;&gt;
-  &lt;meta name=&quot;generator&quot; content=&quot;archify 3.3.2-dev.1&quot;&gt;
+  &lt;meta name=&quot;generator&quot; content=&quot;archify 3.3.3-dev.1&quot;&gt;
   &lt;meta name=&quot;archify-reader-contract&quot; content=&quot;declared-wide-v1&quot;&gt;
   &lt;title&gt;Checkout Platform — Fraud Gate Diagram&lt;/title&gt;
   &lt;script&gt;
@@ -31071,12 +31074,15 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             };
           }).filter(function (edge) { return edge &amp;&amp; edge.points.length &gt; 1; });
 
-          var nodes = Array.prototype.slice.call(root.querySelectorAll(&#39;[data-node-id][data-animate=&quot;node&quot;]&#39;)).map(function (element, index) {
+          var nodeSelector = sequence ? &#39;[data-animate=&quot;node&quot;]&#39; : &#39;[data-node-id][data-animate=&quot;node&quot;]&#39;;
+          var nodes = Array.prototype.slice.call(root.querySelectorAll(nodeSelector)).map(function (element, index) {
+            var wrapper = sequence ? element.closest(&#39;[data-node-id]&#39;) : element;
+            if (!wrapper) return null;
             var box;
             try { box = element.getBBox(); } catch (_) { return null; }
             var painted = element.querySelector(&#39;[class*=&quot;c-&quot;]&#39;) || element;
             var computed = getComputedStyle(painted);
-            var windows = sequence &amp;&amp; sequence.nodes[element.getAttribute(&#39;data-node-id&#39;)];
+            var windows = sequence &amp;&amp; sequence.nodes[wrapper.getAttribute(&#39;data-node-id&#39;)];
             return {
               x: box.x,
               y: box.y,

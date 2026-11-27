@@ -302,7 +302,7 @@ test('duplicates: service worker failure preserves the last successful analysis'
   assert.equal(failed.status, 500);
   assert.equal((await failed.json()).diagnostics[0].code, 'duplicates/tool-unavailable');
   for (const [name, bytes] of saved) assert.deepEqual(fs.readFileSync(path.join(analysis, name)), bytes, name);
-  assert.equal(fs.readdirSync(out).some(name => name.startsWith('analysis.next-')), false);
+  assert.equal(fs.existsSync(path.join(out, '.archify-analysis.lock')), false, 'the failed run releases its staging directory');
   fs.writeFileSync(config, '{}');
   const retried = await fetch(view.url + '/analyze', { method: 'POST', headers });
   assert.equal(retried.status, 200, 'pending state clears after the worker failure');
