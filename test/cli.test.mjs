@@ -28,12 +28,13 @@ function visualEvidencePaths(file) {
   };
 }
 
-function copyInstalledSkill(target) {
-  fs.cpSync(skillRoot, target, {
+function copyInstalledSkill(target, sourceRoot = skillRoot) {
+  fs.cpSync(sourceRoot, target, {
     recursive: true,
     filter(source) {
-      const rel = path.relative(skillRoot, source);
-      return !rel.split(path.sep).includes('node_modules')
+      const rel = path.relative(sourceRoot, source);
+      return !rel.startsWith('.package-negative-')
+        && !rel.split(path.sep).includes('node_modules')
         && rel !== 'test' && !rel.startsWith(`test${path.sep}`)
         // Another test creates this short-lived directory under skillRoot so
         // Ajv resolves from the checkout. Never copy a concurrently removed
@@ -2000,4 +2001,24 @@ test('render rejects an extra positional argument', () => {
 
   assert.notEqual(result.status, 0);
   assert.deepEqual(fs.readdirSync(dir), ['spec.json']);
+});
+
+
+test('installed Skill copy excludes concurrent package-test markers and nested dependencies', () => {
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-copy-marker-'));
+  const source = path.join(out, 'source');
+  const marker = '.package-negative-fixture.txt';
+  const nested = path.join(source, 'modules', 'code-analysis', 'node_modules', 'example');
+  try {
+    fs.mkdirSync(nested, { recursive: true });
+    fs.writeFileSync(path.join(source, marker), 'temporary fixture');
+    fs.writeFileSync(path.join(source, 'keep.txt'), 'runtime');
+    fs.writeFileSync(path.join(nested, 'dependency.txt'), 'dependency');
+    copyInstalledSkill(path.join(out, 'skill'), source);
+    assert.equal(fs.readFileSync(path.join(out, 'skill', 'keep.txt'), 'utf8'), 'runtime');
+    assert.equal(fs.existsSync(path.join(out, 'skill', marker)), false);
+    assert.equal(fs.existsSync(path.join(out, 'skill', 'modules', 'code-analysis', 'node_modules')), false);
+  } finally {
+    fs.rmSync(out, { recursive: true, force: true });
+  }
 });
