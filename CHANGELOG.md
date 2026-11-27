@@ -6,6 +6,10 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 > Development identity: `v3.3.3-dev.1`. Not a stable release.
 
+### Added
+
+- **Sequence self-messages.** Messages whose `from` and `to` name the same participant now render as loop-back arrows, turn inward at the right edge, retain stable edge identity and Viewer interactions, and include the complete loop and wrapped note in automatic sizing. Active-profile label widths and route-end spacing keep labels, notes and subsequent messages clear; structured diagnostics identify insufficient lane space, crowded loops and timeline overflow.
+
 ### Fixed
 
 - Code Analysis output publication recovery (#1471, #1472).
