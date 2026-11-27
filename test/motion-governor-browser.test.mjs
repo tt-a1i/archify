@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { once } from 'node:events';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { ChromeVisualBrowser, findChrome } from '../archify/bin/visual-check.mjs';
 
@@ -47,7 +48,14 @@ test('Motion Governor preserves mode, ownership, continuous Live flow and real c
   files.static = path.join(scratch, 'static.html');
   fs.writeFileSync(files.static, fs.readFileSync(files.architecture, 'utf8').replace(' data-animation="trace"', ''));
   const browser = new ChromeVisualBrowser(chrome);
-  t.after(() => browser.close());
+  t.after(async () => {
+    if (browser.child.exitCode === null && browser.child.signalCode === null) {
+      const exited = once(browser.child, 'exit', { signal: AbortSignal.timeout(5000) }).catch(() => {});
+      await Promise.race([browser.cdp.send('Browser.close').catch(() => {}), exited]);
+      await exited;
+    }
+    await browser.close();
+  });
   await browser.sessionPromise;
   let session;
   let browserContextId;
@@ -280,11 +288,19 @@ test('Motion Governor preserves mode, ownership, continuous Live flow and real c
     await load('sequence');
     const result = await run(`(async () => {
       const svg = document.querySelector('.diagram-container svg');
-      const rows = [...svg.querySelectorAll('[data-animate="edge"]')].map(element =>
-        Math.round(element.getPointAtLength(element.getTotalLength() / 2).y)).sort((a, b) => a - b);
+      const edges = [...svg.querySelectorAll('[data-animate="edge"]')];
+      const edgeRow = element => Math.round(element.getPointAtLength(element.getTotalLength() / 2).y);
+      const rows = edges.map(edgeRow).sort((a, b) => a - b);
+      const traceRows = edges.filter(element => element.closest('[data-edge-to]')?.getAttribute('data-edge-to') === 'trace').map(edgeRow);
       const canvas = CanvasRenderingContext2D.prototype;
       const originalArc = canvas.arc, originalClear = canvas.clearRect;
-      const current = new WeakMap(), seen = [];
+      const originalMove = canvas.moveTo, originalStroke = canvas.stroke;
+      const current = new WeakMap(), seen = [], cometFrames = [];
+      const starts = new WeakMap(), pulses = [];
+      const participants = [...svg.querySelectorAll('[data-node-id] > [data-animate="node"]')].map(element => {
+        const box = element.getBBox();
+        return { id: element.closest('[data-node-id]').getAttribute('data-node-id'), x: box.x, y: box.y };
+      });
       let peak = 0, last = 0;
       const started = performance.now();
       try {
@@ -302,14 +318,29 @@ test('Motion Governor preserves mode, ownership, continuous Live flow and real c
             const row = Math.round(y);
             if (seen.at(-1) !== row) seen.push(row);
             last = performance.now() - started;
+            cometFrames.push({ row, at: last });
           }
           return originalArc.apply(this, arguments);
         };
+        canvas.moveTo = function (x, y) {
+          starts.set(this, { x, y });
+          return originalMove.apply(this, arguments);
+        };
+        canvas.stroke = function () {
+          const start = starts.get(this);
+          if (start && this.shadowBlur > 0 && this.lineWidth < 3.2) {
+            const participant = participants.find(item => Math.abs(start.x - item.x) < 12 && Math.abs(start.y - item.y) < 8);
+            if (participant) pulses.push({ id: participant.id, at: performance.now() - started });
+          }
+          return originalStroke.apply(this, arguments);
+        };
         const video = await Archify.motion.recordWebm({ fps: 24, duration: ${duration} });
-        return { rows, seen, peak, last, elapsed: performance.now() - started, size: video.size, type: video.type };
+        return { rows, traceRows, seen, peak, last, pulses, cometFrames, participants, elapsed: performance.now() - started, size: video.size, type: video.type };
       } finally {
         canvas.arc = originalArc;
         canvas.clearRect = originalClear;
+        canvas.moveTo = originalMove;
+        canvas.stroke = originalStroke;
       }
     })()`);
     assert.match(result.type, /^video\/webm/);
@@ -318,6 +349,13 @@ test('Motion Governor preserves mode, ownership, continuous Live flow and real c
     assert.equal(result.peak, 1);
     assert.ok(result.elapsed >= duration && result.elapsed < duration + 2200, 'recording uses the requested duration');
     assert.ok(result.last > duration * 0.61, 'the final authored message remains animated near the end of the timeline');
+    assert.ok(new Set(result.pulses.map(pulse => pulse.id)).size >= 2, 'sender and receiver participants pulse during the recording');
+    assert.ok(result.pulses.some(pulse => pulse.id === 'trace'), 'the receive-only trace participant pulses when the message arrives');
+    assert.equal(result.traceRows.length, 1, 'fixture has exactly one message addressed to trace');
+    const traceFrames = result.cometFrames.filter(frame => frame.row === result.traceRows[0]);
+    const firstTracePulse = result.pulses.find(pulse => pulse.id === 'trace');
+    assert.ok(traceFrames.length && firstTracePulse.at >= traceFrames.at(-1).at - 1000 / 24 - 10,
+      'the receive-only pulse starts no earlier than the final frame of its incoming message, allowing one recording frame');
   });
 
   await t.test('settled Live node glow preserves Classic card depth across themes', async () => {
