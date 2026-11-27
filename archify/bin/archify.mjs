@@ -2819,8 +2819,11 @@ function formatDiagnostics(error, diagnostics = []) {
   return [
     error,
     ...diagnostics.map((entry) => {
+      const position = Number.isInteger(entry.subject?.line)
+        ? ` (line ${entry.subject.line}${Number.isInteger(entry.subject.column) ? `, column ${entry.subject.column}` : ''})`
+        : '';
       const fix = entry.supportedFixes?.length ? ` Fix: ${entry.supportedFixes.join('; ')}.` : '';
-      return `[${entry.code}] ${entry.message}${fix}`;
+      return `[${entry.code}] ${entry.message}${position}${fix}`;
     }),
   ].join('\n');
 }

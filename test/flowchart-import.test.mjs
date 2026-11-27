@@ -314,6 +314,27 @@ test('CLI import command rejects invalid UTF-8 input instead of importing replac
   }
 });
 
+test('CLI import command reports the source position in human-readable errors', () => {
+  const cli = path.join(skillRoot, 'bin', 'archify.mjs');
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-position-'));
+  const src = path.join(tmpDir, 'stray-end.mmd');
+  fs.writeFileSync(src, 'flowchart LR\nA --> B\nend\n', 'utf8');
+  try {
+    const result = spawnSync(process.execPath, [cli, 'import', 'flowchart', src], {
+      encoding: 'utf8',
+      stdio: 'pipe',
+    });
+    assert.notEqual(result.status, 0, 'Expected non-zero exit for a stray "end"');
+    assert.ok(
+      result.stderr.includes('(line 3, column 1)'),
+      `Expected the diagnostic position in stderr, got: ${result.stderr}`,
+    );
+    assert.ok(result.stderr.includes('[import/flowchart-unbalanced-end]'));
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
+});
+
 test('CLI import command still accepts a correctly encoded literal U+FFFD', () => {
   const cli = path.join(skillRoot, 'bin', 'archify.mjs');
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-utf8-ok-'));
