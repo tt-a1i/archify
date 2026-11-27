@@ -6,7 +6,7 @@ Design rationale and non-goals are tracked in [issue #663](https://github.com/tt
 
 ## What a community package is
 
-A community package lives **outside** the Archify core and depends on it — the way the [Hermes](../integrations/hermes-agent/) and [DeepSeek Harness](../integrations/deepseek-harness/) integrations already do: author versioned JSON IR, invoke the Archify CLI, keep everything deterministic and fail-closed.
+A community package lives **outside** the Archify core and depends on it — the way the [Hermes](../integrations/hermes-agent/) and [DeepSeek Harness](../integrations/deepseek-harness/) integrations already do: author versioned JSON IR and invoke the Archify CLI, or work with delivered pages without modifying them. Existing validation and delivery requirements still apply.
 
 Archify has **no in-process plugin API, and none is planned for this registry**. Third-party code never executes inside the render pipeline, inside Archify CI, or inside the delivery trust model.
 
@@ -16,7 +16,7 @@ Archify has **no in-process plugin API, and none is planned for this registry**.
 | `recipe` | Scenario/recipe library (the shape of `archify/recipes/scenarios.mjs`) | E-commerce architecture scenarios |
 | `brand-marks` | Brand-mark catalog or visual preset | Corporate identity pack |
 | `locale` | `meta.translations` catalog | Community-maintained language |
-| `wrapper` | Standalone tool that emits Archify JSON IR and calls the CLI | Terraform state → diagram |
+| `wrapper` | Standalone tool that calls the Archify CLI or works with delivered output without modifying it | Terraform state → diagram; multi-diagram index |
 
 ## Submitting a package
 
@@ -107,7 +107,7 @@ Removal is also a PR, on record. Maintainers may remove a listing when the packa
 <details>
 <summary>展开中文提交步骤、字段说明和维护指南</summary>
 
-可提交五种独立包：`skill`（领域技能包）、`recipe`（场景配方库）、`brand-marks`（品牌标识或预设）、`locale`（`meta.translations` 语言目录）、`wrapper`（生成 JSON IR 并调用 CLI 的独立工具）。它们由作者维护，不会被 Archify 渲染器加载执行。
+可提交五种独立包：`skill`（领域技能包）、`recipe`（场景配方库）、`brand-marks`（品牌标识或预设）、`locale`（`meta.translations` 语言目录）、`wrapper`（调用 Archify CLI，或在不修改已交付产物的前提下使用这些产物的独立工具）。它们由作者维护，不会被 Archify 渲染器加载执行。
 
 1. 在自己的公开仓库或 npm 发布包，写清用途、使用方式、实际测试过的 Archify 和 IR 版本。准备公开的校验回执、示例产物或截图，移除凭据、私人源码、个人信息和客户数据。
 2. Fork 本仓库，在本地副本中从最新 `dev` 建分支。上方英文折叠区给出了 `upstream` 和建分支命令；已有 `upstream` 时先核对地址，不重复添加。

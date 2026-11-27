@@ -14,7 +14,7 @@
     },
     "type": {
       "enum": ["skill", "recipe", "brand-marks", "locale", "wrapper"],
-      "description": "skill: agent skill pack; recipe: scenario/recipe library; brand-marks: brand-mark catalog or preset; locale: meta.translations catalog; wrapper: standalone tool that emits Archify JSON IR and calls the CLI."
+      "description": "skill: agent skill pack; recipe: scenario/recipe library; brand-marks: brand-mark catalog or preset; locale: meta.translations catalog; wrapper: standalone tool that calls the Archify CLI or works with delivered output without modifying it."
     },
     "summary": {
       "type": "object",
