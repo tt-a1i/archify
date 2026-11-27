@@ -278,6 +278,34 @@ test('a phase border repair clears other arrows beyond the self-call', t => {
   render(t, doc);
 });
 
+test('a phase border repair clears fractional arrow positions after rounding', t => {
+  const doc = sequence([
+    { from: 'left', to: 'left', y: 208, label: 'refresh' },
+    { from: 'middle', to: 'right', y: 254.4, label: 'notify' },
+  ]);
+  doc.segments = [{ from: 204, to: 210, label: 'Phase' }];
+  const diagnostic = failure(t, doc, 'sequence/segment-message-border-run');
+  assert.deepEqual(diagnostic.supportedFixes, [
+    'set /segments/0/to to at least 259 to leave the message above it',
+  ]);
+  doc.segments[0].to = Number(diagnostic.supportedFixes[0].match(/\b(\d+) to leave/)[1]);
+  render(t, doc);
+});
+
+test('a phase border repair omits a move that would overlap another phase label', t => {
+  const doc = sequence([
+    { from: 'left', to: 'left', y: 210, label: 'refresh' },
+    { from: 'middle', to: 'right', y: 258, label: 'notify' },
+  ], { meta: { viewBox: [920, 680] } });
+  doc.segments = [{ from: 250, to: 272, label: 'First phase' }, { from: 278, to: 400, label: 'Next phase' }];
+  const diagnostic = failure(t, doc, 'sequence/segment-message-border-run');
+  assert.deepEqual(diagnostic.supportedFixes, [
+    'set /segments/0/from to at most 206 to leave the message below it',
+  ]);
+  doc.segments[0].from = Number(diagnostic.supportedFixes[0].match(/\b(\d+) to leave/)[1]);
+  render(t, doc);
+});
+
 test('simultaneous self-call notes fall back only when the larger text overlaps', t => {
   const doc = sequence([
     { id: 'retry', from: 'left', to: 'left', y: 200, label: 'retry', note: 'Retry only active sessions' },

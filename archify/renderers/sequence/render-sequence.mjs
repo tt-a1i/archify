@@ -242,12 +242,24 @@ function messageArrowYs(message) {
   return message.from === message.to ? [message.y, messageBottom(message)] : [message.y];
 }
 
-function clearPhaseBorderY(y, sortedArrowYs, direction) {
+const PHASE_ARROW_CLEARANCE = 4;
+
+function phaseBorderCrowdsArrow(border, arrowY) {
+  return Math.abs(border - arrowY) < PHASE_ARROW_CLEARANCE;
+}
+
+function clearPhaseBorderY(boundaryArrowY, sortedArrowYs, direction) {
+  const roundOutward = direction > 0 ? Math.ceil : Math.floor;
+  const clearOf = (arrowY) => {
+    const y = roundOutward(arrowY + direction * PHASE_ARROW_CLEARANCE);
+    return phaseBorderCrowdsArrow(y, arrowY) ? y + direction : y;
+  };
   // Walk in the same direction as the repair, including any newly crowded arrows.
+  let y = clearOf(boundaryArrowY);
   const start = direction > 0 ? 0 : sortedArrowYs.length - 1;
   for (let index = start; index >= 0 && index < sortedArrowYs.length; index += direction) {
     const arrowY = sortedArrowYs[index];
-    if (Math.abs(y - arrowY) < 4) y = arrowY + direction * 4;
+    if (phaseBorderCrowdsArrow(y, arrowY)) y = clearOf(arrowY);
   }
   return y;
 }
@@ -584,7 +596,7 @@ function segmentLabelOccupants() {
   ]).filter((occupant) => occupant.rect);
 }
 
-function legacySegmentLabelBox(segment) {
+function legacySegmentLabelBox(segment, segments) {
   const labelW = Math.max(42, textUnits(segment.label) * 5.2 + 14);
   const occupied = segmentLabelOccupants();
   const label = { x: 56, y: segment.from - 22, width: labelW, height: 18 };
@@ -592,31 +604,31 @@ function legacySegmentLabelBox(segment) {
     if (!occupied.some(({ rect }) => rectsOverlap(label, rect, 2))) break;
     label.y -= 22;
   }
-  if (!segmentLabelMisplaced(label, segment)) return label;
+  if (!segmentLabelMisplaced(label, segment, segments)) return label;
   // Abutting segments can leave no room on the border: the badge climbed
   // behind the participant headers or into the previous segment, where it
   // names the wrong phase. Its own frame's top-left corner, clear of messages,
   // names the right one.
   // Another segment's title normally sits on that segment's own top border,
   // so its strip is taken too.
-  const otherTitles = asArray(sequence.segments).filter((other) => other !== segment)
+  const otherTitles = segments.filter((other) => other !== segment)
     .map((other) => ({ x: 56, y: other.from - 22, width: Math.max(42, textUnits(other.label) * 5.2 + 14), height: 18 }));
   const inside = { x: 56, y: segment.from + 4, width: labelW, height: 18 };
   for (let attempt = 0; attempt < 4 && inside.y + inside.height <= segment.to - 2; attempt += 1) {
-    if (!segmentLabelMisplaced(inside, segment)
+    if (!segmentLabelMisplaced(inside, segment, segments)
       && ![...occupied.map(({ rect }) => rect), ...otherTitles, ...participants.values()].some((rect) => rectsOverlap(inside, rect, 2))) return inside;
     inside.y += 22;
   }
   return label;
 }
 
-function segmentLabelBox(segment) {
-  const label = legacySegmentLabelBox(segment);
+function segmentLabelBox(segment, segments = asArray(sequence.segments)) {
+  const label = legacySegmentLabelBox(segment, segments);
   const headers = [...participants.values()];
   const coveredHeaders = headers.filter((header) => rectsOverlap(label, header, 0));
   if (!coveredHeaders.length || label.y + label.height > segment.from) return label;
 
-  const others = asArray(sequence.segments).filter((other) => other !== segment);
+  const others = segments.filter((other) => other !== segment);
   // Only the unique first, non-overlapping phase gets this local adjustment.
   // Nested phases keep their authored bounds and the existing title policy.
   if (others.some((other) => other.from <= segment.from
@@ -633,7 +645,7 @@ function segmentLabelBox(segment) {
     ...headers,
     // Use actual legacy placements: another title may have climbed above its
     // nominal slot. Calling the unchanged helper keeps this non-recursive.
-    ...others.map(legacySegmentLabelBox),
+    ...others.map((other) => legacySegmentLabelBox(other, segments)),
   ];
   if (!obstacles.some((rect) => rectsOverlap(candidate, rect, 2))) return candidate;
 
@@ -681,7 +693,7 @@ function messageFitsAt(messageIndex, y) {
   const arrowYs = messageArrowYs(moved);
   if (asArray(sequence.segments).some((segment) =>
     [segment.from, segment.to].some((border) =>
-      arrowYs.some((arrowY) => Math.abs(border - arrowY) < 4)
+      arrowYs.some((arrowY) => phaseBorderCrowdsArrow(border, arrowY))
     )
   )) return false;
   const [left, right] = messageSpan(moved);
@@ -707,12 +719,25 @@ function segmentLabelBlocker(segment) {
 // A badge on its frame's top border is the intended title. It stops naming
 // that frame once it hides mostly behind the participant headers, or once
 // message labels pushed it up into another segment.
-function segmentLabelMisplaced(label, segment) {
+function segmentLabelMisplaced(label, segment, segments) {
   const half = label.height / 2;
   if (layout.topY + layout.participantH - label.y > half) return true;
   if (label.y >= segment.from - 22) return false;
-  return asArray(sequence.segments).some((other) => other !== segment
+  return segments.some((other) => other !== segment
     && Math.min(label.y + label.height, other.to) - Math.max(label.y, other.from) > half);
+}
+
+function phaseBorderFits(segments, segmentIndex, edge, y) {
+  const moved = { ...segments[segmentIndex], [edge]: y };
+  if (moved.from < layout.topY || moved.to > layout.lifelineBottom + 20 || moved.from >= moved.to) return false;
+  // A new boundary can reposition titles in adjacent phases as well.
+  const proposed = segments.map((segment, index) => index === segmentIndex ? moved : segment);
+  const labels = proposed.map((segment) => segmentLabelBox(segment, proposed));
+  const occupants = segmentLabelOccupants();
+  return labels.every((label, index) =>
+    !occupants.some(({ rect }) => rectsOverlap(label, rect, 2))
+    && !labels.slice(index + 1).some((other) => rectsOverlap(label, other, 0))
+  );
 }
 
 const compositionFrames = asArray(sequence.segments).map((segment, index) => ({
@@ -1064,15 +1089,15 @@ function validateSequence() {
         const border = segment[edge];
         for (const [messageIndex, message] of messageList.entries()) {
           if (typeof message.y !== 'number') continue;
-          const arrowY = messageArrowYs(message).find((y) => Math.abs(border - y) < 4);
+          const arrowY = messageArrowYs(message).find((y) => phaseBorderCrowdsArrow(border, y));
           if (arrowY === undefined) continue;
-          const after = clearPhaseBorderY(messageBottom(message) + 4, phaseArrowYs, 1);
-          const before = clearPhaseBorderY(message.y - 4, phaseArrowYs, -1);
+          const after = clearPhaseBorderY(messageBottom(message), phaseArrowYs, 1);
+          const before = clearPhaseBorderY(message.y, phaseArrowYs, -1);
           const moves = [];
-          if (after <= layout.lifelineBottom + 20 && (edge === 'to' || after < segment.to)) {
+          if (phaseBorderFits(segments, segmentIndex, edge, after)) {
             moves.push(`to at least ${after} to leave the message above it`);
           }
-          if (before >= layout.topY && (edge === 'from' || before > segment.from)) {
+          if (phaseBorderFits(segments, segmentIndex, edge, before)) {
             moves.push(`to at most ${before} to leave the message below it`);
           }
           const hint = moves.length ? `move the edge ${moves.join(', or ')}` : 'adjust the phase range to clear the message';
@@ -1082,7 +1107,7 @@ function validateSequence() {
           diagnostics.push({
             code: 'sequence/segment-message-border-run', severity: 'error', message: problem,
             subject: { diagramType: 'sequence', collection: 'segments', index: segmentIndex, path },
-            evidence: { segmentLabel: segment.label, edge, borderY: border, messageIndex, messageLabel: message.label, messageY: arrowY, minimumClearancePx: 4 },
+            evidence: { segmentLabel: segment.label, edge, borderY: border, messageIndex, messageLabel: message.label, messageY: arrowY, minimumClearancePx: PHASE_ARROW_CLEARANCE },
             supportedFixes: moves.map((move) => `set ${path} ${move}`),
           });
         }
