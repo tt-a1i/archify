@@ -410,6 +410,11 @@ function noteObstacles(message, note = noteRect(message)) {
   ];
 }
 
+function simultaneousSelfCalls(first, second) {
+  return first !== second && first.y === second.y
+    && first.from === first.to && second.from === second.to;
+}
+
 function largerNotesLoseClearance(preferred, fallback) {
   const obstacles = asArray(sequence.messages).map((message) => ({
     message,
@@ -420,8 +425,10 @@ function largerNotesLoseClearance(preferred, fallback) {
     const larger = noteRect(message, note);
     const smaller = noteRect(message, fallback.get(message));
     for (const other of obstacles) {
-      if (typeof other.message.y !== 'number' || other.message.y <= message.y) continue;
-      if (other.preferred.some(([, rect], index) => {
+      const simultaneous = simultaneousSelfCalls(message, other.message);
+      if (!simultaneous && !(typeof other.message.y === 'number' && other.message.y > message.y)) continue;
+      if (other.preferred.some(([kind, rect], index) => {
+        if (simultaneous && kind !== 'note') return false;
         const original = other.fallback[index][1];
         return rect && rectsOverlap(larger, rect, 2) && (!original || !rectsOverlap(smaller, original, 2));
       })) return true;
@@ -992,24 +999,37 @@ function validateSequence() {
       if (!readableMessages) return;
       const blocker = messages
         .map((other, otherIndex) => {
-          if (otherIndex === messageIndex || typeof other.y !== 'number' || other.y <= message.y) return null;
-          const hit = noteObstacles(other).find(([, rect]) => rect && rectsOverlap(ownRect, rect, 2));
+          // Keep a simultaneous pair together and report its overlap once.
+          const simultaneous = otherIndex > messageIndex && simultaneousSelfCalls(message, other);
+          if (!simultaneous && !(typeof other.y === 'number' && other.y > message.y)) return null;
+          const hit = noteObstacles(other).find(([kind, rect]) => rect
+            && (!simultaneous || kind === 'note') && rectsOverlap(ownRect, rect, 2));
           return hit ? { message: other, index: otherIndex, kind: hit[0], rect: hit[1] } : null;
         })
         .filter(Boolean)
         .sort((a, b) => a.message.y - b.message.y)[0];
       if (!blocker) return;
+      const simultaneous = blocker.message.y === message.y;
+      const blockerPath = `/messages/${blocker.index}/${simultaneous ? 'note' : 'y'}`;
+      const evidence = {
+        lines: note.lines.length,
+        note: bounds(ownRect),
+        blocker: { message: blocker.message.label ?? null, path: blockerPath, y: blocker.message.y, kind: blocker.kind, bounds: bounds(blocker.rect) },
+      };
+      if (simultaneous) {
+        report(`Note on message "${message.label}" overlaps the note on simultaneous message "${blocker.message.label}" — shorten a note or give both notes more horizontal room.`, {
+          code: 'sequence/note-overlap',
+          subject,
+          evidence,
+          supportedFixes: [],
+        });
+        return;
+      }
       const requiredY = Math.ceil(note.bottom + 22);
-      const blockerPath = `/messages/${blocker.index}/y`;
       report(`Note on message "${message.label}" wraps to ${lines} (down to y=${bottom}) and reaches message "${blocker.message.label}" at y=${blocker.message.y} — move "${blocker.message.label}" and later messages down so it sits at y=${requiredY} or below, or shorten the note.`, {
         code: 'sequence/note-overlap',
         subject,
-        evidence: {
-          lines: note.lines.length,
-          note: bounds(ownRect),
-          blocker: { message: blocker.message.label ?? null, path: blockerPath, y: blocker.message.y, kind: blocker.kind, bounds: bounds(blocker.rect) },
-          requiredY,
-        },
+        evidence: { ...evidence, requiredY },
         supportedFixes: messageFitsAt(blocker.index, requiredY) ? [`set ${blockerPath} to ${requiredY}`] : [],
       });
     });
@@ -1032,13 +1052,24 @@ function validateSequence() {
           if (typeof message.y !== 'number') continue;
           const arrowY = messageArrowYs(message).find((y) => Math.abs(border - y) < 4);
           if (arrowY === undefined) continue;
-          const problem = `Segment "${segment.label}" ${edge === 'from' ? 'top' : 'bottom'} edge at y ${border} runs along message "${message.label}" (arrow at y ${arrowY}) — move the edge to at least ${arrowY + 4} to leave the message above it, or to at most ${arrowY - 4} to leave it below.`;
+          const after = messageBottom(message) + 4;
+          const before = message.y - 4;
+          const moves = [];
+          if (after <= layout.lifelineBottom + 20 && (edge === 'to' || after < segment.to)) {
+            moves.push(`to at least ${after} to leave the message above it`);
+          }
+          if (before >= layout.topY && (edge === 'from' || before > segment.from)) {
+            moves.push(`to at most ${before} to leave the message below it`);
+          }
+          const hint = moves.length ? `move the edge ${moves.join(', or ')}` : 'adjust the phase range to clear the message';
+          const path = `/segments/${segmentIndex}/${edge}`;
+          const problem = `Segment "${segment.label}" ${edge === 'from' ? 'top' : 'bottom'} edge at y ${border} runs along message "${message.label}" (arrow at y ${arrowY}) — ${hint}.`;
           problems.push(problem);
           diagnostics.push({
             code: 'sequence/segment-message-border-run', severity: 'error', message: problem,
-            subject: { diagramType: 'sequence', collection: 'segments', index: segmentIndex, path: `/segments/${segmentIndex}/${edge}` },
+            subject: { diagramType: 'sequence', collection: 'segments', index: segmentIndex, path },
             evidence: { segmentLabel: segment.label, edge, borderY: border, messageIndex, messageLabel: message.label, messageY: arrowY, minimumClearancePx: 4 },
-            supportedFixes: [`set /segments/${segmentIndex}/${edge} to at least ${arrowY + 4} to leave the message above it`, `set /segments/${segmentIndex}/${edge} to at most ${arrowY - 4} to leave the message below it`],
+            supportedFixes: moves.map((move) => `set ${path} ${move}`),
           });
         }
       }

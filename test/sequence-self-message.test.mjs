@@ -47,8 +47,8 @@ function route(html, id) {
   return { points, markup: group[1] };
 }
 
-function note(html) {
-  const match = html.match(/<text data-detail="context" x="([\d.]+)" y="([\d.]+)" class="[^"]+" font-size="([\d.]+)"( text-anchor="end")?>([\s\S]*?)<\/text>/);
+function note(html, index = 0) {
+  const match = [...html.matchAll(/<text data-detail="context" x="([\d.]+)" y="([\d.]+)" class="[^"]+" font-size="([\d.]+)"( text-anchor="end")?>([\s\S]*?)<\/text>/g)][index];
   assert.ok(match, 'self-call note is rendered');
   const spans = [...match[5].matchAll(/<tspan[^>]*>([^<]*)<\/tspan>/g)];
   return { x: Number(match[1]), y: Number(match[2]), fontSize: Number(match[3]), anchor: match[4] ? 'end' : 'start', lines: spans.length ? spans.map(span => span[1]) : [match[5]] };
@@ -245,15 +245,53 @@ test('a loop spacing repair is withheld when either horizontal leg would follow 
   }
 });
 
-test('a phase border must clear the return leg of a self-call', t => {
+test('a phase border near a return leg offers repairs that clear the entire self-call', t => {
   const doc = sequence([{ from: 'left', to: 'left', y: 200, label: 'refresh' }]);
   doc.segments = [{ from: 150, to: 244, label: 'Phase' }];
   const diagnostic = failure(t, doc, 'sequence/segment-message-border-run');
   assert.equal(diagnostic.subject.path, '/segments/0/to');
   assert.equal(diagnostic.evidence.messageY, 242);
-  assert.equal(diagnostic.supportedFixes[0], 'set /segments/0/to to at least 246 to leave the message above it');
-  doc.segments[0].to = 246;
-  render(t, doc);
+  assert.deepEqual(diagnostic.supportedFixes, [
+    'set /segments/0/to to at least 246 to leave the message above it',
+    'set /segments/0/to to at most 196 to leave the message below it',
+  ]);
+  for (const fix of diagnostic.supportedFixes) {
+    doc.segments[0].to = Number(fix.match(/\b(\d+) to leave/)[1]);
+    render(t, doc);
+  }
+  doc.segments[0] = { from: 210, to: 244, label: 'Phase' };
+  const limited = failure(t, doc, 'sequence/segment-message-border-run');
+  assert.deepEqual(limited.supportedFixes, [diagnostic.supportedFixes[0]], 'omit a repair that would invert the phase');
+});
+
+test('simultaneous self-call notes fall back only when the larger text overlaps', t => {
+  const doc = sequence([
+    { id: 'retry', from: 'left', to: 'left', y: 200, label: 'retry', note: 'Retry only active sessions' },
+    { id: 'flush', from: 'right', to: 'right', y: 200, label: 'flush', note: 'Leave a record of the flush.' },
+  ], {
+    participants: ['left', 'right'].map(id => ({ id, type: 'backend', label: id })),
+    meta: { viewBox: [560, 480] },
+  });
+  const html = render(t, doc);
+  const left = note(html);
+  const right = note(html, 1);
+  assert.equal(left.y, right.y, 'the notes keep their simultaneous baseline');
+  assert.equal(left.fontSize, 7);
+  assert.equal(right.fontSize, 7);
+  assert.ok(left.x + minimumNodeTextWidth(left.lines[0], left.fontSize)
+    < right.x - minimumNodeTextWidth(right.lines[0], right.fontSize));
+
+  doc.messages[0].note = 'Retry active sessions now please';
+  doc.messages[1].note = 'Leave a record of this flush here.';
+  const diagnostic = failure(t, doc, 'sequence/note-overlap');
+  assert.equal(diagnostic.subject.path, '/messages/0/note');
+  assert.equal(diagnostic.evidence.blocker.path, '/messages/1/note');
+  assert.deepEqual(diagnostic.supportedFixes, [], 'do not separate simultaneous messages');
+
+  doc.messages[1].note = 'Record it';
+  const clear = render(t, doc);
+  assert.equal(note(clear).fontSize, 8.5, 'clear notes retain the preferred size');
+  assert.equal(note(clear).y, note(clear, 1).y);
 });
 
 test('a simultaneous message on the opposite side of a loop remains valid', t => {
