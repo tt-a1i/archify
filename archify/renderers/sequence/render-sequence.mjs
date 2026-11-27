@@ -242,6 +242,16 @@ function messageArrowYs(message) {
   return message.from === message.to ? [message.y, messageBottom(message)] : [message.y];
 }
 
+function clearPhaseBorderY(y, sortedArrowYs, direction) {
+  // Walk in the same direction as the repair, including any newly crowded arrows.
+  const start = direction > 0 ? 0 : sortedArrowYs.length - 1;
+  for (let index = start; index >= 0 && index < sortedArrowYs.length; index += direction) {
+    const arrowY = sortedArrowYs[index];
+    if (Math.abs(y - arrowY) < 4) y = arrowY + direction * 4;
+  }
+  return y;
+}
+
 function messageMaximumY(message) {
   return layout.lifelineBottom - (message.from === message.to ? selfMessageLayout.height + 4 : 18);
 }
@@ -1035,7 +1045,11 @@ function validateSequence() {
     });
   }
 
-  asArray(sequence.segments).forEach((segment, segmentIndex) => {
+  const segments = asArray(sequence.segments);
+  const phaseArrowYs = readableMessages && segments.length
+    ? messageList.filter((message) => typeof message.y === 'number').flatMap(messageArrowYs).sort((a, b) => a - b)
+    : [];
+  segments.forEach((segment, segmentIndex) => {
     if (segment.to <= segment.from) {
       problems.push(`Segment "${segment.label}" has invalid y range (from ${segment.from} to ${segment.to}) — "to" must be greater than "from".`);
     }
@@ -1052,8 +1066,8 @@ function validateSequence() {
           if (typeof message.y !== 'number') continue;
           const arrowY = messageArrowYs(message).find((y) => Math.abs(border - y) < 4);
           if (arrowY === undefined) continue;
-          const after = messageBottom(message) + 4;
-          const before = message.y - 4;
+          const after = clearPhaseBorderY(messageBottom(message) + 4, phaseArrowYs, 1);
+          const before = clearPhaseBorderY(message.y - 4, phaseArrowYs, -1);
           const moves = [];
           if (after <= layout.lifelineBottom + 20 && (edge === 'to' || after < segment.to)) {
             moves.push(`to at least ${after} to leave the message above it`);

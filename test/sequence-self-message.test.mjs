@@ -264,6 +264,20 @@ test('a phase border near a return leg offers repairs that clear the entire self
   assert.deepEqual(limited.supportedFixes, [diagnostic.supportedFixes[0]], 'omit a repair that would invert the phase');
 });
 
+test('a phase border repair clears other arrows beyond the self-call', t => {
+  const doc = sequence([
+    { from: 'left', to: 'left', y: 200, label: 'refresh' },
+    { from: 'middle', to: 'right', y: 246, label: 'notify' },
+  ]);
+  doc.segments = [{ from: 196, to: 202, label: 'Phase' }];
+  const diagnostic = failure(t, doc, 'sequence/segment-message-border-run');
+  assert.deepEqual(diagnostic.supportedFixes, [
+    'set /segments/0/to to at least 250 to leave the message above it',
+  ]);
+  doc.segments[0].to = Number(diagnostic.supportedFixes[0].match(/\b(\d+) to leave/)[1]);
+  render(t, doc);
+});
+
 test('simultaneous self-call notes fall back only when the larger text overlaps', t => {
   const doc = sequence([
     { id: 'retry', from: 'left', to: 'left', y: 200, label: 'retry', note: 'Retry only active sessions' },
