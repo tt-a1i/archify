@@ -198,6 +198,26 @@ test('overlapping loops and an ordinary call inside a loop fail with a repairabl
   }
 });
 
+test('a spacing repair preserves timeline order across disjoint lanes', t => {
+  const doc = sequence([
+    { id: 'loop', from: 'a', to: 'a', y: 200, label: 'refresh' },
+    { id: 'notify', from: 'a', to: 'b', y: 250, label: 'notify' },
+    { id: 'audit', from: 'c', to: 'd', y: 260, label: 'audit' },
+  ], { participants: ['a', 'b', 'c', 'd'].map(id => ({ id, type: 'backend', label: id.toUpperCase() })) });
+  const blocked = failure(t, doc, 'sequence/self-message-overlap');
+  assert.equal(blocked.subject.path, '/messages/1/y');
+  assert.ok(blocked.evidence.requiredY > doc.messages[2].y);
+  assert.deepEqual(blocked.supportedFixes, [], 'moving notify would put it after audit');
+
+  doc.messages[2].y = 340;
+  const allowed = failure(t, doc, 'sequence/self-message-overlap');
+  const repairedY = allowed.evidence.requiredY;
+  assert.deepEqual(allowed.supportedFixes, [`set /messages/1/y to ${repairedY}`]);
+  doc.messages[1].y = repairedY;
+  const html = render(t, doc);
+  assert.ok(route(html, 'notify').points[0][1] < route(html, 'audit').points[0][1]);
+});
+
 test('abutting loop spans still need room for the next label', t => {
   const html = render(t, sequence([{ id: 'first', from: 'left', to: 'left', y: 200, label: 'refresh' }]));
   const returnY = route(html, 'first').points.at(-1)[1];

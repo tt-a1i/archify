@@ -565,7 +565,7 @@ function segmentLabelBox(segment) {
 
 // Whether moving one message to `y` keeps it readable: inside the timeline,
 // 28px from messages sharing its horizontal span, and clear of every other
-// label, route and note. Used to offer only repairs that hold.
+// label, route and note, while preserving the authored timeline order.
 function messageFitsAt(messageIndex, y) {
   const messages = asArray(sequence.messages);
   if (y < layout.lifelineTop + 18) return false;
@@ -585,6 +585,7 @@ function messageFitsAt(messageIndex, y) {
   const movedRects = [messageLabelBox(moved), messageRouteBox(moved), noteRect(moved)].filter(Boolean);
   return messages.every((other, otherIndex) => {
     if (otherIndex === messageIndex || typeof other.y !== 'number') return true;
+    if (Math.sign(moved.y - other.y) !== Math.sign(messages[messageIndex].y - other.y)) return false;
     const [otherLeft, otherRight] = messageSpan(other);
     const separation = y >= other.y ? y - messageBottom(other) : other.y - messageBottom(moved);
     if (separation < 28 && left < otherRight && otherLeft < right) return false;
