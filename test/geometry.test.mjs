@@ -42,6 +42,7 @@ import {
   cleanLabelCanvasContainmentProblems,
 } from '../archify/renderers/shared/geometry.mjs';
 import { textUnits, applyTemplate, renderSemanticSigil } from '../archify/renderers/shared/utils.mjs';
+import { analyzeSvgPath } from '../archify/renderers/shared/svg-path-analysis.mjs';
 
 const rect = (x, y, w, h) => ({ x, y, width: w, height: h, cx: x + w / 2, cy: y + h / 2 });
 
@@ -836,11 +837,21 @@ test('roundedPath inserts a quadratic corner and never emits NaN', () => {
   assert.doesNotMatch(d, /NaN/);
 });
 
-test('roundedPath clamps radius to half the shorter adjacent segment', () => {
-  // 6px segments with radius 10 → r clamps to 3; no overshoot / NaN.
-  const d = roundedPath([[0, 0], [6, 0], [6, 6]], 10);
-  assert.doesNotMatch(d, /NaN/);
-  assert.match(d, /^M 0 0/);
+test('roundedPath clamps large radii inside short and degenerate authored segments', () => {
+  for (const points of [
+    [[0, 0], [6, 0], [6, 6]],
+    [[0, 0], [0, 0], [6, 0]],
+  ]) {
+    const parsed = analyzeSvgPath(roundedPath(points, 10));
+    assert.equal(parsed.ok, true, JSON.stringify(parsed));
+    const visible = parsed.subpaths.flatMap(subpath => subpath.points);
+    assert.deepEqual(visible[0], points[0]);
+    assert.deepEqual(visible.at(-1), points.at(-1));
+    for (const [x, y] of visible) {
+      assert.ok(x >= 0 && x <= 6 && y >= 0 && y <= 6,
+        `rounding must not overshoot authored short segments: ${x},${y}`);
+    }
+  }
 });
 
 test('labelPoint: 2-point path is the midpoint lifted 10px, plus offsets', () => {
