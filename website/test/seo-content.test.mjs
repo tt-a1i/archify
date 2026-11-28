@@ -91,6 +91,19 @@ test('initial homepage product facts explain identity, inputs, delivery, license
   assert.ok(hrefs.includes('https://github.com/tt-a1i/archify/blob/main/LICENSE'));
 });
 
+test('initial Chinese homepage links to the localized flowchart comparison', () => {
+  const page = read('index', 'zh');
+  const origin = cloudflare ? 'https://archify.si/' : 'https://tt-a1i.github.io/archify/';
+  const extension = cloudflare ? '' : '.html';
+  const base = new URL(attr(byTag(page, 'base'), 'href'), new URL(`zh${extension}`, origin));
+  const expected = new URL(`zh/compare${extension}`, origin);
+  const link = links(find(page, 'about-archify'))
+    .find(node => new URL(attr(node, 'href'), base).href === expected.href);
+  assert.ok(link, 'product facts link to the Chinese comparison page');
+  const label = text(link);
+  assert.ok(label.includes('draw.io') && label.includes('ProcessOn'), 'link names both flowchart tools');
+});
+
 for (const lang of ['en', 'zh']) {
   test(`initial ${lang} pages distinguish supported types from selected recipes and use the release channel`, () => {
     const release = JSON.parse(fs.readFileSync(new URL('../../archify/skill-release.json', import.meta.url)));
