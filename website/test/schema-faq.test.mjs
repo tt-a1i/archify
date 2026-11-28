@@ -37,6 +37,7 @@ test('every page graph binds the software entity, public source, and license wit
     const article = nodeOf(schema, 'TechArticle');
     assert.equal(Boolean(article), ['agent-diagrams', 'compare', 'cases/mco-runtime'].includes(page), `${page}: TechArticle scope`);
     if (article) assert.equal(article.about['@id'], app['@id']);
+    assert.equal(Boolean(nodeOf(schema, 'FAQPage')), page === 'index', `${page}/${lang}: FAQPage scope`);
     assert.doesNotMatch(serialized, /aggregateRating|ratingValue|reviewCount|interactionStatistic/);
   }
 });
@@ -54,16 +55,56 @@ test('homepages expose the visible FAQ answers as FAQPage entries from one share
       assert.equal(entry.acceptedAnswer['@type'], 'Answer');
       assert.equal(entry.acceptedAnswer.text, faqFacts[position].answer[index]);
     });
-    assert.equal(nodeOf(pageMetadata('guide', lang, '1.2.3').schema, 'FAQPage'), undefined);
+  }
+});
+
+const output = new URL(process.env.ARCHIFY_SITE_TARGET === 'cloudflare' ? '../dist-cloudflare/' : '../dist/', import.meta.url);
+function readGraphs(html) {
+  return [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)]
+    .map(match => JSON.parse(match[1])).filter(data => data['@graph']);
+}
+
+test('built graphs describe software features and the localized Home-to-page navigation', () => {
+  const labels = {
+    'cases/mco-runtime': ['MCO Case', 'MCO 案例'],
+    'agent-diagrams': ['Agent Diagrams', 'Agent 画图'],
+    compare: ['Compare', '工具对比'],
+    gallery: ['Proof Lab', '验证作品集'],
+    guide: ['Guide', '场景指南'],
+    start: ['Get started', '开始使用'],
+    community: ['Community', '社区包'],
+  };
+  for (const page of sitePages) for (const [lang, home, name, index] of [
+    ['en', 'https://archify.si/', 'Home', 0],
+    ['zh', 'https://archify.si/zh', '首页', 1],
+  ]) {
+    const file = lang === 'zh' ? page === 'index' ? 'zh.html' : `zh/${page}.html` : `${page}.html`;
+    const [schema] = readGraphs(fs.readFileSync(new URL(file, output), 'utf8'));
+    const features = nodeOf(schema, 'SoftwareApplication').featureList;
+    assert.ok(Array.isArray(features) && features.every(feature => typeof feature === 'string' && feature.trim()), file);
+    const expectedFeatures = lang === 'zh'
+      ? [/10 种.*原生.*图型/, /四种.*一页式解答/, /架构诊断/, /1080p Story/, /GitHub PR.*GitLab MR/]
+      : [/10 native diagram types/, /one-page explainers.*four/i, /Architecture Diagnosis/, /1080p Story/, /PR walkthroughs.*GitHub.*GitLab/];
+    for (const capability of expectedFeatures) {
+      assert.ok(features.some(feature => capability.test(feature)), `${file}: missing feature ${capability}`);
+    }
+    const breadcrumbs = nodeOf(schema, 'BreadcrumbList');
+    if (page === 'index') {
+      assert.equal(breadcrumbs, undefined, file);
+      continue;
+    }
+    assert.deepEqual(breadcrumbs?.itemListElement, [
+      { '@type': 'ListItem', position: 1, name, item: home },
+      { '@type': 'ListItem', position: 2, name: labels[page][index], item: `${home.replace(/\/$/, '')}/${page}` },
+    ], file);
+    assert.equal(nodeOf(schema, 'FAQPage'), undefined, file);
   }
 });
 
 test('built homepages carry the same FAQ text in visible markup and default-open facts', () => {
-  const output = new URL(process.env.ARCHIFY_SITE_TARGET === 'cloudflare' ? '../dist-cloudflare/' : '../dist/', import.meta.url);
   for (const [lang, file] of [['en', 'index.html'], ['zh', 'zh.html']]) {
     const html = fs.readFileSync(new URL(file, output), 'utf8');
-    const graphs = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)]
-      .map(match => JSON.parse(match[1])).filter(data => data['@graph']);
+    const graphs = readGraphs(html);
     assert.equal(graphs.length, 1, `${file}: one primary graph`);
     const faq = graphs[0]['@graph'].find(node => node['@type'] === 'FAQPage');
     assert.ok(faq, `${file}: FAQPage`);
