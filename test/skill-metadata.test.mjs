@@ -145,7 +145,7 @@ test('companion PR skill keeps ask-first filtering, install boundaries and the r
   assert.match(companionSkill, /bin\/archify-pr\.mjs/);
   const workflow = readFileSync(path.join(companionRoot, 'references/pr-workflow.md'), 'utf8');
   const documentation = `${companionSkill}\n${workflow}`;
-  for (const command of ['preflight', 'validate', 'build', 'attach']) {
+  for (const command of ['preflight', 'validate', 'build', 'lens', 'attach']) {
     assert.ok(documentation.includes(`pr ${command}`), `companion workflow must document pr ${command}`);
   }
   for (const rule of ['[archify pr: on-demand]', '[archify pr: proactive]', '[archify pr: ask, target=comment]']) assert.ok(companionSkill.includes(rule), `missing rule example: ${rule}`);

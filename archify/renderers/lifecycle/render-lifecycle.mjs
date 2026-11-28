@@ -464,7 +464,7 @@ function layout({ spineGap, rowGap, drop, firstTrack, ports: portMode }) {
       routes.set(transition, { points, segment: points.length - 2, labelMode: owner ? 'beside' : 'none', bracket });
     }
     for (const x of [...run.tops, ...run.bottoms]) {
-      if (x > run.lo + 0.5 && x < run.hi - 0.5) junctions.push([x, y]);
+      if (x > run.lo + 0.5 && x < run.hi - 0.5) junctions.push({ x, y, bracket });
     }
   }
   // Parallel transitions between two neighbours spread symmetrically around
@@ -833,6 +833,11 @@ function countCrossings(runs, assignment) {
   return count;
 }
 
+function labelRoutes(transition, routes) {
+  const bracket = routes.get(transition)?.bracket;
+  return bracket ? bracket.transitions.filter((other) => other.to === transition.to) : [transition];
+}
+
 // Labels sit beside the segment that enters the target (or leaves the lower
 // row), above main-path arrows, and on arc and lower-loop runs. Every
 // candidate keeps clear of other routes, states and labels.
@@ -843,10 +848,7 @@ function placeLabels({ routes, contentRight }) {
     const points = routes.get(transition)?.points || [];
     return points.slice(1).map((end, index) => ({ start: points[index], end }));
   };
-  const siblings = (transition) => {
-    const bracket = routes.get(transition)?.bracket;
-    return bracket ? bracket.transitions.filter((other) => other.to === transition.to) : [transition];
-  };
+  const siblings = (transition) => labelRoutes(transition, routes);
   const others = (transition) => transitions.filter((other) => !siblings(transition).includes(other));
   for (const transition of transitions) {
     const route = routes.get(transition);
@@ -1125,7 +1127,11 @@ function renderLabel(transition, index) {
   const note = transition.note
     ? `\n          <text data-detail="fine" x="${rect.cx}" y="${baseline + (transition.label ? 12 : 0)}" class="t-muted" font-size="${NOTE_FONT}" text-anchor="middle">${!transition.label ? prefix : ''}${esc(transition.note)}</text>`
     : '';
-  return `        <g data-detail="${transition.label ? 'context' : 'fine'}" ${focusEdgeAttrs(transition.from, transition.to, transition.label || transition.note, index, transition.id)}${changeEdgeAttrs(changeReview, transition)}>
+  const owners = process.env.ARCHIFY_PR_LENS === '1' ? labelRoutes(transition, geometry.routes) : [];
+  const ownership = owners.length > 1
+    ? `data-lens-route-keys="${owners.map((owner) => transitions.indexOf(owner)).join(' ')}"`
+    : `${focusEdgeAttrs(transition.from, transition.to, transition.label || transition.note, index, transition.id)}${changeEdgeAttrs(changeReview, transition)}`;
+  return `        <g data-detail="${transition.label ? 'context' : 'fine'}" ${ownership}>
           <rect x="${rect.x}" y="${rect.y}" width="${rect.width}" height="${rect.height}" rx="4" class="c-mask"/>${label}${note}
         </g>`;
 }
@@ -1160,8 +1166,24 @@ function renderLegend() {
   });
 }
 
+function junctionOwnerAttrs({ x, y, bracket }) {
+  if (process.env.ARCHIFY_PR_LENS !== '1') return '';
+  const owners = transitions.flatMap((transition, index) => {
+    if (!bracket.transitions.includes(transition)) return [];
+    const points = geometry.routes.get(transition).points;
+    const touchesJunction = points.some(([x1, y1], i) => {
+      if (!i) return false;
+      const [x0, y0] = points[i - 1];
+      return (y === y0 && y === y1 && x >= Math.min(x0, x1) && x <= Math.max(x0, x1))
+        || (x === x0 && x === x1 && y >= Math.min(y0, y1) && y <= Math.max(y0, y1));
+    });
+    return touchesJunction ? [index] : [];
+  });
+  return ` data-lens-route-keys="${owners.join(' ')}"`;
+}
+
 function renderSvg() {
-  const junctions = geometry.junctions.map(([x, y]) => `        <circle cx="${x}" cy="${y}" r="2.6" data-lifecycle-junction="" style="fill: var(--arrow)" aria-hidden="true"/>`).join('\n');
+  const junctions = geometry.junctions.map(({ x, y, bracket }) => `        <circle cx="${x}" cy="${y}" r="2.6" data-lifecycle-junction=""${junctionOwnerAttrs({ x, y, bracket })} style="fill: var(--arrow)" aria-hidden="true"/>`).join('\n');
   const frames = geometry.frames.map((rect) => `        <rect x="${rect.x}" y="${rect.y}" width="${rect.width}" height="${rect.height}" rx="14" data-lifecycle-frame="" fill="none" stroke="var(--arrow)" stroke-opacity="0.55" stroke-width="1" stroke-dasharray="1.5 3.5" stroke-linecap="round" aria-hidden="true"/>`).join('\n');
   const fitCards = lifecycle.cards?.length ? ' data-reader-fit-cards=""' : '';
   return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" data-reader-fit="intrinsic-height"${fitCards} data-lifecycle-layout="main-path-v3" ${svgRootAttrs(lifecycle.meta)} data-motion-choreography="walk">

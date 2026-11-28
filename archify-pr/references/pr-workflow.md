@@ -108,6 +108,14 @@ On GitHub, `attach` uploads the SVGs with `gh … --attach`, rewrites the placeh
 
 When only the default target applies and the PR already has a written description, show the dry run or confirm the body target before writing.
 
+### Local review file
+
+```sh
+node <archify-pr-root>/bin/archify-pr.mjs pr lens <pr-pack.json> --out-dir <out> --repo-root <repo> --json
+```
+
+Give the reviewer `<out>/pr-lens.html` as a local file. It opens offline and may contain source excerpts from the pinned commits. Leave it out of forge attachments. `pr build` still creates the attachable pack and `pr attach` still takes its receipt. With no matching checkout, omit `--repo-root` to show authored diagrams, counts and payloads with Git evidence marked unavailable. See `references/pr-review.md` in the core Archify Skill for optional walkthrough steps and slice selectors.
+
 ## 7. Repair by diagnostic
 
 Rerun the same command after fixing the cause:

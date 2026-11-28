@@ -3,8 +3,10 @@ import { PrPackError } from './manifest.mjs';
 import { buildPrPack, validatePrPack } from './build.mjs';
 import { attachPrPack, createGhExecutor } from './attach.mjs';
 import { preflightPrPack } from './preflight.mjs';
+import { findReviewTextPath, findRiskVerdict } from './markdown.mjs';
+import { reviewTextFailure } from './errors.mjs';
 
-const SUBCOMMANDS = ['preflight', 'validate', 'build', 'attach'];
+const SUBCOMMANDS = ['preflight', 'validate', 'build', 'lens', 'attach'];
 
 function parseOptions(args, { flags = [], values = [] }, subcommand, rejectCliArgument) {
   const options = { flags: {}, values: {}, positional: [] };
@@ -43,6 +45,14 @@ function formatFailure(error) {
 }
 
 function report({ subcommand, json, error, input }) {
+  if (subcommand === 'lens' || error.reviewTextBoundary) {
+    if (findRiskVerdict(input)) input = undefined;
+    if (findReviewTextPath({ message: error.message, diagnostics: error.diagnostics, rollback: error.rollback })) {
+      const pointer = error.diagnostics?.map((entry) => entry.subject?.path).find((value) =>
+        typeof value === 'string' && value.startsWith('/') && !findRiskVerdict(value));
+      error = reviewTextFailure(error.stage, pointer);
+    }
+  }
   const receipt = {
     schemaVersion: 1,
     ok: false,
@@ -94,6 +104,18 @@ export async function commandPr(args, { rejectCliArgument, usage }) {
       else console.log(`archify pr validate: ${receipt.views.length} view(s) valid${receipt.story ? ` + story (${receipt.story.steps} steps)` : ''}${receipt.revisions.verified ? ` at ${receipt.revisions.baseSha.slice(0, 7)}...${receipt.revisions.headSha.slice(0, 7)}` : ''}`);
       return;
     }
+    if (subcommand === 'lens') {
+      const options = parseOptions(rest, { flags: ['--json'], values: ['--out-dir', '--repo-root', '--quality'] }, subcommand, rejectCliArgument);
+      const [manifest] = options.positional;
+      if (!manifest || options.positional.length !== 1) rejectCliArgument('pr lens expects one manifest and --out-dir <dir>.');
+      input = path.resolve(manifest);
+      const { buildPrLens } = await import('./lens.mjs');
+      const result = await buildPrLens(manifest, {
+        outDir: options.values['--out-dir'], repoRoot: options.values['--repo-root'], quality: options.values['--quality'],
+      });
+      console.log(json ? JSON.stringify(result, null, 2) : result.output.path);
+      return;
+    }
     if (subcommand === 'build') {
       const options = parseOptions(rest, { flags: ['--json', '--html', '--no-html', '--animate-flow'], values: ['--out-dir', '--repo-root', '--platform', '--quality'] }, subcommand, rejectCliArgument);
       const [manifest] = options.positional;
@@ -136,6 +158,11 @@ export async function commandPr(args, { rejectCliArgument, usage }) {
       for (const [file, url] of Object.entries(receipt.assets)) console.log(`${file} -> ${url || '(not uploaded)'}`);
     }
   } catch (error) {
+    if (subcommand === 'lens') {
+      const { lensFailure } = await import('./lens.mjs');
+      report({ subcommand, json, error: lensFailure(error), input });
+      return;
+    }
     if (!(error instanceof PrPackError)) throw error;
     report({ subcommand, json, error, input });
   }

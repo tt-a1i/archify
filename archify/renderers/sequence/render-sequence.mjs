@@ -1065,8 +1065,12 @@ function lifelineEnd() {
   return legend?.titleY == null ? layout.lifelineBottom : Math.min(layout.lifelineBottom, legend.titleY - 22);
 }
 
+function lensParticipantOwner(id) {
+  return process.env.ARCHIFY_PR_LENS === '1' ? ` data-lens-participant="${esc(id)}"` : '';
+}
+
 function renderLifeline(participant, end) {
-  return `        <path d="M ${participant.cx} ${layout.lifelineTop} L ${participant.cx} ${end}" class="a-default" stroke-width="0.8" stroke-dasharray="3,7"/>`;
+  return `        <path d="M ${participant.cx} ${layout.lifelineTop} L ${participant.cx} ${end}" class="a-default" stroke-width="0.8" stroke-dasharray="3,7"${lensParticipantOwner(participant.id)}/>`;
 }
 
 function renderSegment(segment, index) {
@@ -1094,8 +1098,9 @@ function renderActivation(activation) {
     : componentFill[activation.type] || componentFill[participant.type] || 'c-external';
   const x = participant.cx - 5;
   const height = activation.to - activation.from;
-  return `        <rect x="${x}" y="${activation.from}" width="10" height="${height}" rx="3" class="c-mask"/>
-        <rect x="${x}" y="${activation.from}" width="10" height="${height}" rx="3" class="${fill}" stroke-width="1"/>`;
+  const owner = lensParticipantOwner(activation.participant);
+  return `        <rect x="${x}" y="${activation.from}" width="10" height="${height}" rx="3" class="c-mask"${owner}/>
+        <rect x="${x}" y="${activation.from}" width="10" height="${height}" rx="3" class="${fill}" stroke-width="1"${owner}/>`;
 }
 
 function messageLabel(message, x1, x2) {

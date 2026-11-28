@@ -240,3 +240,21 @@ export function replacePackBlock(body, block) {
   const trimmed = text.replace(/\s+$/, '');
   return trimmed ? `${trimmed}\n\n${block}\n` : `${block}\n`;
 }
+
+export function findReviewTextPath(value, pointer = '') {
+  if (typeof value === 'string') {
+    try {
+      assertNoRiskVerdict(value, 'Review text');
+      return null;
+    } catch {
+      return pointer || '/';
+    }
+  }
+  if (value === null || typeof value !== 'object') return null;
+  for (const [key, child] of Object.entries(value)) {
+    if (findRiskVerdict(key)) return pointer || '/';
+    const found = findReviewTextPath(child, `${pointer}/${key.replace(/~/g, '~0').replace(/\//g, '~1')}`);
+    if (found) return found;
+  }
+  return null;
+}

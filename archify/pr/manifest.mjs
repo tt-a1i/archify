@@ -1,8 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { FULL_SHA_RE, hasRepositoryEvidence, runGit, verifyRepositorySourceAnchors } from '../renderers/shared/repository-evidence.mjs';
+import { EVIDENCE_NODE_COLLECTIONS, FULL_SHA_RE, hasRepositoryEvidence, runGit, runPinnedDiff, verifyRepositorySourceAnchors } from '../renderers/shared/repository-evidence.mjs';
 import { validateSchema } from '../renderers/shared/validator.mjs';
-import { PrPackError, failPrPack as fail, packDiagnostic } from './errors.mjs';
+import { PrPackError, failPrPack as fail, packDiagnostic, reviewTextFailure } from './errors.mjs';
+import { findReviewTextPath } from './markdown.mjs';
 import { resolveStorySteps, validatePrStory } from './story-svg.mjs';
 
 export { PrPackError, packDiagnostic };
@@ -32,14 +33,30 @@ function schemaFailure(error, stage, subject) {
 
 // Loads the manifest, validates it against the precompiled pr-pack schema,
 // and validates every referenced diagram against its own diagram schema.
-export function loadPrPack(manifestInput) {
+export function loadPrPack(manifestInput, { lens = false, validate = false } = {}) {
   const manifestPath = path.resolve(manifestInput);
   const manifestDir = path.dirname(manifestPath);
   const manifest = readJson(manifestPath, { stage: 'manifest', subject: { manifest: manifestPath } });
   try {
+    return validatePackManifest(manifest, manifestPath, manifestDir, { lens, validate });
+  } catch (error) {
+    if (error instanceof PrPackError && manifest?.walkthrough !== undefined) error.reviewTextBoundary = true;
+    throw error;
+  }
+}
+
+function validatePackManifest(manifest, manifestPath, manifestDir, { lens, validate }) {
+  if (lens) assertReviewText(manifest, '', 'manifest');
+  for (const key of ['pullRequest', 'walkthrough']) assertReviewText(manifest?.[key], `/${key}`, 'manifest');
+  try {
     validateSchema('prPack', manifest);
   } catch (error) {
-    throw schemaFailure(error, 'manifest', { manifest: manifestPath });
+    const failure = schemaFailure(error, 'manifest', { manifest: manifestPath });
+    if (manifest?.walkthrough !== undefined || manifest?.pullRequest !== undefined) {
+      const pointer = findReviewTextPath({ message: failure.message, diagnostics: failure.diagnostics });
+      if (pointer) throw reviewTextFailure('manifest');
+    }
+    throw failure;
   }
   const seen = new Set();
   const views = manifest.views.map((view, index) => {
@@ -52,6 +69,7 @@ export function loadPrPack(manifestInput) {
     seen.add(view.id);
     const inputPath = path.resolve(manifestDir, view.input);
     const diagram = readJson(inputPath, { stage: 'views', subject: { view: view.id, input: inputPath } });
+    if (lens) assertReviewText(diagram, `/views/${index}/diagram`, 'views');
     try {
       validateSchema(view.type, diagram);
     } catch (error) {
@@ -68,7 +86,7 @@ export function loadPrPack(manifestInput) {
       evidence: hasRepositoryEvidence(view.type, diagram),
     };
   });
-  if (views.every((view) => view.storyOnly) && !manifest.story) {
+  if (!lens && !(validate && manifest.walkthrough) && views.every((view) => view.storyOnly) && !manifest.story) {
     fail('pr-pack/no-visible-output', 'manifest', 'Every declared view has storyOnly: true and no manifest.story is defined.', {
       subject: { manifest: manifestPath, path: '/views' },
       supportedFixes: ['add manifest.story or remove storyOnly from at least one view'],
@@ -93,12 +111,98 @@ export function loadPrPack(manifestInput) {
     platform: manifest.platform || 'github',
     changeTableLimit: manifest.changeTableLimit || DEFAULT_CHANGE_TABLE_LIMIT,
   };
+  validateWalkthrough(pack);
   if (pack.story) validatePrStory(pack.story, pack, { manifestDir });
   return pack;
 }
 
+export function assertReviewText(value, pointer = '', stage = 'render') {
+  const found = findReviewTextPath(value, pointer);
+  if (found) throw reviewTextFailure(stage, found);
+}
+
+const reviewEdgeCollections = {
+  architecture: 'connections', sequence: 'messages', erd: 'relationships', class: 'relationships',
+  workflow: 'edges', dataflow: 'flows', lifecycle: 'transitions',
+};
+
+export function reviewElements({ type, diagram }) {
+  return {
+    nodeIds: diagram[EVIDENCE_NODE_COLLECTIONS[type]] || [],
+    edgeIds: diagram[reviewEdgeCollections[type]] || [],
+  };
+}
+
+function validateWalkthrough({ manifest, views }) {
+  if (!manifest.walkthrough) return;
+  const { steps, slices = [] } = manifest.walkthrough;
+  const sliceIds = new Set();
+  const stepIds = new Set();
+  const invalid = (pointer, message) => fail('pr-pack/invalid-walkthrough', 'manifest', message, { subject: { path: pointer } });
+  for (const [index, slice] of slices.entries()) {
+    if (sliceIds.has(slice.id)) invalid(`/walkthrough/slices/${index}/id`, 'Slice ID is declared more than once.');
+    sliceIds.add(slice.id);
+  }
+  for (const [index, step] of steps.entries()) {
+    const pointer = `/walkthrough/steps/${index}`;
+    if (stepIds.has(step.id)) invalid(`${pointer}/id`, 'Step ID is declared more than once.');
+    stepIds.add(step.id);
+    const view = views.find((entry) => entry.id === step.viewId);
+    if (!view) invalid(`${pointer}/viewId`, 'Step must reference a declared view.');
+    for (const [field, elements] of Object.entries(reviewElements(view))) {
+      for (const [item, id] of (step[field] || []).entries()) {
+        if (elements.filter((element) => element.id === id).length !== 1) {
+          invalid(`${pointer}/${field}/${item}`, 'Element reference must identify one explicit ID in this view.');
+        }
+      }
+    }
+    if (step.primarySliceId && !sliceIds.has(step.primarySliceId)) invalid(`${pointer}/primarySliceId`, 'Primary slice must reference a declared slice.');
+    for (const [item, id] of (step.relatedSliceIds || []).entries()) {
+      if (!sliceIds.has(id) || id === step.primarySliceId) invalid(`${pointer}/relatedSliceIds/${item}`, 'Related slice must reference a declared slice other than the primary slice.');
+    }
+  }
+}
+
+export function changeSourceAnchors(row) {
+  if (!row.path) return [];
+  if (row.change === 'removed') return [{ side: 'base', path: row.basePath || row.path, line: row.baseLine ?? row.line }];
+  const anchors = [];
+  if (row.line !== undefined || row.baseLine === undefined || row.basePath !== undefined) anchors.push({ side: 'head', path: row.path, line: row.line });
+  if (row.baseLine !== undefined || row.basePath !== undefined) anchors.push({ side: 'base', path: row.basePath || row.path, line: row.baseLine });
+  return anchors;
+}
+
+function readPackFilePairs(root, baseSha, headSha) {
+  const diff = runPinnedDiff(root, baseSha, headSha, ['--name-status', '-z'], { bytes: true });
+  if (diff.status !== 0) fail('pr-pack/invalid-source-anchor', 'revisions', 'Could not read the pinned PR diff to verify source anchors.', {
+    supportedFixes: ['verify both pinned revisions are available in the local checkout'],
+  });
+  const fields = diff.stdout.toString('latin1').split('\0');
+  const decoder = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true });
+  const decodePath = (raw) => {
+    try {
+      return decoder.decode(Buffer.from(raw, 'latin1'));
+    } catch {
+      // An authored JSON path cannot address a non-UTF-8 Git pathname.
+      return null;
+    }
+  };
+  const pairs = new Map();
+  for (let index = 0; index < fields.length - 1;) {
+    const status = fields[index++];
+    const first = fields[index++];
+    const current = /^[RC]/.test(status) ? fields[index++] : first;
+    const oldPath = status === 'A' ? null : decodePath(first);
+    const newPath = status === 'D' ? null : decodePath(current);
+    const pair = { status, oldPath, newPath, addressable: (status === 'A' || oldPath !== null) && (status === 'D' || newPath !== null) };
+    if (pair.oldPath) pairs.set(`base:${pair.oldPath}`, pair);
+    if (pair.newPath) pairs.set(`head:${pair.newPath}`, pair);
+  }
+  return pairs;
+}
+
 function gitCommit(repoRoot, ref, label) {
-  const result = runGit(repoRoot, ['rev-parse', '--verify', '--quiet', `${ref}^{commit}`]);
+  const result = runGit(repoRoot, ['rev-parse', '--verify', '--quiet', '--end-of-options', `${ref}^{commit}`]);
   const sha = result.stdout.trim();
   if (result.status !== 0 || !FULL_SHA_RE.test(sha)) {
     fail('pr-pack/ref-unavailable', 'revisions', `${label} "${ref}" does not resolve to a commit in ${repoRoot}.`, {
@@ -124,8 +228,8 @@ export function verifyPackRevisions(pack, repoRoot) {
   let mergeBase = null;
   if (manifest.baseRef && manifest.headRef) {
     const headRefSha = gitCommit(root, manifest.headRef, 'headRef');
-    gitCommit(root, manifest.baseRef, 'baseRef');
-    const result = runGit(root, ['merge-base', manifest.baseRef, manifest.headRef]);
+    const baseRefSha = gitCommit(root, manifest.baseRef, 'baseRef');
+    const result = runGit(root, ['merge-base', baseRefSha, headRefSha]);
     mergeBase = result.stdout.trim();
     if (result.status !== 0 || !FULL_SHA_RE.test(mergeBase)) {
       fail('pr-pack/merge-base-unavailable', 'revisions', `No merge-base between "${manifest.baseRef}" and "${manifest.headRef}".`, {
@@ -157,8 +261,8 @@ export function verifyPackRevisions(pack, repoRoot) {
         supportedFixes: ['declare baseRef and headRef (preferred) or both full SHAs'],
       });
     }
-    gitCommit(root, headSha, 'headSha');
-    gitCommit(root, baseSha, 'baseSha');
+    headSha = gitCommit(root, headSha, 'headSha');
+    baseSha = gitCommit(root, baseSha, 'baseSha');
     const result = runGit(root, ['merge-base', baseSha, headSha]);
     mergeBase = result.stdout.trim();
     if (mergeBase !== baseSha) {
@@ -171,31 +275,18 @@ export function verifyPackRevisions(pack, repoRoot) {
   const anchors = [];
   const groups = [['changes', manifest.changes || []], ['story/steps', manifest.story?.steps || []]];
   for (const [group, rows] of groups) for (const [index, row] of rows.entries()) {
-    if (!row.path) continue;
     const subject = { manifest: pack.manifestPath, path: `/${group}/${index}` };
-    if (row.change === 'removed') {
-      anchors.push({ path: row.basePath || row.path, line: row.baseLine ?? row.line, revision: baseSha, subject });
-    } else {
-      if (row.line !== undefined || row.baseLine === undefined || row.basePath !== undefined) anchors.push({ path: row.path, line: row.line, revision: headSha, subject });
-      if (row.baseLine !== undefined || row.basePath !== undefined) anchors.push({ path: row.basePath || row.path, line: row.baseLine, revision: baseSha, subject });
+    for (const anchor of changeSourceAnchors(row)) {
+      anchors.push({ ...anchor, revision: anchor.side === 'base' ? baseSha : headSha, subject });
     }
   }
-  if (anchors.length) {
-    const diff = runGit(root, ['diff', '--name-status', '-z', '--find-renames', baseSha, headSha, '--']);
-    if (diff.status !== 0) fail('pr-pack/invalid-source-anchor', 'revisions', 'Could not read the pinned PR diff to verify source anchors.', {
-      supportedFixes: ['verify both pinned revisions are available in the local checkout'],
-    });
-    const fields = diff.stdout.split('\0');
-    const diffPaths = new Map();
-    for (let index = 0; index < fields.length - 1;) {
-      const status = fields[index++];
-      const oldPath = fields[index++];
-      const currentPath = /^[RC]/.test(status) ? fields[index++] : oldPath;
-      if (!status.startsWith('A')) diffPaths.set(`L:${oldPath}`, currentPath);
-      if (!status.startsWith('D')) diffPaths.set(`R:${currentPath}`, currentPath);
-    }
+  if (anchors.length || manifest.walkthrough?.slices?.length) {
+    pack.filePairs = readPackFilePairs(root, baseSha, headSha);
+    const diffPaths = new Map([...pack.filePairs].map(([key, pair]) => [
+      key.replace(/^(base|head):/, (_, side) => side === 'base' ? 'L:' : 'R:'), pair.newPath || pair.oldPath,
+    ]));
     for (const anchor of anchors) {
-      const side = anchor.revision === baseSha ? 'L' : 'R';
+      const side = anchor.side === 'base' ? 'L' : 'R';
       const diffPath = diffPaths.get(`${side}:${anchor.path}`);
       if (!diffPath) fail('pr-pack/invalid-source-anchor', 'revisions', `${anchor.subject.path} cites ${anchor.path}, which is not on the ${side === 'L' ? 'base' : 'head'} side of this PR diff.`, {
         subject: anchor.subject, evidence: { sourcePath: anchor.path, revision: anchor.revision, baseSha, headSha },

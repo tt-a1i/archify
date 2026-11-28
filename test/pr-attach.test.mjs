@@ -256,6 +256,29 @@ test('attach --target comment deletes its temporary comment when mapping fails',
   assert.equal(state.comments.length, 0);
 });
 
+test('attach accepts exactly fifty receipt assets and ignores a larger sibling Lens', async () => {
+  const pack = receiptFixture({ views: Array.from({ length: MAX_ATTACHMENTS / 2 }, (_, i) => `view-${i}`) });
+  const limit = 5 * 1024 * 1024;
+  fs.writeFileSync(pack.assets[0].path, Buffer.alloc(limit - 1, 0x20));
+  const lens = path.join(pack.dir, 'pr-lens.html');
+  fs.writeFileSync(lens, Buffer.alloc(limit + 1, 0x20));
+  const { gh, state } = fakeGh();
+  const result = await attachPrPack({ pullRequest: '42', repo: 'acme/checkout', receipt: pack.receiptPath, gh });
+  assert.equal(result.attachments.length, MAX_ATTACHMENTS);
+  const upload = state.calls.find((call) => call.args.includes('--attach'));
+  assert.deepEqual(upload.args.filter((_, i) => upload.args[i - 1] === '--attach'), pack.assets.map(({ path }) => path));
+  assert.doesNotMatch(upload.input, /pr-lens\.html/);
+  const receipt = JSON.parse(fs.readFileSync(pack.receiptPath));
+  const extra = path.join(pack.dir, 'extra.svg');
+  fs.writeFileSync(extra, svg('extra'));
+  receipt.assets.push({ id: 'extra', path: extra, placeholder: '{{archify:asset:extra}}' });
+  fs.writeFileSync(pack.receiptPath, JSON.stringify(receipt));
+  const tooMany = fakeGh();
+  await assert.rejects(attachPrPack({ pullRequest: '42', repo: 'acme/checkout', receipt: pack.receiptPath, gh: tooMany.gh }),
+    (error) => error.code === 'pr-attach/too-many-attachments' && error.diagnostics[0].evidence.attachments === MAX_ATTACHMENTS + 1);
+  assert.equal(tooMany.state.calls.length, 0);
+});
+
 test('attach preflight blocks oversized and excessive attachments, old gh, missing auth and bad references', async () => {
   const oversized = receiptFixture({ views: ['big'], bytes: 5 * 1024 * 1024 });
   const { gh, state } = fakeGh();

@@ -87,9 +87,84 @@
       }
     },
     "changeTableLimit": { "type": "integer", "minimum": 1, "maximum": 100 },
+    "pullRequest": { "$ref": "#/$defs/pullRequest" },
+    "walkthrough": { "$ref": "#/$defs/walkthrough" },
     "story": { "$ref": "#/$defs/prStory" }
   },
   "$defs": {
+    "pullRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "number": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+        "author": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "facts": { "type": "array", "minItems": 1, "maxItems": 12, "items": { "type": "string", "minLength": 1, "maxLength": 240 } }
+      }
+    },
+    "walkthrough": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["steps"],
+      "properties": {
+        "steps": { "type": "array", "minItems": 1, "maxItems": 64, "items": { "$ref": "#/$defs/reviewStep" } },
+        "slices": { "type": "array", "minItems": 1, "maxItems": 128, "items": { "$ref": "#/$defs/reviewSlice" } }
+      }
+    },
+    "reviewStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "viewId"],
+      "dependentRequired": { "relatedSliceIds": ["primarySliceId"] },
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/id" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "viewId": { "$ref": "common.schema.json#/$defs/id" },
+        "body": { "type": "string", "minLength": 1, "maxLength": 600 },
+        "change": { "$ref": "common.schema.json#/$defs/changeStatus" },
+        "beforeLabel": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "afterLabel": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "nodeIds": { "$ref": "#/$defs/focusIds" },
+        "edgeIds": { "$ref": "#/$defs/focusIds" },
+        "primarySliceId": { "$ref": "common.schema.json#/$defs/id" },
+        "relatedSliceIds": {
+          "type": "array", "minItems": 1, "maxItems": 8, "uniqueItems": true,
+          "items": { "type": "string", "$ref": "common.schema.json#/$defs/id" }
+        },
+        "payload": {
+          "type": "object", "additionalProperties": false, "minProperties": 1,
+          "properties": {
+            "before": { "$ref": "#/$defs/reviewPayloadValue" },
+            "after": { "$ref": "#/$defs/reviewPayloadValue" }
+          }
+        }
+      }
+    },
+    "focusIds": {
+      "type": "array", "minItems": 1, "maxItems": 64, "uniqueItems": true,
+      "items": { "type": "string", "$ref": "common.schema.json#/$defs/id" }
+    },
+    "reviewPayloadValue": {
+      "anyOf": [
+        { "$ref": "common.schema.json#/$defs/payloadValue" },
+        { "type": "number" },
+        { "type": "boolean" },
+        { "type": "null" }
+      ]
+    },
+    "reviewSlice": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "path", "side"],
+      "not": { "properties": { "line": true, "hunk": true }, "required": ["line", "hunk"] },
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/id" },
+        "path": { "$ref": "#/$defs/sourcePath" },
+        "side": { "enum": ["base", "head"] },
+        "line": { "type": "integer", "minimum": 1 },
+        "hunk": { "type": "integer", "minimum": 1 }
+      }
+    },
     "sourcePath": {"type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*\\\\)(?!.*[\\u0000-\\u001f\\u007f])(?!.*(?:^|/)\\.\\.?(?:/|$))(?!\\.git(?:/|$))(?!.*//)(?!.*\\/$).+$"},
     "sha": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
     "prStory": {

@@ -88,6 +88,37 @@ Each view is a single diagram that contains both sides of the change:
 marks need one candidate per view and cover ten diagram types. Neither route
 emits a risk opinion.
 
+## Local review with PR Lens
+
+```sh
+node bin/archify.mjs pr lens <pr-pack.json> --out-dir <out> --repo-root <repo> --json
+```
+
+Open `<out>/pr-lens.html` in a browser. Each manifest view has a tab. Delta shows the change-marked superset. Before and After show the corresponding elements in the same positions. Reviewers can check off steps and inspect diff hunks and payloads offline. Share the HTML as a local file with people authorized to see the source excerpts it contains. Forge upload continues to use the separate build receipt.
+
+Use `--repo-root` to verify the declared refs or SHAs against the matching checkout. With refs, the base is their merge base. Without a checkout, Lens labels counts as declared and shows authored payloads and diagrams. Use `--quality standard|showcase` to override renderer quality.
+
+Add optional `pullRequest` metadata (`number`, `author`, `facts`) and a `walkthrough` to the existing PR-pack manifest when review order matters:
+
+```json
+{
+  "steps": [
+    {
+      "id": "checkout-response",
+      "title": "The checkout response gains a ledger reference",
+      "viewId": "flow",
+      "edgeIds": ["create"],
+      "primarySliceId": "route",
+      "beforeLabel": "Accepted order",
+      "afterLabel": "Accepted order with ledger reference"
+    }
+  ],
+  "slices": [{ "id": "route", "path": "src/checkout.js", "side": "head", "line": 42 }]
+}
+```
+
+Put this object in `walkthrough`. Step references use explicit node or edge IDs from the selected view. Add `relatedSliceIds` to offer additional pinned hunks. A slice can select by line or one-based hunk ordinal. Omit both to select the first text hunk. On a rename, cite the old path for `base` and the new path for `head`. A step can provide `payload.before` and/or `payload.after`, including literal JSON null. If omitted, Lens can show the selected message or dataflow edge payload. Without a walkthrough, each view supplies a step in manifest order, with its declared change rows and available payloads. The animated `story` can coexist with the walkthrough.
+
 ## 5. Command loop
 
 ```sh

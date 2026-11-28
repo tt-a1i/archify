@@ -490,6 +490,32 @@ function validIcoImageRanges(buffer) {
   return true;
 }
 
+export function rasterSignatureMatches(contentType, buffer) {
+  switch (contentType) {
+    case 'image/png':
+      return buffer.length >= 45
+        && buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
+        && buffer.readUInt32BE(8) === 13
+        && buffer.toString('ascii', 12, 16) === 'IHDR'
+        && buffer.readUInt32BE(16) > 0
+        && buffer.readUInt32BE(20) > 0
+        && buffer.toString('ascii', buffer.length - 8, buffer.length - 4) === 'IEND';
+    case 'image/jpeg':
+      return buffer.length >= 20 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff
+        && buffer.at(-2) === 0xff && buffer.at(-1) === 0xd9;
+    case 'image/webp':
+      return hasWebpImageData(buffer);
+    case 'image/gif':
+      return buffer.length >= 14 && ['GIF87a', 'GIF89a'].includes(buffer.toString('ascii', 0, 6))
+        && buffer.readUInt16LE(6) > 0 && buffer.readUInt16LE(8) > 0 && buffer.at(-1) === 0x3b;
+    case 'image/vnd.microsoft.icon':
+    case 'image/x-icon':
+      return validIcoImageRanges(buffer);
+    default:
+      return false;
+  }
+}
+
 async function imageData(response) {
   const contentType = (response.headers.get('content-type') || '').split(';')[0].trim().toLocaleLowerCase('en-US');
   const allowed = new Set([
@@ -504,22 +530,7 @@ async function imageData(response) {
     throw new Error(`unsupported brand image type ${contentType || 'unknown'}`);
   }
   const buffer = await readLimited(response, MAX_IMAGE_BYTES);
-  const signatureMatches = contentType === 'image/png'
-    ? buffer.length >= 45
-      && buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
-      && buffer.readUInt32BE(8) === 13
-      && buffer.toString('ascii', 12, 16) === 'IHDR'
-      && buffer.readUInt32BE(16) > 0
-      && buffer.readUInt32BE(20) > 0
-      && buffer.toString('ascii', buffer.length - 8, buffer.length - 4) === 'IEND'
-    : (contentType === 'image/jpeg'
-      ? buffer.length >= 20
-        && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff
-        && buffer.at(-2) === 0xff && buffer.at(-1) === 0xd9
-      : (contentType === 'image/webp'
-        ? hasWebpImageData(buffer)
-        : validIcoImageRanges(buffer)));
-  if (!signatureMatches) throw new Error(`brand asset bytes do not match ${contentType}`);
+  if (!rasterSignatureMatches(contentType, buffer)) throw new Error(`brand asset bytes do not match ${contentType}`);
   return {
     dataUrl: `data:${contentType};base64,${buffer.toString('base64')}`,
     sha256: createHash('sha256').update(buffer).digest('hex'),

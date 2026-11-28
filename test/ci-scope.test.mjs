@@ -47,6 +47,15 @@ test('site content and GEO notes keep the published install brief in sync withou
   assert.ok(classifyPaths([note, 'journal/geo-2026-11/tool.mjs']).webm);
 });
 
+test('Lens runtime and its browser regression retain PR and package ownership', () => {
+  const file = 'test/pr-lens-browser.test.mjs';
+  const plan = classifyPaths(['archify/pr/lens-scene.mjs', file]);
+  assert.deepEqual(plan.owners, ['pr']);
+  assert.ok(plan.browser && plan.package);
+  assert.ok(plan.changedTests.includes(file));
+  assert.ok(selectAffectedTests(plan.owners, [], ['test/pr-lens.test.mjs', 'test/pr-lens-evidence.test.mjs']).length === 2);
+});
+
 test('Atlas-only changes keep CLI, overlay, browser and package checks without unrelated gates', () => {
   const paths = ['archify/modules/code-analysis/overlay/client/atlas.js',
     'archify/modules/code-analysis/docs/USAGE.md', 'archify.zip', 'test/code-analysis-browser.test.mjs'];
