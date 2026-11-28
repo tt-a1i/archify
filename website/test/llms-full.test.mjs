@@ -59,6 +59,9 @@ test('every canonical site link in built llms-full.txt is extensionless HTML or 
   const text = fs.readFileSync(path.join(output, 'llms-full.txt'), 'utf8');
   const links = [...new Set([...text.matchAll(/https:\/\/archify\.si[^\s)`<>]*/g)].map(match => match[0]))];
   assert.ok(links.length >= 10, `expected a canonical link index, got ${links.length}`);
+  for (const url of ['https://archify.si/zh/compare', 'https://archify.si/zh/agent-diagrams']) {
+    assert.ok(links.includes(url), `missing Chinese canonical entrypoint: ${url}`);
+  }
   for (const link of links) {
     const url = new URL(link);
     assert.doesNotMatch(url.pathname, /\.html$/, `canonical link must omit .html: ${link}`);
