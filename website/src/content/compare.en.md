@@ -1,6 +1,6 @@
 # Archify vs Mermaid, Excalidraw, PlantUML & D2 (Mermaid Alternatives for AI Coding Agents)
 
-**Short answer:** use Mermaid when a tiny diagram must sit inside a Markdown code block, Excalidraw when several people need live freehand whiteboarding, and PlantUML, D2, or LikeC4 when architecture models stay as text files in a classic CI pipeline. Choose **Archify** as a **Mermaid alternative for AI coding agents** (Claude Code, Cursor, Codex, OpenCode, or GitHub Copilot) when you want an agent to turn **anything you want to understand, plan, or share** — an everyday life decision, a travel route, a complex concept, a tangled Mermaid draft, or a codebase — quickly and without diagram syntax into a polished, layout-checked interactive HTML diagram (**10 diagram types**) or a **4-style, conclusion-first one-page explainer**.
+**Short answer:** choose **draw.io** for an editable `.drawio` file you can keep refining in its GUI, with AI or MCP available for drafting. Choose **Excalidraw (including Excalidraw via MCP)** when your team wants to keep editing a shared interactive canvas. Choose **ProcessOn** for AI-assisted flowcharts and online collaboration with Chinese-language templates. Use **Mermaid** for small diagrams embedded in Markdown, or **PlantUML, D2, or LikeC4** for text-based diagram or architecture models. Choose **Archify** when reviewers need a standalone offline HTML diagram. Archify routes diagrams deterministically from typed input and checks native diagrams in a real browser by default. Reviewers can click to focus and trace dependencies without a server or editor.
 
 <span id="answer" class="section-anchor" aria-hidden="true"></span>
 
@@ -16,10 +16,10 @@ That makes Archify a different category from syntax renderers or blank whiteboar
 
 | Dimension | Archify | Mermaid | Excalidraw | PlantUML / D2 |
 | --- | --- | --- | --- | --- |
-| Primary authoring | AI agent from plain language | Hand-written text DSL | Manual canvas drawing | Hand-written text DSL |
+| Primary authoring | AI agent from plain language | Hand-written text DSL | Interactive canvas (+ AI / MCP) | Hand-written text DSL |
 | Subject scope | Plans, concepts, life, repos | Markdown doc snippets | Freehand sketches | System/UML specs |
 | Output | Standalone interactive HTML + source | Inline SVG/PNG | Canvas / image export | Static SVG/PNG |
-| Visual polish & checks | 10 types, routing + browser check | Host renderer dependent | Manual arrangement | Auto layout, no browser check |
+| Visual polish & checks | 10 types, routing + browser check | Host renderer dependent | Manual / canvas adjustment | Auto layout, no browser check |
 | Interactive exploration | Focus, reach, path trace, themes | Usually static | Static on export | Usually static |
 | One-page explainer | 4 styles, synced diagrams & sources | No | No | No |
 | Delivery & extend | Zero-dep HTML + image/PDF export | Markdown host embed | App or share link | CI image artifact |
@@ -32,8 +32,8 @@ The table describes default strengths, not rigid limits. Skilled authors can pol
 ## When another tool fits better
 
 - **Use Mermaid** when the diagram is small, must render natively inside GitHub READMEs or docs Markdown, and should stay editable as a few lines of inline text.
-- **Use draw.io (diagrams.net)** when you want a free browser-based GUI editor to drag standard flowchart, network, or org-chart shapes manually with no AI coding agent involved.
-- **Use Excalidraw (including Excalidraw via MCP)** when real-time collaborative whiteboarding, rough hand-drawn sketching in chat, or mouse drag-and-drop brainstorming is the primary goal.
+- **Use draw.io (diagrams.net)** when you want an editable `.drawio` file you can keep dragging and refining in a GUI editor. You can draft the diagram with draw.io’s AI tools or MCP integration.
+- **Use Excalidraw (including Excalidraw via MCP)** when agents and humans should keep editing a shared, freehand whiteboard canvas together. Choose Archify when reviewers need a zero-dependency offline HTML file with click-to-trace dependencies, deterministic routing, and a browser check that runs by default for native diagrams.
 - **Use PlantUML or D2** when your team already maintains diagrams as plain text in Git, wants line-by-line DSL diffs in review, or needs deep formal UML notation beyond Archify's `class` and `sequence` modes.
 - **Use LikeC4** when your team wants a dedicated C4-style architecture-as-code DSL maintained as structured model files across a repository.
 - **Use a BI or observability tool** when you need live metrics, telemetry dashboards, or real-time trace streaming. Archify produces an authored artifact, not a live monitor.

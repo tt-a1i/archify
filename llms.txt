@@ -46,6 +46,6 @@ If you were only asked to install Archify, stop here and do not fetch the refere
 ## Documentation and verified examples
 
 - [Full reference](https://archify.si/llms-full.txt): Complete product facts, universal life & engineering scope, 10 diagram types, 4-style explainers, and FAQ.
-- [Comparison & guides](https://archify.si/compare) · [Scenario guide](https://archify.si/guide) · [Proof gallery](https://archify.si/gallery) · [Agent guide](https://archify.si/agent-diagrams)
+- [Comparison & guides](https://archify.si/compare) · [Scenario guide](https://archify.si/guide) · [Proof gallery](https://archify.si/gallery) · [Agent guide](https://archify.si/agent-diagrams) · [中文对比：draw.io / ProcessOn](https://archify.si/zh/compare)
 - [Life & community](https://archify.si/cases/explainer/first-rental) · [Leave workflow](https://archify.si/cases/life/leave-plan.workflow) · [Shanghai CityWalk](https://archify.si/cases/community/shanghai-citywalk)
 - [Technical cases](https://archify.si/cases/explainer/p99-tail-latency) · [MCO runtime case](https://archify.si/cases/mco-runtime)
