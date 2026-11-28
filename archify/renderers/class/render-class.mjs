@@ -1165,5 +1165,6 @@ if (layoutJsonMode) {
     svg: renderSvg(),
     cards: cd.cards,
     sourceEvidence,
+    layoutReport: buildLayoutReport,
   });
 }

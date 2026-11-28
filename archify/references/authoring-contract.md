@@ -254,6 +254,12 @@ Every native diagram type accepts `validate <type> <input.json> --layout-json`;
 each report carries `ok`, `diagram_type`, `viewBox`, and the measured element
 geometry for that type (nodes and edge routes for workflow, sequence, dataflow,
 and lifecycle; entities, types, segments, or bars for the remaining types).
+A tool that needs both answers for a candidate can run
+`validate <type> <input.json> --json --with-layout`: a passing receipt is the
+`--json` verdict plus the same report under `layout`, from one render. A failing
+candidate returns the ordinary failure receipt without `layout`; use
+`--layout-json` alone for rejected-layout evidence. Explainer documents have no
+layout report and reject the option.
 
 Use the measured failing side for `layout/boundary-out-of-bounds`. Left/top
 negative coordinates need an inward move; increasing viewBox width/height only
