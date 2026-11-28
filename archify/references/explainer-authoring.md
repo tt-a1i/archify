@@ -267,6 +267,91 @@ Prefer a specific question as each panel title. `{#id}` gives a stable ID for li
 
 When two examples need to start side by side below the conclusion, use `@answer span=12` with `span=6` on each example panel. The optional answer span uses the same 1–12 column range as panels; phone layouts still stack at full width. Leave it out for automatic placement.
 
+## Scenarios and calculators
+
+Use one `@scenarios` block, one `@calc` block, or both. Each has an explicit ID distinct from its panel ID. Bindings can point to another panel or to a declaration later in the draft. A scenario-only page can highlight different paths in one native diagram. A calculator-only page can change conclusions, metrics and charts.
+
+```md
+# When does the connection pool fill up? {#pool-explainer}
+
+The pool is at {{metric:pool-load}} and has {{value:free}} free connections.
+
+@answer live=capacity scope="Illustrative steady-state model"
+
+## Which path does the request take? {#path}
+
+@scenarios id=traffic default=warm
+| case warm | Warm cache | busy=4 |
+| case loaded | Pool under load | busy=30 |
+
+@architecture id=requests title="Request path" scenarios=traffic
+| api | API | backend |
+| cache | Cache | database |
+| pool | Connection pool | backend |
+| api > cache |
+| api > pool |
+| active warm | | api~cache |
+| active loaded | | api~pool |
+| badge node:pool | pool-load |
+
+## How many slots are free? {#model}
+
+@calc id=capacity
+| range busy | Busy connections | 0 | 32 | 1 | 4 |
+| let used | 100 * busy / 32 |
+| let free | 32 - busy |
+| preset half | Half full | busy=16 |
+
+@metric id=pool-load label="Pool use" calc=capacity bind=used digits=1 unit="%"
+| {good} | < 70 | Headroom |
+| {caution} | < 100 | Little headroom |
+| {bad} | else | Full |
+
+@chart id=connections calc=capacity type=bar title="Connection slots" unit=connections ymin=0 ymax=32
+| labels | Busy | Free |
+| bar | Connections | busy | free |
+```
+
+### Controls and state
+
+- `@scenarios id=S default=C` takes 1–8 `| case C | Label | input=value | ... |` rows. A case can omit assignments. The default must name a declared case.
+- `@calc id=M` takes up to six inputs, 64 `let` rows and eight presets. Use `| range key | Label | min | max | step | default | unit |` with an optional unit, `| toggle key | Label | true |` with a `true` or `false` default, or `| choice key | Label | defaultKey | key=Option label | key=Other label |` with 2–8 options. Use `| let key | expression |` for a derived scalar and `| preset key | Label | input=value | ... |` for a preset with at least one assignment.
+- Keep each assignment or option in its own cell. The first `=` separates the key from its value. Assignments name calculator inputs and use valid range ticks, booleans, or choice keys. Each input may occur only once per row.
+- Use plain text for case, input, option, preset, threshold, and computed chart labels.
+- The page starts with the input defaults and applies the default case’s assignments. When you choose a case or preset, it changes only the inputs it assigns. A preset or manual edit keeps the selected case. Reload restores the authored default. The visible input summary records the settings used for the displayed result.
+- Model keys start with an ASCII letter and use at most 32 ASCII letters, digits or underscores. Input and derived keys are unique across the calculator. Case keys, preset keys and choice options are unique within their lists. The function names, `true`, `false`, `t`, `scenario`, `constructor`, `prototype` and `__proto__` are reserved as input and derived names. Block IDs can still contain hyphens.
+
+### Expressions and displayed values
+
+Expressions use finite decimal literals such as `.1` and `1e-3`, booleans, and single-quoted keys such as `'loaded'`. Use parentheses, unary `+` and `-`, then `*` and `/`, then `+` and `-`, then one comparison (`==`, `!=`, `<`, `<=`, `>`, `>=`). Arithmetic associates left. Quote a directive attribute that contains whitespace. In `a-b`, the hyphen is subtraction.
+
+Functions are `min(a,b)`, `max(a,b)`, `pow(base,exponent)`, `abs(x)`, `round(x)`, `floor(x)`, `ceil(x)`, `clamp(x,lo,hi)` and `if(condition,yes,no)`. Arithmetic and ordered comparisons take numbers. Equality requires compatible values. Compare a choice or `scenario` with a declared key from that same domain. A conditional requires a boolean test and branches of the same type. Validation checks both branches and evaluates only the selected branch. Derived values can refer forward and must be acyclic. Sampled charts alone can use `t`.
+
+Arithmetic uses binary64. Division by zero fails. Each evaluated numeric result must be finite and at most `1e15` in magnitude. Displayed results are limited to `1e12`. `round` rounds half ties toward positive infinity. `pow` accepts integer exponents between −1200 and 1200, including zero. A negative exponent requires a nonzero base. `clamp` requires `lo <= hi`. Each expression may use at most 512 characters, 128 syntax nodes and 24 levels.
+
+- `@metric id=… label=… calc=M bind=expression [digits=0..6] [unit=…]` displays a numeric result. The default precision is zero decimal places. Group thousands with commas. A percent sign is appended directly. Other units follow a nonbreaking space. Write `100 * ratio` to convert a fraction to percent. Use `note` and `typical` as for static metrics. A live metric uses `bind` in place of `value` and `limit`.
+- A live metric can have three threshold rows. Use `{good}`, `{caution}` and `{bad}` once each in any order. Use `< expression` or `<= expression` for the first two rows, then `else`. Cutoffs must increase in every checked state. The first matching row supplies the status label and color. The comparison uses the unrounded value.
+- Put `live=M` on `@answer` or `@prose id=…` to enable up to 32 slots in that field. `{{value:key}}` displays an input or derived value. Ranges show the selected tick with at least the step’s decimal precision. Derived numbers use up to six decimal places, toggles show localized on/off text, and choices show their labels. `{{metric:block-id}}` displays the metric with its unit and precision. `{{scenario}}` displays the selected case’s label and requires `@scenarios`. Slots work in ordinary text and emphasis. Inline code, link labels, link destinations and text without `live=` keep literal braces.
+
+### Bound diagrams and computed charts
+
+Add `scenarios=S` to a native diagram directive with shorthand geometry, `source=` or `spec=`. Provide one `| active caseKey | nodeIds | edgeSelectors |` for each case. The last two cells hold comma-separated lists. One list may be empty if the other selects a target. Use `from~to` for one unambiguous directed hop and `edge:ID` for an explicit native edge. An active edge also activates its endpoints. Use `| badge node:ID | metricBlockId |` or `| badge edge:ID | metricBlockId |` to add a live badge. The edge badge also accepts `edge:from~to`. A badge stays on its target as the case changes. Its fixed slot preserves the native drawing, and the full Viewer opens from the preview.
+
+For a categorical chart use `@chart id=… calc=M type=bar|line title=… ymin=N ymax=N [unit=…]`. Supply one `| labels | Category | ... |` row and up to four `| bar | Series label | expression | ... |` or `| line | Series label | expression | ... |` rows. Use 1–12 categories and one expression per category in each series. The first series matches the chart type. A line on a bar chart can show a reference level.
+
+For a sampled chart use `@chart id=… calc=M type=line from=A to=B step=D ymin=N ymax=N`. Each series uses one `| line | Series label | expression |` row. The reserved `t` is the numeric coordinate of each sample. Include both endpoints and use 2–241 aligned coordinates. Axes must increase and include every evaluated series value. If the chart has bars, the vertical axis must include zero. Chart data is available in a disclosure below the plot.
+
+### Validation and offline reading
+
+A range or sample domain uses literal decimals with up to six places, a positive step and aligned inclusive endpoints. Each range has up to 10,001 ticks. Every tick must retain its exact grid position in binary64. The validator checks the default, scenario assignments and presets on the same decimal grid used by the controls.
+
+Validation checks every tuple when a scenario has at most 256 possible input combinations. For a larger domain it checks 256 distinct states per scenario, including its default, presets, midpoint, joint corners, and one-input excursions from the midpoint. It fills the remaining slots uniformly over the other ordered grid ranks. Every checked state evaluates all formulas and chart points, including the last sample. The total budget is 32 million estimated evaluation operations. Increase a chart’s sample step or simplify formulas if the estimate exceeds the budget. The detailed JSON receipt reports the number checked and the number possible.
+
+A sampled check covers the visited states. If a reader reaches a failing setting, the page reports the error and restores the last valid settings and results. Validation errors identify the expression and, when available, the scenario and input tuple.
+
+The delivered HTML opens offline. With JavaScript disabled it shows the default case, inputs, numbers, chart and diagram. Print, PDF and long-image export use the current valid reading and omit operating controls. **View source** opens the original draft and the grid receipt in the reader. Interactive documents use the same finalization and optional browser check as other explainers.
+
+
 ## Delivery
 
 ```sh

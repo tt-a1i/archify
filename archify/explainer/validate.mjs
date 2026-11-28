@@ -3,6 +3,8 @@ import { validateSchema } from '../renderers/shared/validator.mjs';
 import { parseInline } from './inline.mjs';
 import { lintExplainerWriting } from './writing.mjs';
 import { parseExplainerDiff } from './diff.mjs';
+import { compileWhatIf, isWhatIf, resolveSlot, templateParts, WhatIfError } from './whatif-engine.mjs';
+import { checkWhatIfGrid } from './whatif-grid.mjs';
 import { compileExplainerChart } from './charts.mjs';
 
 const ID = /^[A-Za-z][A-Za-z0-9_-]*$/;
@@ -11,15 +13,93 @@ const NODE_KEYS = {architecture:'components',sequence:'participants',lifecycle:'
 const EDGE_KEYS = {architecture:'connections',sequence:'messages',lifecycle:'transitions',erd:'relationships',class:'relationships',workflow:'edges',dataflow:'edges'};
 const at = (document,pointer) => pointer.split('/').slice(1).reduce((value,key)=>value?.[key.replaceAll('~1','/').replaceAll('~0','~')],document);
 
+// Keep authored formula/selector data out of the inline prose grammar.
+export function visitWhatIfLabels(block, visit) {
+  const labels = (items, path) => items?.forEach((item, i) => visit(item.label, `${path}/${i}/label`));
+  labels(block.cases, '/cases');
+  labels(block.inputs, '/inputs');
+  block.inputs?.forEach((input, i) => labels(input.options, `/inputs/${i}/options`));
+  labels(block.presets, '/presets');
+  labels(block.thresholds, '/thresholds');
+  labels(block.computed?.series, '/computed/series');
+  block.computed?.labels?.forEach((label, i) => visit(label, `/computed/labels/${i}`));
+}
+
+export function visitLiveSlots(document, visit, onError = error => { throw error; }) {
+  function field(value, path) {
+    let count = 0;
+    function walk(tokens) {
+      for (const token of tokens) {
+        if (token.children) walk(token.children);
+        if (token.type !== 'text') continue;
+        try {
+          for (const slot of templateParts(token.value)) {
+            if (!slot.kind) continue;
+            if (++count > 32) throw new WhatIfError('calc-budget', 'A live text field may use at most 32 slots.', slot.offset);
+            visit({ ...slot, path, offset: token.offsets?.[slot.offset] ?? token.offset + slot.offset });
+          }
+        } catch(error) {
+          error.path ??= path;
+          error.offset = token.offsets?.[error.offset] ?? token.offset + error.offset;
+          onError(error);
+        }
+      }
+    }
+    walk(parseInline(value,{textOffsets:true}).tokens);
+  }
+  if(document.answer.live)field(document.answer.summary,'/answer/summary');
+  document.panels.forEach((panel, pi) => panel.blocks.forEach((block, bi) => {
+    if(block.live)field(block.text,`/panels/${pi}/blocks/${bi}/text`);
+  }));
+}
+
+export function compileExplainerWhatIf(document) {
+  const model=compileWhatIf(document);
+  visitLiveSlots(document, slot=>model.slots.push({...resolveSlot(model,{...slot,offset:0}),...slot}));
+  return model;
+}
+
 /** Structural and semantic author validation; resource preparation owns byte and Git verification.
  * Deferred references into external native files are checked after prepareExplainerDiagrams.
  */
-export function validateExplainer(document, {sourceMap = {}, inputPath, writingMode = 'warn'} = {}) {
+export function validateExplainer(document, {sourceMap = {}, sourceText, inputPath, writingMode = 'warn'} = {}) {
   const diagnostics = [], entries = [];
   function location(pointer,component,panelId) {
     let key=pointer, value;
     while(value===undefined) { value=sourceMap instanceof Map?sourceMap.get(key):sourceMap[key]; if(!key)break;key=key.slice(0,key.lastIndexOf('/')); }
     return {line:value?.line || 1,column:value?.column || 1,component,path:pointer,...(panelId?{panelId}:{}),...(inputPath?{input:inputPath}:{})};
+  }
+  function expressionLocation(pointer, offset, where) {
+    const mapped = sourceMap instanceof Map ? sourceMap.get(pointer) : sourceMap[pointer];
+    if (mapped && /^\s*[{[]/u.test(sourceText || '') && sourceText[mapped.start] === '"') {
+      // A JSON string pointer includes its quotes. Count decoded UTF-16
+      // units to locate the authored operator even after a JSON escape.
+      let raw = mapped.start + 1;
+      for (let decoded = 0; decoded < offset && raw < mapped.end - 1; decoded++) {
+        if (sourceText[raw] === '\\') raw += sourceText[raw+1] === 'u' ? 6 : 2;
+        else raw++;
+      }
+      return { line:where.line, column:where.column + raw - mapped.start };
+    }
+    if (mapped?.quote) {
+      let raw = mapped.start;
+      for (let decoded = 0; decoded < offset && raw < mapped.end; decoded++, raw++) {
+        if (sourceText?.[raw] === '\\' && [mapped.quote,'\\'].includes(sourceText[raw+1])) raw++;
+      }
+      return {line:mapped.line,column:mapped.column + raw - mapped.start};
+    }
+    const text = at(document,pointer);
+    const prefix = typeof text === 'string' ? text.slice(0,offset).split('\n') : [];
+    const row = mapped?.rows?.[prefix.length-1];
+    if (row) {
+      let raw = row.start;
+      for (let i = 0; i < prefix.at(-1).length && raw < row.end; i++, raw++) {
+        if (sourceText?.[raw] === '\\' && ['|','\\'].includes(sourceText[raw+1])) raw++;
+      }
+      return {line:row.line,column:row.column + raw - row.start};
+    }
+    if (prefix.length > 1) return { line:where.line + prefix.length - 1, column:prefix.at(-1).length + 1 };
+    return { line:where.line, column:where.column + offset };
   }
   function fail(code,pointer,component,reason,example,panelId) {
     diagnostics.push({code:`explainer/${code}`,severity:'error',message:reason,subject:location(pointer,component,panelId),
@@ -98,12 +178,18 @@ export function validateExplainer(document, {sourceMap = {}, inputPath, writingM
     for(const node of target.route||[])if(!nodes.has(node))fail('diagram-route',`${pointer}/route`,component,'A route endpoint does not exist in the authored native diagram.','route=api~redis',panelId);
     if(target.edges)references(target.edges,`${pointer}/edges`,component,panelId,new Map(edges.filter(edge=>edge.id).map(edge=>[edge.id,edge])),'Use an edge ID from the native diagram.');
   }
-  function text(value,pointer,component,panelId) {
+  function text(value,pointer,component,panelId,live = false,plain = false) {
     if(typeof value!=='string')return;
     const where=location(pointer,component,panelId);
     const parsed=parseInline(value,{...where,input:inputPath});diagnostics.push(...parsed.diagnostics.map(entry=>({...entry,subject:{...entry.subject,path:pointer}})));
-    const prose=tokens=>tokens.map(token=>token.type==='code'?'':token.children?prose(token.children):token.type==='link'?token.label:token.value||'').join('');
-    if(component!=='source')entries.push({text:prose(parsed.tokens),raw:value,pointer,line:where.line,component,...(panelId?{panelId}:{})});
+    if (plain && !parsed.diagnostics.length &&
+        (parsed.tokens.some(token=>token.type!=='text') || parsed.tokens.map(token=>token.value).join('')!==value)) {
+      fail('label-markup',pointer,component,'Use plain text in interactive labels.','Warm cache',panelId);
+      return;
+    }
+    const mask = value => live ? value.replace(/\{\{(?:value:[A-Za-z][\w-]*|metric:[A-Za-z][\w-]*|scenario)\}\}/gu, match=>' '.repeat(match.length)) : value;
+    const prose=tokens=>tokens.map(token=>token.type==='code'?'':token.children?prose(token.children):token.type==='link'?token.label:mask(token.value||'')).join('');
+    if(component!=='source')entries.push({text:prose(parsed.tokens),raw:mask(value),pointer,line:where.line,component,...(panelId?{panelId}:{})});
     for(const ref of parsed.references) {
       if(ref.kind==='source')reference(ref.id,pointer,component,panelId,sourceIds,'[Evidence](source:known-source)');
       if(ref.kind==='block')reference(ref.id,pointer,component,panelId,targets,'[Read explanation](block:known-block)');
@@ -112,7 +198,7 @@ export function validateExplainer(document, {sourceMap = {}, inputPath, writingM
       if(ref.kind==='typical'&&!['source','scope'].includes(component))entries.push({text:ref.text,line:where.line,component:'typical',...(panelId?{panelId}:{})});
     }
   }
-  text(document.meta.title,'/meta/title','title');text(document.answer.summary,'/answer/summary','answer');(document.answer.reasons||[]).forEach((reason,i)=>text(reason,`/answer/reasons/${i}`,'answer'));
+  text(document.meta.title,'/meta/title','title');text(document.answer.summary,'/answer/summary','answer',undefined,Boolean(document.answer.live));(document.answer.reasons||[]).forEach((reason,i)=>text(reason,`/answer/reasons/${i}`,'answer'));
   text(document.answer.scope,'/answer/scope','scope');
   for(const [si,source]of document.sources.entries()) {
     const pointer=`/sources/${si}`;text(source.title,`${pointer}/title`,'source');
@@ -124,9 +210,9 @@ export function validateExplainer(document, {sourceMap = {}, inputPath, writingM
     for(const [bi,block]of panel.blocks.entries()) {
       const bp=`${pp}/blocks/${bi}`, component=block.type;
       if(component==='diff')diagnostics.push(...parseExplainerDiff(block.text,{...location(`${bp}/text`,component,panel.id),input:inputPath}).diagnostics);
-      if(component==='chart'&&(block.text===undefined)===(block.data===undefined))fail('chart',`${bp}`,component,'A chart has either fence text or a data file, not both or neither.','@chart type=bar data=latency.csv x=day y=p99',panel.id);
       if(component==='chart'&&block.text!==undefined){const chart=compileExplainerChart(block.text);if(chart.error){const before=diagnostics.length;fail('chart',`${bp}/text`,component,chart.error,chart.example,panel.id);if(chart.line>0)diagnostics[before].subject.line+=chart.line-1;}}
-      for(const key of ['text','title','label','note','caption','alt'])if(!['diff','snippet','chart'].includes(component)||key!=='text')text(block[key],`${bp}/${key}`,component,panel.id);
+      for(const key of ['text','title','label','note','caption','alt'])if(!['diff','snippet','chart'].includes(component)||key!=='text')text(block[key],`${bp}/${key}`,component,panel.id,key==='text'&&Boolean(block.live));
+      visitWhatIfLabels(block,(value,pointer)=>text(value,bp+pointer,component,panel.id,false,true));
       if(component==='list')block.items.forEach((item,i)=>text(item,`${bp}/items/${i}`,component,panel.id));
       if(component==='facts')block.entries.forEach((item,i)=>{text(item.key,`${bp}/entries/${i}/key`,component,panel.id);text(item.value,`${bp}/entries/${i}/value`,component,panel.id);});
       if(component==='comparison') {
@@ -143,6 +229,29 @@ export function validateExplainer(document, {sourceMap = {}, inputPath, writingM
       if(component==='diagram')for(const key of ['nodeSources','nodeBlocks'])for(const node of Object.keys(block[key]||{}))diagramTarget({diagram:block.id,node},`${bp}/${key}/${node}`,component,panel.id);
     }
   }
+  let grid;
+  if (isWhatIf(document)) {
+    const report = (error, detail = {}) => {
+      if (!(error instanceof WhatIfError)) throw error;
+      const pointer=error.path || '/';
+      const panel=at(document,pointer.match(/^\/panels\/\d+/u)?.[0] || '/');
+      const component=at(document,pointer.match(/^\/panels\/\d+\/blocks\/\d+/u)?.[0] || '/')?.type ||
+        (pointer.startsWith('/answer/') ? 'answer' : 'calc');
+      const where=location(pointer,component,panel?.id);
+      const example='Correct the indicated expression, binding or input domain.';
+      diagnostics.push({code:`explainer/${error.code}`,severity:'error',message:error.message,
+        subject:{...where,...expressionLocation(pointer,error.offset,where),expressionOffset:error.offset},
+        evidence:{reason:error.message,example,...detail},supportedFixes:[example]});
+    };
+    try {
+      const model=compileWhatIf(document);
+      visitLiveSlots(document, slot=>{
+        try { model.slots.push(resolveSlot(model,slot)); }
+        catch(error) { error.path=slot.path; report(error); }
+      },report);
+      if (!diagnostics.some(entry=>entry.severity==='error')) grid=checkWhatIfGrid(model,report);
+    } catch(error) { report(error); }
+  }
   diagnostics.push(...lintExplainerWriting(entries,{mode:writingMode,locale:document.meta.locale||'auto'}).map(entry=>({...entry,subject:{...entry.subject,...(inputPath?{input:inputPath}:{})}})));
-  return {ok:!diagnostics.some(entry=>entry.severity==='error'),diagnostics};
+  return {ok:!diagnostics.some(entry=>entry.severity==='error'),diagnostics,...(grid ? {grid} : {})};
 }

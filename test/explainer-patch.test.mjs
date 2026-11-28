@@ -4,13 +4,14 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { scanHtml } from '../archify/explainer/check.mjs';
+import { checkExplainerHtml, scanHtml } from '../archify/explainer/check.mjs';
 import { createHash } from 'node:crypto';
 import { preparePanelPatch } from '../archify/explainer/patch.mjs';
 import { packPageBundle, unpackPageBundle } from '../archify/explainer/page-bundle.mjs';
 import { compileExplainerDiagram } from '../archify/explainer/diagrams.mjs';
 import { prepareExplainer, rebindPreparedBundle } from '../archify/explainer/prepare.mjs';
 import { renderExplainer } from '../archify/explainer/render.mjs';
+import { verifiedNativeScriptHashes } from '../archify/explainer/whatif-csp.mjs';
 const cli=path.resolve('archify/bin/archify.mjs');
 const run=args=>spawnSync(process.execPath,[cli,...args],{encoding:'utf8',maxBuffer:64*1024*1024,env:{...process.env,ARCHIFY_UPDATE_CHECK_DISABLED:'1'}});
 const read=file=>unpackPageBundle(JSON.parse(scanHtml(fs.readFileSync(file,'utf8')).scripts.find(s=>s.attrs.id==='archify-explainer-prepared').text));
@@ -246,4 +247,86 @@ test('reader serialization omits private bindings for Windows paths and missing 
     assert.equal(page.digest, createHash('sha256').update(JSON.stringify({...page,digest:undefined})).digest('hex'));
     assert.equal(JSON.stringify(bundle), before, 'private validated bundle must stay unchanged');
   }
+});
+
+test('patch revalidates formulas and updates live bindings in an untouched panel atomically',t=>{
+ const dir=temp(t),input=path.join(dir,'author.md'),artifact=path.join(dir,'initial.html');
+ const replacement=path.join(dir,'replacement.md'),output=path.join(dir,'patched.html');
+ const summary='## Reading {#reading}\n\n@prose id=description live=model\n| The new value is {{metric:value}}. |\n';
+ const config='## Model {#model-panel}\n\n@calc id=model\n| range x | Count | 0 | 4 | 1 | 2 |\n| let total | 2 * x |\n\n@metric id=value label=Count calc=model bind=total\n\n';
+ fs.writeFileSync(input,'# Cross-panel result {#patch-calc}\n\nThis reading has a calculated result.\n\n'+config+summary);
+ const initial=run(['deliver','explainer',input,artifact,'--json']);
+ assert.equal(initial.status,0,initial.stdout+initial.stderr);
+ const before=read(artifact);
+ fs.writeFileSync(replacement,config.replace('2 * x','3 * x'));
+ const patched=run(['patch','explainer',artifact,'model-panel',replacement,output,'--json']);
+ assert.equal(patched.status,0,patched.stdout+patched.stderr);
+ const after=read(output);
+ assert.deepEqual(after.document.panels[1],before.document.panels[1]);
+ assert.ok(after.sourceText.endsWith(summary));
+ assert.deepEqual(after.grid,before.grid);
+ assert.match(fs.readFileSync(output,'utf8'),/data-whatif-key="value">6<\/span>/u);
+ assert.notEqual(manifest(output).revision,manifest(artifact).revision);
+ const successful=fs.readFileSync(output);
+ fs.writeFileSync(replacement,config.replace('bind=total','bind=removed'));
+ const rejected=run(['patch','explainer',artifact,'model-panel',replacement,output,'--json']);
+ assert.notEqual(rejected.status,0);
+ assert.match(rejected.stdout,/explainer\/calc-name/u);
+ assert.deepEqual(fs.readFileSync(output),successful);
+});
+
+test('a shipped v1 P99 panel accepts a calculator and preserves its verified native Viewer',t=>{
+ const dir=temp(t);
+ const artifact=path.resolve('docs/cases/explainer/p99-tail-latency.html');
+ const replacement=path.join(dir,'causes.md'), output=path.join(dir,'patched.html');
+ const previous=read(artifact);
+ fs.writeFileSync(replacement,`## 常见根因怎么快速区分？ {#causes}
+
+@calc id=model
+| range rate | 请求数 | 0.25 | 2.25 | 1 | 1.25 |
+
+@metric id=request-rate label=请求数 calc=model bind=rate digits=2
+
+`);
+ const patched=run(['patch','explainer',artifact,'causes',replacement,output,'--json']);
+ assert.equal(patched.status,0,patched.stdout+patched.stderr);
+ const page=read(output);
+ assert.equal(page.grid.statesPossible,'3');
+ const child=page.preparedDiagrams.diagrams['p99-triage'];
+ assert.equal(child.html,previous.preparedDiagrams.diagrams['p99-triage'].html);
+ assert.equal(verifiedNativeScriptHashes(child.html+'\n'),null,'historical Viewer hashes require the exact shipped child bytes');
+ const checked=run(['check',output,'--require-provenance','--json']);
+ assert.equal(checked.status,0,checked.stdout+checked.stderr);
+ assert.match(fs.readFileSync(output,'utf8'),/data-whatif-metric>1\.25</u);
+});
+
+test('patched first-rental binds preview lanes to its original frozen workflow',t=>{
+ const dir=temp(t);
+ const artifact=path.resolve('docs/cases/explainer/first-rental.html');
+ const replacement=path.join(dir,'clauses.md'), output=path.join(dir,'patched.html');
+ fs.writeFileSync(replacement,`## Contract terms {#clauses}
+
+@calc id=model
+| range rate | Rate | 1 | 3 | 1 | 2 |
+
+@metric id=rental-rate label=Rate calc=model bind=rate
+
+`);
+ const patched=run(['patch','explainer',artifact,'clauses',replacement,output,'--json']);
+ assert.equal(patched.status,0,patched.stdout+patched.stderr);
+ const html=fs.readFileSync(output,'utf8');
+ const script=scanHtml(html).scripts.find(s=>s.attrs.id==='archify-explainer-prepared');
+ const bundle=read(output);
+ const child=bundle.preparedDiagrams.diagrams['rent-flow'];
+ assert.equal(child.html,read(artifact).preparedDiagrams.diagrams['rent-flow'].html);
+ assert.equal(child.previewLanes.length,4);
+ assert.doesNotMatch(html,/class="diagram-preview [^"]*bare-lanes/u);
+ assert.equal(checkExplainerHtml(html,{checkNative:false}).ok,true);
+
+ child.previewLanes=child.previewLanes.map(({label},i)=>({id:`lane-${i}`,label}));
+ bundle.digest=createHash('sha256').update(JSON.stringify({...bundle,digest:undefined})).digest('hex');
+ const payload=JSON.stringify(packPageBundle(bundle)).replaceAll('<','\\u003c').replaceAll('>','\\u003e').replaceAll('&','\\u0026');
+ const forged=html.replace(script.text,()=>payload);
+ const diagnostics=checkExplainerHtml(forged,{checkNative:false}).diagnostics;
+ assert.deepEqual(diagnostics.map(issue=>issue.code),['explainer/native-preview-binding']);
 });

@@ -2,15 +2,20 @@ import fs from 'node:fs';
 import { softwareNoticesHtml } from '../renderers/shared/software-notices.mjs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
+import { isDeepStrictEqual } from 'node:util';
 import { parseInline, renderInline } from './inline.mjs';
 import { parseExplainerDiff } from './diff.mjs';
 import { computeExplainerRevision } from './revision.mjs';
 import { layoutExplainerPanels, isGuidedPanel } from './layout.mjs';
 import { compileExplainerChart } from './charts.mjs';
 import { packPageBundle } from './page-bundle.mjs';
+import { checkWhatIfGrid } from './whatif-grid.mjs';
+import { compileExplainerWhatIf } from './validate.mjs';
+import { displayInput, displaySlot, evaluateWhatIf, isWhatIf, projectChart, templateParts } from './whatif-engine.mjs';
+import { explainerScript, whatIfPolicy } from './whatif-csp.mjs';
+import { nativePreviewLanes, scenarioDiagramSvg, scenarioDiagramTargets } from './diagrams.mjs';
 
 const css = fs.readFileSync(new URL('./reader.css', import.meta.url), 'utf8');
-const js = fs.readFileSync(new URL('./reader.js', import.meta.url), 'utf8');
 const escape = value => String(value ?? '').replace(/[&<>"']/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character]));
 const json = value => JSON.stringify(value).replace(/[<>&\u2028\u2029]/g, character => `\\u${character.charCodeAt(0).toString(16).padStart(4, '0')}`);
 const hash = text => createHash('sha256').update(text).digest('hex');
@@ -33,21 +38,39 @@ const dictionaries = {
   zh:{answer:'结论',feedback:{trigger:'反馈',issue:'提交 Issue',issueHint:'反馈问题或功能建议',email:'发邮件反馈',copyEmail:'复制邮箱地址',starPrompt:'如果 Archify 帮到了你',star:'点个 Star',starLabel:'在 GitHub 给 Archify 点 Star',starTitle:'在 GitHub 支持 Archify',starBody:'你的每一颗 Star，都是我们持续开源打磨的最大动力。'},answerMark:'答',scope:'适用于',sources:'来源',print:'打印 / PDF',image:'长图',imageHints:['最清晰','体积最小','兼容最好'],export:'导出',style:'样式',styles:{clean:'简洁',editorial:'杂志',product:'产品',swiss:'网格'},auto:'系统',light:'浅色',dark:'深色',typical:'典型值',explore:'打开交互图',exploreTitle:'缩放、搜索节点、追踪路径和上下游，导出图片或动画',close:'关闭',loading:'正在打开交互图…',graph:'图的结构',changes:'结构改动',added:'新增',removed:'删除',modified:'修改',copy:'复制',copied:'已复制',walk:'逐步看',walkMessages:'逐条看消息',walkFlow:'沿流程看',prev:'上一步',next:'下一步',end:'结束',ask:'追问',askQuote:'追问这段',askPlaceholder:'哪里没看懂，或者希望这块补充什么？',askCopy:'复制追问',askCopied:'已复制，粘贴给 agent 即可',askCancel:'取消',askChips:['没看懂这块','展开讲讲','举个例子','依据是什么？'],askPage:'页面',askFile:'文件',askWhere:'位置',askQuoteLabel:'引用',askQuestion:'问题',askNote:'会一并复制页面、面板位置和 ID，agent 可以只改这一块。',askPatch:'请用 Archify 的面板替换（patch explainer）只更新这个面板，保留它的 ID。',tagline:'把你想理解、规划或分享的事，变成可以互动的可视化作品。',facts:{panels:n=>`${n} 个面板`,diagrams:n=>`${n} 张图已通过结构校验`,sources:n=>`${n} 个来源`,pinned:rev=>`代码固定在提交 ${rev}`}}
 };
 
+export const explainerWords = (locale = 'zh-CN') => dictionaries[locale.startsWith('zh') ? 'zh' : 'en'];
+
 /** Render a validated canonical explainer with separately prepared, immutable resources. */
 export function renderExplainer(document, options = {}) {
-  const { preparedBundle, sourceText = JSON.stringify(document), sourceMap = {}, sourcePath, preparedSources = {}, preparedDiagrams = {}, diagnostics = [], pageDirectory } = options;
+  const { preparedBundle, sourceText = JSON.stringify(document), sourceMap = {}, sourcePath, preparedSources = {}, preparedDiagrams = {}, diagnostics = [], pageDirectory, projectionOnly = false } = options;
   const locale = document.meta.locale || 'zh-CN';
   // Chinese pages get Chinese controls; every other language gets the English ones.
   const english = !locale.startsWith('zh');
-  const words = dictionaries[english ? 'en' : 'zh'];
+  const words = explainerWords(locale);
   const sources = preparedSources.sources || preparedSources;
   const assets = preparedSources.assets || {};
   const diagrams = preparedDiagrams.diagrams || preparedDiagrams;
+  const previewLanes = Object.fromEntries(Object.entries(diagrams).map(([id,diagram])=>[id,nativePreviewLanes(diagram.html)]));
+  const interactive = isWhatIf(document);
+  const model = interactive ? compileExplainerWhatIf(document) : null;
+  const initial = model && evaluateWhatIf(model, model.initial);
+  const say=(en,zh)=>english?en:zh;
+  const viewSource=say('View source','查看源码');
+  const sourceTools = interactive ? `<button type="button" class="tool-button" aria-haspopup="dialog" data-open-source>${viewSource}</button>` : '';
+  const sourceDialog = interactive ? `<dialog id="explainer-source" class="whatif-source" aria-labelledby="explainer-source-title"><header><h2 id="explainer-source-title">${viewSource}</h2><button type="button" class="tool-button" data-close-source autofocus>${words.close}</button></header><p data-source-format></p><pre></pre><p data-source-grid></p></dialog>` : '';
+  const csp = interactive && !projectionOnly ? `<meta http-equiv="Content-Security-Policy" content="${whatIfPolicy(diagrams)}">` : '';
   const sourceSha256 = hash(sourceText);
   const revision = computeExplainerRevision({document,sourceText,preparedSources,preparedDiagrams,dependencies:preparedBundle?.dependencies});
   const footnotes = [];
   const citations = new Map();
-  const inline = (text, panelId, blockId) => renderInline(String(text ?? ''), {document,sources,diagrams,panelId,blockId,footnotes,citations});
+  const inline = (text, panelId, blockId, live) => renderInline(String(text ?? ''), {
+    document,sources,diagrams,panelId,blockId,footnotes,citations,
+    ...(live ? {renderText:token=>templateParts(token.value).map(part=>part.kind
+      ? `<span data-whatif-slot="${part.kind}"${part.key ? ` data-whatif-key="${escape(part.key)}"` : ''}>${escape(displaySlot(model,initial,part,locale))}</span>`
+      : escape(part.text)).join('')} : {}),
+  });
+  const inputSummary = () => model.inputs.length ? `<dl class="whatif-inputs">${model.inputs.map((input,index)=>
+    `<div><dt>${escape(input.label)}</dt><dd data-whatif-current="${index}">${escape(displayInput(input,initial.tuple[index],locale))}</dd></div>`).join('')}</dl>` : '';
   function unavailable(block, message) {
     const panelIndex = document.panels.findIndex(panel => panel.blocks.includes(block));
     const pointer = `/panels/${panelIndex}/blocks/${document.panels[panelIndex]?.blocks.indexOf(block)}`;
@@ -58,24 +81,62 @@ export function renderExplainer(document, options = {}) {
     const nativeHash = target.node ? `focus=${encodeURIComponent(target.node)}` : target.route ? `route=${encodeURIComponent(target.route[0])}~${encodeURIComponent(target.route[1])}` : '';
     return `<a class="diagram-link" href="#${escape(target.diagram)}" data-diagram-link="${escape(target.diagram)}" data-diagram-hash="${escape(nativeHash)}"${target.edges ? ` data-diagram-edges="${escape(JSON.stringify(target.edges))}"` : ''}>${text}<span aria-hidden="true"> ↗</span></a>`;
   };
-  function blockHtml(block, panelId) {
+  function blockHtml(block, panelId, panelIndex, blockIndex) {
     const i = text => inline(text,panelId,block.id);
     let body;
     switch (block.type) {
-      case 'prose': body = block.text.split(/\n\s*\n/).map(text => `<p>${i(text)}</p>`).join(''); break;
+      case 'prose': body = block.text.split(/\n\s*\n/).map(text => `<p>${inline(text,panelId,block.id,block.live)}</p>`).join(''); break;
       case 'list': { const tag = block.ordered ? 'ol' : 'ul'; if (block.checklist) { body = `<ul class="checklist">${block.items.map(text => `<li><label><input type="checkbox"><span>${i(text)}</span></label></li>`).join('')}</ul>`; break; } body = `<${tag} class="text-list">${block.items.map(text => `<li>${i(text)}</li>`).join('')}</${tag}>`; break; }
       case 'callout': body = `<aside class="callout ${escape(block.level)}">${block.title ? `<h3>${i(block.title)}</h3>` : ''}<p>${i(block.text)}</p></aside>`; break;
       case 'comparison': body = `<div class="table-scroll"><table><thead><tr><th scope="col">${block.labelColumn ? i(block.labelColumn) : ''}</th>${block.columns.map(text => `<th scope="col">${i(text)}</th>`).join('')}</tr></thead><tbody>${block.rows.map(row => `<tr id="${escape(row.id)}"><th scope="row">${i(row.label)}</th>${row.cells.map(cell => `<td>${cell.assessment ? `<span class="assessment ${escape(cell.assessment)}"><span class="assessment-meter" aria-hidden="true"><i></i><i></i><i></i></span><b>${i(cell.verdict || ({good:english?'Favorable':'有利',caution:english?'Tradeoff':'有代价',bad:english?'Unfavorable':'不利'}[cell.assessment]))}</b></span>` : ''}${cell.assessment && cell.text === cell.verdict ? '' : `<span class="cell-text">${i(cell.text)}</span>`}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`; break;
       case 'facts': body = `<dl class="facts">${block.entries.map(entry => `<div><dt>${i(entry.key)}</dt><dd>${i(entry.value)}</dd></div>`).join('')}</dl>`; break;
+      case 'scenarios':
+        body = `<div class="whatif-scenario"><p class="whatif-current-case" data-whatif-case-label>${escape(initial.label)}</p><div class="whatif-buttons interactive" role="group" aria-label="${say('Scenarios','场景')}">${block.cases.map(item=>`<button type="button" class="tool-button" data-whatif-case="${escape(item.key)}" aria-pressed="${item.key===initial.key}">${escape(item.label)}</button>`).join('')}</div></div>`;
+        break;
+      case 'calc': {
+        const prefix=`explainer-control-${panelIndex}-${blockIndex}`;
+        body = `${model.scenarios && block.inputs.length ? `<p class="whatif-current-case" data-whatif-case-label>${escape(initial.label)}</p>` : ''}${inputSummary()}${block.inputs.length || block.presets.length ? `<div class="whatif-controls interactive">${block.inputs.map((input,index)=>{
+          const id=prefix+'-'+index, value=initial.tuple[index];
+          const shown=displayInput(input,value,locale);
+          const common=`id="${id}" data-whatif-input="${index}"`;
+          const control=input.kind==='toggle' ? `<input ${common} type="checkbox"${value ? ' checked' : ''}>` :
+            input.kind==='choice' ? `<select ${common}>${input.options.map(option=>`<option value="${escape(option.key)}"${value===option.key?' selected':''}>${escape(option.label)}</option>`).join('')}</select>` :
+            `<input ${common} type="range" min="${input.min}" max="${input.max}" step="${input.step}" value="${value}" aria-valuetext="${escape(shown)}">`;
+          const endpoints = input.kind==='range' ? `<div class="whatif-endpoints" aria-hidden="true"><span>${escape(displayInput(input,input.min,locale))}</span><span>${escape(displayInput(input,input.max,locale))}</span></div>` : '';
+          return `<div class="whatif-control" data-input-kind="${input.kind}"><label for="${id}">${escape(input.label)}</label>${input.kind==='range' ? `<span data-whatif-current="${index}" class="whatif-readout">${escape(shown)}</span>` : ''}${control}${endpoints}</div>`;
+        }).join('')}${block.presets.length ? `<div class="whatif-buttons" role="group" aria-label="${say('Presets','预设')}">${block.presets.map(preset=>`<button type="button" class="tool-button" data-whatif-preset="${escape(preset.key)}">${escape(preset.label)}</button>`).join('')}</div>` : ''}</div>` : ''}`;
+        break;
+      }
       case 'metric': {
+        if (block.calc) {
+          const result=initial.metrics.get(block.id);
+          body=`<div class="metric"><span class="metric-label">${i(block.label)}</span><p class="metric-value" data-whatif-metric>${escape(result.text)}</p>${result.status ? `<p class="whatif-verdict" data-whatif-status="${result.status.level}">${escape(result.status.label)}</p>` : ''}${block.typical ? `<span class="typical">${words.typical}</span>` : ''}${block.note ? `<p class="fine">${i(block.note)}</p>` : ''}</div>`;
+          break;
+        }
         const over = block.value !== undefined && block.limit !== undefined && block.value > block.limit;
         const unit = escape(block.unit || '');
         body = `<div class="metric${over ? ' metric-over-limit' : ''}" data-metric-status="${over ? 'over-limit' : block.value === undefined ? 'limit-only' : 'within-limit'}"><span class="metric-label">${i(block.label)}</span><p class="metric-value">${block.value === undefined ? `${english?'Limit':'上限'} ${escape(block.limit)}<span>${unit}</span>` : `${escape(block.value)}${block.unit ? `<span>${unit}</span>` : ''}${block.limit === undefined ? '' : `<small> / ${escape(block.limit)}${unit}</small>`}`}</p>${block.value !== undefined && block.limit > 0 ? `<meter min="0" max="${escape(block.limit)}" value="${escape(Math.max(0, Math.min(block.value,block.limit)))}" aria-label="${escape(block.label)}">${escape(block.value)} / ${escape(block.limit)}</meter>` : ''}${over ? `<p class="metric-overflow">${english?'Over limit by':'超限'} ${escape(block.value - block.limit)}${block.unit ? ` ${unit}` : ''}</p>` : ''}${block.typical ? `<span class="typical">${words.typical}</span>` : ''}${block.note ? `<p class="fine">${i(block.note)}</p>` : ''}</div>`;
         break;
       }
       case 'steps': body = `<ol class="steps">${block.items.map(item => `<li id="${escape(item.id)}"><b>${item.target ? nativeLink(item.target,i(item.text)) : i(item.text)}</b>${item.detail ? `<p>${i(item.detail)}</p>` : ''}</li>`).join('')}</ol>`; break;
-      case 'diagram': { const diagram = diagrams[block.id]; if (!diagram?.svg || !diagram?.html) unavailable(block,`Missing prepared native diagram: ${block.id}`); const title = diagram.spec?.meta?.title || block.id; const svg = staticSvg(diagram.svg, block.id); const previewClass = previewPrefix(block.id); const nativeStyle = scopeNativeCss(diagram.styles ?? nativeStyles(diagram.html), '.' + previewClass, previewClass + '-', diagram.svg); const nativeWidth = Number(diagram.svg.match(/viewBox=["'][^"']*?[\d.-]+[ ,]+[\d.-]+[ ,]+([\d.]+)/)?.[1]); const lanes = diagram.previewLanes ?? diagram.spec?.lanes ?? [], singleLane = lanes.length === 1 ? ' single-lane bare-lanes' : lanes.length && lanes.every(lane => /^lane-\d+$/.test(lane.id)) ? ' bare-lanes' : ''; body = `<figure class="diagram"><figcaption><span class="diagram-title">${escape(title)}</span><span class="diagram-actions interactive"><button class="tool-button explore-button" type="button" data-open-diagram="${escape(block.id)}" title="${words.exploreTitle}">${icons.expand}<span>${words.explore}</span></button></span></figcaption><div class="diagram-preview ${previewClass}${singleLane}" role="img" aria-label="${escape(title)}"${block.nodeSources ? ` data-node-sources="${escape(JSON.stringify(block.nodeSources))}"` : ''}${block.nodeBlocks ? ` data-node-blocks="${escape(JSON.stringify(block.nodeBlocks))}"` : ''}${nativeWidth > 0 ? ` style="--native-width:${Math.round(nativeWidth)}px"` : ''}><style>${nativeStyle}</style>${svg}</div></figure><p class="diagram-fit-status fine" role="status" hidden></p><details class="diagram-semantics" open><summary>${words.graph}</summary><ul>${(diagram.semantic?.nodes || []).map(node => `<li>${escape(node.label || node.id)} <code>${escape(node.id)}</code></li>`).join('')}${(diagram.semantic?.edges || []).map(edge => `<li><code>${escape(edge.from)}</code> → <code>${escape(edge.to)}</code>${edge.label ? ` · ${escape(edge.label)}` : ''}</li>`).join('')}</ul></details>${block.changes?.length ? `<dl class="changes"><dt>${words.changes}</dt>${block.changes.map(change => `<dd data-change-target="${escape(change.target)}"><span class="chip ${escape(change.change)}">${words[change.change]}</span> ${changeTargetName(diagram.semantic, change.target)}</dd>`).join('')}</dl>` : ''}`; break; }
-      case 'chart': { const text = block.text ?? preparedSources.charts?.[block.id]; if (typeof text !== 'string') unavailable(block,`Missing prepared chart data: ${block.id}`); const chart = compileExplainerChart(text); if (chart.error) unavailable(block, chart.error); body = `<figure class="chart" style="--native-width:${Math.round(chart.width)}px">${chart.svg.replace(/^<svg\b[^>]*>/, tag => tag.replace(/\s(?:width|height)="[^"]*"/g, ''))}${block.title ? `<figcaption>${i(block.title)}</figcaption>` : ''}</figure>`; break; }
+      case 'diagram': {
+        const diagram = diagrams[block.id];
+        if (!diagram?.svg || !diagram?.html) unavailable(block,`Missing prepared native diagram: ${block.id}`);
+        const title = diagram.spec?.meta?.title || block.id;
+        const bound = block.scenarios ? scenarioDiagramTargets(block,diagram,{pointer:`/panels/${panelIndex}/blocks/${blockIndex}`,panelId,sourceMap,sourcePath}) : undefined;
+        const svg = staticSvg(bound ? scenarioDiagramSvg(diagram.svg,block.diagramType,bound,model,initial) : diagram.svg, block.id);
+        const previewClass = previewPrefix(block.id);
+        const scoped = scopeNativeCss(nativeStyles(diagram.html), '.' + previewClass, previewClass + '-', diagram.svg);
+        const nativeStyle = interactive ? scoped.replace(/[ \t]+$/gmu,'') : scoped;
+        const nativeWidth = Number(diagram.svg.match(/viewBox=["'][^"']*?[\d.-]+[ ,]+[\d.-]+[ ,]+([\d.]+)/)?.[1]); const lanes = previewLanes[block.id], singleLane = lanes.length === 1 ? ' single-lane bare-lanes' : lanes.length && lanes.every(lane => /^lane-\d+$/.test(lane.id)) ? ' bare-lanes' : ''; body = `<figure class="diagram"><figcaption><span class="diagram-title">${escape(title)}</span><span class="diagram-actions interactive"><button class="tool-button explore-button" type="button" data-open-diagram="${escape(block.id)}" title="${words.exploreTitle}">${icons.expand}<span>${words.explore}</span></button></span></figcaption><div class="diagram-preview ${previewClass}${singleLane}" role="img" aria-label="${escape(bound ? title + ' — ' + initial.label : title)}"${bound ? ` data-whatif-diagram="${escape(title)}"` : ''}${block.nodeSources ? ` data-node-sources="${escape(JSON.stringify(block.nodeSources))}"` : ''}${block.nodeBlocks ? ` data-node-blocks="${escape(JSON.stringify(block.nodeBlocks))}"` : ''}${nativeWidth > 0 ? ` style="--native-width:${Math.round(nativeWidth)}px"` : ''}><style>${nativeStyle}</style>${svg}</div></figure><p class="diagram-fit-status fine" role="status" hidden></p><details class="diagram-semantics" open><summary>${words.graph}</summary><ul>${(diagram.semantic?.nodes || []).map(node => `<li>${escape(node.label || node.id)} <code>${escape(node.id)}</code></li>`).join('')}${(diagram.semantic?.edges || []).map(edge => `<li><code>${escape(edge.from)}</code> → <code>${escape(edge.to)}</code>${edge.label ? ` · ${escape(edge.label)}` : ''}</li>`).join('')}</ul></details>${block.changes?.length ? `<dl class="changes"><dt>${words.changes}</dt>${block.changes.map(change => `<dd data-change-target="${escape(change.target)}"><span class="chip ${escape(change.change)}">${words[change.change]}</span> ${changeTargetName(diagram.semantic, change.target)}</dd>`).join('')}</dl>` : ''}`; break; }
+      case 'chart': {
+        if (block.computed) {
+          const {data,labels}=model.charts.get(block.id);
+          const projection=projectChart(data,labels,initial.charts.get(block.id));
+          body=computedChartHtml(projection,block.title ? i(block.title) : '',say,data);
+          break;
+        }
+        const text = block.text ?? preparedSources.charts?.[block.id]; if (typeof text !== 'string') unavailable(block,`Missing prepared chart data: ${block.id}`); const chart = compileExplainerChart(text); if (chart.error) unavailable(block, chart.error); body = `<figure class="chart" style="--native-width:${Math.round(chart.width)}px">${chart.svg.replace(/^<svg\b[^>]*>/, tag => tag.replace(/\s(?:width|height)="[^"]*"/g, ''))}${block.title ? `<figcaption>${i(block.title)}</figcaption>` : ''}</figure>`; break; }
       case 'snippet': body = `<figure class="snippet"><figcaption><span class="snippet-label">${block.title ? i(block.title) : ''}${block.language ? `<code class="snippet-language">${escape(block.language)}</code>` : ''}</span><button class="text-button interactive" type="button" data-copy>${words.copy}</button></figcaption><pre><code${block.language ? ` class="language-${escape(block.language)}"` : ''}>${escape(block.text)}</code></pre></figure>`; break;
       case 'code': { const source = sources[block.source]; if (!source?.path || typeof source.text !== 'string') unavailable(block,`Code requires a Git excerpt: ${block.source}`); body = `<figure class="code"><figcaption>${i(`[](source:${block.source})`)}<span>${escape(source.path)}:${escape(source.lines?.join('–'))}</span></figcaption><pre><code${block.language ? ` class="language-${escape(block.language)}"` : ''}>${escape(source.text)}</code></pre></figure>`; break; }
       case 'diff': {
@@ -95,7 +156,7 @@ export function renderExplainer(document, options = {}) {
   const plainText = value => plain(parseInline(value).tokens);
   const titleHtml = inline(document.meta.title);
   const titleText = plainText(document.meta.title);
-  const answerHtml = `<header class="panel-head"><span class="panel-id answer-id" aria-hidden="true">${words.answerMark}</span><h2>${words.answer}</h2></header><div class="panel-body"><p class="verdict">${inline(document.answer.summary)}</p>${document.answer.reasons?.length ? `<ol class="reasons">${document.answer.reasons.map(reason=>`<li>${inline(reason)}</li>`).join('')}</ol>` : ''}</div>${document.answer.scope ? `<p class="answer-scope"><span class="scope-label">${words.scope}</span>${scopeHtml(document.answer.scope)}</p>` : ''}`;
+  const answerHtml = `<header class="panel-head"><span class="panel-id answer-id" aria-hidden="true">${words.answerMark}</span><h2>${words.answer}</h2></header><div class="panel-body"><p class="verdict">${inline(document.answer.summary,undefined,undefined,document.answer.live)}</p>${document.answer.reasons?.length ? `<ol class="reasons">${document.answer.reasons.map(reason=>`<li>${inline(reason)}</li>`).join('')}</ol>` : ''}</div>${document.answer.scope ? `<p class="answer-scope"><span class="scope-label">${words.scope}</span>${scopeHtml(document.answer.scope)}</p>` : ''}`;
   const rows=layoutExplainerPanels(document,diagrams);
   const panels=rows.flatMap((row,rowIndex)=>row.map(item=>{
     if(item.spacer)return `<div class="board-spacer span${item.span}" data-row="${rowIndex}" aria-hidden="true"></div>`;
@@ -104,12 +165,14 @@ export function renderExplainer(document, options = {}) {
     const measure=panel.blocks.every(block=>['prose','list','steps','callout','facts','metric'].includes(block.type)) ? ' data-measure="text"' : '';
     const panelTitle = plainText(panel.title);
     const panelHeading = inline(panel.title, panel.id);
-    const blocks=panel.blocks.map(block=>blockHtml(block,panel.id)), figures=panel.blocks.filter(block=>block.type === 'diagram');
+    const blocks=panel.blocks.map((block,bi)=>blockHtml(block,panel.id,index,bi)), figures=panel.blocks.filter(block=>block.type === 'diagram');
     // Steps that point into the panel's one diagram are read beside it: text left, diagram right.
     const guided=isGuidedPanel(panel);
     const body=guided ? `<div class="panel-body guided"><div class="guide-figure">${blocks[panel.blocks.indexOf(figures[0])]}</div><div class="guide-text">${blocks.filter((_,n)=>panel.blocks[n] !== figures[0]).join('')}</div></div>` : `<div class="panel-body">${blocks.join('')}</div>`;
     return `<section class="panel span${item.span}${figures.length ? ' diagram-panel' : ''}" id="${escape(panel.id)}" data-row="${rowIndex}" data-span-min="${item.min}"${item.explicit ? ` data-span-fixed="${item.span}"` : ''}${measure} data-title="${escape(panelTitle)}"><header class="panel-head"><a class="panel-id" href="#${escape(panel.id)}" aria-label="${escape(panelTitle)}">${index+1}</a><h2>${panelHeading}</h2></header>${body}</section>`;
   })).join('');
+  const main = `<main id="board"><div class="board">${panels}</div></main>`;
+  if (projectionOnly) return main;
   for(const source of document.sources)if(!citations.has(source.id))citations.set(source.id,citations.size+1);
   const sourceList=[...citations].map(([id,number])=>{
     const source=sources[id] || document.sources.find(source=>source.id===id);
@@ -128,13 +191,31 @@ export function renderExplainer(document, options = {}) {
   const colophon = `<div class="colophon${hasFeedback ? ' colophon-has-feedback' : ''}"><a class="colophon-brand" href="https://github.com/tt-a1i/archify" target="_blank" rel="noopener noreferrer"><span class="colophon-mark" aria-hidden="true">${mark}</span><span class="colophon-words"><span class="colophon-name">Archify</span><span class="colophon-tagline">${words.tagline}</span></span></a>${starHtml}<div class="colophon-aside"><p class="colophon-facts">${facts.map(fact=>`<span>${escape(fact)}</span>`).join('')}</p>${feedbackHtml}</div></div>`;
   const footnotesHtml = footnotes.length ? `<section class="typical-footnotes"><h2>${english?'Typical value notes':'典型值说明'}</h2><ol>${footnotes.map(note=>`<li id="${escape(note.id)}">${escape(note.label)}: ${escape(note.text)}</li>`).join('')}</ol></section>` : '';
   const manifest = {version:1,artifactId:document.meta.id,revision,documentSha256:hash(JSON.stringify(document)),sourceSha256,dependencies:[...(preparedSources.dependencies || []),...(preparedDiagrams.dependencies || [])].map(({contentBase64,...entry})=>entry),children:Object.fromEntries(Object.entries(children).map(([id,child])=>[id,{sha256:child.sha256,bytes:child.bytes,diagramType:child.diagramType,checks:child.checks,composition:child.composition,specSha256:child.specSha256}])),sources:Object.fromEntries(Object.entries(sources).map(([id,source])=>[id,Object.fromEntries(Object.entries(source || {}).filter(([key])=>key !== 'text'))])),assets:Object.fromEntries(Object.entries(assets).map(([id,asset])=>[id,{sha256:asset.sha256,bytes:asset.bytes,mime:asset.mime}])),diagnostics};
-  const bundle = preparedBundle || {schemaVersion:1,kind:'archify-explainer-prepared',sourceText,sourceMap,sourcePath,document,format:'json',diagnostics,preparedSources,preparedDiagrams,dependencies:[...(preparedSources.dependencies || []),...(preparedDiagrams.dependencies || [])],source:{sha256:sourceSha256,bytes:Buffer.byteLength(sourceText)}};
-  if (!preparedBundle) bundle.digest = hash(JSON.stringify(bundle));
+  const bundleDiagrams = interactive && !Object.hasOwn(preparedDiagrams,'diagrams') ? {diagrams} : preparedDiagrams;
+  const bundle = preparedBundle || {schemaVersion:1,kind:'archify-explainer-prepared',sourceText,sourceMap,sourcePath,document,format:/^\s*[{[]/u.test(sourceText)?'json':'markdown',diagnostics,preparedSources,preparedDiagrams:bundleDiagrams,dependencies:[...(preparedSources.dependencies || []),...(preparedDiagrams.dependencies || [])],source:{sha256:sourceSha256,bytes:Buffer.byteLength(sourceText)}};
+  if (!preparedBundle) {
+    if (interactive) bundle.grid = checkWhatIfGrid(model,error=>{throw error;});
+    bundle.digest = hash(JSON.stringify(bundle));
+  }
   if (bundle.sourceText !== sourceText || JSON.stringify(bundle.document) !== JSON.stringify(document)) throw new Error('Prepared bundle differs from rendered source or canonical document.');
-  const page = portableBundle(bundle, pageDirectory || bundle.baseDir || (bundle.sourcePath && path.dirname(bundle.sourcePath)));
+  const page = portableBundle(bundle, pageDirectory || bundle.baseDir || (bundle.sourcePath && path.dirname(bundle.sourcePath)), previewLanes);
   manifest.diagnostics = page.diagnostics;
   manifest.dependencies = (page.dependencies || []).map(({contentBase64,...entry})=>entry);
-  return `<!doctype html>\n<html lang="${escape(locale)}" data-style="${escape(document.meta.style || 'clean')}" data-archify-artifact="explainer" data-artifact="${escape(document.meta.id)}" data-revision="${revision}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="description" content="${escape(document.answer.summary)}"><title>${escape(titleText)} · Archify</title><link rel="icon" type="image/svg+xml" href="${favicon}"><style>${css}</style>${softwareNoticesHtml}</head><body><a class="skip-link" href="#board">${english?'Skip to content':'跳至正文'}</a><div class="shell"><header class="masthead" data-title="${escape(titleText)}"><h1>${titleHtml}</h1><div class="tools interactive"><div class="theme-controls" role="group" aria-label="${english?'Theme':'主题'}">${['auto','light','dark'].map(theme=>`<button type="button" data-theme-choice="${theme}" aria-pressed="${theme === 'auto'}">${words[theme]}</button>`).join('')}</div><div class="tool-menu style-menu"><button type="button" class="tool-button" data-style-toggle aria-haspopup="menu" aria-expanded="false" aria-label="${words.style}"><span class="style-swatch" data-swatch="${escape(document.meta.style || 'clean')}"></span><span data-style-label>${words.styles[document.meta.style || 'clean']}</span>${icons.chevron}</button><div class="menu-options style-options" role="menu" aria-label="${words.style}" hidden>${['clean','editorial','product','swiss'].map(style=>`<button type="button" role="menuitemradio" aria-checked="${style === (document.meta.style || 'clean')}" data-style-choice="${style}" tabindex="-1"><span class="style-swatch" data-swatch="${style}"></span><span>${words.styles[style]}</span>${icons.check}</button>`).join('')}</div></div><div class="tool-menu export-menu"><button type="button" class="tool-button" data-export-toggle aria-haspopup="menu" aria-expanded="false">${icons.export}<span>${words.export}</span>${icons.chevron}</button><div class="menu-options" role="menu" aria-label="${words.export}" hidden><p class="menu-label" role="presentation">${words.image}</p>${[['png','PNG'],['webp','WebP'],['jpeg','JPG']].map(([format,label],index)=>`<button type="button" role="menuitem" tabindex="-1" data-export-image="${format}" aria-label="${words.image} ${label}">${icons.image}<span>${label}</span><small>${words.imageHints[index]}</small></button>`).join('')}<hr role="separator"><button type="button" role="menuitem" tabindex="-1" data-print>${icons.print}<span>${words.print}</span></button></div></div></div></header><main id="board"><div class="board">${panels}</div></main><footer>${footnotesHtml}<section class="sources"><h2>${words.sources}</h2><ol>${sourceList}</ol></section>${colophon}</footer></div><dialog class="viewer-dialog" id="diagram-dialog" aria-labelledby="diagram-dialog-title"><header><h2 id="diagram-dialog-title"></h2><button type="button" class="viewer-close" data-close-diagram>${icons.close}<span>${words.close}</span><kbd>Esc</kbd></button></header><p class="dialog-loading" role="status">${words.loading}</p></dialog><div id="toast" role="status" aria-live="polite"></div><script type="application/json" id="archify-explainer-prepared">${json(packPageBundle(page))}</script><script type="application/json" id="explainer-manifest">${json(manifest)}</script><script type="application/json" id="explainer-reader-words">${json(words)}</script><script>${js}</script></body></html>`;
+  return `<!doctype html>\n<html lang="${escape(locale)}" data-style="${escape(document.meta.style || 'clean')}" data-archify-artifact="explainer"${interactive ? ' data-explainer-whatif=""' : ''} data-artifact="${escape(document.meta.id)}" data-revision="${revision}"><head><meta charset="utf-8">${csp}<meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="description" content="${escape(document.answer.summary)}"><title>${escape(titleText)} · Archify</title><link rel="icon" type="image/svg+xml" href="${favicon}"><style>${css}</style>${softwareNoticesHtml}</head><body><a class="skip-link" href="#board">${english?'Skip to content':'跳至正文'}</a><div class="shell"><header class="masthead" data-title="${escape(titleText)}"><h1>${titleHtml}</h1><div class="tools interactive">${sourceTools}<div class="theme-controls" role="group" aria-label="${english?'Theme':'主题'}">${['auto','light','dark'].map(theme=>`<button type="button" data-theme-choice="${theme}" aria-pressed="${theme === 'auto'}">${words[theme]}</button>`).join('')}</div><div class="tool-menu style-menu"><button type="button" class="tool-button" data-style-toggle aria-haspopup="menu" aria-expanded="false" aria-label="${words.style}"><span class="style-swatch" data-swatch="${escape(document.meta.style || 'clean')}"></span><span data-style-label>${words.styles[document.meta.style || 'clean']}</span>${icons.chevron}</button><div class="menu-options style-options" role="menu" aria-label="${words.style}" hidden>${['clean','editorial','product','swiss'].map(style=>`<button type="button" role="menuitemradio" aria-checked="${style === (document.meta.style || 'clean')}" data-style-choice="${style}" tabindex="-1"><span class="style-swatch" data-swatch="${style}"></span><span>${words.styles[style]}</span>${icons.check}</button>`).join('')}</div></div><div class="tool-menu export-menu"><button type="button" class="tool-button" data-export-toggle aria-haspopup="menu" aria-expanded="false">${icons.export}<span>${words.export}</span>${icons.chevron}</button><div class="menu-options" role="menu" aria-label="${words.export}" hidden><p class="menu-label" role="presentation">${words.image}</p>${[['png','PNG'],['webp','WebP'],['jpeg','JPG']].map(([format,label],index)=>`<button type="button" role="menuitem" tabindex="-1" data-export-image="${format}" aria-label="${words.image} ${label}">${icons.image}<span>${label}</span><small>${words.imageHints[index]}</small></button>`).join('')}<hr role="separator"><button type="button" role="menuitem" tabindex="-1" data-print>${icons.print}<span>${words.print}</span></button></div></div></div></header>${main}<footer>${footnotesHtml}<section class="sources"><h2>${words.sources}</h2><ol>${sourceList}</ol></section>${colophon}</footer></div><dialog class="viewer-dialog" id="diagram-dialog" aria-labelledby="diagram-dialog-title"><header><h2 id="diagram-dialog-title"></h2><button type="button" class="viewer-close" data-close-diagram>${icons.close}<span>${words.close}</span><kbd>Esc</kbd></button></header><p class="dialog-loading" role="status">${words.loading}</p></dialog>${sourceDialog}${interactive ? '<p id="explainer-whatif-status" role="status"></p>' : ''}<div id="toast" role="status" aria-live="polite"></div><script type="application/json" id="archify-explainer-prepared">${json(packPageBundle(page))}</script><script type="application/json" id="explainer-manifest">${json(manifest)}</script><script type="application/json" id="explainer-reader-words">${json(words)}</script><script${interactive ? ' type="module"' : ''}>${explainerScript(interactive)}</script></body></html>`;
+}
+
+function computedChartHtml(plot,title,say,data) {
+  const {width,height,left,right,bottom,ticks,labels,series,rows}=plot;
+  const type=say('Computed chart','计算图表');
+  const heading=title ? `<figcaption>${title}</figcaption>` : '';
+  const legend=`<ul class="whatif-legend">${series.map((item,i)=>`<li><i data-series="${i}" data-kind="${item.kind}" aria-hidden="true"></i>${escape(item.label)}</li>`).join('')}</ul>`;
+  const axes=ticks.map(tick=>`<line x1="${left}" x2="${right}" y1="${tick.y}" y2="${tick.y}"/><text x="${left-8}" y="${tick.y+5}" text-anchor="end">${escape(tick.text)}</text>`).join('') +
+    labels.map(label=>`<text x="${label.x}" y="${bottom+23}" text-anchor="middle">${escape(label.text)}</text>`).join('');
+  const shapes=series.map((item,i)=>`<g data-series="${i}">${item.kind==='line' ?
+    `<path data-whatif-line="${i}" d="${item.d}"/>` :
+    item.bars.map((bar,j)=>`<rect data-whatif-bar="${i}-${j}" x="${bar.x}" y="${bar.y}" width="${bar.width}" height="${bar.height}"/>`).join('')}</g>`).join('');
+  const table=`<details class="whatif-chart-data"><summary>${say('Chart data','图表数据')}</summary><div class="table-scroll"><table><thead><tr><th scope="col">${data.domain ? say('Coordinate','坐标') : say('Category','类别')}</th>${series.map(item=>`<th scope="col">${escape(item.label)}</th>`).join('')}</tr></thead><tbody>${rows.map(([label,...cells],i)=>`<tr><th scope="row">${escape(label)}</th>${cells.map((value,j)=>`<td data-whatif-point="${i}-${j}">${escape(value)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></details>`;
+  return `<figure class="whatif-chart" data-whatif-chart="">${heading}${legend}${data.unit ? `<p class="whatif-unit">${escape(data.unit)}</p>` : ''}<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${type}"><g class="whatif-axes">${axes}</g>${shapes}</svg>${table}</figure>`;
 }
 
 // Native check filenames refer to disposable build files, not reader resources.
@@ -146,10 +227,22 @@ function portableChecks(checks) {
 
 // A page is shared, so the draft it carries names local files relative to the page, never by absolute
 // path: the reader sees no author directories. `patch explainer` resolves them against the page again.
-function portableBundle({inputPath: _executionInput, ...bundle}, directory) {
+function portableBundle({inputPath: _executionInput, ...bundle}, directory, previewLanes) {
+  let lanesChanged = false;
+  if (bundle.preparedDiagrams?.diagrams) {
+    const diagrams = Object.fromEntries(Object.entries(bundle.preparedDiagrams.diagrams).map(([id,child])=>{
+      const lanes = previewLanes[id]?.length ? previewLanes[id] : undefined;
+      if (isDeepStrictEqual(child.previewLanes,lanes)) return [id,child];
+      lanesChanged = true;
+      const {previewLanes: _cached, ...diagram} = child;
+      return [id,lanes ? {...diagram,previewLanes:lanes} : diagram];
+    }));
+    if (lanesChanged) bundle.preparedDiagrams = {...bundle.preparedDiagrams,diagrams};
+  }
   // The child delivery validates this execution-only binding, but a shared page
   // must retain only the original draft origin for later edits.
-  if (!directory) return _executionInput === undefined ? bundle : {...bundle,digest:hash(JSON.stringify({...bundle,digest:undefined}))};
+  if (!directory) return _executionInput === undefined && !lanesChanged ? bundle :
+    {...bundle,digest:hash(JSON.stringify({...bundle,digest:undefined}))};
   const local = value => {
     if (typeof value !== 'string') return value;
     const paths = path.win32.isAbsolute(value) && !path.posix.isAbsolute(value) ? path.win32 : path;

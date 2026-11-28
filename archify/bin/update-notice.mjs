@@ -189,7 +189,7 @@ html[data-present="true"] .archify-update-notice,html[data-embed="true"] .archif
 @media print{.archify-update-notice{display:none!important}}`;
 
 // All interpolated text is escaped in HTML attributes outside the script.
-const NOTICE_SCRIPT = `(() => {
+export const NOTICE_SCRIPT = `(() => {
   const notice = document.currentScript.parentElement;
   const copy = notice.querySelector('.archify-update-notice__copy');
   const label = copy.firstElementChild;

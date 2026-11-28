@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
+import {pathToFileURL} from 'node:url';
 import {ChromeVisualBrowser,findChrome,runBrowserCheck} from '../archify/bin/visual-check.mjs';
 import {unpackPageBundle} from '../archify/explainer/page-bundle.mjs';
 import {inspectPublicHtml,inspectExplainerBrowser,inspectNativePreviewLayout,inspectNativeViewer,explainerObservation,explainerObservationDiagnostics} from '../archify/explainer/browser-check.mjs';
@@ -704,4 +705,280 @@ test('browser diagnostics include snippet context and specific repair guidance f
  assert.ok(fitDiag);
  assert.notEqual(fitDiag.supportedFixes[0],'Repair the reported component and re-render the source.');
  assert.match(fitDiag.supportedFixes[0],/phase lanes|wider panel span/);
+});
+
+function badgeLabelIntersections(browser) {
+ return pageValue(browser,`(()=>{
+  const svg=document.querySelector('.diagram-preview>svg');
+  const root=svg.getCTM().inverse();
+  const bounds=element=>{
+   const {x,y,width,height}=element.getBBox();
+   const matrix=root.multiply(element.getCTM());
+   const corners=[[x,y],[x+width,y],[x,y+height],[x+width,y+height]].map(([x,y])=>new DOMPoint(x,y).matrixTransform(matrix));
+   const xs=corners.map(point=>point.x), ys=corners.map(point=>point.y);
+   return {left:Math.min(...xs),right:Math.max(...xs),top:Math.min(...ys),bottom:Math.max(...ys)};
+  };
+  const badges=[...svg.querySelectorAll('.whatif-badge>rect')].map(bounds);
+  const leaders=[...svg.querySelectorAll('.whatif-badge>line')].map(line=>{
+   const matrix=root.multiply(line.getCTM());
+   return [[line.x1.baseVal.value,line.y1.baseVal.value],[line.x2.baseVal.value,line.y2.baseVal.value]]
+    .map(([x,y])=>new DOMPoint(x,y).matrixTransform(matrix));
+  });
+  const crosses=([start,end],box)=>{
+   let low=0, high=1;
+   for (const [a,b,min,max] of [[start.x,end.x,box.left,box.right],[start.y,end.y,box.top,box.bottom]]) {
+    if (Math.abs(b-a)<1e-7) { if (a<min || a>max) return false; continue; }
+    const first=(min-a)/(b-a), last=(max-a)/(b-a);
+    low=Math.max(low,Math.min(first,last));
+    high=Math.min(high,Math.max(first,last));
+   }
+   return low<=high;
+  };
+  const labels=[...svg.querySelectorAll('text:not(.whatif-badge text)')].filter(element=>element.getClientRects().length);
+  const intersections=labels.filter(element=>{
+   const a=bounds(element);
+   return badges.some(b=>a.left<b.right && b.left<a.right && a.top<b.bottom && b.top<a.bottom);
+  }).map(element=>element.textContent);
+  const leaderIntersections=labels.filter(element=>leaders.some(segment=>crosses(segment,bounds(element))))
+   .map(element=>element.textContent);
+  return {badges:badges.length,leaders:leaders.length,labels:labels.map(element=>element.textContent),intersections,leaderIntersections};
+ })()`);
+}
+
+test('offline P99 showcases one coherent change, stable native geometry, source inspection and Viewer focus',{skip:!chrome},async()=>{
+ const {injectUpdateNotice}=await import('../archify/bin/update-notice.mjs');
+ const source=fs.readFileSync('docs/cases/explainer/p99-cascading-failure.archify.md','utf8');
+ const shipped=fs.readFileSync('docs/cases/explainer/p99-cascading-failure.html','utf8');
+ const plain=artifact('p99-whatif',shipped);
+ const notice=artifact('p99-notice',injectUpdateNotice(shipped,{installedVersion:'1.0.0',availableVersion:'1.0.1'}).html);
+ const browser=new ChromeVisualBrowser(chrome);
+ try {
+  const metrics=await inspectExplainerBrowser(browser,{artifactPath:plain,width:1440,height:900,theme:'light'});
+  const observation=explainerObservation({width:1440,height:900,theme:'light',metrics});
+  assert.deepEqual(explainerObservationDiagnostics({artifact:plain,allObservations:[observation]}),[]);
+  const session=await browser.sessionPromise;
+  const errors=[],requests=[];
+  const stop=browser.cdp.subscribe(message=>{
+   if(message.sessionId!==session)return;
+   if(message.method==='Log.entryAdded'&&message.params.entry.level==='error')errors.push(message.params.entry.text);
+   if(message.method==='Network.requestWillBeSent'&&/^https?:/u.test(message.params.request.url))requests.push(message.params.request.url);
+  });
+  try {
+   await browser.cdp.send('Network.enable',{},session);
+   await browser.cdp.send('Log.enable',{},session);
+   await browser.cdp.send('Emulation.setEmulatedMedia',{media:'screen',features:[{name:'prefers-reduced-motion',value:'reduce'}]},session);
+   const loaded=browser.cdp.waitFor('Page.loadEventFired',session);
+   await browser.cdp.send('Page.navigate',{url:pathToFileURL(notice).href},session);
+   await loaded;
+   await pageValue(browser,'document.fonts.ready.then(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))))');
+   const snapshot=()=>pageValue(browser,`(()=>{
+    const svg=document.querySelector('.diagram-preview>svg');
+    const attrs=(e,keys)=>keys.map(key=>e.getAttribute(key));
+    const geometry={view:svg.getAttribute('viewBox'),marks:[...svg.querySelectorAll('[data-node-id], path[data-edge-id], text')].map(e=>{
+     const b=e.matches('[data-node-id]')?e.getBBox():null;
+     return [attrs(e,['transform','d','x','y']),b&&[b.x,b.y,b.width,b.height]];
+    })};
+    return {same:!window.fixtureSvg||window.fixtureSvg===svg,geometry,case:document.querySelector('[data-whatif-case-label]').textContent,
+      p99:document.querySelector('#tail-latency [data-whatif-metric]').textContent,
+      status:document.querySelector('#utilization [data-whatif-status]').dataset.whatifStatus,
+      bars:[...document.querySelectorAll('[data-whatif-bar]')].map(e=>e.getAttribute('height')),
+      active:[...svg.querySelectorAll('path[data-whatif-active=true]')].map(e=>e.dataset.edgeId),
+      badge:svg.querySelector('[data-whatif-badge="database-rate"]').textContent,
+      summary:document.querySelector('#answer .verdict').textContent,
+      cspTransition:getComputedStyle(svg.querySelector('[data-whatif-active]')).transitionDuration,
+      revision:document.documentElement.dataset.revision,
+      source:JSON.parse(document.querySelector('#archify-explainer-prepared').textContent).sourceText};
+   })()`);
+   const initial=await snapshot();
+   assert.equal(initial.p99,'620\u00a0ms');
+   assert.equal(initial.status,'bad');
+   assert.equal(initial.source,source);
+   assert.equal(initial.cspTransition,'0s');
+   const desktopClearance=await badgeLabelIntersections(browser);
+   assert.equal(desktopClearance.badges,2);
+   assert.ok(desktopClearance.labels.length>0);
+   assert.deepEqual(desktopClearance.intersections,[]);
+   assert.deepEqual(desktopClearance.leaderIntersections,[]);
+   assert.equal(await pageValue(browser,"document.querySelector('[data-archify-update-notice]')?.dataset.availableVersion"),'1.0.1');
+   await pageValue(browser,"window.fixtureSvg=document.querySelector('.diagram-preview>svg')");
+   await keyboardActivate(browser,'[data-whatif-case="recovery"]');
+   const recovered=await snapshot();
+   assert.equal(recovered.same,true);
+   assert.deepEqual(recovered.geometry,initial.geometry);
+   assert.notDeepEqual(recovered.active,initial.active);
+   assert.notDeepEqual(recovered.bars,initial.bars);
+   assert.equal(recovered.case,'Singleflight recovery');
+   assert.equal(recovered.status,'good');
+   assert.equal(recovered.badge,'69.44\u00a0req/s');
+   assert.match(recovered.summary,/210\u00a0ms/u);
+   assert.equal(recovered.revision,initial.revision);
+   assert.equal(recovered.source,source);
+   await keyboardActivate(browser,'[data-open-source]');
+   assert.equal(await pageValue(browser,"document.querySelector('#explainer-source[open] pre').textContent"),source);
+   await keyboardPress(browser,'Escape');
+   assert.equal(await pageValue(browser,"document.activeElement.matches('[data-open-source]')"),true);
+   await pageValue(browser,"document.querySelector('[data-diagram-link=requests]').focus()");
+   assert.equal(await pageValue(browser,"document.querySelector('[data-node-id=pool]').classList.contains('reader-highlight')"),true);
+   await keyboardActivate(browser,'[data-diagram-link=requests]');
+   await pageValue(browser,`new Promise((resolve,reject)=>{
+    const deadline=performance.now()+4000;
+    function next(){if(JSON.parse(document.querySelector('#diagram-dialog').dataset.nativeFocus||'{}').nodes?.includes('pool'))return resolve(true);
+     if(performance.now()>deadline)return reject(new Error('Native Viewer did not focus the pool')); requestAnimationFrame(next);}
+    next();
+   })`);
+   const native=await inspectNativeViewer(browser);
+   assert.equal(native.hasViewer,true);
+   assert.deepEqual(native.nodes,['pool']);
+   assert.deepEqual(native.errors,[]);
+   await keyboardActivate(browser,'[data-close-diagram]');
+   await browser.cdp.send('Emulation.setEmulatedMedia',{media:'print'},session);
+   assert.equal(await pageValue(browser,`(()=>{
+    const controls=[...document.querySelectorAll('.interactive')];
+    return controls.every(element=>!element.getClientRects().length) && document.querySelector('#answer .verdict').innerText.includes('210');
+   })()`),true);
+   await browser.cdp.send('Emulation.setEmulatedMedia',{media:'screen'},session);
+   const exported=await pageValue(browser,`(async()=>{
+    const create=URL.createObjectURL, click=HTMLAnchorElement.prototype.click;
+    let complete, serialized, timeout;
+    const output=new Promise(resolve=>{complete=resolve;});
+    URL.createObjectURL=function(blob){complete(blob);return create.call(this,blob);};
+    const serialize=XMLSerializer.prototype.serializeToString;
+    XMLSerializer.prototype.serializeToString=function(node){serialized=serialize.call(this,node);return serialized;};
+    HTMLAnchorElement.prototype.click=function(){if(!this.download)return click.call(this);};
+    try {
+      document.querySelector('[data-export-image=png]').click();
+      const blob=await Promise.race([output,new Promise((_,reject)=>{timeout=setTimeout(()=>reject(new Error('Image export did not complete')),5000);})]);
+      return {type:blob.type,current:serialized.includes('210')&&serialized.includes('69.44'),controls:serialized.includes('data-whatif-case=')};
+    } finally {clearTimeout(timeout);URL.createObjectURL=create;HTMLAnchorElement.prototype.click=click;XMLSerializer.prototype.serializeToString=serialize;}
+   })()`);
+   assert.deepEqual(exported,{type:'image/png',current:true,controls:false});
+   const mobile=await inspectPublicHtml(browser,{artifactPath:plain,width:390,height:900,theme:'light',keyboard:false});
+   assert.equal(mobile.scrollWidth,390);
+   assert.deepEqual(mobile.consoleErrors,[]);
+   await keyboardActivate(browser,'[data-whatif-case="recovery"]');
+   assert.equal((await snapshot()).p99,'210\u00a0ms');
+   const mobileClearance=await badgeLabelIntersections(browser);
+   assert.equal(mobileClearance.badges,2);
+   assert.ok(mobileClearance.labels.length>0);
+   assert.deepEqual(mobileClearance.intersections,[]);
+   assert.deepEqual(mobileClearance.leaderIntersections,[]);
+   assert.deepEqual(errors,[]);
+   assert.deepEqual(requests,[]);
+   const missingMenus=artifact('p99-without-toolbar-menus',shipped
+    .replace('class="tool-menu style-menu"','class="tool-menu"')
+    .replace('class="tool-menu export-menu"','class="tool-menu"'));
+   const damaged=await inspectPublicHtml(browser,{artifactPath:missingMenus,width:1280,keyboard:false});
+   assert.deepEqual(damaged.consoleErrors,[]);
+   await keyboardActivate(browser,'[data-whatif-case="recovery"]');
+   assert.equal((await snapshot()).p99,'210\u00a0ms');
+  } finally {stop();}
+ }finally{await browser.close();}
+});
+
+test('scenario badges clear the native workflow lane headings',{skip:!chrome},async()=>{
+ const {nativeExplainerPreview}=await import('../archify/explainer/diagrams.mjs');
+ const {renderExplainer}=await import('../archify/explainer/render.mjs');
+ const doc=formalDocument();
+ doc.panels[0].blocks.push(
+  {type:'scenarios',id:'mode',default:'read',cases:[{key:'read',label:'Read'}]},
+  {type:'calc',id:'model',inputs:[],derived:[{key:'rate',expr:'42'}],presets:[]},
+  {type:'metric',id:'local-rate',label:'Request rate',calc:'model',bind:'rate',digits:2,unit:'req/s'},
+  {type:'diagram',id:'native-flow',diagramType:'workflow',scenarios:'mode',active:[{case:'read',nodes:['user'],edges:[]}],
+   badges:[{node:'user',metric:'local-rate'}],source:'workflow.json'},
+ );
+ const html=fs.readFileSync('docs/gallery/artifacts/agent-tool-call.workflow.html','utf8');
+ const diagram={html,diagramType:'workflow',...nativeExplainerPreview(html)};
+ const file=artifact('lane-heading-clearance',renderExplainer(doc,{preparedDiagrams:{diagrams:{'native-flow':diagram}}}));
+ const browser=new ChromeVisualBrowser(chrome);
+ try {
+  await inspectPublicHtml(browser,{artifactPath:file,width:1440,keyboard:false});
+  const clearance=await badgeLabelIntersections(browser);
+  assert.equal(clearance.badges,1);
+  assert.ok(clearance.leaders>0);
+  assert.ok(clearance.labels.includes('01 / User Interface'));
+  assert.ok(clearance.labels.includes('EX / Policy & Recovery'));
+  assert.deepEqual(clearance.leaderIntersections,[]);
+  assert.deepEqual(clearance.intersections,[]);
+ }finally{await browser.close();}
+});
+
+test('mortgage controls retain values across strategies and restore authored default on reload',{skip:!chrome},async()=>{
+ const file=path.resolve('docs/cases/explainer/mortgage-prepayment.html');
+ const browser=new ChromeVisualBrowser(chrome);
+ try {
+  const metrics=await inspectPublicHtml(browser,{artifactPath:file,width:390,height:900,theme:'dark',keyboard:false});
+  assert.deepEqual(metrics.consoleErrors,[]);
+  assert.equal(metrics.scrollWidth,390);
+  const payment=()=>pageValue(browser,"document.querySelector('#monthly-payment [data-whatif-metric]').textContent");
+  assert.equal(await payment(),'5,851.11\u00a0USD');
+  await keyboardActivate(browser,'[data-whatif-preset=zeroRate]');
+  assert.equal(await payment(),'4,166.67\u00a0USD');
+  await keyboardActivate(browser,'[data-whatif-case=keep]');
+  assert.equal(await payment(),'5,000.00\u00a0USD','switching cases retains the zero-rate preset');
+  await pageValue(browser,`(()=>{
+   const range=document.querySelector('[data-whatif-input="0"]');
+   const set=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set;
+   set.call(range,'1440000');range.dispatchEvent(new Event('input',{bubbles:true}));
+  })()`);
+  assert.equal(await payment(),'6,000.00\u00a0USD');
+  await keyboardActivate(browser,'[data-whatif-case=recast]');
+  assert.equal(await payment(),'5,166.67\u00a0USD','switching strategy retains edited principal and rate');
+  await keyboardActivate(browser,'[data-whatif-preset=fullPayment]');
+  assert.equal(await payment(),'0.00\u00a0USD');
+  assert.equal(await pageValue(browser,"document.querySelector('[data-whatif-point=\"20-1\"]').textContent"),'0\u00a0USD');
+  await inspectPublicHtml(browser,{artifactPath:file,width:390,keyboard:false});
+  assert.equal(await payment(),'5,851.11\u00a0USD');
+ }finally{await browser.close();}
+});
+
+test('reader restores the last valid setting when it reaches an unsampled failure',{skip:!chrome},async()=>{
+ const {parseValidatedExplainer}=await import('../archify/explainer/prepare.mjs');
+ const {renderExplainer}=await import('../archify/explainer/render.mjs');
+ const sourceText=`# Runtime guard {#guard}
+
+The result is {{metric:value}}.
+
+@answer live=model
+@meta locale=en
+
+## Input {#calculator}
+
+@calc id=model
+| range x | Count | 0.25 | 1000.25 | 1 | 0.25 |
+| choice mode | Mode | safe | safe=Safe | extra=Extra |
+| toggle enabled | Enabled | false |
+| let divisor | if(enabled, x - 1.25, 2) |
+| let numerator | if(mode == 'extra', 4, 2) |
+
+@metric id=value label=Value calc=model bind="numerator / divisor"
+`;
+ const {document,sourceMap,grid}=parseValidatedExplainer(sourceText);
+ assert.equal(grid.mode,'sampled');
+ const file=artifact('interactive-fallback',renderExplainer(document,{sourceText,sourceMap}).replace(' data-open-source>','>'));
+ const browser=new ChromeVisualBrowser(chrome);
+ try {
+  await inspectPublicHtml(browser,{artifactPath:file,width:1440,keyboard:false});
+  await pageValue(browser,`(()=>{
+   const input=document.querySelector('[data-whatif-input="0"]');
+   input.value='1.25';input.dispatchEvent(new Event('input',{bubbles:true}));
+   const choice=document.querySelector('[data-whatif-input="1"]');
+   choice.value='extra';choice.dispatchEvent(new Event('change',{bubbles:true}));
+  })()`);
+  assert.equal(await pageValue(browser,"document.querySelector('[data-whatif-metric]').textContent"),'2');
+  await keyboardActivate(browser,'[data-whatif-input="2"]',' ');
+  const state=await pageValue(browser,`({
+   toggle:document.querySelector('[data-whatif-input="2"]').checked,
+   value:document.querySelector('[data-whatif-metric]').textContent,
+   range:document.querySelector('[data-whatif-input="0"]').value,
+   aria:document.querySelector('[data-whatif-input="0"]').getAttribute('aria-valuetext'),
+   summary:[...document.querySelectorAll('.whatif-inputs dd')].map(e=>e.textContent),
+   error:document.querySelector('.whatif-error')?.textContent
+  })`);
+  assert.equal(state.toggle,false);
+  assert.equal(state.value,'2');
+  assert.deepEqual(state.summary,['1.25','Extra','Off']);
+  assert.equal(state.range,'1.25');
+  assert.equal(state.aria,'1.25');
+  assert.match(state.error,/Enabled.*Division by zero/u);
+ }finally{await browser.close();}
 });

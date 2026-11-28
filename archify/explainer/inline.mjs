@@ -42,31 +42,37 @@ export function parseInline(value, options = {}) {
   }
   function segment(start, end, depth = 0) {
     const tokens = [];
-    const literal = value => {
+    const literal = (value, offset) => {
       if (!value) return;
       const previous = tokens[tokens.length-1];
-      if (previous?.type === 'text') previous.value += value;
-      else tokens.push({type:'text',value});
+      if (previous?.type === 'text') {
+        if (options.textOffsets && previous.offset + previous.value.length !== offset) {
+          (previous.offsets ||= Array.from({length:previous.value.length},(_,i)=>previous.offset+i))
+            .push(...Array.from({length:value.length},(_,i)=>offset+i));
+        } else if (previous.offsets) previous.offsets.push(...Array.from({length:value.length},(_,i)=>offset+i));
+        previous.value += value;
+      }
+      else tokens.push({type:'text',value,...(options.textOffsets ? {offset} : {})});
     };
     for (let i=start;i<end;) {
       const c=text[i];
-      if (c === '\\' && i+1 < end && /[\\`*_[\]()!<>~|]/u.test(text[i+1])) { literal(text[i+1]);i+=2;continue; }
+      if (c === '\\' && i+1 < end && /[\\`*_[\]()!<>~|]/u.test(text[i+1])) { literal(text[i+1],i);i+=2;continue; }
       if (c === '`') {
         const close=text.indexOf('`',i+1);
         if (close === -1 || close >= end || text.slice(i+1,close).includes('\n')) {
-          problem('code',i,'Inline code must have one closing backtick on the same line.','`cache.get(key)`');literal(c);i++;continue;
+          problem('code',i,'Inline code must have one closing backtick on the same line.','`cache.get(key)`');literal(c,i);i++;continue;
         }
         tokens.push({type:'code',value:text.slice(i+1,close)});i=close+1;continue;
       }
       if (c === '<' && /^(?:<\/?[A-Za-z][^>]*>|<!--)/u.test(text.slice(i,end))) {
         problem('html',i,'Raw HTML is not part of the explainer inline language.','**Important** or `[literal <tag>]`');
-        literal(c);i++;continue;
+        literal(c,i);i++;continue;
       }
       if (text.startsWith('![',i)) {
         problem('image',i,'Inline Markdown images are unsupported. Use a contained image block.','@image path=diagram.png alt="Request path"');
-        literal('!');i++;continue;
+        literal('!',i);i++;continue;
       }
-      if (text.startsWith('~~',i)) { problem('decoration',i,'Strikethrough is unsupported; use a diff or an explicit change block.','Changed: **new behavior**');literal('~~');i+=2;continue; }
+      if (text.startsWith('~~',i)) { problem('decoration',i,'Strikethrough is unsupported; use a diff or an explicit change block.','Changed: **new behavior**');literal('~~',i);i+=2;continue; }
       if (c === '*') {
         const marker=text.startsWith('**',i) ? '**' : '*';
         let close=text.indexOf(marker,i+marker.length);
@@ -77,7 +83,7 @@ export function parseInline(value, options = {}) {
         };
         while (close > -1 && escaped(close)) close=text.indexOf(marker,close+marker.length);
         if (close < 0 || close >= end || close === i+marker.length || depth >= 6) {
-          problem('emphasis',i,'Emphasis needs matching nonempty delimiters. Escape a literal asterisk.','**important** or \\*');literal(marker);i+=marker.length;continue;
+          problem('emphasis',i,'Emphasis needs matching nonempty delimiters. Escape a literal asterisk.','**important** or \\*');literal(marker,i);i+=marker.length;continue;
         }
         tokens.push({type:marker.length===2?'strong':'em',children:segment(i+marker.length,close,depth+1)});i=close+marker.length;continue;
       }
@@ -91,13 +97,13 @@ export function parseInline(value, options = {}) {
             if (text[close] === ')' && --nesting === 0) break;
           }
           if (close >= end || nesting !== 0) {
-            problem('link',i,'The link destination is not closed.','[Evidence](source:cache-read)');literal(c);i++;continue;
+            problem('link',i,'The link destination is not closed.','[Evidence](source:cache-read)');literal(c,i);i++;continue;
           }
           const label=text.slice(i+1,labelEnd), href=text.slice(labelEnd+2,close).replace(/\\([()\\])/g,'$1');
           const reference=referenceFor(href);
           if ((!label.trim() && reference?.kind !== 'source') || !reference) {
             problem('target',i,'Use a nonempty label and an HTTP(S), source, block, node, route or typical destination.','[Redis](node:read-path.redis)');
-            literal(text.slice(i,close+1));
+            literal(text.slice(i,close+1),i);
           } else {
             const entry={...reference,offset:i,end:close+1};references.push(entry);
             tokens.push({type:'link',label,href,reference:entry});
@@ -106,7 +112,7 @@ export function parseInline(value, options = {}) {
         }
         if (text[i+1] === '^') problem('footnote',i,'Arbitrary Markdown footnotes are unsupported. Use a source or typical-value reference.','[Claim](source:trace)');
       }
-      literal(c);i++;
+      literal(c,i);i++;
     }
     return tokens;
   }
@@ -123,10 +129,10 @@ function inlineError(diagnostics) {
 
 /** Safely render the same parsed language used by semantic validation. */
 export function renderInline(value, context = {}) {
-  const parsed=parseInline(value,context);
+  const parsed=parseInline(value,{...context,textOffsets:Boolean(context.renderText)});
   if (parsed.diagnostics.length) throw inlineError(parsed.diagnostics);
   const render = tokens => tokens.map(token => {
-    if (token.type === 'text') return escapeHtml(token.value);
+    if (token.type === 'text') return context.renderText ? context.renderText(token) : escapeHtml(token.value);
     if (token.type === 'code') return `<code>${escapeHtml(token.value)}</code>`;
     if (token.type === 'strong' || token.type === 'em') return `<${token.type}>${render(token.children)}</${token.type}>`;
     const label=escapeHtml(token.label), ref=token.reference;

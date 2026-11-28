@@ -42,6 +42,7 @@ export async function preparePanelPatch({artifactPath,panelId,replacementPath,re
   const replacement = replacementBytes.toString('utf8');
   if(!Buffer.from(replacement).equals(replacementBytes)) fail('source-encoding','Panel replacement must contain valid UTF-8 bytes.',replacementPath,panelId,'Save the replacement panel as UTF-8 text.');
   const sourceText = draft.sourceText.slice(0,range.start)+replacement+draft.sourceText.slice(range.end);
+  // Calculator references and the grid span the entire spliced source.
   const parsed=parseValidatedExplainer(sourceText,{inputPath:draft.sourcePath || artifactPath,writingMode:writingMode || previous.writingMode || 'warn'});
   if(parsed.document.panels.length!==oldParsed.document.panels.length || parsed.document.panels[index]?.id!==panelId) {
     fail('identity','A panel replacement must retain the target stable id and panel count.',replacementPath,panelId,oldParsed.format==='json'?'{"id":"'+panelId+'","title":"Question?","blocks":[...]}':'## Question? {#'+panelId+'}\n\nReplacement content.');
@@ -103,6 +104,7 @@ export async function preparePanelPatch({artifactPath,panelId,replacementPath,re
   preparedSources.charts=Object.fromEntries(Object.entries(preparedSources.charts).filter(([id])=>dataChartIds.has(id)));
   if(!Object.keys(preparedSources.charts).length)delete preparedSources.charts;
   preparedDiagrams.diagrams=Object.fromEntries(Object.entries(preparedDiagrams.diagrams).filter(([id])=>diagramIds.has(id)));
+  // Rebind scenarios against the combined native topology, including retained children.
   validatePreparedTargets(parsed.document,preparedDiagrams.diagrams,common);
   const dependencyKey=entry=>`${entry.kind}:${entry.id}`;
   const newDependencies=[...(newSources.dependencies||[]),...(newDiagrams.dependencies||[])];

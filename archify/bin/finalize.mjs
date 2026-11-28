@@ -701,6 +701,7 @@ export function compactFinalizeReceipt(receipt) {
       ? { update: receipt.update }
       : {}),
     visualReview: receipt.visualReview || 'not-requested',
+    ...(receipt.explainer ? {explainer:receipt.explainer} : {}),
     durationMs: receipt.durationMs,
     ...(receipt.browserCheck ? {browserCheck:receipt.browserCheck} : {}),
   };
@@ -989,6 +990,7 @@ export async function runFinalize({
     diagnostics: [],
     evidence: { receipt: resolvedReceipt, summaryReceipt: resolvedSummary },
     visualReview: 'not-requested',
+    ...(preparedExplainer?.grid ? {explainer:{grid:preparedExplainer.grid}} : {}),
   };
   const persistReceipts = () => {
     if (type === 'explainer') receipt.diagnostics = (receipt.diagnostics || []).map(entry => {
