@@ -4,7 +4,6 @@
   "meta": {
     "title": "Order Event-stream Topology",
     "output": "examples/event-stream.html",
-    "viewBox": [1080, 780],
     "animation": "trace",
     "visual_preset": "signal-flow",
     "quality_profile": "showcase"

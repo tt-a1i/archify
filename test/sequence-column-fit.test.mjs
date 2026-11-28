@@ -172,6 +172,9 @@ test('standard retains acceptance for parallel schema-v1 labels with legacy spac
 
 test('seven participants fit an authored 820px frame with real card gutters', () => {
   const doc = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/async-job-roundtrip.sequence.json'), 'utf8'));
+  // The shipped example lets the renderer size the canvas (#1465); this case is
+  // about an authored frame, so it pins the frame it asserts on.
+  doc.meta.viewBox = [820, 920];
   assert.equal(doc.meta.column_fit, undefined);
   const original = structuredClone(doc);
   const html = render(doc);
@@ -197,11 +200,11 @@ test('seven participants fit an authored 820px frame with real card gutters', ()
 
 test('spread capacity still rejects an infeasible frame and unrescuable participant label', () => {
   const doc = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/async-job-roundtrip.sequence.json'), 'utf8'));
-  doc.meta.viewBox[0] = 740;
+  doc.meta.viewBox = [740, 920];
   const narrow = renderOutcome(doc);
   assert.notEqual(narrow.code, 0);
   assert.match(narrow.stderr, /Participants exceed viewBox width/);
-  doc.meta.viewBox[0] = 820;
+  doc.meta.viewBox = [820, 920];
   doc.participants[0].label = 'A participant label far beyond the available frame capacity';
   const long = renderOutcome(doc);
   assert.notEqual(long.code, 0);
