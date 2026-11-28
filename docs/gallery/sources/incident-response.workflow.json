@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "diagram_type": "workflow",
   "meta": {
     "title": "Incident Response Runbook",
@@ -40,16 +40,16 @@
     { "id": "rollback", "lane": "exceptions", "col": 5, "type": "messagebus", "label": "Rollback", "sublabel": "last good" }
   ],
   "edges": [
-    { "from": "alert", "to": "page", "label": "page", "variant": "emphasis", "route": "drop", "fromSide": "bottom", "toSide": "top" },
-    { "from": "page", "to": "triage", "route": "bottom-channel", "fromSide": "bottom", "toSide": "bottom" },
-    { "from": "triage", "to": "contain", "variant": "emphasis", "route": "drop", "fromSide": "bottom", "toSide": "top" },
-    { "from": "contain", "to": "recover", "route": "bottom-channel", "fromSide": "bottom", "toSide": "bottom" },
-    { "from": "recover", "to": "verify", "variant": "emphasis", "route": "drop", "fromSide": "bottom", "toSide": "top" },
-    { "from": "verify", "to": "close", "variant": "emphasis", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "from": "alert", "to": "page", "label": "page", "variant": "emphasis" },
+    { "from": "page", "to": "triage" },
+    { "from": "triage", "to": "contain", "variant": "emphasis" },
+    { "from": "contain", "to": "recover" },
+    { "from": "recover", "to": "verify", "variant": "emphasis" },
+    { "from": "verify", "to": "close", "variant": "emphasis" },
     { "from": "triage", "to": "declare", "variant": "security" },
-    { "from": "declare", "to": "update", "variant": "dashed", "fromSide": "top", "toSide": "left", "via": [[430, 16], [20, 16], [20, 615]] },
-    { "from": "update", "to": "escalate", "variant": "security", "route": "drop", "fromSide": "bottom", "toSide": "top" },
-    { "from": "verify", "to": "rollback", "variant": "security", "role": "error", "route": "outside-right", "fromSide": "right", "toSide": "right" }
+    { "from": "declare", "to": "update", "variant": "dashed" },
+    { "from": "update", "to": "escalate", "variant": "security" },
+    { "from": "verify", "to": "rollback", "variant": "security", "role": "error" }
   ],
   "cards": [
     { "dot": "rose", "title": "Ownership First", "items": ["A page is not an incident until someone owns command", "Severity and scope are explicit before mitigation spreads", "Escalation names the missing expertise"] },

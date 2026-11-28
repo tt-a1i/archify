@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "diagram_type": "workflow",
   "meta": {
     "title": "Release Delivery Workflow",
@@ -39,15 +39,15 @@
   ],
   "edges": [
     { "from": "commit", "to": "pull_request" },
-    { "from": "pull_request", "to": "build", "label": "merge", "variant": "emphasis", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "from": "pull_request", "to": "build", "label": "merge", "variant": "emphasis" },
     { "from": "build", "to": "checks" },
-    { "from": "checks", "to": "approval", "variant": "emphasis", "route": "drop", "fromSide": "bottom", "toSide": "top" },
-    { "from": "approval", "to": "deploy", "variant": "security", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "from": "checks", "to": "approval", "variant": "emphasis" },
+    { "from": "approval", "to": "deploy", "variant": "security" },
     { "from": "deploy", "to": "verify_prod" },
-    { "from": "verify_prod", "to": "announce", "label": "healthy", "variant": "emphasis", "route": "drop", "fromSide": "bottom", "toSide": "top" },
-    { "from": "checks", "to": "failed", "label": "red", "variant": "security", "role": "error", "route": "drop", "fromSide": "bottom", "toSide": "top" },
-    { "from": "verify_prod", "to": "rollback", "variant": "security", "role": "error", "route": "outside-right", "fromSide": "right", "toSide": "right" },
-    { "from": "rollback", "to": "deploy", "label": "restore", "variant": "dashed", "role": "return", "route": "return-left", "fromSide": "left", "toSide": "left" }
+    { "from": "verify_prod", "to": "announce", "label": "healthy", "variant": "emphasis" },
+    { "from": "checks", "to": "failed", "label": "red", "variant": "security", "role": "error" },
+    { "from": "verify_prod", "to": "rollback", "variant": "security", "role": "error" },
+    { "from": "rollback", "to": "deploy", "label": "restore", "variant": "dashed", "role": "return" }
   ],
   "cards": [
     { "dot": "emerald", "title": "One Happy Path", "items": ["Every change is reviewed before a reproducible build", "Blocking checks must be green before human approval", "Production is complete only after smoke and SLO verification"] },

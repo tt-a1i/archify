@@ -654,13 +654,16 @@ test('fallback planning preserves straight-edge rank constraints when mapping ab
   assert.deepEqual(report.newSchemaDiagnostics, []);
 });
 
-for (const { example, expectedEdge } of [
-  { example: 'incident-response.workflow.json', expectedEdge: ['alert', 'page'] },
-  { example: 'release-delivery.workflow.json', expectedEdge: ['pull_request', 'build'] },
+// The packaged examples used to double as v1 fixtures for this diagnostic.
+// They ship as schema v2 now (#1465), so the case keeps its own copy of the
+// two v1 spellings whose `route` presets the migration has to refuse.
+for (const { fixture, expectedEdge } of [
+  { fixture: 'v1-route-preset-conflict.incident.workflow.json', expectedEdge: ['alert', 'page'] },
+  { fixture: 'v1-route-preset-conflict.release.workflow.json', expectedEdge: ['pull_request', 'build'] },
 ]) {
-  test(`workflow migration preserves causal route diagnostics for packaged ${example}`, () => {
-    const source = path.join(skillRoot, 'examples', example);
-    const destination = path.join(tmp, `migrated-${example}`);
+  test(`workflow migration preserves causal route diagnostics for exported ${fixture}`, () => {
+    const source = path.join(__dirname, 'fixtures', fixture);
+    const destination = path.join(tmp, `migrated-${fixture}`);
     const sourceBefore = fs.readFileSync(source);
 
     const validation = runValidation(source);

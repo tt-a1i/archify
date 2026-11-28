@@ -13,7 +13,8 @@
     "test:browser": "node scripts/run-browser-tests.mjs",
     "test:webm": "node test/webm-artifact.smoke.mjs && node --test test/site-language-integration.mjs",
     "test:core": "node scripts/run-tests.mjs test/core-smoke.test.mjs",
-    "test:generated": "pnpm --dir archify run check:viewer && pnpm --dir archify run check:brand-marks && pnpm --dir archify run check:validators && pnpm --dir archify run check:release-identity && node test/golden.mjs",
+    "test:showcase": "node --test test/examples-showcase-gate.mjs",
+    "test:generated": "pnpm --dir archify run check:viewer && pnpm --dir archify run check:brand-marks && pnpm --dir archify run check:validators && pnpm --dir archify run check:release-identity && node test/golden.mjs && pnpm run test:showcase",
     "test:full": "pnpm run test:generated && pnpm --dir archify/modules/code-analysis test && node scripts/run-tests.mjs",
     "test:affected": "node scripts/run-affected-tests.mjs"
   },

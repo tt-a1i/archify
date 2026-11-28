@@ -400,16 +400,16 @@
       "input": "gallery/sources/release-delivery.workflow.json",
       "artifact": "gallery/artifacts/release-delivery.workflow.html",
       "focus": "approval",
-      "schemaVersion": 1,
+      "schemaVersion": 2,
       "visualPreset": "classic",
       "animation": "trace",
       "engineeringProfile": null,
       "nodeCount": 10,
       "edgeCount": 10,
-      "artifactBytes": 946094,
-      "artifactSha256": "bf387753b971ba545b17c57b3a944fba9fd4ab72e12cb04fc841ca5268033c4b",
-      "sourceBytes": 4510,
-      "sourceSha256": "dbd5c174af66296caec372e7214cf4df7158b50a563508e16826b95ab8d1cd6c",
+      "artifactBytes": 946656,
+      "artifactSha256": "7d06cad8e47cad9786a0e68299e59e65336cf6074bcfb05f7a0f25e418e24479",
+      "sourceBytes": 4102,
+      "sourceSha256": "10b5ae382d3ee7ab648d99558a40e0077206de454e66300e382717a2eac08666",
       "checks": [
         {
           "name": "single_svg",
@@ -454,7 +454,7 @@
         "status": "pass",
         "summary": {
           "errors": 0,
-          "warnings": 1
+          "warnings": 0
         },
         "metrics": {
           "properCrossings": 0,
@@ -464,18 +464,18 @@
           "containerBorderRuns": 0,
           "labelRouteClearanceIssues": 0,
           "labelCanvasOverflowIssues": 0,
-          "minLabelRouteClearance": 36.3,
+          "minLabelRouteClearance": 33.2,
           "desktopReadabilityIssues": 0,
-          "viewportHeightIssues": 1,
+          "viewportHeightIssues": 0,
           "minProjectedNodeTextPx": 6.2,
-          "maxBends": 2,
+          "maxBends": 0,
           "routesOverSuggestedBends": 0,
-          "maxStretch": 1.214,
+          "maxStretch": 1,
           "routesOverSuggestedStretch": 0,
-          "minSegmentPx": 13,
-          "minInteriorSegmentPx": 70,
-          "shortSegmentCount": 1,
-          "shortEndpointSegmentCount": 1,
+          "minSegmentPx": 8,
+          "minInteriorSegmentPx": null,
+          "shortSegmentCount": 4,
+          "shortEndpointSegmentCount": 4,
           "shortInteriorSegmentCount": 0,
           "microSegmentCount": 0
         },
@@ -511,25 +511,7 @@
           "minimumProjectedTextPx": 6.2,
           "semanticTextCount": 24
         },
-        "issues": [
-          {
-            "severity": "warning",
-            "code": "composition/viewport-height",
-            "readerFit": null,
-            "viewBoxWidth": 720,
-            "viewBoxHeight": 900,
-            "viewportWidth": 1440,
-            "viewportHeight": 900,
-            "ratio": 0.8,
-            "wideRatio": 1.55,
-            "svgWidthPx": 1346,
-            "svgHeightPx": 1683,
-            "fixedChromePx": 126,
-            "pageHeightPx": 1809,
-            "overflowPx": 909,
-            "detail": "[composition/viewport-height] Preserve every node, relationship, and label. This 720x900 canvas (ratio 0.8) declares no intrinsic-height fit and is below the 1.55 wide ratio, so the desktop Reader can neither narrow it nor accept vertical scroll: it renders 1683px tall at the full 1346px width and the page reaches 1809px before cards against 900px, a certain visual-check failure. Either compact vertical spacing so meta.viewBox height is at most 464 at this width, or spread content sideways so the width is at least 1395 at this height; for architecture and readable-v2 workflow, omitting meta.viewBox lets the renderer size the canvas and declare the fit."
-          }
-        ]
+        "issues": []
       }
     },
     {
@@ -540,16 +522,16 @@
       "input": "gallery/sources/incident-response.workflow.json",
       "artifact": "gallery/artifacts/incident-response.workflow.html",
       "focus": "triage",
-      "schemaVersion": 1,
+      "schemaVersion": 2,
       "visualPreset": "signal-flow",
       "animation": "trace",
       "engineeringProfile": null,
       "nodeCount": 11,
       "edgeCount": 10,
-      "artifactBytes": 943494,
-      "artifactSha256": "a76380d35033b3a49270f841df8e2f592c9e06dfa1089a0e29d6ef88a9fea23d",
-      "sourceBytes": 4723,
-      "sourceSha256": "630be98449925d2716ecb8439f404b2bff5fe65ba905b0ad0baea6d96890c526",
+      "artifactBytes": 947111,
+      "artifactSha256": "13944b65bcf14be71a7008a2978378c9681564f2dd4d65c17481f4c401688470",
+      "sourceBytes": 4161,
+      "sourceSha256": "2a8eabae307b7bfc3ba9a4e3f49a57f2e3d9c62729a004e95bff5a189159d60e",
       "checks": [
         {
           "name": "single_svg",
@@ -594,7 +576,7 @@
         "status": "pass",
         "summary": {
           "errors": 0,
-          "warnings": 1
+          "warnings": 0
         },
         "metrics": {
           "properCrossings": 0,
@@ -604,18 +586,18 @@
           "containerBorderRuns": 0,
           "labelRouteClearanceIssues": 0,
           "labelCanvasOverflowIssues": 0,
-          "minLabelRouteClearance": 119,
+          "minLabelRouteClearance": 119.3,
           "desktopReadabilityIssues": 0,
-          "viewportHeightIssues": 1,
+          "viewportHeightIssues": 0,
           "minProjectedNodeTextPx": 7.7,
-          "maxBends": 3,
-          "routesOverSuggestedBends": 1,
-          "maxStretch": 3.465,
-          "routesOverSuggestedStretch": 3,
-          "minSegmentPx": 21,
-          "minInteriorSegmentPx": 70,
-          "shortSegmentCount": 0,
-          "shortEndpointSegmentCount": 0,
+          "maxBends": 0,
+          "routesOverSuggestedBends": 0,
+          "maxStretch": 1,
+          "routesOverSuggestedStretch": 0,
+          "minSegmentPx": 8,
+          "minInteriorSegmentPx": null,
+          "shortSegmentCount": 8,
+          "shortEndpointSegmentCount": 8,
           "shortInteriorSegmentCount": 0,
           "microSegmentCount": 0
         },
@@ -627,53 +609,7 @@
         },
         "routeReview": {
           "crossings": [],
-          "detours": [
-            {
-              "relationship": {
-                "from": "page",
-                "to": "triage",
-                "label": "",
-                "collectionIndex": 1,
-                "artifactIndex": 2
-              },
-              "bends": 2,
-              "stretch": 1.8
-            },
-            {
-              "relationship": {
-                "from": "contain",
-                "to": "recover",
-                "label": "",
-                "collectionIndex": 3,
-                "artifactIndex": 4
-              },
-              "bends": 2,
-              "stretch": 1.914
-            },
-            {
-              "relationship": {
-                "from": "declare",
-                "to": "update",
-                "label": "",
-                "collectionIndex": 7,
-                "artifactIndex": 8
-              },
-              "bends": 3,
-              "stretch": 3.465,
-              "directCorridorBlockers": [
-                {
-                  "id": "contain",
-                  "label": "Contain",
-                  "box": [
-                    394,
-                    341,
-                    72,
-                    52
-                  ]
-                }
-              ]
-            }
-          ]
+          "detours": []
         },
         "leadingSpace": {
           "measured": false,
@@ -697,25 +633,7 @@
           "minimumProjectedTextPx": 7.7,
           "semanticTextCount": 23
         },
-        "issues": [
-          {
-            "severity": "warning",
-            "code": "composition/viewport-height",
-            "readerFit": null,
-            "viewBoxWidth": 720,
-            "viewBoxHeight": 900,
-            "viewportWidth": 1440,
-            "viewportHeight": 900,
-            "ratio": 0.8,
-            "wideRatio": 1.55,
-            "svgWidthPx": 1346,
-            "svgHeightPx": 1683,
-            "fixedChromePx": 126,
-            "pageHeightPx": 1809,
-            "overflowPx": 909,
-            "detail": "[composition/viewport-height] Preserve every node, relationship, and label. This 720x900 canvas (ratio 0.8) declares no intrinsic-height fit and is below the 1.55 wide ratio, so the desktop Reader can neither narrow it nor accept vertical scroll: it renders 1683px tall at the full 1346px width and the page reaches 1809px before cards against 900px, a certain visual-check failure. Either compact vertical spacing so meta.viewBox height is at most 464 at this width, or spread content sideways so the width is at least 1395 at this height; for architecture and readable-v2 workflow, omitting meta.viewBox lets the renderer size the canvas and declare the fit."
-          }
-        ]
+        "issues": []
       }
     },
     {
@@ -867,10 +785,10 @@
       "engineeringProfile": null,
       "nodeCount": 7,
       "edgeCount": 14,
-      "artifactBytes": 941168,
-      "artifactSha256": "155f611aa9c4d5beb075d3704a938f188a0e7ec7f3d710cc3d3ad15e589bfc22",
-      "sourceBytes": 3766,
-      "sourceSha256": "b8c6c52f1763ede2933c77deb8da59b3e06917bc41d27e66df896136456b859a",
+      "artifactBytes": 941193,
+      "artifactSha256": "3903fcbb39dcd4e2da1d648d7a123761af90065f38797f2138951e6b117552b9",
+      "sourceBytes": 3739,
+      "sourceSha256": "fd72faa6470912226dca7cd8e90b38fc8f521f3776fe0c0d92be1ca53128ec37",
       "checks": [
         {
           "name": "single_svg",
@@ -915,7 +833,7 @@
         "status": "pass",
         "summary": {
           "errors": 0,
-          "warnings": 1
+          "warnings": 0
         },
         "metrics": {
           "properCrossings": 0,
@@ -927,13 +845,13 @@
           "labelCanvasOverflowIssues": 0,
           "minLabelRouteClearance": 22,
           "desktopReadabilityIssues": 0,
-          "viewportHeightIssues": 1,
+          "viewportHeightIssues": 0,
           "minProjectedNodeTextPx": 7,
           "maxBends": 0,
           "routesOverSuggestedBends": 0,
           "maxStretch": 1,
           "routesOverSuggestedStretch": 0,
-          "minSegmentPx": 91.3,
+          "minSegmentPx": 107.3,
           "minInteriorSegmentPx": null,
           "shortSegmentCount": 0,
           "shortEndpointSegmentCount": 0,
@@ -958,12 +876,12 @@
           "measured": true,
           "columnFit": "spread",
           "participantCount": 7,
-          "occupiedRight": 780,
+          "occupiedRight": 880,
           "viewBoxLeft": 0,
-          "canvasWidth": 820,
+          "canvasWidth": 920,
           "emptyRightPx": 40,
-          "emptyRightRatio": 0.049,
-          "typicalParticipantWidth": 86,
+          "emptyRightRatio": 0.043,
+          "typicalParticipantWidth": 90,
           "reviewSuggested": false
         },
         "desktopReadability": {
@@ -984,25 +902,7 @@
           "minimumProjectedTextPx": 7,
           "semanticTextCount": 28
         },
-        "issues": [
-          {
-            "severity": "warning",
-            "code": "composition/viewport-height",
-            "readerFit": null,
-            "viewBoxWidth": 820,
-            "viewBoxHeight": 920,
-            "viewportWidth": 1440,
-            "viewportHeight": 900,
-            "ratio": 0.89,
-            "wideRatio": 1.55,
-            "svgWidthPx": 1346,
-            "svgHeightPx": 1510,
-            "fixedChromePx": 126,
-            "pageHeightPx": 1636,
-            "overflowPx": 736,
-            "detail": "[composition/viewport-height] Preserve every node, relationship, and label. This 820x920 canvas (ratio 0.89) declares no intrinsic-height fit and is below the 1.55 wide ratio, so the desktop Reader can neither narrow it nor accept vertical scroll: it renders 1510px tall at the full 1346px width and the page reaches 1636px before cards against 900px, a certain visual-check failure. Either compact vertical spacing so meta.viewBox height is at most 529 at this width, or spread content sideways so the width is at least 1426 at this height; for architecture and readable-v2 workflow, omitting meta.viewBox lets the renderer size the canvas and declare the fit."
-          }
-        ]
+        "issues": []
       }
     },
     {
@@ -1019,10 +919,10 @@
       "engineeringProfile": null,
       "nodeCount": 12,
       "edgeCount": 12,
-      "artifactBytes": 947029,
-      "artifactSha256": "dfb00b03e0425e5c25abea74cbc78326ece66193a6f9f7e928e43563b64da600",
-      "sourceBytes": 4769,
-      "sourceSha256": "3bdd77674282009c7c68d588cf8a3c495bc98a3be1b9c45327fd1801a6f83a23",
+      "artifactBytes": 947064,
+      "artifactSha256": "dc9acb1904ebf6aeb84c9273615f137b161ef0251407516db58c543a94ca0051",
+      "sourceBytes": 4741,
+      "sourceSha256": "7e3983866180b8fb52646426de9ac391506099737f1291746a249abcdd3e3090",
       "checks": [
         {
           "name": "single_svg",
@@ -1067,7 +967,7 @@
         "status": "pass",
         "summary": {
           "errors": 0,
-          "warnings": 1
+          "warnings": 0
         },
         "metrics": {
           "properCrossings": 0,
@@ -1079,8 +979,8 @@
           "labelCanvasOverflowIssues": 0,
           "minLabelRouteClearance": 9,
           "desktopReadabilityIssues": 0,
-          "viewportHeightIssues": 1,
-          "minProjectedNodeTextPx": 6.027777777777779,
+          "viewportHeightIssues": 0,
+          "minProjectedNodeTextPx": 6.095505617977528,
           "maxBends": 4,
           "routesOverSuggestedBends": 1,
           "maxStretch": 2.663,
@@ -1133,28 +1033,10 @@
             "id": "checkout"
           },
           "minimumSourceTextPx": 7,
-          "minimumProjectedTextPx": 6.027777777777779,
+          "minimumProjectedTextPx": 6.095505617977528,
           "semanticTextCount": 36
         },
-        "issues": [
-          {
-            "severity": "warning",
-            "code": "composition/viewport-height",
-            "readerFit": null,
-            "viewBoxWidth": 1080,
-            "viewBoxHeight": 780,
-            "viewportWidth": 1440,
-            "viewportHeight": 900,
-            "ratio": 1.38,
-            "wideRatio": 1.55,
-            "svgWidthPx": 1346,
-            "svgHeightPx": 972,
-            "fixedChromePx": 126,
-            "pageHeightPx": 1098,
-            "overflowPx": 198,
-            "detail": "[composition/viewport-height] Preserve every node, relationship, and label. This 1080x780 canvas (ratio 1.38) declares no intrinsic-height fit and is below the 1.55 wide ratio, so the desktop Reader can neither narrow it nor accept vertical scroll: it renders 972px tall at the full 1346px width and the page reaches 1098px before cards against 900px, a certain visual-check failure. Either compact vertical spacing so meta.viewBox height is at most 696 at this width, or spread content sideways so the width is at least 1209 at this height; for architecture and readable-v2 workflow, omitting meta.viewBox lets the renderer size the canvas and declare the fit."
-          }
-        ]
+        "issues": []
       }
     },
     {
