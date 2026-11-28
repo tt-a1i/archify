@@ -13,6 +13,7 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 ### Fixed
 
 - Code Analysis output publication recovery (#1471, #1472).
+- **Explainer feedback footer switch (#1482).** An Explainer draft's `@meta feedback_links=false` is accepted, as the schema README documents; the parser refused the argument, so a draft could not turn the footer off.
 
 ## [3.3.2] — 2026-11-25
 

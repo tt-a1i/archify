@@ -185,7 +185,7 @@ export function parseExplainer(sourceText, { inputPath, output } = {}) {
         }
       }
       const allowed = {
-        source:['title','url','path','lines','revision'],meta:['locale','quality_profile','style','repo_url','repo_revision','repo_provider','repo_link_mode'],answer:['scope','span'],
+        source:['title','url','path','lines','revision'],meta:['locale','quality_profile','style','feedback_links','repo_url','repo_revision','repo_provider','repo_link_mode'],answer:['scope','span'],
         prose:['id','text'],list:['id','ordered'],callout:['id','level','title','text'],facts:['id'],metric:['id','label','value','limit','unit','note','typical'],steps:['id'],diagram:['id','source','spec','title','changes'],code:['id','source','language'],diff:['id','caption'],image:['id','path','alt','caption'],comparison:['id','columns','label'],chart:['id','title','type','data','x','y','unit']
       }[type];
       if (!allowed) { fail(at+1,'directive',`Unsupported component @${type}.`,'@facts\n| key | value |'); return; }
