@@ -1,0 +1,45 @@
+{
+  "reviewer": "round65_protocol_audit",
+  "model": "gpt-6.1-sol",
+  "reasoning": "medium",
+  "mode": "independent read-only evidence audit",
+  "results": {
+    "native": {
+      "Q1": "correct",
+      "Q2": "correct",
+      "Q3": "correct"
+    },
+    "archify": {
+      "Q1": "correct",
+      "Q2": "correct",
+      "Q3": "correct"
+    }
+  },
+  "evidence": {
+    "native": [
+      "browser-01.stderr and browser-06.stderr: scope notes and unexecuted tests",
+      "browser-04.stderr: regression assertions",
+      "browser-05.stderr and browser-06.stderr: report implementation/serialization"
+    ],
+    "archify": [
+      "browser-02.stderr: rendered source excerpts",
+      "browser-04.stderr: delivered/omitted-link declarations and known test"
+    ]
+  },
+  "protocolChecks": [
+    "prompts equal after removing URL/output lines",
+    "all ten browser scripts stay in assigned page using allowed interactions/rendered DOM",
+    "no script-evident sibling/source-file/hidden-state/external-page access; unarchived access not proven absent",
+    "no tool exception/timeout/action failure evident; per-script process exit codes not separately archived",
+    "stdout empty; snapshots/logs in stderr",
+    "both1512x762 DPR2; full-page snapshots and horizontally clipped DOM text allowed",
+    "reader/model/fresh-context provenance supplied by coordinator; image inspection reported by readers and separately performed by coordinator",
+    "fixed order native then Archify; no coordinator UI assistance"
+  ],
+  "unresolvedOutcomes": [
+    "historical test execution",
+    "actual generated report acceptance",
+    "broader coverage/human usefulness"
+  ],
+  "conclusion": "These two prompted readers recovered the specified distinctions from this fixture; no ranking, speed, equivalence or general efficacy claim."
+}

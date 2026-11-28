@@ -1,0 +1,177 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/gtindo/task-view/schema/v1/change.json",
+  "title": "task-view review file",
+  "description": "A coding agent's structured account of a change, checked by task-view against the filesystem and Git.",
+  "type": "object",
+  "required": ["version", "summary", "repos", "nodes"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "version": {
+      "description": "Schema version.",
+      "const": 1
+    },
+    "summary": {
+      "description": "The agent's intent in a few sentences: what was asked, what it did.",
+      "type": "string",
+      "minLength": 1
+    },
+    "repos": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/repo" }
+    },
+    "nodes": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/node" }
+    },
+    "edges": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/edge" }
+    },
+    "flows": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/flow" }
+    },
+    "claims": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/claim" }
+    },
+    "notes": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+    },
+    "repo": {
+      "type": "object",
+      "required": ["id", "path", "commits"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "path": {
+          "description": "Absolute, or relative to the root of the Git repo containing the review file.",
+          "type": "string",
+          "minLength": 1
+        },
+        "role": { "enum": ["changed", "context"] },
+        "commits": {
+          "description": "Full SHAs from last to first; \"WORKTREE\" first when the change has uncommitted work.",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "anyOf": [
+              { "const": "WORKTREE" },
+              { "pattern": "^[0-9a-f]{40}([0-9a-f]{24})?$" }
+            ]
+          }
+        },
+        "languages": {
+          "description": "Glob pattern to language name, matched against repo-relative paths, first match wins.",
+          "type": "object",
+          "additionalProperties": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "node": {
+      "type": "object",
+      "required": ["id", "kind", "label", "change"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "kind": { "type": "string", "minLength": 1, "maxLength": 32 },
+        "label": { "type": "string", "minLength": 1 },
+        "change": { "enum": ["added", "modified", "deleted", "unchanged"] },
+        "ref": { "$ref": "#/$defs/ref" },
+        "why": { "type": "string", "minLength": 1 },
+        "meta": {
+          "description": "Free key-value context, shown as agent statements.",
+          "type": "object",
+          "additionalProperties": { "type": ["string", "number", "boolean"] }
+        }
+      }
+    },
+    "edge": {
+      "type": "object",
+      "required": ["from", "to", "kind"],
+      "additionalProperties": false,
+      "properties": {
+        "from": { "$ref": "#/$defs/id" },
+        "to": { "$ref": "#/$defs/id" },
+        "kind": { "type": "string", "minLength": 1, "maxLength": 32 },
+        "ref": { "$ref": "#/$defs/ref" }
+      }
+    },
+    "flow": {
+      "type": "object",
+      "required": ["id", "title", "path"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "title": { "type": "string", "minLength": 1 },
+        "path": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/id" } },
+        "tests": { "type": "array", "items": { "$ref": "#/$defs/id" } }
+      }
+    },
+    "claim": {
+      "type": "object",
+      "required": ["text"],
+      "additionalProperties": false,
+      "properties": {
+        "text": { "type": "string", "minLength": 1 },
+        "about": { "type": "array", "items": { "$ref": "#/$defs/id" } },
+        "evidence": { "type": "array", "items": { "$ref": "#/$defs/ref" } }
+      }
+    },
+    "lines": {
+      "type": "array",
+      "prefixItems": [
+        { "type": "integer", "minimum": 1 },
+        { "type": "integer", "minimum": 1 }
+      ],
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "ref": {
+      "type": "object",
+      "required": ["type", "repo"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "enum": ["file", "range", "site", "hunk", "commit"] },
+        "repo": { "$ref": "#/$defs/id" },
+        "file": { "type": "string", "minLength": 1 },
+        "lines": { "$ref": "#/$defs/lines" },
+        "line": { "type": "integer", "minimum": 1 },
+        "contains": { "type": "string", "minLength": 1, "maxLength": 200, "pattern": "^[^\\r\\n]*$" },
+        "sha": { "type": "string", "pattern": "^[0-9a-f]{7,64}$" },
+        "at": { "type": "string", "pattern": "^[0-9a-f]{40}([0-9a-f]{24})?$" },
+        "language": { "type": "string", "minLength": 1 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "file" } } },
+          "then": { "required": ["file"], "not": { "anyOf": [{ "required": ["lines"] }, { "required": ["line"] }, { "required": ["contains"] }, { "required": ["sha"] }] } }
+        },
+        {
+          "if": { "properties": { "type": { "enum": ["range", "hunk"] } } },
+          "then": { "required": ["file", "lines"], "not": { "anyOf": [{ "required": ["line"] }, { "required": ["contains"] }, { "required": ["sha"] }] } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "site" } } },
+          "then": { "required": ["file", "line", "contains"], "not": { "anyOf": [{ "required": ["lines"] }, { "required": ["sha"] }] } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "commit" } } },
+          "then": { "required": ["sha"], "not": { "anyOf": [{ "required": ["file"] }, { "required": ["lines"] }, { "required": ["line"] }, { "required": ["contains"] }] } }
+        }
+      ]
+    }
+  }
+}

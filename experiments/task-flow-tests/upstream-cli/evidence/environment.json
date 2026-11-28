@@ -1,0 +1,39 @@
+{
+  "hostGoVersion": "go1.27.2 darwin/arm64",
+  "executedBinaryBuildGoVersion": "go1.26.3",
+  "sourceDependencies": [
+    {
+      "module": "github.com/alecthomas/chroma/v2",
+      "version": "v2.27.0",
+      "unpackedDirectoryPresent": false,
+      "cachedZipPresent": false
+    },
+    {
+      "module": "github.com/santhosh-tekuri/jsonschema/v6",
+      "version": "v6.0.3",
+      "unpackedDirectoryPresent": false,
+      "cachedZipPresent": false
+    },
+    {
+      "module": "golang.org/x/text",
+      "version": "v0.14.0",
+      "unpackedDirectoryPresent": false,
+      "cachedZipPresent": false
+    },
+    {
+      "module": "github.com/dlclark/regexp2/v2",
+      "version": "v2.2.1",
+      "unpackedDirectoryPresent": false,
+      "cachedZipPresent": false
+    }
+  ],
+  "browser": {
+    "viewport": {
+      "width": 1512,
+      "height": 762
+    },
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36"
+  },
+  "noPackageManagerOrInstallCommand": true,
+  "portableBinaryLocation": "Outside repository in the experiment evidence directory, not PATH."
+}

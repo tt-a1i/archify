@@ -1,0 +1,31 @@
+{
+  "at": "2026-10-29T14:52:00.174870+00:00",
+  "taskflowCommit": "784a8377210298707357f28ad6ae391c874fe8e1",
+  "files": [
+    {
+      "path": "upstream-cli/native/final.html",
+      "bytes": 2287696,
+      "sha256": "b941588f968f3ad6094ca5691472e5c28bb432a8e0c26257294a1a83f13c653a"
+    },
+    {
+      "path": "final/review.html",
+      "bytes": 554553,
+      "sha256": "f8c908b1d9e4e2eccf127387d886eba425aa06106448fbd212eac931f6f4b17b"
+    },
+    {
+      "path": "input/mapping.json",
+      "bytes": 11153,
+      "sha256": "e04fea9bb1b29fce4926311c6101ad12d8d8d98efaa5eb2f0659a4828557b4cf"
+    },
+    {
+      "path": "flows.json",
+      "bytes": 1711,
+      "sha256": "cd61df03f5182ef43c05a80d7a551000f79af5d86bc93d7ef6a7a56ef8f09d11"
+    },
+    {
+      "path": "upstream-cli/inputs/shared-review.json",
+      "bytes": 5360,
+      "sha256": "965730d7f351339e1bfbb88d8fa98779559eafebfe6b81c76393ed62f7c0b858"
+    }
+  ]
+}

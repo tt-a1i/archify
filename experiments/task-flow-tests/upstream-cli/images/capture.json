@@ -1,0 +1,23 @@
+{
+  "source": "Actual unmodified CLI final-run/native.html before path redaction",
+  "sourceSha256": "457ac8023576e8c24006b9270f0c9cfb2ee78ae9174d3ebcb1b63ef0847e0c79",
+  "viewport": {
+    "width": 1512,
+    "height": 762
+  },
+  "reviewedImages": [
+    "native-flows.png",
+    "native-delivered-graph.png",
+    "native-inspector-tooltip.png",
+    "native-inspector.png"
+  ],
+  "actions": [
+    "Navigate generated native page; capture Flows",
+    "Click delivered flow title then Graph; capture its scoped graph",
+    "Text click of guard label failed because canvas intercepted pointer; preserve failure",
+    "Click graph at screenshot-grounded coordinates (970,428); inspect source table and capture",
+    "Move pointer to (800,100); capture inspector without tooltip"
+  ],
+  "scope": "Actual native UI, not modified viewData, hidden graph state, historical code execution or reader-efficiency evidence.",
+  "captureRecovery": "An early view_image call preceded completion of the screenshot command; same live session was polled to completion before opening the image. No browser action was replayed."
+}

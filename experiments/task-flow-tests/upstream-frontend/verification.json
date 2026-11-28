@@ -1,0 +1,21 @@
+{
+  "upstreamMain": "a3fa21767bfaeb3077fdda08bddb7249366caa93",
+  "remoteHeads": 333,
+  "dedup": "Only hub changed from round44; existing #1121 open, #994 closed; no new PR",
+  "finalImages": 11,
+  "initialImages": 12,
+  "sourceFiles": 10,
+  "scope": "No renderer/shared runtime changes; no broad product tests or CI claim",
+  "rawWhitespaceExceptions": [
+    "source/",
+    "browser/*.log"
+  ],
+  "authoredWhitespaceCheck": "pass",
+  "nativeValidation": "not-run",
+  "historicalTests": "not-run",
+  "installations": "none",
+  "ELKSourceTag": {
+    "ref": "refs/tags/0.11.0",
+    "object": "37e798513db6e88b2e205b8239ed4e387d5f24d0"
+  }
+}

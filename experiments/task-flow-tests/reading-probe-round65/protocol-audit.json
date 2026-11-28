@@ -1,0 +1,29 @@
+{
+  "reviewer": "round65_protocol_audit",
+  "model": "gpt-6.1-sol",
+  "reasoning": "medium",
+  "beforeReaders": true,
+  "summary": "No protocol blocker. Full native notes, graph, Inspector, diff required. Same questions, fresh contexts; no speed/general benefit claim. Per-path native notes are representation asymmetry, not upstream defect.",
+  "expectedEvidence": {
+    "Q1": [
+      "flows.json delivered testLinks=[]",
+      "upstream-cli/inputs/shared-review.json notes about global edge and delivered"
+    ],
+    "Q2": [
+      "mapping regression excerpt: unverified/human null/missing reason/index.html exists",
+      "report implementation adds evidenceMissing independently",
+      "historical tests unexecuted"
+    ],
+    "Q3": [
+      "omitted-link synthetic=true",
+      "same source and mapping, declaration removed only"
+    ]
+  },
+  "overlap": {
+    "observedRemoteHead": "3a8636145318762ab4212e7d19010f5c39a74bc1",
+    "prior": "0f36a3a9af85f87c694b801f445cf9ae8750e8e0",
+    "inspection": "read-only exact local objects after root remote refresh",
+    "changedFiles": 90,
+    "finding": "phone scrolling/export, Redis/TaskGroup examples, SQLite WAL observations; no changes under experiments/task-flow-tests; adjacent broader reading research"
+  }
+}

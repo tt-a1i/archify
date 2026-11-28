@@ -1,0 +1,32 @@
+{
+  "frozenAt": "2026-10-29T14:53:36.143941+00:00",
+  "questions": [
+    "在 delivered（产物已交付：沿用历史评分）路径，作者明确将 regression（回归测试）关联到哪个步骤？若没有请说明。请给出页面证据。",
+    "在 missing（缺少产物：记录评分未绑定）路径，regression 的源码断言是否足以证明生成报告包含 evidenceMissing？请区分测试断言与报告实现，并指出证据。页面是否证明历史测试本次已经执行通过？",
+    "在 omitted-link（对照：移除测试关联声明）路径，没有步骤测试关联声明能否推出不存在相关测试？请说明依据和限制。"
+  ],
+  "order": [
+    "native",
+    "archify"
+  ],
+  "model": "gpt-6.1-terra",
+  "reasoning": "medium",
+  "participantsPerArm": 1,
+  "independence": "fork_turns none; prompts differ only URL/output; serial shared browser, reset by navigation",
+  "scope": "prompted evidence lookup, no human/speed/general efficacy claim",
+  "budget": "12 minutes suggested per reader; preserve unresolved and failures; one evidence-based recovery",
+  "sources": "frozen-inputs.json",
+  "expected": {
+    "Q1": "no authored per-step assignment in delivered; global regression-to-guard edge does not assign a flow",
+    "Q2": "no evidenceMissing field assertion; report code separately adds field; test checks report file exists; historical tests unexecuted",
+    "Q3": "synthetic missing declaration cannot establish absence of tests or code defect"
+  },
+  "confounds": [
+    "single existing fixture; author-created mapping and question selection",
+    "artifacts share source facts but differ in authored representation and metadata",
+    "native per-step declaration represented in full notes, not native flow field",
+    "one reader per arm, order fixed; no timing comparison",
+    "questions explicitly ask evidence boundaries; not unprompted discovery",
+    "screens/viewport recorded, responsive interaction may differ"
+  ]
+}

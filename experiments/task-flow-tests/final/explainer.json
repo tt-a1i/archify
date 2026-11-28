@@ -1,0 +1,301 @@
+{
+  "schema_version": 1,
+  "diagram_type": "explainer",
+  "meta": {
+    "id": "task-flow-tests",
+    "title": "这条改动路径，关联了哪个测试？",
+    "locale": "zh-CN"
+  },
+  "answer": {
+    "summary": "逐步对照测试关联声明；所列历史测试未执行。",
+    "reasons": [
+      "3 条声明路径复用同一份固定 Git 映射。",
+      "步骤、测试关联与未分配测试分开呈现。",
+      "引用吻合只说明代码指针吻合。"
+    ],
+    "scope": "固定历史提交 · 作者编写路径 · 非运行轨迹"
+  },
+  "panels": [
+    {
+      "id": "paths",
+      "title": "沿同一张图比较路径与测试声明",
+      "span": 12,
+      "blocks": [
+        {
+          "id": "scope-warning",
+          "type": "callout",
+          "level": "warning",
+          "title": "声明关联，未执行",
+          "text": "路径与关联由实验作者编写。源码引用吻合不证明代码正确或测试通过。正常路径未分配回归测试，不表示它没有测试。"
+        },
+        {
+          "id": "change-path",
+          "type": "diagram",
+          "diagramType": "architecture",
+          "spec": {
+            "schema_version": 1,
+            "diagram_type": "architecture",
+            "meta": {
+              "title": "同一组变更节点",
+              "output": "change-path.html",
+              "locale": "zh-CN",
+              "quality_profile": "showcase",
+              "repository": {
+                "url": "https://github.com/tt-a1i/archify",
+                "revision": "ed62bfefaf490e831259261fdc12f985267590fb"
+              }
+            },
+            "components": [
+              {
+                "id": "guard",
+                "type": "backend",
+                "label": "新增：交付条件",
+                "sublabel": "作者声明 · 非运行轨迹",
+                "pos": [
+                  40,
+                  50
+                ],
+                "size": [
+                  240,
+                  90
+                ],
+                "sources": [
+                  {
+                    "path": "benchmarks/diagram-quality/comparison.mjs",
+                    "line": 137,
+                    "end_line": 139,
+                    "label": "固定 head 源码"
+                  }
+                ]
+              },
+              {
+                "id": "report",
+                "type": "backend",
+                "label": "报告展示缺测原因",
+                "sublabel": "作者声明 · 非运行轨迹",
+                "pos": [
+                  430,
+                  50
+                ],
+                "size": [
+                  240,
+                  90
+                ],
+                "sources": [
+                  {
+                    "path": "benchmarks/diagram-quality/score-report.mjs",
+                    "line": 55,
+                    "end_line": 55,
+                    "label": "固定 head 源码"
+                  }
+                ]
+              }
+            ],
+            "connections": [
+              {
+                "from": "guard",
+                "to": "report",
+                "label": "声明：缺测呈现"
+              }
+            ]
+          },
+          "nodeBlocks": {
+            "guard": "why-guard",
+            "report": "why-report"
+          }
+        },
+        {
+          "id": "missing-scope",
+          "type": "prose",
+          "text": "**缺少产物：记录评分未绑定**。缺产物且存在历史评分的源码阅读；未执行历史代码。"
+        },
+        {
+          "id": "missing-steps",
+          "type": "steps",
+          "items": [
+            {
+              "id": "missing-step-0",
+              "text": "新增：交付条件",
+              "detail": "条件不是 delivered 且存在历史评分，追加未绑定原因。 声明关联：[回归测试：缺失产物](block:source-regression)；未执行。测试源码移除产物，断言 delivery 为 unverified、human 为 null，并检查缺失原因。",
+              "target": {
+                "diagram": "change-path",
+                "node": "guard"
+              }
+            },
+            {
+              "id": "missing-step-1",
+              "text": "报告展示缺测原因",
+              "detail": "报告对象把 evidence.missing 暴露为 evidenceMissing。 此步骤未声明测试关联。",
+              "target": {
+                "diagram": "change-path",
+                "node": "report"
+              }
+            }
+          ]
+        },
+        {
+          "id": "missing-unassigned",
+          "type": "prose",
+          "text": "本路径的已知测试均有声明关联；未执行，不表示测试覆盖完整。"
+        },
+        {
+          "id": "delivered-scope",
+          "type": "prose",
+          "text": "**产物已交付：沿用历史评分**。已交付分支的源码阅读；未执行历史代码。"
+        },
+        {
+          "id": "delivered-steps",
+          "type": "steps",
+          "items": [
+            {
+              "id": "delivered-step-0",
+              "text": "新增：交付条件",
+              "detail": "条件为 delivered，遍历 storedReviews 并绑定评分。 此步骤未声明测试关联。",
+              "target": {
+                "diagram": "change-path",
+                "node": "guard"
+              }
+            },
+            {
+              "id": "delivered-step-1",
+              "text": "报告展示缺测原因",
+              "detail": "报告对象仍列出 evidenceMissing，缺失数组可以为空。 此步骤未声明测试关联。",
+              "target": {
+                "diagram": "change-path",
+                "node": "report"
+              }
+            }
+          ]
+        },
+        {
+          "id": "delivered-unassigned",
+          "type": "prose",
+          "text": "本路径未分配的已知测试：[回归测试：缺失产物](block:source-regression)。未分配不等于没有测试。"
+        },
+        {
+          "id": "omitted-link-scope",
+          "type": "prose",
+          "text": "**对照：移除测试关联声明**。合成对照。人为遗漏关联的合成对照；Git 映射与源码未变。"
+        },
+        {
+          "id": "omitted-link-steps",
+          "type": "steps",
+          "items": [
+            {
+              "id": "omitted-link-step-0",
+              "text": "新增：交付条件",
+              "detail": "与缺产物路径相同，但作者没有给出测试关联。 此步骤未声明测试关联。",
+              "target": {
+                "diagram": "change-path",
+                "node": "guard"
+              }
+            },
+            {
+              "id": "omitted-link-step-1",
+              "text": "报告展示缺测原因",
+              "detail": "没有声明关联，不表示不存在测试，也不表示代码有缺陷。 此步骤未声明测试关联。",
+              "target": {
+                "diagram": "change-path",
+                "node": "report"
+              }
+            }
+          ]
+        },
+        {
+          "id": "omitted-link-unassigned",
+          "type": "prose",
+          "text": "本路径未分配的已知测试：[回归测试：缺失产物](block:source-regression)。未分配不等于没有测试。"
+        }
+      ]
+    },
+    {
+      "id": "node-guard",
+      "title": "新增：交付条件",
+      "span": 12,
+      "blocks": [
+        {
+          "id": "why-guard",
+          "type": "prose",
+          "text": "我的解释：只有 delivered 才复用历史评分，否则记录评分无法绑定的缺测原因。此代码引用吻合不能证明所有评分流程正确。"
+        },
+        {
+          "id": "citation-guard",
+          "type": "prose",
+          "text": "[固定源码位置](source:ref-guard)。复用原映射的引用吻合结果，本轮未重做 Git 核对。"
+        },
+        {
+          "id": "source-guard",
+          "type": "snippet",
+          "title": "head · L137–L139 · 原映射摘录",
+          "language": "js",
+          "text": "   const storedReviews=original.human?.reviews??[];\n   if(receipt.delivery.status==='delivered')for(const review of storedReviews)receipt=attachHumanReview(receipt,review);\n   else if(storedReviews.length)evidence.missing.push('stored human reviews not bound: final artifact unavailable');"
+        }
+      ]
+    },
+    {
+      "id": "node-report",
+      "title": "报告展示缺测原因",
+      "span": 12,
+      "blocks": [
+        {
+          "id": "why-report",
+          "type": "prose",
+          "text": "我的解释：报告详情新增 evidenceMissing，供读者看到历史评分没有绑定的原因。具体页面效果仍需独立浏览器验收。"
+        },
+        {
+          "id": "citation-report",
+          "type": "prose",
+          "text": "[固定源码位置](source:ref-report)。复用原映射的引用吻合结果，本轮未重做 Git 核对。"
+        },
+        {
+          "id": "source-report",
+          "type": "snippet",
+          "title": "head · L55–L55 · 原映射摘录",
+          "language": "js",
+          "text": " const defects={evidenceMissing:evidence.missing??[],semanticMeasurements:row.semanticMeasurements??null,semanticDefects:row.semanticDefects??[],layoutDetails:row.layoutDetails??null,sourceEvidence:row.sourceEvidence??null,missing:row.missing??[],human:row.human??null};"
+        }
+      ]
+    },
+    {
+      "id": "node-regression",
+      "title": "回归测试：缺失产物",
+      "span": 12,
+      "blocks": [
+        {
+          "id": "why-regression",
+          "type": "prose",
+          "text": "我的解释：新增测试构造历史评分但缺少产物的情形，断言无人工分并保留报告。这里只审阅测试源码，本实验没有执行该历史测试。"
+        },
+        {
+          "id": "citation-regression",
+          "type": "prose",
+          "text": "[固定源码位置](source:ref-regression)。复用原映射的引用吻合结果，本轮未重做 Git 核对。测试源码，不是执行结果。"
+        },
+        {
+          "id": "source-regression",
+          "type": "snippet",
+          "title": "head · L85–L95 · 原映射摘录",
+          "language": "js",
+          "text": "test('stored ratings with a missing artifact do not abort the comparison or gain human credit',async t=>{\n const dir=temp(t),{plan,write}=comparisonFixture(dir);\n const receipt=JSON.parse(fs.readFileSync(path.join(dir,'base.json')));\n receipt.human={status:'completed',reviews:[{taskId:'one',artifactHash:receipt.artifactHash,status:'completed',reviewerId:'historical-rater',rubricVersion:'diagram-quality-human-v1',independent:true,ratings:{readability:4,hierarchy:4,layout:4,style:4,aesthetics:4}}]};\n write('base.json',receipt);delete plan.runs[0].artifact;write('plan.json',plan);\n const {comparison}=await compareFromFiles({plan:path.join(dir,'plan.json'),output:path.join(dir,'out')});\n const row=comparison.pairs[0].base;\n assert.equal(row.delivery.status,'unverified');assert.equal(row.scores.human,null);\n assert.ok(row.evidence.missing.some(reason=>reason.includes('stored human reviews')));\n assert.ok(fs.existsSync(path.join(dir,'out/index.html')));\n});"
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "ref-guard",
+      "title": "新增：交付条件 · benchmarks/diagram-quality/comparison.mjs:137–139",
+      "url": "https://github.com/tt-a1i/archify/blob/ed62bfefaf490e831259261fdc12f985267590fb/benchmarks/diagram-quality/comparison.mjs#L137-L139"
+    },
+    {
+      "id": "ref-report",
+      "title": "报告展示缺测原因 · benchmarks/diagram-quality/score-report.mjs:55–55",
+      "url": "https://github.com/tt-a1i/archify/blob/ed62bfefaf490e831259261fdc12f985267590fb/benchmarks/diagram-quality/score-report.mjs#L55-L55"
+    },
+    {
+      "id": "ref-regression",
+      "title": "回归测试：缺失产物 · test/diagram-quality-comparison.test.mjs:85–95",
+      "url": "https://github.com/tt-a1i/archify/blob/ed62bfefaf490e831259261fdc12f985267590fb/test/diagram-quality-comparison.test.mjs#L85-L95"
+    }
+  ]
+}

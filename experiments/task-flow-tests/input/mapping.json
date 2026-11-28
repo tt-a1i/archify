@@ -1,0 +1,238 @@
+{
+  "version": 1,
+  "experiment": "task-review-map",
+  "repository": "https://github.com/tt-a1i/archify",
+  "base": "de004edf47228b6134fd3d29ef91cd5e010c867b",
+  "head": "ed62bfefaf490e831259261fdc12f985267590fb",
+  "reviewSha256": "e6231ac2b9105319e7b435d63e07270c72c1d89675aa99e3aea53a96a86f6312",
+  "repositoryIdentity": "Author-declared public URL; remote object availability is not checked or authenticated.",
+  "statementAuthor": "Codex 实验作者（手写历史变更解释，未经原提交作者确认）",
+  "scope": "Local committed objects only; no checkout, fetch, AST or test execution. Renames are delete/add.",
+  "meaning": "reference-matches means changed-line reference agreement only. Why and relations remain agent statements. range-accounted is not semantic completeness or test coverage.",
+  "nodes": [
+    {
+      "id": "before-guard",
+      "label": "原逻辑：直接绑定评分",
+      "why": "我的解释：原逻辑尝试绑定已保存的人工评分，没有先检查最终产物是否真的交付。这里只引用被删除的一行。",
+      "ref": {
+        "path": "benchmarks/diagram-quality/comparison.mjs",
+        "side": "base",
+        "start": 137,
+        "end": 137
+      },
+      "status": "reference-matches",
+      "reason": "Range contains changed lines in the stated Git side. Semantic meaning and test results are not checked.",
+      "matchedHunks": [
+        "benchmarks/diagram-quality/comparison.mjs:1"
+      ],
+      "excerpt": "   for(const review of original.human?.reviews??[])receipt=attachHumanReview(receipt,review);",
+      "blobSha256": "c80f931d580ffa2fbcf0e2a5df971baf87d2d9dbf762f3ff659eb3f524717804"
+    },
+    {
+      "id": "guard",
+      "label": "新增：交付条件",
+      "why": "我的解释：只有 delivered 才复用历史评分，否则记录评分无法绑定的缺测原因。此代码引用吻合不能证明所有评分流程正确。",
+      "ref": {
+        "path": "benchmarks/diagram-quality/comparison.mjs",
+        "side": "head",
+        "start": 137,
+        "end": 139
+      },
+      "status": "reference-matches",
+      "reason": "Range contains changed lines in the stated Git side. Semantic meaning and test results are not checked.",
+      "matchedHunks": [
+        "benchmarks/diagram-quality/comparison.mjs:1"
+      ],
+      "excerpt": "   const storedReviews=original.human?.reviews??[];\n   if(receipt.delivery.status==='delivered')for(const review of storedReviews)receipt=attachHumanReview(receipt,review);\n   else if(storedReviews.length)evidence.missing.push('stored human reviews not bound: final artifact unavailable');",
+      "blobSha256": "2ebba904a91de7f5dd37e5fc6f42978fea69898874ad673eb1e3269870c6a581"
+    },
+    {
+      "id": "regression",
+      "label": "回归测试：缺失产物",
+      "why": "我的解释：新增测试构造历史评分但缺少产物的情形，断言无人工分并保留报告。这里只审阅测试源码，本实验没有执行该历史测试。",
+      "ref": {
+        "path": "test/diagram-quality-comparison.test.mjs",
+        "side": "head",
+        "start": 85,
+        "end": 95
+      },
+      "status": "reference-matches",
+      "reason": "Range contains changed lines in the stated Git side. Semantic meaning and test results are not checked.",
+      "matchedHunks": [
+        "test/diagram-quality-comparison.test.mjs:1"
+      ],
+      "excerpt": "test('stored ratings with a missing artifact do not abort the comparison or gain human credit',async t=>{\n const dir=temp(t),{plan,write}=comparisonFixture(dir);\n const receipt=JSON.parse(fs.readFileSync(path.join(dir,'base.json')));\n receipt.human={status:'completed',reviews:[{taskId:'one',artifactHash:receipt.artifactHash,status:'completed',reviewerId:'historical-rater',rubricVersion:'diagram-quality-human-v1',independent:true,ratings:{readability:4,hierarchy:4,layout:4,style:4,aesthetics:4}}]};\n write('base.json',receipt);delete plan.runs[0].artifact;write('plan.json',plan);\n const {comparison}=await compareFromFiles({plan:path.join(dir,'plan.json'),output:path.join(dir,'out')});\n const row=comparison.pairs[0].base;\n assert.equal(row.delivery.status,'unverified');assert.equal(row.scores.human,null);\n assert.ok(row.evidence.missing.some(reason=>reason.includes('stored human reviews')));\n assert.ok(fs.existsSync(path.join(dir,'out/index.html')));\n});",
+      "blobSha256": "e1496b70a2d31eb76516fe3dd314ba998796d684a115d66efaa1a6afd222f98a"
+    },
+    {
+      "id": "before-report",
+      "label": "原报告：无缺测字段",
+      "why": "我的解释：原报告的详情对象未列出 evidence.missing。这里引用被替换的一行，供审阅前后变化。",
+      "ref": {
+        "path": "benchmarks/diagram-quality/score-report.mjs",
+        "side": "base",
+        "start": 55,
+        "end": 55
+      },
+      "status": "reference-matches",
+      "reason": "Range contains changed lines in the stated Git side. Semantic meaning and test results are not checked.",
+      "matchedHunks": [
+        "benchmarks/diagram-quality/score-report.mjs:1"
+      ],
+      "excerpt": " const defects={semanticMeasurements:row.semanticMeasurements??null,semanticDefects:row.semanticDefects??[],layoutDetails:row.layoutDetails??null,sourceEvidence:row.sourceEvidence??null,missing:row.missing??[],human:row.human??null};",
+      "blobSha256": "c6c63c05343d35ae608face607b05f8fb29071b6de0a89826b4150b0fa5e85e4"
+    },
+    {
+      "id": "report",
+      "label": "报告展示缺测原因",
+      "why": "我的解释：报告详情新增 evidenceMissing，供读者看到历史评分没有绑定的原因。具体页面效果仍需独立浏览器验收。",
+      "ref": {
+        "path": "benchmarks/diagram-quality/score-report.mjs",
+        "side": "head",
+        "start": 55,
+        "end": 55
+      },
+      "status": "reference-matches",
+      "reason": "Range contains changed lines in the stated Git side. Semantic meaning and test results are not checked.",
+      "matchedHunks": [
+        "benchmarks/diagram-quality/score-report.mjs:1"
+      ],
+      "excerpt": " const defects={evidenceMissing:evidence.missing??[],semanticMeasurements:row.semanticMeasurements??null,semanticDefects:row.semanticDefects??[],layoutDetails:row.layoutDetails??null,sourceEvidence:row.sourceEvidence??null,missing:row.missing??[],human:row.human??null};",
+      "blobSha256": "2a71dd26fd9aa588eadab3ff05f132dead096000589df6cf4159c6536c3d7930"
+    }
+  ],
+  "edges": [
+    {
+      "from": "before-guard",
+      "to": "guard",
+      "label": "声明：替换"
+    },
+    {
+      "from": "regression",
+      "to": "guard",
+      "label": "声明：测试关联"
+    },
+    {
+      "from": "guard",
+      "to": "report",
+      "label": "声明：缺测呈现"
+    },
+    {
+      "from": "before-report",
+      "to": "report",
+      "label": "声明：替换"
+    }
+  ],
+  "hunks": [
+    {
+      "id": "benchmarks/diagram-quality/comparison.mjs:1",
+      "path": "benchmarks/diagram-quality/comparison.mjs",
+      "base": {
+        "start": 137,
+        "count": 1
+      },
+      "head": {
+        "start": 137,
+        "count": 3
+      },
+      "diff": "@@ -137 +137,3 @@ export async function compareFromFiles({plan:planFile,output,reviews:reviewFile}\n-   for(const review of original.human?.reviews??[])receipt=attachHumanReview(receipt,review);\n+   const storedReviews=original.human?.reviews??[];\n+   if(receipt.delivery.status==='delivered')for(const review of storedReviews)receipt=attachHumanReview(receipt,review);\n+   else if(storedReviews.length)evidence.missing.push('stored human reviews not bound: final artifact unavailable');",
+      "explainedBy": [
+        "before-guard",
+        "guard"
+      ],
+      "changed": {
+        "base": [
+          137
+        ],
+        "head": [
+          137,
+          138,
+          139
+        ]
+      },
+      "unexplainedLines": {
+        "base": [],
+        "head": []
+      },
+      "coverage": "range-accounted"
+    },
+    {
+      "id": "benchmarks/diagram-quality/score-report.mjs:1",
+      "path": "benchmarks/diagram-quality/score-report.mjs",
+      "base": {
+        "start": 55,
+        "count": 1
+      },
+      "head": {
+        "start": 55,
+        "count": 1
+      },
+      "diff": "@@ -55 +55 @@ function evidenceArm(row,name,revision) {\n- const defects={semanticMeasurements:row.semanticMeasurements??null,semanticDefects:row.semanticDefects??[],layoutDetails:row.layoutDetails??null,sourceEvidence:row.sourceEvidence??null,missing:row.missing??[],human:row.human??null};\n+ const defects={evidenceMissing:evidence.missing??[],semanticMeasurements:row.semanticMeasurements??null,semanticDefects:row.semanticDefects??[],layoutDetails:row.layoutDetails??null,sourceEvidence:row.sourceEvidence??null,missing:row.missing??[],human:row.human??null};",
+      "explainedBy": [
+        "before-report",
+        "report"
+      ],
+      "changed": {
+        "base": [
+          55
+        ],
+        "head": [
+          55
+        ]
+      },
+      "unexplainedLines": {
+        "base": [],
+        "head": []
+      },
+      "coverage": "range-accounted"
+    },
+    {
+      "id": "test/diagram-quality-comparison.test.mjs:1",
+      "path": "test/diagram-quality-comparison.test.mjs",
+      "base": {
+        "start": 84,
+        "count": 0
+      },
+      "head": {
+        "start": 85,
+        "count": 11
+      },
+      "diff": "@@ -84,0 +85,11 @@ test('malformed generated JSON remains a recorded failure with inspectable candi\n+test('stored ratings with a missing artifact do not abort the comparison or gain human credit',async t=>{\n+ const dir=temp(t),{plan,write}=comparisonFixture(dir);\n+ const receipt=JSON.parse(fs.readFileSync(path.join(dir,'base.json')));\n+ receipt.human={status:'completed',reviews:[{taskId:'one',artifactHash:receipt.artifactHash,status:'completed',reviewerId:'historical-rater',rubricVersion:'diagram-quality-human-v1',independent:true,ratings:{readability:4,hierarchy:4,layout:4,style:4,aesthetics:4}}]};\n+ write('base.json',receipt);delete plan.runs[0].artifact;write('plan.json',plan);\n+ const {comparison}=await compareFromFiles({plan:path.join(dir,'plan.json'),output:path.join(dir,'out')});\n+ const row=comparison.pairs[0].base;\n+ assert.equal(row.delivery.status,'unverified');assert.equal(row.scores.human,null);\n+ assert.ok(row.evidence.missing.some(reason=>reason.includes('stored human reviews')));\n+ assert.ok(fs.existsSync(path.join(dir,'out/index.html')));\n+});",
+      "explainedBy": [
+        "regression"
+      ],
+      "changed": {
+        "base": [],
+        "head": [
+          85,
+          86,
+          87,
+          88,
+          89,
+          90,
+          91,
+          92,
+          93,
+          94,
+          95
+        ]
+      },
+      "unexplainedLines": {
+        "base": [],
+        "head": []
+      },
+      "coverage": "range-accounted"
+    }
+  ],
+  "unresolvedFiles": [],
+  "summary": {
+    "files": 3,
+    "hunks": 3,
+    "referenceMatches": 5,
+    "invalidReferences": 0,
+    "unexplainedHunks": 0,
+    "unresolvedFiles": 0
+  },
+  "testExecution": "not-run",
+  "mappingComplete": true
+}

@@ -1,0 +1,57 @@
+{
+  "questions": {
+    "1": {
+      "answer": "没有。delivered 路径的两个步骤均未声明测试关联；回归测试列为本路径未分配的已知测试。",
+      "evidence": [
+        "新增：交付条件：此步骤未声明测试关联。",
+        "报告展示缺测原因：此步骤未声明测试关联。",
+        "本路径未分配的已知测试：回归测试：缺失产物。未分配不等于没有测试。"
+      ],
+      "limitations": "这是作者声明和固定历史源码映射，不是完整测试清单或运行轨迹。"
+    },
+    "2": {
+      "answer": "不够。测试断言比较结果中的缺失原因以及 out/index.html 文件存在，没有断言生成报告内容含 evidenceMissing。另一个报告实现片段将 evidence.missing 赋给 defects.evidenceMissing，但这本身不能证明测试验证了报告内容，也不能证明实际页面渲染正确。页面明确说历史测试本次未执行，不能证明通过。",
+      "evidence": [
+        "assert.equal(row.delivery.status,'unverified');assert.equal(row.scores.human,null);",
+        "assert.ok(row.evidence.missing.some(reason=>reason.includes('stored human reviews')));",
+        "assert.ok(fs.existsSync(path.join(dir,'out/index.html')));",
+        "const defects={evidenceMissing:evidence.missing??[],...}",
+        "具体页面效果仍需独立浏览器验收。",
+        "这里只审阅测试源码，本实验没有执行该历史测试。"
+      ],
+      "limitations": "只根据页面展示的固定源码摘录，未执行测试，也未检查完整实现或生成报告。"
+    },
+    "3": {
+      "answer": "不能。没有声明关联只说明作者没有将测试分配给步骤，并不能推出没有相关测试。",
+      "evidence": [
+        "人为遗漏关联的合成对照；Git 映射与源码未变。",
+        "与缺产物路径相同，但作者没有给出测试关联。",
+        "本路径未分配的已知测试：回归测试：缺失产物。未分配不等于没有测试。"
+      ],
+      "limitations": "回归测试存在于展示的源码映射中，但是否覆盖该路径的全部行为或本次通过，页面不证明。"
+    }
+  },
+  "actions": [
+    "运行 ego-browser skill；复用 TaskSpace 17 的 p1 并打开给定 URL；读取完整页面快照及 viewport；跳至回归测试并读取页面可见代码文本；跳至路径区截图；向下滚动截图。",
+    "用 view_image 检查两张截图。"
+  ],
+  "viewedImages": [
+    "paths.png",
+    "other-paths.png"
+  ],
+  "startedAt": "2026-10-29T14:55:26.923Z",
+  "finishedAt": "2026-10-29T14:56:24.726052+00:00",
+  "runtime": {
+    "model": "gpt-6.1-terra",
+    "reasoning": "medium",
+    "browser": "ego-browser skill guide v2.1.0; Chromium, actual browser version not observed",
+    "viewport": {
+      "width": 1512,
+      "height": 762,
+      "devicePixelRatio": 2
+    }
+  },
+  "unresolved": [
+    "未执行历史测试；未独立核对 Git 或验收生成报告的实际页面效果。"
+  ]
+}
