@@ -1,0 +1,93 @@
+{
+  "kind": "portable-stage-summary-not-original-receipt",
+  "startedAt": "2026-10-27T00:03:30.765Z",
+  "endedAt": "2026-10-27T00:03:31.945Z",
+  "productBase": "e837dc4cb83042d2b6c596e039692e25ec62c2da",
+  "node": "v22.23.3",
+  "exitCode": 0,
+  "error": null,
+  "result": {
+    "schemaVersion": 1,
+    "ok": true,
+    "command": "finalize",
+    "status": "pass",
+    "type": "explainer",
+    "quality": "showcase",
+    "specification": {
+      "path": "<output>/candidate.archify.md",
+      "sha256": "bf783bc0fcb58084c8a2c662e6a394613cb6e28db294493c87c499f7e47b443a",
+      "bytes": 5583
+    },
+    "artifact": {
+      "path": "<output>/review.html",
+      "sha256": "97ccdee5dcbf6b467fcd725e2ac12e36c0a1efcb9d91aee476162f4fcbdccb98",
+      "bytes": 546416
+    },
+    "gates": {
+      "validate": "pass",
+      "deliver": "pass",
+      "check": "pass",
+      "browser-check": "not-run"
+    },
+    "diagnostics": [
+      {
+        "code": "explainer/writing-qualification",
+        "severity": "warning",
+        "message": "把限定条件写进 scope 或来源",
+        "subject": {
+          "input": "<output>/candidate.archify.md",
+          "line": 6,
+          "component": "answer"
+        },
+        "evidence": {
+          "reason": "把限定条件写进 scope 或来源",
+          "example": "@answer scope=\"适用于当前请求路径\"",
+          "rule": "qualification",
+          "matched": "不代表"
+        },
+        "supportedFixes": [
+          "把限定条件写进 scope 或来源，正文直接解释判断和原因。"
+        ]
+      }
+    ],
+    "diagnosticSummary": {
+      "total": 1,
+      "shown": 1,
+      "truncated": false
+    },
+    "evidence": {
+      "receipt": "<private-receipts>/finalize.json",
+      "summaryReceipt": "<private-receipts>/finalize-summary.json"
+    },
+    "update": {
+      "status": "current",
+      "installedVersion": "3.2.1-dev.1",
+      "availableVersion": "3.2.0",
+      "releaseNotes": null,
+      "checkedAt": "2026-10-26T23:50:51.017Z",
+      "source": "cache",
+      "noticeRequired": false,
+      "noticeText": null
+    },
+    "visualReview": "not-requested",
+    "durationMs": 862,
+    "browserCheck": {
+      "requested": false,
+      "ran": false
+    }
+  },
+  "files": [
+    {
+      "name": "evidence.json",
+      "sha256": "a4bc8b21072a40e6ee3a9d8a48527553b40123364162398901905d8251ab73ae"
+    },
+    {
+      "name": "candidate.archify.md",
+      "sha256": "bf783bc0fcb58084c8a2c662e6a394613cb6e28db294493c87c499f7e47b443a"
+    },
+    {
+      "name": "review.html",
+      "sha256": "97ccdee5dcbf6b467fcd725e2ac12e36c0a1efcb9d91aee476162f4fcbdccb98"
+    }
+  ]
+}
