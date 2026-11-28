@@ -55,12 +55,12 @@ export function run({ graph, facts }) {
   const files = [...new Set(edges.flatMap((e) => [e.from, e.to]))].sort();
   const all = cyclicComponents(files, edges, true);
   const allParts = partitionEdges(all, edges);
-  if (['java', 'rust'].includes(facts.repository.language)) return all.map(scc => {
+  if (['java', 'kotlin', 'rust'].includes(facts.repository.language)) return all.map(scc => {
     const internal = allParts.get(scc[0]), pathEdges = indexPathEdges(internal);
     const path = shortestCycle(scc[0], node => [...(pathEdges.get(node)?.keys() || [])].sort());
     return {
       code, dimension, confidence, severity: facts.repository.language === 'rust' ? 'info' : 'warning',
-      message: `${scc.length} ${facts.repository.language === 'rust' ? 'Rust' : 'Java'} files form a structural dependency cycle: ${path.join(' → ')} → ${path[0]}. ${facts.repository.language === 'rust' ? 'Rust mod/use declarations are compile-time source relationships, not runtime imports or partial initialization.' : 'Imports and type references do not establish class initialization order or runtime failure.'}`,
+      message: `${scc.length} ${{ rust: 'Rust', kotlin: 'Kotlin' }[facts.repository.language] || 'Java'} files form a structural dependency cycle: ${path.join(' → ')} → ${path[0]}. ${facts.repository.language === 'rust' ? 'Rust mod/use declarations are compile-time source relationships, not runtime imports or partial initialization.' : 'Imports and type references do not establish class initialization order or runtime failure.'}`,
       subject: { files: scc },
       evidence: {
         kind: 'structural',

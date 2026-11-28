@@ -62,7 +62,7 @@ export function run({ graph, facts }) {
     }
     return [...findings.values()].sort((a, b) => JSON.stringify(a.subject).localeCompare(JSON.stringify(b.subject)));
   }
-  const java = ['java', 'rust'].includes(graph.repository?.language);
+  const java = ['java', 'kotlin', 'rust'].includes(graph.repository?.language);
   const rust = graph.repository?.language === 'rust';
   const ids = graph.modules.map((m) => m.id).sort();
   const sccsOf = (edges) => cyclicComponents(ids, edges);
@@ -90,7 +90,7 @@ export function run({ graph, facts }) {
     return {
       code, dimension, severity: level, confidence,
       message: java
-        ? `${scc.length} modules form a structural ${rust ? 'Rust' : 'Java'} dependency cycle: ${path.map(id => labelOf.get(id)).join(' → ')} → ${labelOf.get(path[0])}. ${rust ? 'Source references do not establish runtime import order or partial initialization.' : 'Directory grouping does not establish file cycles or class initialization behavior.'}`
+        ? `${scc.length} modules form a structural ${rust ? 'Rust' : graph.repository?.language === 'kotlin' ? 'Kotlin' : 'Java'} dependency cycle: ${path.map(id => labelOf.get(id)).join(' → ')} → ${labelOf.get(path[0])}. ${rust ? 'Source references do not establish runtime import order or partial initialization.' : 'Directory grouping does not establish file cycles or class initialization behavior.'}`
         : eagerSurvives
         ? `${scc.length} modules depend on each other at package level: ${path.map((id) => labelOf.get(id)).join(' → ')} → ${labelOf.get(path[0])}. See coupling/import-cycle for whether any file actually cycles.`
         : `${scc.length} modules form a package-level dependency component containing deferred, conditional, or type-only edges: ${path.map((id) => labelOf.get(id)).join(' → ')} → ${labelOf.get(path[0])}. This grouping does not establish initialization behavior; it may also contain module-scope subcycles.`,

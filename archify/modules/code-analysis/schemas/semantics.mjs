@@ -42,6 +42,7 @@ const isPoint = (point) => Number.isInteger(point.line) && point.line >= 1 && Nu
 const CALL_MODELS = {
   py: { prefix: 'python-lexical', latest: 2 },
   java: { prefix: 'java-static-lexical', latest: 6 },
+  kotlin: { prefix: 'kotlin-static-lexical', latest: 1 },
   go: { prefix: 'go-source-direct', latest: 4 },
   rust: { prefix: 'rust-source-direct', latest: 15 },
   c: { prefix: 'cpp-source-direct', latest: 1 },
@@ -49,7 +50,7 @@ const CALL_MODELS = {
 };
 
 function callModelVersions(data) {
-  const versions = { py: 0, java: 0, go: 0, rust: 0, c: 0, cpp: 0 };
+  const versions = { py: 0, java: 0, kotlin: 0, go: 0, rust: 0, c: 0, cpp: 0 };
   const language = data.repository.language;
   if (!Object.hasOwn(CALL_MODELS, language)) return versions;
   const { prefix, latest } = CALL_MODELS[language];
@@ -67,6 +68,7 @@ const RESOLUTION_MODELS = new Map([
   ['python-source-declaration', ['py', 3, 'requires the Python source declaration model']],
   ['java-qualified-static-method', ['java', 2, 'requires the Java v2 source model']],
   ['java-compiler-source-method', ['java', 6, 'requires the Java v6 compiler binding model']],
+  ['kotlin-scope-function', ['kotlin', 1, 'requires the Kotlin static lexical model']],
   ['rust-inherent-source-candidate', ['rust', 2, 'requires the Rust v2 inherent source-candidate model']],
   ['rust-specialized-inherent-source-candidate', ['rust', 3, 'requires the Rust v3 concrete-specialization source-candidate model']],
   ['rust-lifetime-inherent-source-candidate', ['rust', 4, 'requires the Rust v4 lifetime-only inherent source-candidate model']],
@@ -216,11 +218,11 @@ function javaProjectMetadata(data, files, model, { add, unique }) {
   return metadata;
 }
 
-const DEFINITION_LANGUAGE = { FunctionDef: 'py', AsyncFunctionDef: 'py', FuncDecl: 'go', InterfaceMethod: 'go', RustItemFn: 'rust' };
+const DEFINITION_LANGUAGE = { FunctionDef: 'py', AsyncFunctionDef: 'py', FuncDecl: 'go', InterfaceMethod: 'go', RustItemFn: 'rust', KtNamedFunction: 'kotlin', KtSecondaryConstructor: 'kotlin', KtClassInitializer: 'kotlin', KtProperty: 'kotlin' };
 
 function functionRangeErrors(data, sourceTexts, model, add) {
   const language = data.repository.language;
-  const exactRanges = model.py || model.java || model.go || model.rust || model.c || model.cpp
+  const exactRanges = model.py || model.java || model.kotlin || model.go || model.rust || model.c || model.cpp
     || (language === 'ts' && data.repository.adapterRevision >= 23);
   data.functions?.forEach((fn, i) => {
     if ((exactRanges || fn.sourceRange) && !validSourceRange(sourceTexts.get(fn.file), fn, language)) add(`/functions/${i}/sourceRange`, 'must match exact captured definition range and digest');

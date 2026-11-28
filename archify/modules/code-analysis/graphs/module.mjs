@@ -17,8 +17,9 @@ export function buildModuleGraph(facts, config = {}) {
   // Adapters list only parsed sources in `files`; marker files such as
   // package.json and pyproject.toml arrive separately in `packageMarkers`.
   const packageDirs = options.packageBoundaries ? collectPackageDirs([...facts.files.map((f) => f.path), ...(facts.packageMarkers || [])]) : [];
-  const java = facts.repository.language === 'java' && options.packageBoundaries && config.modules?.depth === undefined
-    ? javaModules(facts.files.filter((f) => !excluded.has(f.role) && !groupMatchers.some(([, match]) => match(f.path))).map((f) => f.path), facts.packageMarkers || []) : null;
+  const packageLanguage = facts.repository.language === 'java' || facts.repository.language === 'kotlin' ? facts.repository.language : null;
+  const java = packageLanguage && options.packageBoundaries && config.modules?.depth === undefined
+    ? javaModules(facts.files.filter((f) => !excluded.has(f.role) && !groupMatchers.some(([, match]) => match(f.path))).map((f) => f.path), facts.packageMarkers || [], packageLanguage) : null;
 
   // The innermost JS/TS source root is a sub-application boundary, even without a
   // package.json in that directory. Split at its first child instead of folding
@@ -77,7 +78,7 @@ export function buildModuleGraph(facts, config = {}) {
     edge.kinds[imp.kind] = (edge.kinds[imp.kind] || 0) + 1;
     if (imp.lazy) edge.kinds.lazy = (edge.kinds.lazy || 0) + 1;
     for (const flag of ['typeOnly', 'conditional', 'implicit']) if (imp[flag]) edge.kinds[flag] = (edge.kinds[flag] || 0) + 1;
-    if (!['java', 'rust', 'c', 'cpp'].includes(facts.repository.language) && !imp.lazy && !imp.typeOnly && !imp.conditional && !(facts.repository.language === 'ts' && imp.kind === 'dynamic')) edge.kinds.eager = (edge.kinds.eager || 0) + 1;
+    if (!['java', 'kotlin', 'rust', 'c', 'cpp'].includes(facts.repository.language) && !imp.lazy && !imp.typeOnly && !imp.conditional && !(facts.repository.language === 'ts' && imp.kind === 'dynamic')) edge.kinds.eager = (edge.kinds.eager || 0) + 1;
     if (edge.evidence.length < 5) edge.evidence.push({ file: imp.from, line: imp.line, to: imp.to, ...(imp.contexts ? { contexts: imp.contexts } : {}), ...Object.fromEntries(['lazy', 'typeOnly', 'conditional', 'implicit'].filter((flag) => imp[flag]).map((flag) => [flag, true])), ...(facts.repository.language === 'ts' && imp.kind === 'dynamic' ? { deferred: true } : {}) });
     incoming.set(imp.to, (incoming.get(imp.to) || 0) + 1);
   }
@@ -104,7 +105,7 @@ export function buildModuleGraph(facts, config = {}) {
   return {
     schema_version: 1,
     repository: facts.repository,
-    grouping: { depth: options.depth, packageBoundaries: options.packageBoundaries, groups: Object.keys(options.groups).sort(), ...(java ? { java: java.strategy } : {}), ...(tsKeys.size ? { typescript: 'nested-source-roots-v2' } : {}) },
+    grouping: { depth: options.depth, packageBoundaries: options.packageBoundaries, groups: Object.keys(options.groups).sort(), ...(java ? { [packageLanguage]: java.strategy } : {}), ...(tsKeys.size ? { typescript: 'nested-source-roots-v2' } : {}) },
     excluded: { roles: [...excluded].sort(), files: excludedFiles },
     modules: moduleList,
     fileModules: Object.fromEntries([...fileModule].sort(([a], [b]) => compareText(a, b)).map(([file, key]) => [file, ids.get(key)])),
@@ -130,8 +131,10 @@ function collectPackageDirs(paths) {
 // `src/main/java/org/x/<package>`. Files outside those roots keep directory
 // depth. A tree without conventional roots splits below its shared prefix.
 const SOURCE_ROOT = /^(?:.*\/)?src\/[^/]+\/java(?=\/)/;
+const KOTLIN_SOURCE_ROOT = /^(?:.*\/)?src\/[^/]+\/kotlin(?=\/)/;
 
-function javaModules(paths, markers) {
+function javaModules(paths, markers, language = 'java') {
+  const sourceRoot = language === 'kotlin' ? KOTLIN_SOURCE_ROOT : SOURCE_ROOT;
   // No analyzed file below the root is left after explicit groups: no Java default applies.
   if (!paths.some((p) => p.includes('/'))) return null;
   const buildDirs = [...new Set(markers.filter((p) => JAVA_BUILD_MARKERS.includes(p.slice(p.lastIndexOf('/') + 1)))
@@ -145,7 +148,7 @@ function javaModules(paths, markers) {
   if (new Set([...owner.values()].filter((dir) => dir !== undefined)).size > 1) return { strategy: 'build-modules', keys: owner };
   const roots = new Map();
   for (const p of nested) {
-    const root = p.match(SOURCE_ROOT)?.[0];
+    const root = p.match(sourceRoot)?.[0];
     if (root !== undefined) roots.set(root, [...(roots.get(root) || []), p]);
   }
   const keys = new Map();

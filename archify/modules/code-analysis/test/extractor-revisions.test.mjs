@@ -15,6 +15,7 @@ import { schemaErrors } from '../extract/shared/schema.mjs';
 import { REVISION as TS_REVISION } from '../extract/ts/index.mjs';
 import { REVISION as PY_REVISION } from '../extract/py/index.mjs';
 import { REVISION as JAVA_REVISION } from '../extract/java/index.mjs';
+import { REVISION as KOTLIN_REVISION } from '../extract/kotlin/index.mjs';
 import { MODULE_ROOT } from './helpers.mjs';
 
 const FIXTURES = path.join(MODULE_ROOT, 'test', 'fixtures');
@@ -23,6 +24,7 @@ const ADAPTERS = [
   { language: 'ts', fixture: 'ts-basic', revision: TS_REVISION, source: 'extract/ts/index.mjs' },
   { language: 'py', fixture: 'py-basic', revision: PY_REVISION, source: 'extract/py/index.mjs' },
   { language: 'java', fixture: 'java-basic', revision: JAVA_REVISION, source: 'extract/java/index.mjs' },
+  { language: 'kotlin', fixture: 'kotlin-basic', revision: KOTLIN_REVISION, source: 'extract/kotlin/index.mjs' },
 ];
 const UPDATE = process.env.UPDATE_EXTRACTOR_REVISIONS === '1';
 
