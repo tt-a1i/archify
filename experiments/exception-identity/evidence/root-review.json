@@ -1,0 +1,39 @@
+{
+  "date": "2026-10-27",
+  "reviewedImplementation": "83ebab6c6bc5ab2465bc0c29ac6d06eeef1086fe",
+  "artifactSha256": "c48efb0dc764f6a98100335cae0761e0b100247af3afdf83be33188f5b0c9c32",
+  "tool": "ego-browser",
+  "observations": [
+    "Normal light overview displays all three objects and the 1 object / prints 2x sublabels. Reciprocal contains and caused-by arrows have separate readable labels.",
+    "Opened Finder, searched inner and pressed Enter: focus=inner, 2 outgoing and 1 incoming relationship.",
+    "Activated Outgoing: caused-by, outer: focus=outer, one outgoing contains and one incoming caused-by.",
+    "Pressed Escape then toggled theme; captured and inspected dark overview.",
+    "Supporting explanation cards remain below first viewport. No assistive-technology or reader-efficiency acceptance claimed."
+  ],
+  "images": [
+    {
+      "path": "evidence/root-cause-focus.png",
+      "pixels": [
+        1279,
+        784
+      ],
+      "sha256": "299e86272789ca85f13e8b09c79037ab9e6a6e23fda9094317e2e00a70ca38c4"
+    },
+    {
+      "path": "evidence/root-dark.png",
+      "pixels": [
+        1440,
+        900
+      ],
+      "sha256": "51c71f9da981bed68bdbf48ad39b1d8121c4af41b2816862fd76fa34b69583a7"
+    },
+    {
+      "path": "evidence/root-overview.png",
+      "pixels": [
+        1440,
+        900
+      ],
+      "sha256": "407f2aabb5de9f43a59918671ce48048f6085fed55988c4e8c90be7218753a26"
+    }
+  ]
+}

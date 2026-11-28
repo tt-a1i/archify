@@ -1,0 +1,7 @@
+raw/
+__pycache__/
+*.delivery.json
+*.finalize.json
+*.finalize-summary.json
+*.browser-check.json
+*.visual-check.json
