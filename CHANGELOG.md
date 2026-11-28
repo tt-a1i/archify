@@ -6,6 +6,10 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 > Development identity: `v3.3.3-dev.1`. Not a stable release.
 
+### Added
+
+- **Verdict and layout from one run (#1420).** `validate <type> <input.json> --json --with-layout` returns the passing `--json` verdict with the `--layout-json` report under `layout`. The renderer that writes the checked artifact also records the report. This works for all ten native types. Failed validations return the ordinary failure receipt. Thanks to [@HengYangDS](https://github.com/HengYangDS).
+
 ### Fixed
 
 - Code Analysis output publication recovery (#1471, #1472).
