@@ -10,7 +10,7 @@
   const byId = id => document.getElementById(id);
   const all = (selector, within = document) => [...within.querySelectorAll(selector)];
   let toastTimer;
-  function notify(text) { const toast=byId('toast');toast.textContent=text;toast.classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove('visible'),3000); }
+  function notify(text) { const toast=byId('toast');if (!toast) return;toast.textContent=text;toast.classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove('visible'),3000); }
   // Call during user activation; async also routes unavailable APIs and synchronous throws to failure handlers.
   async function copyText(text) { await navigator.clipboard.writeText(text); }
   // Measured board layout. Each panel is measured at every column width, then each column template is
@@ -24,7 +24,7 @@
     // A diagram needs enough width for its smallest label to reach the reading floor.
     const readableWidth = svg => {
       const viewWidth = svg.viewBox.baseVal?.width || svg.getBoundingClientRect().width;
-      const smallest = Math.min(...all('text',svg).filter(text=>text.textContent.trim() && !text.closest('[data-legend]')).map(text=>(parseFloat(text.getAttribute('font-size')) || parseFloat(getComputedStyle(text).fontSize)) / secondary(text)));
+      const smallest = Math.min(...all('text',svg).filter(text=>text.textContent.trim() && !text.closest('[data-legend], [data-whatif-annotations]')).map(text=>(parseFloat(text.getAttribute('font-size')) || parseFloat(getComputedStyle(text).fontSize)) / secondary(text)));
       return Number.isFinite(smallest) && smallest > 0 ? viewWidth * floor / smallest : 0;
     };
     // Beside its steps, the diagram column is exactly that wide; without room for both, it wraps above them.
@@ -35,7 +35,9 @@
       guide.style.setProperty('--guide-figure-max',Math.max(need,Math.ceil(parseFloat(getComputedStyle(preview).getPropertyValue('--native-width')) * 1.25 || 0)) + 'px');
     });
     const reset = () => { board.classList.remove('measured'); panels.forEach(panel=>{panel.style.gridColumn = '';panel.style.gridRow = '';}); };
-    if (window.innerWidth <= 760 || panels.length < 2) { reset(); return; }
+    // Interactive text and chart disclosures can grow after the first layout.
+    // Let their rows size to their content while retaining the authored column widths.
+    if (root.hasAttribute('data-explainer-whatif') || window.innerWidth <= 760 || panels.length < 2) { reset(); return; }
     const gap = parseFloat(getComputedStyle(board).columnGap) || 0;
     const column = (board.clientWidth - gap * 11) / 12;
     const px = span => span * column + (span - 1) * gap;
@@ -177,7 +179,10 @@
     all('.diagram-preview>svg').forEach(svg=>{
       if (svg.dataset.cropped) return;
       fitLaneFrames(svg);
-      let box; try { box = svg.getBBox(); } catch { return; }
+      let box;
+      svg.classList.add('measure-native-preview');
+      try { box = svg.getBBox(); } catch { return; }
+      finally { svg.classList.remove('measure-native-preview'); }
       if (!box.width || !box.height) return;
       const pad = 6;
       svg.setAttribute('viewBox',[box.x - pad,box.y - pad,box.width + pad * 2,box.height + pad * 2].map(n=>Math.round(n)).join(' '));
@@ -202,7 +207,7 @@
     all('.diagram-preview>svg').forEach(svg=>{
       // Measure the current available width, rather than retaining a wider viewport's floor.
       svg.style.minWidth = '0px';
-      const sizes = all('text',svg).filter(text=>text.textContent.trim() && text.getBoundingClientRect().width > 0).map(text=>{const matrix = text.getScreenCTM();return matrix ? parseFloat(getComputedStyle(text).fontSize) / secondary(text) * (()=>{const trace=matrix.a**2+matrix.b**2+matrix.c**2+matrix.d**2;const determinant=matrix.a*matrix.d-matrix.b*matrix.c;return Math.sqrt(Math.max(0,(trace-Math.sqrt(Math.max(0,trace**2-4*determinant**2)))/2));})() : Infinity;});
+      const sizes = all('text',svg).filter(text=>text.textContent.trim() && !text.closest('[data-whatif-annotations]') && text.getBoundingClientRect().width > 0).map(text=>{const matrix = text.getScreenCTM();return matrix ? parseFloat(getComputedStyle(text).fontSize) / secondary(text) * (()=>{const trace=matrix.a**2+matrix.b**2+matrix.c**2+matrix.d**2;const determinant=matrix.a*matrix.d-matrix.b*matrix.c;return Math.sqrt(Math.max(0,(trace-Math.sqrt(Math.max(0,trace**2-4*determinant**2)))/2));})() : Infinity;});
       const smallest = Math.min(...sizes);
       const preview = svg.parentElement;
       const needed = svg.getBoundingClientRect().width * minimumText / smallest;
@@ -230,6 +235,8 @@
     });
     return changed;
   }
+  setupWhatIf();
+
   const preference = matchMedia('(prefers-color-scheme: dark)');
   let theme = 'auto';
   function applyTheme() {
@@ -244,7 +251,10 @@
   // Toolbar menus, not native selects, so they match the toolbar: arrow keys move, Escape or Tab
   // closes, and a click elsewhere closes.
   function toolMenu(container, pick, current = () => null) {
-    const toggle = container.querySelector('[aria-haspopup]'), panel = container.querySelector('[role=menu]'), items = all('[role^=menuitem]',panel);
+    const toggle = container?.querySelector('[aria-haspopup]'), panel = container?.querySelector('[role=menu]');
+    if (!toggle || !panel) return;
+    const items = all('[role^=menuitem]',panel);
+    if (!items.length) return;
     const set = open => { panel.hidden = !open; toggle.setAttribute('aria-expanded',String(open)); if (open) (current() || items[0]).focus(); };
     toggle.addEventListener('click',()=>set(panel.hidden));
     items.forEach(item=>item.addEventListener('click',()=>{ set(false); toggle.focus(); pick(item); }));
@@ -257,13 +267,15 @@
   }
   // The author picks a default style; a reader's own choice is kept for every explainer page.
   const styleToggle = document.querySelector('[data-style-toggle]'), styleMenu = document.querySelector('.style-options');
-  const styleItems = all('[data-style-choice]',styleMenu || document);
+  const styleItems = styleMenu ? all('[data-style-choice]',styleMenu) : [];
   const setStyle = (style, remember) => {
     if (!styleItems.some(item=>item.dataset.styleChoice === style)) return;
     root.dataset.style = style;
     styleItems.forEach(item=>item.setAttribute('aria-checked',String(item.dataset.styleChoice === style)));
-    styleToggle.querySelector('[data-style-label]').textContent = words.styles[style];
-    styleToggle.querySelector('.style-swatch').dataset.swatch = style;
+    const label = styleToggle?.querySelector('[data-style-label]');
+    const swatch = styleToggle?.querySelector('.style-swatch');
+    if (label) label.textContent = words.styles[style];
+    if (swatch) swatch.dataset.swatch = style;
     if (remember) { try { localStorage.setItem('archify-explainer-style',style); } catch {} requestAnimationFrame(()=>{ layoutBoard(); ensureDiagramReadability(); }); }
   };
   try { const saved = localStorage.getItem('archify-explainer-style'); if (saved) setStyle(saved,false); } catch {}
@@ -298,7 +310,7 @@
       copyBoard.style.flexDirection = 'column';
       all('.board-spacer',copyBoard).forEach(spacer=>spacer.remove());
     }
-    clone.querySelectorAll('script,dialog,#toast,.skip-link,.tools,.ask-button,.ask-floating,.walk-bar,.walk-start,.interactive,.diagram-fit-status,.source-card,[data-archify-update-notice],[data-archify-update-notice-style]').forEach(element=>element.remove());
+    clone.querySelectorAll('script,dialog,#toast,.skip-link,.tools,.ask-button,.ask-floating,.walk-bar,.walk-start,.interactive,.diagram-fit-status,.source-card,#explainer-whatif-status,[data-archify-update-notice],[data-archify-update-notice-style]').forEach(element=>element.remove());
     clone.querySelectorAll('.reader-highlight').forEach(element=>element.classList.remove('reader-highlight'));
     clone.querySelectorAll('.focusing').forEach(element=>element.classList.remove('focusing'));
     // An exported image has no scroll interaction; retain the complete overview.
@@ -393,48 +405,19 @@
     viewerOpener = opener;
     byId('diagram-dialog-title').textContent = byId(id).querySelector('.diagram-title').textContent;
     viewerDialog.showModal(); document.body.classList.add('dialog-open');
-    if(viewer?.id === id) { viewer.hash = hash; viewer.nodes = requestedNodes; viewer.edges = requestedEdges; sendViewer(); return; }
+    if (viewer?.id === id && !root.hasAttribute('data-explainer-whatif')) {
+      viewer.hash = hash;
+      viewer.nodes = requestedNodes;
+      viewer.edges = requestedEdges;
+      sendViewer();
+      return;
+    }
     viewer?.frame.remove();
     const token = Array.from(crypto.getRandomValues(new Uint32Array(4))).join('-');
     viewerDialog.dataset.nativeReady = 'false'; delete viewerDialog.dataset.nativeFocus;
     const frame = document.createElement('iframe'); frame.addEventListener('load',()=>{viewerDialog.dataset.nativeLoaded = id;}); frame.title = byId('diagram-dialog-title').textContent;
     frame.setAttribute('sandbox','allow-scripts allow-downloads allow-modals');
-    const script = `<script>(()=>{
-      // The page around this Viewer names the diagram, so the preset's standalone badges stay off.
-      document.documentElement.dataset.hosted='explainer';
-      const token=${JSON.stringify(token)};
-      let pending=null;
-      const settle=data=>requestAnimationFrame(()=>{
-        if(pending!==data)return;
-        if(Array.isArray(data.edges)&&data.edges.length&&Array.isArray(data.nodes)){
-          if(window.Archify?.focus?.setMany)window.Archify.focus.setMany(data.nodes,{toggle:false,mode:'selection',updateUrl:false});
-          document.querySelectorAll('[data-edge-id]').forEach(edge=>{if(data.edges.includes(edge.dataset.edgeId))edge.setAttribute('data-focus-match','');else edge.removeAttribute('data-focus-match');});
-        }
-        requestAnimationFrame(()=>requestAnimationFrame(()=>{
-          if(pending!==data)return;
-          pending=null;
-          const active=document.querySelector('svg[data-focus-active]');
-          const selected=Array.from(document.querySelectorAll('[data-focus-selected]')).map(node=>node.dataset.nodeId);
-          const matched=Array.from(document.querySelectorAll('[data-edge-id][data-focus-match]')).map(edge=>edge.dataset.edgeId);
-          parent.postMessage({kind:'archify-explainer-focus-result',token,nodes:[...new Set(selected)],edges:[...new Set(matched)],active:active?.dataset.focusActive||''},'*');
-        }));
-      });
-      // The native hash listeners restore focus before the explicit host selection.
-      addEventListener('hashchange',()=>{if(pending&&location.hash.slice(1)===pending.hash)settle(pending);});
-      addEventListener('message',event=>{
-        const data=event.data;
-        if(event.source!==parent||data?.kind!=='archify-explainer-host'||data.token!==token)return;
-        if(['light','dark'].includes(data.theme))document.documentElement.dataset.theme=data.theme;
-        if(['classic','editorial'].includes(data.preset))window.Archify?.preset?.apply?.(data.preset);
-        if(typeof data.hash!=='string'||!/^(?:|focus=[^&]+|route=[^&]+~[^&]+)$/.test(data.hash))return;
-        pending=data;
-        if(location.hash.slice(1)===data.hash)dispatchEvent(new HashChangeEvent('hashchange'));
-        else location.hash=data.hash;
-      });
-      addEventListener('keydown',event=>{if(event.key==='Escape')parent.postMessage({kind:'archify-explainer-escape',token},'*');},true);
-      const ready=()=>requestAnimationFrame(()=>requestAnimationFrame(()=>parent.postMessage({kind:'archify-explainer-ready',token},'*')));
-      if(document.readyState==='complete')ready();else addEventListener('load',ready,{once:true});
-    })();<\/script>`;
+    const script = `<meta name="archify-explainer-frame-token" content="${token}"><script>${explainerViewerBridge}<\/script>`;
     viewer = {id,frame,token,hash,nodes:requestedNodes,edges:requestedEdges,ready:false};
     viewerDialog.querySelector('.dialog-loading').hidden = false;
     viewerDialog.append(frame);
@@ -451,8 +434,8 @@
     return diagram.inflating ||= new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
   }
   function closeViewer() { if(viewerDialog.open) viewerDialog.close(); }
-  document.querySelector('[data-close-diagram]').addEventListener('click',closeViewer);
-  viewerDialog.addEventListener('close',()=>{ document.body.classList.remove('dialog-open'); viewerOpener?.focus({preventScroll:true}); });
+  document.querySelector('[data-close-diagram]')?.addEventListener('click',closeViewer);
+  viewerDialog?.addEventListener('close',()=>{ document.body.classList.remove('dialog-open'); viewerOpener?.focus({preventScroll:true}); });
   window.addEventListener('message',event=>{ if(!viewer || event.source !== viewer.frame.contentWindow || event.data?.token !== viewer.token) return; if(event.data.kind === 'archify-explainer-ready') {viewer.ready = true; viewerDialog.dataset.nativeReady = 'true'; viewerDialog.querySelector('.dialog-loading').hidden = true; sendViewer();} else if(event.data.kind === 'archify-explainer-focus-result') {viewerDialog.dataset.nativeFocus = JSON.stringify({nodes:event.data.nodes,edges:event.data.edges,active:event.data.active});} else if(event.data.kind === 'archify-explainer-escape') closeViewer(); });
   all('[data-open-diagram]').forEach(button=>button.addEventListener('click',()=>openViewer(button.dataset.openDiagram,'',button)));
   // A node clicked in the preview opens the interactive view focused on it, with its links.
@@ -761,11 +744,131 @@
     let saved = []; try { saved = JSON.parse(localStorage.getItem(key) || '[]'); } catch {}
     boxes.forEach((box,index)=>{ box.checked = saved[index] === 1; box.addEventListener('change',()=>{ try { localStorage.setItem(key,JSON.stringify(boxes.map(b=>b.checked ? 1 : 0))); } catch {} }); });
   });
+  function setupWhatIfSource() {
+    const opener = document.querySelector('[data-open-source]');
+    const source = byId('explainer-source');
+    if (!opener || !(source instanceof HTMLDialogElement)) return;
+    const text = source.querySelector('pre');
+    const format = source.querySelector('[data-source-format]');
+    const coverage = source.querySelector('[data-source-grid]');
+    const close = source.querySelector('[data-close-source]');
+    if (!text || !format || !coverage || !close) return;
+    opener.addEventListener('click', () => {
+      text.textContent = prepared.sourceText;
+      format.textContent = prepared.format === 'json' ? 'JSON' : 'Markdown';
+      const grid = prepared.grid;
+      if (grid) coverage.textContent = say(
+        `Checked ${grid.statesChecked} of ${grid.statesPossible} states across ${grid.scenarios} scenarios.`,
+        `已检查 ${grid.scenarios} 个场景中的 ${grid.statesChecked} 种状态，共 ${grid.statesPossible} 种。`
+      );
+      source.showModal();
+    });
+    close.addEventListener('click', () => source.close());
+    source.addEventListener('close', () => opener.focus({ preventScroll:true }));
+  }
+
+  function setupWhatIf() {
+    if (!root.hasAttribute('data-explainer-whatif')) return;
+    const model = compileWhatIf(prepared.document);
+    let current = evaluateWhatIf(model, model.initial);
+    const locale = root.lang;
+    const controls = all('[data-whatif-input]');
+    const cases = all('[data-whatif-case]');
+    const inputs = all('[data-whatif-current]');
+    const badges = all('[data-whatif-badge]');
+    const paths = all('[data-whatif-cases]');
+    const labels = all('[data-whatif-case-label]');
+    const previews = all('[data-whatif-diagram]');
+    const slots = all('[data-whatif-slot]').map(element => {
+      const slot = resolveSlot(model, { kind:element.dataset.whatifSlot, key:element.dataset.whatifKey });
+      model.slots.push(slot);
+      return { element, slot };
+    });
+    const metricViews = [...model.metrics].map(([id]) => ({ id,
+      value:byId(id).querySelector('[data-whatif-metric]'), verdict:byId(id).querySelector('[data-whatif-status]') }));
+    const chartViews = [...model.charts].map(([id, chart]) => {
+      const element = byId(id);
+      const by = (selector,key) => new Map(all(selector,element).map(node=>[node.dataset[key],node]));
+      return { id, chart, bars:by('[data-whatif-bar]','whatifBar'),
+        lines:by('[data-whatif-line]','whatifLine'), cells:by('[data-whatif-point]','whatifPoint') };
+    });
+    const status = byId('explainer-whatif-status');
+    function showControls(state) {
+      for (const control of controls) {
+        const i = Number(control.dataset.whatifInput), input = model.inputs[i], value = state.tuple[i];
+        if (input.kind === 'toggle') control.checked = value;
+        else if (control.value !== String(value)) control.value = value;
+        if (input.kind === 'range') control.setAttribute('aria-valuetext',displayInput(input,value,locale));
+      }
+      for (const button of cases) button.setAttribute('aria-pressed',button.dataset.whatifCase === state.key);
+    }
+    function update(next, cause) {
+      let proposed, texts, charts;
+      try {
+        proposed = evaluateWhatIf(model, next);
+        texts = slots.map(({slot}) => displaySlot(model,proposed,slot,locale));
+        charts = chartViews.map(({id,chart}) => projectChart(chart.data,chart.labels,proposed.charts.get(id)));
+      } catch (error) {
+        showControls(current);
+        const field = error.path?.split('/').slice(1).reduce((value,key)=>value?.[key],prepared.document);
+        const detail = typeof field === 'string' ? ` (${field})` : '';
+        status.classList.add('whatif-error');
+        status.textContent = `${cause} · ${error.message}${detail}`;
+        return;
+      }
+      current = proposed;
+      showControls(proposed);
+      labels.forEach(label=>label.textContent = proposed.label);
+      inputs.forEach(element=>{
+        const index = Number(element.dataset.whatifCurrent);
+        element.textContent = displayInput(model.inputs[index],proposed.tuple[index],locale);
+      });
+      slots.forEach(({element},i)=>element.textContent = texts[i]);
+      paths.forEach(element=>element.dataset.whatifActive = String(element.dataset.whatifCases.split(' ').includes(proposed.key)));
+      previews.forEach(preview=>preview.setAttribute('aria-label',preview.dataset.whatifDiagram + ' — ' + proposed.label));
+      badges.forEach(badge=>badge.textContent = badge.dataset.whatifPrefix + proposed.metrics.get(badge.dataset.whatifBadge).text);
+      for (const {id,value,verdict} of metricViews) {
+        const result = proposed.metrics.get(id);
+        value.textContent = result.text;
+        if (verdict) {
+          verdict.dataset.whatifStatus = result.status.level;
+          verdict.textContent = result.status.label;
+        }
+      }
+      chartViews.forEach(({bars,lines,cells},i)=>{
+        const plot = charts[i];
+        plot.series.forEach((item,j)=>{
+          if (item.kind === 'line') lines.get(String(j)).setAttribute('d',item.d);
+          else item.bars.forEach((bar,k)=>{
+            const mark = bars.get(j+'-'+k);
+            for (const [name,value] of Object.entries(bar)) mark.setAttribute(name,value);
+          });
+        });
+        plot.rows.forEach((row,j)=>row.slice(1).forEach((value,k)=>cells.get(j+'-'+k).textContent = value));
+      });
+      status.classList.remove('whatif-error');
+      status.textContent = cause + ' · ' + say('Results updated','结果已更新');
+    }
+    for (const control of controls) {
+      const i = Number(control.dataset.whatifInput), input = model.inputs[i];
+      control.addEventListener(input.kind === 'range' ? 'input' : 'change', () => {
+        const value = input.kind === 'range' ? control.valueAsNumber : input.kind === 'toggle' ? control.checked : control.value;
+        update({ key:current.key, tuple:model.overlay(current.tuple,[[i,value]]) },input.label);
+      });
+    }
+    for (const button of cases) button.addEventListener('click', () => {
+      const key = button.dataset.whatifCase;
+      update({key,tuple:model.overlay(current.tuple,model.caseSets.get(key))},button.textContent);
+    });
+    for (const button of all('[data-whatif-preset]')) button.addEventListener('click', () =>
+      update({key:current.key,tuple:model.overlay(current.tuple,model.presetSets.get(button.dataset.whatifPreset))},button.textContent));
+  }
   // Native dialogs supply Escape, focus trapping and the accessible modal semantics.
   const printDetails = new Map();
   all('.diagram-semantics').forEach(details=>details.open = false);
   window.addEventListener('beforeprint',()=>all('.diagram-semantics').forEach(details=>{printDetails.set(details,details.open);details.open = true;}));
   window.addEventListener('afterprint',()=>{printDetails.forEach((open,details)=>details.open = open);printDetails.clear();});
+  setupWhatIfSource();
   root.classList.add('js');
   applyTheme();
   cropDiagramPreviews();

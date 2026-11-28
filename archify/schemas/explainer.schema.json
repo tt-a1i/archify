@@ -83,6 +83,9 @@
         },
         "scope": {
           "$ref": "#/$defs/text"
+        },
+        "live": {
+          "$ref": "#/$defs/id"
         }
       }
     },
@@ -169,6 +172,9 @@
         },
         "text": {
           "$ref": "#/$defs/text"
+        },
+        "live": {
+          "$ref": "#/$defs/id"
         }
       }
     },
@@ -383,8 +389,75 @@
         },
         "typical": {
           "type": "boolean"
+        },
+        "calc": {
+          "$ref": "#/$defs/id"
+        },
+        "bind": {
+          "$ref": "#/$defs/expression"
+        },
+        "digits": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 6
+        },
+        "thresholds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/threshold"
+          },
+          "minItems": 0,
+          "maxItems": 3
         }
-      }
+      },
+      "dependencies": {
+        "calc": [
+          "bind"
+        ],
+        "bind": [
+          "calc"
+        ],
+        "digits": [
+          "bind"
+        ],
+        "thresholds": [
+          "bind"
+        ]
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "bind"
+            ],
+            "properties": {
+              "bind": {}
+            }
+          },
+          "then": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "value"
+                  ],
+                  "properties": {
+                    "value": {}
+                  }
+                },
+                {
+                  "required": [
+                    "limit"
+                  ],
+                  "properties": {
+                    "limit": {}
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
     },
     "steps": {
       "type": "object",
@@ -538,6 +611,89 @@
           },
           "minItems": 1,
           "maxItems": 500
+        },
+        "scenarios": {
+          "$ref": "#/$defs/id"
+        },
+        "active": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "case",
+              "nodes",
+              "edges"
+            ],
+            "properties": {
+              "case": {
+                "$ref": "#/$defs/modelKey"
+              },
+              "nodes": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z][A-Za-z0-9_.:-]*$",
+                  "maxLength": 100
+                },
+                "minItems": 0,
+                "maxItems": 500
+              },
+              "edges": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/edgeSelector"
+                },
+                "minItems": 0,
+                "maxItems": 500
+              }
+            }
+          },
+          "minItems": 1,
+          "maxItems": 8
+        },
+        "badges": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "node",
+                  "metric"
+                ],
+                "properties": {
+                  "node": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z][A-Za-z0-9_.:-]*$",
+                    "maxLength": 100
+                  },
+                  "metric": {
+                    "$ref": "#/$defs/id"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "edge",
+                  "metric"
+                ],
+                "properties": {
+                  "edge": {
+                    "$ref": "#/$defs/edgeSelector"
+                  },
+                  "metric": {
+                    "$ref": "#/$defs/id"
+                  }
+                }
+              }
+            ]
+          },
+          "minItems": 0,
+          "maxItems": 64
         }
       },
       "oneOf": [
@@ -557,7 +713,18 @@
             "source"
           ]
         }
-      ]
+      ],
+      "dependencies": {
+        "scenarios": [
+          "active"
+        ],
+        "active": [
+          "scenarios"
+        ],
+        "badges": [
+          "scenarios"
+        ]
+      }
     },
     "code": {
       "type": "object",
@@ -678,7 +845,9 @@
             "snippet",
             "chart",
             "diff",
-            "image"
+            "image",
+            "scenarios",
+            "calc"
           ]
         }
       },
@@ -838,6 +1007,36 @@
           "then": {
             "$ref": "#/$defs/image"
           }
+        },
+        {
+          "if": {
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "const": "scenarios"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/$defs/scenarios"
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "const": "calc"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/$defs/calc"
+          }
         }
       ]
     },
@@ -939,8 +1138,544 @@
               "$ref": "#/$defs/short"
             }
           }
+        },
+        "computed": {
+          "$ref": "#/$defs/computedChart"
+        }
+      },
+      "oneOf": [
+        {
+          "required": [
+            "text"
+          ],
+          "properties": {
+            "text": {}
+          }
+        },
+        {
+          "required": [
+            "data"
+          ],
+          "properties": {
+            "data": {}
+          }
+        },
+        {
+          "required": [
+            "computed"
+          ],
+          "properties": {
+            "computed": {}
+          }
+        }
+      ]
+    },
+    "modelKey": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_]{0,31}$"
+    },
+    "expression": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "assignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "input",
+        "value"
+      ],
+      "properties": {
+        "input": {
+          "$ref": "#/$defs/modelKey"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string"
+            }
+          ]
         }
       }
+    },
+    "scenarios": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "default",
+        "cases"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "type": {
+          "const": "scenarios"
+        },
+        "default": {
+          "$ref": "#/$defs/modelKey"
+        },
+        "cases": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "key",
+              "label"
+            ],
+            "properties": {
+              "key": {
+                "$ref": "#/$defs/modelKey"
+              },
+              "label": {
+                "$ref": "#/$defs/short"
+              },
+              "set": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/assignment"
+                },
+                "minItems": 1,
+                "maxItems": 6
+              }
+            }
+          },
+          "minItems": 1,
+          "maxItems": 8
+        }
+      }
+    },
+    "calculatorInput": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "key",
+            "label",
+            "min",
+            "max",
+            "step",
+            "default"
+          ],
+          "properties": {
+            "kind": {
+              "const": "range"
+            },
+            "key": {
+              "$ref": "#/$defs/modelKey"
+            },
+            "label": {
+              "$ref": "#/$defs/short"
+            },
+            "min": {
+              "type": "number"
+            },
+            "max": {
+              "type": "number"
+            },
+            "step": {
+              "type": "number"
+            },
+            "default": {
+              "type": "number"
+            },
+            "unit": {
+              "$ref": "#/$defs/short"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "key",
+            "label",
+            "default"
+          ],
+          "properties": {
+            "kind": {
+              "const": "toggle"
+            },
+            "key": {
+              "$ref": "#/$defs/modelKey"
+            },
+            "label": {
+              "$ref": "#/$defs/short"
+            },
+            "default": {
+              "type": "boolean"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "key",
+            "label",
+            "default",
+            "options"
+          ],
+          "properties": {
+            "kind": {
+              "const": "choice"
+            },
+            "key": {
+              "$ref": "#/$defs/modelKey"
+            },
+            "label": {
+              "$ref": "#/$defs/short"
+            },
+            "default": {
+              "$ref": "#/$defs/modelKey"
+            },
+            "options": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "key",
+                  "label"
+                ],
+                "properties": {
+                  "key": {
+                    "$ref": "#/$defs/modelKey"
+                  },
+                  "label": {
+                    "$ref": "#/$defs/short"
+                  }
+                }
+              },
+              "minItems": 2,
+              "maxItems": 8
+            }
+          }
+        }
+      ]
+    },
+    "calc": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "inputs",
+        "derived",
+        "presets"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "type": {
+          "const": "calc"
+        },
+        "inputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/calculatorInput"
+          },
+          "minItems": 0,
+          "maxItems": 6
+        },
+        "derived": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "key",
+              "expr"
+            ],
+            "properties": {
+              "key": {
+                "$ref": "#/$defs/modelKey"
+              },
+              "expr": {
+                "$ref": "#/$defs/expression"
+              }
+            }
+          },
+          "minItems": 0,
+          "maxItems": 64
+        },
+        "presets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "key",
+              "label",
+              "set"
+            ],
+            "properties": {
+              "key": {
+                "$ref": "#/$defs/modelKey"
+              },
+              "label": {
+                "$ref": "#/$defs/short"
+              },
+              "set": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/assignment"
+                },
+                "minItems": 1,
+                "maxItems": 6
+              }
+            }
+          },
+          "minItems": 0,
+          "maxItems": 8
+        }
+      }
+    },
+    "threshold": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "level",
+            "op",
+            "expr",
+            "label"
+          ],
+          "properties": {
+            "level": {
+              "enum": [
+                "good",
+                "caution",
+                "bad"
+              ]
+            },
+            "op": {
+              "enum": [
+                "lt",
+                "le"
+              ]
+            },
+            "expr": {
+              "$ref": "#/$defs/expression"
+            },
+            "label": {
+              "$ref": "#/$defs/short"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "level",
+            "op",
+            "label"
+          ],
+          "properties": {
+            "level": {
+              "enum": [
+                "good",
+                "caution",
+                "bad"
+              ]
+            },
+            "op": {
+              "const": "else"
+            },
+            "label": {
+              "$ref": "#/$defs/short"
+            }
+          }
+        }
+      ]
+    },
+    "edgeSelector": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^[A-Za-z][A-Za-z0-9_.:-]*$",
+              "maxLength": 100
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "from",
+            "to"
+          ],
+          "properties": {
+            "from": {
+              "type": "string",
+              "pattern": "^[A-Za-z][A-Za-z0-9_.:-]*$",
+              "maxLength": 100
+            },
+            "to": {
+              "type": "string",
+              "pattern": "^[A-Za-z][A-Za-z0-9_.:-]*$",
+              "maxLength": 100
+            }
+          }
+        }
+      ]
+    },
+    "computedChart": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "calc",
+        "kind",
+        "ymin",
+        "ymax",
+        "series"
+      ],
+      "properties": {
+        "calc": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "enum": [
+            "bar",
+            "line"
+          ]
+        },
+        "ymin": {
+          "type": "number"
+        },
+        "ymax": {
+          "type": "number"
+        },
+        "unit": {
+          "$ref": "#/$defs/short"
+        },
+        "labels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/short"
+          },
+          "minItems": 1,
+          "maxItems": 12
+        },
+        "domain": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "from",
+            "to",
+            "step"
+          ],
+          "properties": {
+            "from": {
+              "type": "number"
+            },
+            "to": {
+              "type": "number"
+            },
+            "step": {
+              "type": "number"
+            }
+          }
+        },
+        "series": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind",
+                  "label",
+                  "values"
+                ],
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "bar",
+                      "line"
+                    ]
+                  },
+                  "label": {
+                    "$ref": "#/$defs/short"
+                  },
+                  "values": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/expression"
+                    },
+                    "minItems": 1,
+                    "maxItems": 12
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind",
+                  "label",
+                  "expr"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "line"
+                  },
+                  "label": {
+                    "$ref": "#/$defs/short"
+                  },
+                  "expr": {
+                    "$ref": "#/$defs/expression"
+                  }
+                }
+              }
+            ]
+          },
+          "minItems": 1,
+          "maxItems": 4
+        }
+      },
+      "oneOf": [
+        {
+          "required": [
+            "labels"
+          ],
+          "properties": {
+            "labels": {}
+          }
+        },
+        {
+          "required": [
+            "domain"
+          ],
+          "properties": {
+            "domain": {}
+          }
+        }
+      ]
     }
   }
 }

@@ -97,3 +97,149 @@ test('answer accepts four reasons and local qualifications remain valid in stric
 
  d.answer.reasons=Array(5).fill('Reason');check(d,'schema-maxItems');
 });
+
+test('live templates lint prose while typed fields and legacy braces retain their own grammar',()=>{
+  const input=`# Live capacity {#diagram-page}
+
+**{{metric:value}}** remains inside the range. A literal \`{{value:unknown}}\` stays in code.
+
+@answer live=model
+
+## How much? {#explanation}
+
+Use {{value:unknown}} here as ordinary text.
+
+@calc id=model
+| range x | Count | 0 | 4 | 1 | 0 |
+| let n | if(x > 0, 4 * x, 0) |
+
+@metric id=value label=Load calc=model bind=n
+| {good} | <= 8 | Safe |
+| {caution} | < 12 | Busy |
+| {bad} | else | Full |
+`;
+  const parsed=parseExplainer(input);
+  const valid=validateExplainer(parsed.document,{sourceMap:parsed.sourceMap,writingMode:'strict'});
+  assert.equal(valid.ok,true,JSON.stringify(valid.diagnostics));
+  assert.equal(valid.grid.statesChecked,5);
+  const invalid=parseExplainer(input.replace('4 * x','4 / (x-4)'));
+  const diagnostics=validateExplainer(invalid.document,{sourceMap:invalid.sourceMap,inputPath:'model.md'}).diagnostics;
+  const failure=diagnostics.find(d=>d.code==='explainer/calc-div-zero');
+  assert.equal(failure.subject.path,'/panels/0/blocks/1/derived/0/expr');
+  assert.equal(failure.subject.panelId,'explanation');
+  assert.equal(failure.subject.input,'model.md');
+  assert.equal(input.split('\n')[failure.subject.line-1][failure.subject.column-1],'*');
+  assert.deepEqual(failure.evidence.inputs,{x:4});
+  for (const [replace,code] of [
+    ['{{metric:missing}}','calc-name'],['{{anything}}','calc-syntax'],
+  ]) {
+    const invalid=parseExplainer(input.replace('{{metric:value}}',replace));
+    const diagnostic=validateExplainer(invalid.document,{sourceMap:invalid.sourceMap}).diagnostics.find(d=>d.code===`explainer/${code}`);
+    assert.equal(diagnostic.subject.path,'/answer/summary');
+    assert.equal(diagnostic.subject.expressionOffset,2);
+  }
+  const lower=parseExplainer(input.replace('< 12','< 7'));
+  assert.ok(validateExplainer(lower.document).diagnostics.some(d=>d.code==='explainer/calc-threshold'));
+});
+
+test('interactive records reject unknown fields and conflicting metric and chart shapes',()=>{
+  const d=base();
+  blocks(d).push({type:'calc',id:'model',inputs:[{kind:'toggle',key:'enabled',label:'Enable',default:false,script:'extra'}],derived:[],presets:[]});
+  check(d,'schema-additionalProperties');
+  delete blocks(d)[1].inputs[0].script;
+  blocks(d).push({type:'metric',id:'live-value',label:'Value',calc:'model',bind:'1',value:1});
+  check(d,'schema-not');
+  blocks(d).pop();
+  blocks(d).push({type:'chart',id:'plot',text:'legacy',computed:{calc:'model',kind:'bar',ymin:0,ymax:10,labels:['A'],series:[{kind:'bar',label:'Value',values:['1']}]}})
+  check(d,'schema-oneOf');
+});
+
+test('scenario-only pages validate and directed hops cannot choose parallel edges implicitly',async()=>{
+  const {scenarioDiagramTargets}=await import('../archify/explainer/diagrams.mjs');
+  const d=base();
+  blocks(d).push({type:'scenarios',id:'paths',default:'one',cases:[{key:'one',label:'First'},{key:'two',label:'Second'}]});
+  const diagram={type:'diagram',id:'flow',diagramType:'architecture',source:'flow.json',scenarios:'paths',active:[
+    {case:'one',nodes:[],edges:[{from:'a',to:'b'}]},
+    {case:'two',nodes:['b'],edges:[]},
+  ]};
+  blocks(d).push(diagram);
+  assert.deepEqual(validateExplainer(d).grid,{version:1,mode:'full',scenarios:2,statesChecked:2,statesPossible:'2'});
+  const native={semantic:{nodes:[{id:'a'},{id:'b'}],edges:[
+    {id:'first',from:'a',to:'b'},{id:'second',from:'a',to:'b'},{id:'back',from:'b',to:'a'},
+  ]}};
+  const context={pointer:'/panels/0/blocks/2',panelId:'reasoning',sourcePath:'diagram.md'};
+  assert.throws(()=>scenarioDiagramTargets(diagram,native,context),error=>{
+    const diagnostic=error.archifyDiagnostics[0];
+    return diagnostic.code==='explainer/scenario-target' && diagnostic.subject.path.endsWith('/active/0/edges/0') &&
+      diagnostic.message.includes('first, second') && !diagnostic.message.includes('back');
+  });
+  diagram.active[0].edges=[{id:'second'}];
+  assert.deepEqual(scenarioDiagramTargets(diagram,native,context).active[0],{key:'one',nodes:['a','b'],edges:['second']});
+});
+
+
+test('expression diagnostics locate an operator after a JSON string escape',()=>{
+  const d=base();
+  blocks(d).push({type:'calc',id:'model',inputs:[],derived:[{key:'broken',expr:'1 / 0'}],presets:[]});
+  const sourceText=JSON.stringify(d,null,2).replace('"1 / 0"','"\\u0031 / 0"');
+  const parsed=parseExplainer(sourceText);
+  const issue=validateExplainer(parsed.document,{sourceMap:parsed.sourceMap,sourceText}).diagnostics.find(d=>d.code==='explainer/calc-div-zero');
+  assert.equal(issue.subject.expressionOffset,2);
+  assert.equal(sourceText.split('\n')[issue.subject.line-1][issue.subject.column-1],'/');
+});
+
+test('multiline live prose diagnostics point to the authored slot after indentation and pipe escapes',()=>{
+  const sourceText=[
+    '# Live values {#readout}', '', 'Read the calculated value.', '', '## Model {#controls}', '',
+    '@calc id=model', '| let value | 2 |', '', '@prose id=reading live=model',
+    '| Read {{value:value}}. |', '    | Later \\| text before {{value:missing}}. |',
+  ].join('\r\n');
+  const parsed=parseExplainer(sourceText);
+  const rows=parsed.sourceMap['/panels/0/blocks/1/text'].rows;
+  const authored=sourceText.split('\r\n')[11];
+  assert.equal(rows[1].start,sourceText.indexOf('Later'));
+  const issue=validateExplainer(parsed.document,{sourceMap:parsed.sourceMap,sourceText}).diagnostics.find(d=>d.code==='explainer/calc-name');
+  assert.equal(issue.subject.line,12);
+  assert.equal(issue.subject.column,authored.indexOf('{{')+1);
+});
+
+test('labels displayed literally reject inline markup',()=>{
+  const sourceText=`# Live values {#readout}
+
+Read the calculated value.
+
+## Model {#controls}
+
+@scenarios id=mode default=warm
+| case warm | **Warm** cache |
+
+@calc id=model
+| toggle enabled | *Enable* cache | false |
+| preset on | \`Turn on\` | enabled=true |
+`;
+  const parsed=parseExplainer(sourceText);
+  const diagnostics=validateExplainer(parsed.document,{sourceMap:parsed.sourceMap,sourceText}).diagnostics;
+  assert.deepEqual(diagnostics.filter(d=>d.code==='explainer/label-markup').map(d=>d.subject.path),[
+    '/panels/0/blocks/0/cases/0/label','/panels/0/blocks/1/inputs/0/label','/panels/0/blocks/1/presets/0/label',
+  ]);
+});
+
+test('quoted prose reports unknown live slots at the authored column after escaped quotes',()=>{
+  const sourceText=String.raw`# Live values {#readout}
+
+Read the calculated value.
+
+## Model {#controls}
+
+@calc id=model
+| let value | 1 |
+
+  @prose live=model text="Read \"quoted\" text before {{metric:unknown}}."
+`;
+  const parsed=parseExplainer(sourceText);
+  assert.deepEqual(parsed.diagnostics,[]);
+  const issue=validateExplainer(parsed.document,{sourceMap:parsed.sourceMap,sourceText}).diagnostics.find(d=>d.code==='explainer/calc-name');
+  const authored=sourceText.split('\n').find(line=>line.includes('@prose'));
+  assert.equal(issue.subject.line,10);
+  assert.equal(issue.subject.column,authored.indexOf('{{')+1);
+});

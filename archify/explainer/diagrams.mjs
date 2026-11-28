@@ -6,6 +6,10 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { validateSchema } from '../renderers/shared/validator.mjs';
 import { textUnits, SEMANTIC_SIGIL_FOOTPRINT } from '../renderers/shared/utils.mjs';
+import { segmentIntersectsRect } from '../renderers/shared/geometry.mjs';
+import { layoutReportFromSvg } from '../renderers/shared/layout-report.mjs';
+import { formatNumber } from './whatif-engine.mjs';
+import { escapeHtml } from './inline.mjs';
 import { minimumNodeTextWidth } from '../renderers/shared/text-fit.mjs';
 import { throwDiagnosticError, withIsolatedDiagnosticRecording } from '../renderers/shared/diagnostics.mjs';
 import { createOwnedTempDirectory } from '../renderers/shared/owned-temp-directory.mjs';
@@ -605,14 +609,11 @@ export async function prepareExplainerDiagrams(document, { repoRoot, baseDir, qu
           if (check.ok === false) throw Object.assign(new Error('Native diagram check failed.'), { nativeResult: check });
           const bytes = fs.readFileSync(output);
           if (bytes.length > MAX_DIAGRAM_BYTES) fail(context, 'diagram-artifact-size', 'The native diagram artifact exceeds 32 MiB.', 'Use a smaller native diagram.');
-          const html = bytes.toString('utf8'), svgMatch = html.match(/<svg\b[^>]*\bdata-quality-profile="[^"]*"[^>]*>[\s\S]*?<\/svg>/);
-          if (!svgMatch) fail(context, 'diagram-svg', 'The native renderer produced no primary semantic SVG.', 'Use a supported native diagram renderer.');
-          const canonicalSvg = svgMatch[0], semantic = semanticOf(canonicalSvg);
-          const svg = changesPreview(canonicalSvg, block.changes, semantic, context);
+          const html = bytes.toString('utf8');
+          const preview=nativeExplainerPreview(html,block.changes,context);
           // Preview styles are derived from html at render time; storing them again would double the page.
-          diagrams[block.id] = { diagramType: block.diagramType, spec: original, html, svg, sha256: hash(bytes), bytes: bytes.length,
-            ...(spec.lanes ? { previewLanes: spec.lanes } : {}),
-            specification: freezeBytes(originalBytes), checks: { validate: { ok: true }, render: { ok: true }, check }, semantic,
+          diagrams[block.id] = { diagramType: block.diagramType, spec: original, html, ...preview, sha256: hash(bytes), bytes: bytes.length,
+            specification: freezeBytes(originalBytes), checks: { validate: { ok: true }, render: { ok: true }, check },
             ...(block.changes ? { changes: block.changes.map(change => ({ ...change })) } : {}) };
           break;
         } catch (error) {
@@ -646,4 +647,201 @@ export function validateExplainerDiagramTarget(diagrams, target, { sourceMap, so
     if (!visited.has(to)) fail(context, 'diagram-route-reference', 'No directed route connects these nodes in the native diagram.', `{diagram:"${target.diagram}",route:["${edges[0]?.from || 'api'}","${edges[0]?.to || 'db'}"]}`);
   }
   return true;
+}
+
+// Older workflow SVGs expose lane frames and titles, but omit authored IDs.
+function previewLanesFromSvg(svg) {
+  return Array.from(svg.matchAll(/(<rect\b[^>]*\bdata-composition-frame-kind="lane"[^>]*>)\s*<text\b[^>]*>([^<]*)<\/text>/gu),
+    ([,frame,title])=>({id:attrs(frame)['data-lane-id'] ?? null, label:decode(title).replace(/^[^/]+ \/ /u,'')}));
+}
+
+export function nativePreviewLanes(html) {
+  return previewLanesFromSvg(primarySvg(html) || '');
+}
+
+const primarySvg = html => html?.match(/<svg\b[^>]*\bdata-quality-profile="[^"]*"[^>]*>[\s\S]*?<\/svg>/)?.[0];
+
+// Rebuild the preview and semantic graph from the frozen native output when checking a page.
+export function nativeExplainerPreview(html, changes, context = {}) {
+  const svg = primarySvg(html);
+  if (!svg) fail(context, 'diagram-svg', 'The native output is missing its primary semantic SVG.', 'Re-render the native diagram.');
+  const semantic = semanticOf(svg);
+  const previewLanes = previewLanesFromSvg(svg);
+  return { svg: changesPreview(svg, changes, semantic, context), semantic, ...(previewLanes.length ? {previewLanes} : {}) };
+}
+
+export function scenarioDiagramTargets(block, diagram, context) {
+  if (!diagram?.semantic) fail(context, 'scenario-target', 'The bound native diagram is missing.', 'Prepare the bound native diagram.');
+  const nodes = new Map(diagram.semantic.nodes.map(node => [node.id, node]));
+  const edges = diagram.semantic.edges;
+  const problem = (pointer,message) => fail({...context,pointer:context.pointer+pointer},'scenario-target',message,'Use an unambiguous node or directed edge from the native output.');
+  function node(id, pointer) {
+    if (!nodes.has(id)) problem(pointer,`Node ${id} is absent from the native diagram.`);
+    return nodes.get(id);
+  }
+  function edge(selector, pointer) {
+    const matches = edges.filter(edge => selector.id !== undefined ? edge.id === selector.id : edge.from === selector.from && edge.to === selector.to);
+    const name = selector.id ?? `${selector.from}~${selector.to}`;
+    if (!matches.length) problem(pointer,`Edge ${name} is absent from the native diagram.`);
+    if (matches.length > 1) problem(pointer,`Directed hop ${name} is ambiguous. Select one of ${matches.map(edge=>edge.id).join(', ')} by ID.`);
+    return matches[0];
+  }
+  const active = block.active.map((row,i) => {
+    const path = `/active/${i}`;
+    const chosen = row.edges.map((item,j) => edge(item,`${path}/edges/${j}`));
+    const selected = row.nodes.map((id,j)=>node(id,`${path}/nodes/${j}`).id).concat(chosen.flatMap(edge=>[edge.from,edge.to]));
+    return { key:row.case,nodes:[...new Set(selected)],edges:[...new Set(chosen.map(edge=>edge.id))] };
+  });
+  const badges = (block.badges || []).map((badge,i) => {
+    const path = `/badges/${i}`;
+    if (badge.node !== undefined) return { kind:'node', target:node(badge.node,path+'/node'), metric:badge.metric };
+    return { kind:'edge', target:edge(badge.edge,path+'/edge'), metric:badge.metric };
+  });
+  return { active, badges };
+}
+
+function midpoint(points) {
+  const distances = points.slice(1).map(([x,y],i)=>Math.hypot(x-points[i][0],y-points[i][1]));
+  let remaining = distances.reduce((sum,value)=>sum+value,0)/2;
+  for (const [i,distance] of distances.entries()) {
+    if (distance > 0 && remaining <= distance) {
+      const [x,y]=points[i], [endX,endY]=points[i+1], part=remaining/distance;
+      return [x+(endX-x)*part,y+(endY-y)*part];
+    }
+    remaining-=distance;
+  }
+  return points[0];
+}
+
+function badgeSlots(svg, badges, metrics, diagramType) {
+  const geometry = layoutReportFromSvg(svg,diagramType);
+  const boxes = new Map(geometry.nodes.filter(node=>node.width>0&&node.height>0).map(node=>[node.id,node]));
+  const routes = new Map(geometry.edges.map(edge=>[edge.id,edge.points]));
+  const view = /\bviewBox="([^"]+)"/u.exec(svg)?.[1].split(/[ ,]+/u).map(Number) || [0,0,640,400];
+  const [left,top,width,height] = view;
+  // Native node cards and routed-edge labels publish their boxes as SVG rects.
+  // Frames surround their contents and therefore do not occupy the entire interior.
+  const obstacles = [...svg.matchAll(/<rect\b[^>]*>/gu)].map(match=>attrs(match[0]))
+    .filter(rect=>!rect.transform&&!rect.fill?.startsWith('url(')&&!rect['data-composition-frame-kind']&&rect['data-graph-role']!=='structural-frame')
+    .map(rect=>({x:Number(rect.x),y:Number(rect.y),width:Number(rect.width),height:Number(rect.height)}))
+    .filter(rect=>rect.width>0&&rect.height>0&&Number.isFinite(rect.x)&&Number.isFinite(rect.y));
+  // Standalone headings have no background rect. An em per text unit leaves
+  // room for the native font, including bold labels and wide characters.
+  const labels = [];
+  for (const [,tag,content] of svg.matchAll(/(<text\b[^>]*>)([\s\S]*?)<\/text>/gu)) {
+    const label = attrs(tag);
+    const x = Number(label.x), y = Number(label.y), size = Number(label['font-size'] || 16);
+    if (![x,y,size].every(Number.isFinite) || size<=0) continue;
+    const text = decode(content.replace(/<[^>]*>/gu,'')).trim();
+    if (!text) continue;
+    const width = Math.max(Number(label.textLength) || 0, size*textUnits(text));
+    const alignment = label['text-anchor']==='middle' ? .5 : label['text-anchor']==='end' ? 1 : 0;
+    labels.push({x:x-width*alignment,y:y-size,width,height:size*1.3});
+  }
+  obstacles.push(...labels);
+  const overlap = (a,b) => a.x < b.x+b.width+3 && b.x < a.x+a.width+3 && a.y < b.y+b.height+3 && b.y < a.y+a.height+3;
+  const nativeBottom = ['architecture','workflow'].includes(diagramType) ?
+    Math.max(top,...obstacles.map(rect=>rect.y+rect.height),...geometry.edges.flatMap(edge=>edge.points.map(point=>point[1]))) :
+    top+height;
+  const marginTop = nativeBottom + 16;
+  let bottom = top+height;
+  let right = left+width;
+  const nativeCoordinates = ['architecture','workflow'].includes(diagramType);
+  const slots = badges.map(badge=>{
+    const metric = metrics.get(badge.metric).block;
+    const box = nativeCoordinates && badge.kind==='node' ? boxes.get(badge.target.id) : undefined;
+    const points = nativeCoordinates && badge.kind==='edge' ? routes.get(badge.target.id) : undefined;
+    const anchor = box ? [box.x+box.width/2,box.y+box.height/2] : points?.length ? midpoint(points) : undefined;
+    const label = badge.target.label || badge.target.id;
+    const w = Math.max(112, Math.ceil(8*textUnits(formatNumber(-1e12,metric.digits,metric.unit)) + 18));
+    const h = 25;
+    const [x,y] = anchor || [0,0];
+    const gap = 8, hw=(box?.width||0)/2, hh=(box?.height||0)/2;
+    function leaderTo(end) {
+      const dx=end[0]-x, dy=end[1]-y;
+      const distance=box ? Math.min(hw/Math.abs(dx),hh/Math.abs(dy),1) : 0;
+      return {start:[x+dx*distance,y+dy*distance],end};
+    }
+    const clear = segment => labels.every(label=>!segmentIntersectsRect(segment,label,2));
+    const straight = item => leaderTo([
+      Math.max(item.x,Math.min(item.x+item.width,x)),Math.max(item.y,Math.min(item.y+item.height,y)),
+    ]);
+    const candidates = [[x-w/2,y-hh-gap-h],[x-w/2,y+hh+gap],[x+hw+gap,y-h/2],[x-hw-gap-w,y-h/2]];
+    let slot, leader = [];
+    if (anchor) for (const [x,y] of candidates) {
+      const item = {x,y,width:w,height:h};
+      if (x<left || y<top || x+w>left+width || y+h>top+height || obstacles.some(other=>overlap(item,other))) continue;
+      const segment = straight(item);
+      if (!clear(segment)) continue;
+      slot = item;
+      leader = [segment];
+      break;
+    }
+    if (!slot) {
+      const fallbackWidth = anchor ? w : Math.max(w, Math.ceil(8*textUnits(label)+w));
+      const preferred = anchor ? Math.max(left,Math.min(x-fallbackWidth/2,left+width-fallbackWidth)) : left;
+      slot={x:preferred,y:marginTop,width:fallbackWidth,height:h};
+      while (obstacles.some(other=>overlap(slot,other))) slot.y+=h+8;
+      if (anchor) {
+        const segment = straight(slot);
+        if (clear(segment)) leader = [segment];
+        else {
+          // Go around the labels via a clear vertical corridor, then enter
+          // the badge from the side in the reserved margin.
+          const corridors = [left+4,left+width-4,...labels.flatMap(label=>[label.x-4,label.x+label.width+4])]
+            .filter(column=>column>=left && column<=left+width)
+            .sort((a,b)=>Math.abs(a-x)-Math.abs(b-x));
+          const dockY = slot.y+h/2;
+          for (const column of corridors) {
+            const first = leaderTo([column,y]);
+            const entryX = Math.max(slot.x,Math.min(slot.x+w,column));
+            const segments = [first,{start:first.end,end:[column,entryX===column ? slot.y : dockY]}];
+            if (entryX!==column) segments.push({start:segments[1].end,end:[entryX,dockY]});
+            if (!segments.every(clear)) continue;
+            leader = segments;
+            break;
+          }
+        }
+      }
+      if (!leader.length) {
+        slot.width = Math.max(slot.width,Math.ceil(8*textUnits(label)+w));
+        while (obstacles.some(other=>overlap(slot,other))) slot.y+=h+8;
+      }
+      right=Math.max(right,slot.x+slot.width+4);
+      bottom=Math.max(bottom,slot.y+h+8);
+    }
+    obstacles.push(slot);
+    return {...slot, leader, label, metric:badge.metric};
+  });
+  return { slots, view:[left,top,right-left,bottom-top] };
+}
+
+export function scenarioDiagramSvg(svg, diagramType, targets, model, state) {
+  // Target marks use the same semantic precedence as the frozen native graph.
+  const byNode = new Map(), byEdge = new Map();
+  for (const row of targets.active) {
+    for (const [ids, table] of [[row.nodes,byNode],[row.edges,byEdge]]) for (const id of ids) {
+      if (!table.has(id)) table.set(id,[]);
+      table.get(id).push(row.key);
+    }
+  }
+  const marked = svg.replace(/<[a-zA-Z][^>]*>/gu,tag=>{
+    const a=attrs(tag);
+    const node=a['data-node-id'], from=a['data-edge-from'], to=a['data-edge-to'];
+    if (!node && !(from && to)) return tag;
+    const cases = (node ? byNode.get(node) : byEdge.get(a['data-edge-id'] || a['data-edge-key'] || `${from}~${to}`)) || [];
+    return tag.replace(/(\/?>)$/u,` data-whatif-cases="${cases.join(' ')}" data-whatif-active="${cases.includes(state.key)}"$1`);
+  });
+  if (!targets.badges.length) return marked;
+  const {slots,view} = badgeSlots(svg,targets.badges,model.metrics,diagramType);
+  const annotations = slots.map(slot=>{
+    const {x,y,width,height,leader,label,metric} = slot;
+    const cx=x+width/2, cy=y+height/2;
+    const lines = leader.filter(({start,end})=>start[0]!==end[0] || start[1]!==end[1]).map(({start,end})=>
+      `<line x1="${start[0]}" y1="${start[1]}" x2="${end[0]}" y2="${end[1]}"/>`).join('');
+    const prefix = leader.length ? '' : label+' · ';
+    return `<g class="whatif-badge"><title>${escapeHtml(label)}</title>${lines}<rect x="${x}" y="${y}" width="${width}" height="${height}" rx="5"/><text x="${cx}" y="${cy+4}" text-anchor="middle" data-whatif-badge="${escapeHtml(metric)}" data-whatif-prefix="${escapeHtml(prefix)}">${escapeHtml(prefix+state.metrics.get(metric).text)}</text></g>`;
+  }).join('');
+  return marked.replace(/(<svg\b[^>]*\bviewBox=")[^"]+/u,(_,start)=>start+view.join(' '))
+    .replace(/<\/svg>$/u,`<g data-whatif-annotations="">${annotations}</g></svg>`);
 }

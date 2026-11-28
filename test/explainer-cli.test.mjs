@@ -200,3 +200,43 @@ test('page title links validate against prepared external native targets',async 
     return true;
   });
 });
+
+test('calculator drafts use the public delivery stages and reject an invalid model before publication',t=>{
+  const dir=temporary(t),input=path.join(dir,'calculation.md'),output=path.join(dir,'interactive.html');
+  const source=`# Calculator {#interactive-page}
+
+The result is {{metric:value}}.
+
+@answer live=model
+
+## Calculation {#calculation}
+
+@calc id=model
+| range x | Count | 0 | 4 | 1 | 2 |
+| let total | x * 3 |
+
+@metric id=value label=Total calc=model bind=total
+`;
+  fs.writeFileSync(input,source);
+  for(const args of [
+    ['validate','explainer',input],
+    ['render','explainer',input,output],
+    ['deliver','explainer',input,output],
+    ['check',output,'--require-provenance'],
+    ['finalize','explainer',input,output],
+  ]) {
+    const response=run(args[0]==='render' ? args : [...args,'--json']);
+    assert.equal(response.status,0,response.stdout+response.stderr);
+    if (args[0]==='finalize') {
+      const receipt=JSON.parse(response.stdout);
+      assert.equal(receipt.gates['browser-check'],'not-run');
+      assert.equal(receipt.explainer.grid.statesChecked,5);
+    }
+  }
+  const original=fs.readFileSync(output);
+  fs.writeFileSync(input,source.replace('x * 3','1 / (x - 4)'));
+  const rejected=run(['finalize','explainer',input,output,'--json']);
+  assert.notEqual(rejected.status,0);
+  assert.match(rejected.stdout,/explainer\/calc-div-zero/u);
+  assert.deepEqual(fs.readFileSync(output),original);
+});

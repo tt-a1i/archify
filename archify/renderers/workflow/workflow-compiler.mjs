@@ -5556,7 +5556,7 @@ function renderLane(lane, index) {
     frameTitleBox(layout.laneX + 14, y + 22, 10, `${prefix} / ${lane.label}`),
     { maxRight: laneRect.x + laneRect.width - 8, fallback: nodeChangeBadgePos(laneRect, { rx: 10 }) },
   ));
-  return `        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-${index}"${changeAttrs} x="${layout.laneX}" y="${y}" width="${renderedLaneWidth}" height="${height}" rx="10" class="c-lane" stroke-width="1"/>${exception}
+  return `        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-${index}" data-lane-id="${esc(lane.id)}"${changeAttrs} x="${layout.laneX}" y="${y}" width="${renderedLaneWidth}" height="${height}" rx="10" class="c-lane" stroke-width="1"/>${exception}
         <text${changeAttrs} x="${layout.laneX + 14}" y="${y + 22}" class="${labelClass}" font-size="10" font-weight="600">${prefix} / ${esc(lane.label)}</text>${badge ? `\n        ${badge}` : ''}`;
 }
 

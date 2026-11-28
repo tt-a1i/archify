@@ -5157,7 +5157,7 @@ async function commandDeliver(args) {
       type,
       input: inputPath,
       output: outputPath,
-      ...(explainerBundle ? { explainer: { preparedSha256: explainerBundle.digest, dependencies: explainerBundle.dependencies.map(({contentBase64, ...entry}) => entry) } } : {}),
+      ...(explainerBundle ? { explainer: { preparedSha256: explainerBundle.digest, ...(explainerBundle.grid ? {grid:explainerBundle.grid} : {}), dependencies: explainerBundle.dependencies.map(({contentBase64, ...entry}) => entry) } } : {}),
       specification: {
         sha256: createHash('sha256').update(specification).digest('hex'),
         bytes: specification.byteLength,
@@ -5477,7 +5477,7 @@ async function commandPatch(rawArgs) {
     const input=path.join(temporary.path,'patched-draft.json');
     fs.writeFileSync(input,prepared.sourceText,{flag:'wx'});
     const { rebindPreparedBundle } = await import('../explainer/prepare.mjs');
-    prepared.bundle=rebindPreparedBundle({...prepared.bundle,inputPath:input},{sourceText:prepared.bundle.sourceText,document:prepared.bundle.document,sourceMap:prepared.bundle.sourceMap,format:prepared.bundle.format,diagnostics:prepared.bundle.diagnostics});
+    prepared.bundle=rebindPreparedBundle({...prepared.bundle,inputPath:input},{sourceText:prepared.bundle.sourceText});
     const preparedFile=writePreparedBundle(temporary.path,prepared.bundle);
     const delivery=runNode([fileURLToPath(import.meta.url),'deliver','explainer',input,output,'--quality',qualityArgs.quality || prepared.bundle.quality || 'standard','--writing',prepared.bundle.writingMode || 'warn',...(repoArgs.repoRoot?['--repo-root',repoArgs.repoRoot]:[]),'--json'],{stdio:'pipe',env:{ARCHIFY_EXPLAINER_PREPARED:preparedFile},maxBuffer:artifactCheckMaxBuffer()});
     let receipt;
@@ -6328,7 +6328,7 @@ async function commandDoctor(args) {
     });
   }
 
-  const explainerRuntime = ['parse.mjs', 'validate.mjs', 'inline.mjs', 'sources.mjs', 'writing.mjs', 'diagrams.mjs', 'prepare.mjs', 'patch.mjs', 'diff.mjs', 'revision.mjs', 'layout.mjs', 'render.mjs', 'check.mjs', 'browser-check.mjs', 'charts.mjs', 'page-bundle.mjs', 'vendor/pele/core.js', 'reader.css', 'reader.js'];
+  const explainerRuntime = ['parse.mjs', 'validate.mjs', 'inline.mjs', 'sources.mjs', 'writing.mjs', 'diagrams.mjs', 'prepare.mjs', 'patch.mjs', 'diff.mjs', 'revision.mjs', 'layout.mjs', 'render.mjs', 'check.mjs', 'browser-check.mjs', 'charts.mjs', 'page-bundle.mjs', 'whatif-engine.mjs', 'whatif-grid.mjs', 'whatif-csp.mjs', 'viewer-bridge.js', 'vendor/pele/core.js', 'reader.css', 'reader.js'];
   const missingExplainerRuntime = explainerRuntime.filter(file => !fs.existsSync(path.join(skillRoot, 'explainer', file))).length;
   checks.push({label:'Explainer runtime and reader assets',ok:missingExplainerRuntime===0,missing:missingExplainerRuntime});
 

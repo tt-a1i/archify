@@ -2,10 +2,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { parseExplainer } from './parse.mjs';
-import { validateExplainer } from './validate.mjs';
+import { validateExplainer, visitWhatIfLabels } from './validate.mjs';
 import { resolveExplainerSources } from './sources.mjs';
 import { parseInline } from './inline.mjs';
-import { prepareExplainerDiagrams, validateExplainerDiagramTarget } from './diagrams.mjs';
+import { prepareExplainerDiagrams, validateExplainerDiagramTarget, scenarioDiagramTargets } from './diagrams.mjs';
 import { throwDiagnosticError } from '../renderers/shared/diagnostics.mjs';
 
 const MAX_BUNDLE_BYTES = 64 * 1024 * 1024;
@@ -22,9 +22,9 @@ export function parseValidatedExplainer(sourceText, options = {}) {
   if (!parsed.document || parsed.diagnostics.some(entry => entry.severity !== 'warning')) {
     throwDiagnosticError('Explainer draft could not be parsed.', parsed.diagnostics);
   }
-  const validated = validateExplainer(parsed.document, { sourceMap: parsed.sourceMap, inputPath: options.inputPath, writingMode: options.writingMode });
+  const validated = validateExplainer(parsed.document, { sourceMap: parsed.sourceMap, sourceText, inputPath: options.inputPath, writingMode: options.writingMode });
   if (!validated.ok) throwDiagnosticError('Explainer draft is invalid.', validated.diagnostics);
-  return { ...parsed, diagnostics: [...parsed.diagnostics, ...validated.diagnostics] };
+  return { ...parsed, diagnostics: [...parsed.diagnostics, ...validated.diagnostics], ...(validated.grid ? {grid:validated.grid} : {}) };
 }
 
 // Discover declared inputs before reading their contents: failed preparation
@@ -107,12 +107,14 @@ export function readPreparedBundle(file, sourceText, inputPath, { checkDependenc
   if (quality && quality !== bundle.quality) fail('prepared-mismatch', 'Prepared explainer uses a different quality profile.', inputPath, 'quality-profile-mismatch', 'Prepare the original draft again under the requested quality profile.');
   if (writingMode && writingMode !== (bundle.writingMode || 'warn')) fail('prepared-mismatch', 'Prepared explainer uses a different writing check mode.', inputPath, 'writing-mode-mismatch', 'Prepare the original draft again under the requested writing check mode.');
   const parsed = parseValidatedExplainer(sourceText, { inputPath: bundle.sourcePath, writingMode: bundle.writingMode || 'warn' });
+  if (JSON.stringify(parsed.grid) !== JSON.stringify(bundle.grid)) fail('prepared-mismatch', 'Prepared grid receipt differs from the authored model.', inputPath, 'grid-receipt-mismatch');
   if (JSON.stringify(parsed.document) !== JSON.stringify(bundle.document)) fail('prepared-mismatch', 'Prepared document differs from the authored draft.', inputPath, 'normalized-document-mismatch');
   if (checkDependencies) assertPreparedDependencies(bundle);
   return bundle;
 }
 export function rebindPreparedBundle(bundle, parsed) {
   const next = { ...bundle, ...parsed, source: identity(Buffer.from(parsed.sourceText)) };
+  if (Object.hasOwn(parsed,'document') && !parsed.grid) delete next.grid;
   next.digest = digest(next);
   return next;
 }
@@ -130,7 +132,7 @@ export function validatePreparedTargets(document, diagrams, options = {}) {
       }
     } else if (Array.isArray(value)) value.forEach((entry,index)=>visit(entry,`${pointer}/${index}`,panelId,component));
     else if (value && typeof value === 'object') for(const [key,entry] of Object.entries(value)) {
-      if (['spec','source','path','language','target','changes'].includes(key) || (['diff','snippet'].includes(component) && key==='text')) continue;
+      if (['spec','source','path','language','target','changes','live','calc','bind','scenarios','active','badges','computed','thresholds'].includes(key) || (['diff','snippet'].includes(component) && key==='text')) continue;
       visit(entry,`${pointer}/${key}`,panelId,component);
     }
   };
@@ -140,8 +142,10 @@ export function validatePreparedTargets(document, diagrams, options = {}) {
     visit(panel.title,`/panels/${index}/title`,panel.id,'panel');
     panel.blocks.forEach((block,blockIndex)=>{
       const pointer=`/panels/${index}/blocks/${blockIndex}`;
-      visit(block,pointer,panel.id,block.type);
+      if (!['scenarios','calc'].includes(block.type)) visit(block,pointer,panel.id,block.type);
+      visitWhatIfLabels(block,(value,suffix)=>visit(value,pointer+suffix,panel.id,block.type));
       if(block.type==='diagram')for(const key of ['nodeSources','nodeBlocks'])for(const node of Object.keys(block[key]||{}))validateExplainerDiagramTarget(diagrams,{diagram:block.id,node},{...options,pointer:`${pointer}/${key}/${node}`,line:options.sourceMap?.[`${pointer}/${key}/${node}`]?.line || options.sourceMap?.[pointer]?.line || 1});
+      if(block.scenarios)scenarioDiagramTargets(block,diagrams[block.id],{...options,pointer,panelId:panel.id});
       if(block.type==='steps') block.items.forEach((item,itemIndex)=>{
         if(item.target)validateExplainerDiagramTarget(diagrams,item.target,{...options,pointer:`${pointer}/items/${itemIndex}/target`,line:options.sourceMap?.[`${pointer}/items/${itemIndex}`]?.line || options.sourceMap?.[pointer]?.line || 1});
       });

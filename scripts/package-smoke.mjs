@@ -106,6 +106,38 @@ async function verifyPackagedExplainer() {
   if (browserUnavailable.status !== 'skipped' || browserUnavailable.chrome?.status !== 'unavailable') {
     throw new Error('packaged explainer browser runtime did not report the explicit unavailable browser');
   }
+  const interactiveInput=path.join(scratch,'package-whatif.md');
+  const interactiveOutput=path.join(scratch,'package-whatif.html');
+  fs.writeFileSync(interactiveInput, `# What is the total? {#package-whatif}
+
+The total is {{metric:value}}.
+
+@answer live=model
+
+## Which settings apply? {#settings}
+
+@scenarios id=setting default=full
+| case full | Full | count=4 |
+| case half | Half | count=2 |
+
+@calc id=model
+| range count | Count | 0 | 4 | 1 | 2 |
+| let units | count * 2 |
+
+@metric id=value label=Total calc=model bind=units
+
+@chart id=totals calc=model type=bar ymin=0 ymax=10
+| labels | Saved | Used |
+| bar | Units | units | count |
+`);
+  const interactive=JSON.parse(run(['finalize','explainer',interactiveInput,interactiveOutput,'--json'],explainerOptions));
+  const checked=JSON.parse(run(['check',interactiveOutput,'--require-provenance','--json'],explainerOptions));
+  const interactiveHtml=fs.readFileSync(interactiveOutput,'utf8');
+  if (!interactive.ok || interactive.gates['browser-check']!=='not-run' || interactive.explainer?.grid?.statesChecked!==10 ||
+      !checked.ok || !interactiveHtml.includes('Content-Security-Policy') || !interactiveHtml.includes('data-whatif-key="value">8</span>')) {
+    throw new Error('packaged interactive explainer lost its grid receipt, hash policy or default result');
+  }
+  process.stdout.write('packaged interactive explainer finalization and strict check passed without dependencies\n');
   process.stdout.write('packaged explainer parser, native graph, delivery, strict check and panel patch passed without dependencies\n');
 
 }

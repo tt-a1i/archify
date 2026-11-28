@@ -15,8 +15,8 @@ const text = node => node.nodeName === '#text' ? node.value : (node.childNodes |
 const find = (tree,id) => all(tree,node=>attr(node,'id') === id)[0];
 const payload = (tree,id) => unpackPageBundle(JSON.parse(text(find(tree,id))));
 const source = {id:'code-source',title:'Real excerpt',path:'src/example.mjs',lines:[2,3]};
-const nativeHtml = '<!doctype html><html><body><svg id="diagram-svg"></svg><script>const sample = "native";</script></body></html>';
-const diagram = {diagramType:'architecture',spec:{meta:{title:'Actual relationships'}},html:nativeHtml,svg:'<svg id="diagram-svg" viewBox="0 0 200 80"><defs><marker id="arrow"></marker></defs><g data-node-id="api"><text x="10" y="30">API</text></g><path data-edge-id="write" data-edge-from="api" data-edge-to="redis" marker-end="url(#arrow)"/><g data-node-id="redis"><text x="90" y="30">Redis</text></g></svg>',styles:'<style>:root,[data-theme="dark"]{--native-ink:#eee}[data-theme="light"]{--native-ink:#123}body{height:100vh}text{fill:var(--native-ink)}</style>',sha256:sha(nativeHtml),bytes:Buffer.byteLength(nativeHtml),semantic:{nodes:[{id:'api',label:'API'},{id:'redis',label:'Redis'}],edges:[{id:'write',from:'api',to:'redis',label:'writes'}]}};
+const nativeHtml = '<!doctype html><html><head><style>:root,[data-theme="dark"]{--native-ink:#eee}[data-theme="light"]{--native-ink:#123}body{height:100vh}text{fill:var(--native-ink)}</style></head><body><svg id="diagram-svg"></svg><script>const sample = "native";</script></body></html>';
+const diagram = {diagramType:'architecture',spec:{meta:{title:'Actual relationships'}},html:nativeHtml,svg:'<svg id="diagram-svg" viewBox="0 0 200 80"><defs><marker id="arrow"></marker></defs><g data-node-id="api"><text x="10" y="30">API</text></g><path data-edge-id="write" data-edge-from="api" data-edge-to="redis" marker-end="url(#arrow)"/><g data-node-id="redis"><text x="90" y="30">Redis</text></g></svg>',sha256:sha(nativeHtml),bytes:Buffer.byteLength(nativeHtml),semantic:{nodes:[{id:'api',label:'API'},{id:'redis',label:'Redis'}],edges:[{id:'write',from:'api',to:'redis',label:'writes'}]}};
 function fixture() {
   return {schema_version:1,diagram_type:'explainer',meta:{id:'test-explainer',title:'How `<script>` works?',locale:'en'},answer:{summary:'Keep **the evidence** visible.'},panels:[{id:'panel-main',title:'What do we know?',blocks:[
     {id:'prose',type:'prose',text:'Untrusted `<img src=x onerror=alert(1)>` and [typical](typical:not measured here).'},
@@ -273,4 +273,33 @@ test('renderer: inline reader keeps parsing after a Live Server style injection 
   const injectedReader=scanHtml(injected).scripts.find(script=>!script.attrs.type);
   assert.ok(injectedReader,'the reader script survives the injection');
   assert.doesNotThrow(()=>new Script(injectedReader.text),'a reload script injected before the first closing body tag must not cut the reader script short');
+});
+
+test('interactive SSR renders unrounded threshold verdicts, live slots and a chart data disclosure',()=>{
+  const doc=fixture();
+  doc.answer={summary:'**{{metric:load}}**; literal `{{value:unknown}}` and [{{value:unknown}}](https://example.org).',live:'model'};
+  doc.panels[0].blocks=[
+    {type:'calc',id:'model',inputs:[{kind:'range',key:'x',label:'Value',min:.25,max:2.25,step:1,default:1.25}],derived:[],presets:[]},
+    {type:'metric',id:'load',label:'Load',calc:'model',bind:'x',digits:0,unit:'USD',thresholds:[
+      {level:'good',op:'le',expr:'1',label:'Low'},
+      {level:'caution',op:'lt',expr:'2',label:'Rising'},
+      {level:'bad',op:'else',label:'Full'},
+    ]},
+    {type:'chart',id:'plot',computed:{calc:'model',kind:'line',ymin:0,ymax:4,domain:{from:0,to:1,step:.5},series:[{kind:'line',label:'Total',expr:'x+t'}]}},
+  ];
+  const tree=parse(renderExplainer(doc));
+  assert.match(text(find(tree,'answer')),/1\u00a0USD; literal \{\{value:unknown\}\} and \{\{value:unknown\}\}/u);
+  const status=all(find(tree,'load'),node=>attr(node,'data-whatif-status')==='caution')[0];
+  assert.equal(text(status),'Rising');
+  const line=all(find(tree,'plot'),node=>attr(node,'data-whatif-line')!==undefined)[0];
+  assert.equal(attr(line,'d').split(' ').length,6);
+  const disclosure=all(find(tree,'plot'),node=>node.tagName==='details')[0];
+  const rows=all(disclosure,node=>node.tagName==='tr');
+  assert.deepEqual(rows.slice(1).map(text),['01','0.52','12']);
+  assert.equal(all(tree,node=>attr(node,'for')==='explainer-control-0-0-0').length,1);
+  const range=find(tree,'explainer-control-0-0-0');
+  assert.equal(attr(range,'value'),'1.25');
+  assert.equal(attr(range,'aria-valuetext'),'1.25');
+  assert.deepEqual(all(tree,node=>attr(node,'data-whatif-current')==='0').map(text),['1.25','1.25']);
+  assert.equal(text(all(tree,node=>attr(node,'class')==='whatif-endpoints')[0]),'0.252.25');
 });

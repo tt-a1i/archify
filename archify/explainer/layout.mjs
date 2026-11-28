@@ -12,7 +12,7 @@ export function layoutExplainerPanels(document, diagrams = {}) {
   const widths = block => {
     if (block.type === 'comparison') return block.columns.length + 1 > 3 ? [8,7] : [7,6];
     if (['code','diff'].includes(block.type)) return [8,7];
-    if (block.type === 'chart') return [6,5];
+    if (block.type === 'chart') return block.computed ? [8,7] : [6,5];
     if (block.type === 'snippet') { const longest = Math.max(...block.text.split('\n').map(line => line.length)); return longest > 72 ? [8,7] : longest > 48 ? [6,6] : [5,4]; }
     if (block.type === 'diagram') {
       const diagram=diagrams[block.id], viewBox=diagram?.svg?.match(/viewBox=["']([^"']+)["']/)?.[1].split(/[ ,]+/).map(Number);
@@ -20,8 +20,15 @@ export function layoutExplainerPanels(document, diagrams = {}) {
     }
     return [4,4];
   };
+  const labelWeight = block => {
+    if (block.type === 'calc') return [block.inputs.map(input=>input.label),block.presets.map(preset=>preset.label)];
+    if (block.type === 'scenarios') return block.cases.map(item=>item.label);
+    if (block.computed) return [block.title,block.computed.labels,block.computed.series.map(series=>series.label)];
+    if (block.calc) return [block.label,block.note,block.thresholds?.map(row=>row.label)];
+    return block;
+  };
   const sized = panel => isGuidedPanel(panel) ? [12,12] : panel.blocks.map(widths).reduce((best,next)=>next[0]>best[0]?next:best,[4,4]);
-  const items=[{id:'answer',span:document.answer.span ?? 5,min:document.answer.span ?? 4,explicit:document.answer.span!==undefined,weight:contentSize(document.answer),answer:true},...document.panels.map(panel=>{const [span,min]=sized(panel);return{id:panel.id,span:panel.span ?? span,min:panel.span ?? min,explicit:panel.span!==undefined,weight:contentSize(panel),panel};})];
+  const items=[{id:'answer',span:document.answer.span ?? 5,min:document.answer.span ?? 4,explicit:document.answer.span!==undefined,weight:contentSize(document.answer),answer:true},...document.panels.map(panel=>{const [span,min]=sized(panel);return{id:panel.id,span:panel.span ?? span,min:panel.span ?? min,explicit:panel.span!==undefined,weight:contentSize({...panel,blocks:panel.blocks.map(labelWeight)}),panel};})];
   const rows=[];let row=[],used=0;
   function finish(){if(!row.length)return;const remaining=12-used;const flexible=row.filter(item=>!item.explicit).sort((a,b)=>b.weight-a.weight);if(remaining&&flexible.length)flexible[0].span+=remaining;else if(remaining)row.push({spacer:true,span:remaining});rows.push(row);row=[];used=0;}
   for(const item of items){

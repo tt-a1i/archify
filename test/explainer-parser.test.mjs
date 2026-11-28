@@ -346,3 +346,133 @@ test('workflow shorthand uses final page locale without moving its source locati
  assert.ok(source.slice(location.start,location.end).startsWith(workflow.trimEnd()));
  assert.equal(late.sourceMap['/meta/locale'].start,source.indexOf('@meta'));
 });
+
+test('interactive rows preserve field order, decimal and boolean assignments, and CRLF cell locations',()=>{
+  const text=draft(`@scenarios id=scenes default=warm
+| case warm | Warm | open=true | count=.2 | shape=flat |
+
+@architecture id=graph source=existing.json scenarios=scenes
+| active warm | a,b | a~b,edge:branch |
+| badge edge:a~b | load |
+
+@calc id=model
+| let double | 2 * count |
+| range count | Count | 0 | .3 | .1 | .1 |
+| preset fewer | Fewer | count=.1 |
+| toggle open | Open | false |
+| choice shape | Shape | flat | flat=Flat | tall=Tall |
+
+@metric id=load label=Load calc=model bind="double * 2"
+| {good} | < .5 | Low |
+| {caution} | <= 1 | High |
+| {bad} | else | Full |
+
+@chart id=chart calc=model type=bar ymin=0 ymax=2
+| labels | Load | Count |
+| bar | Slots | double * 2 | count |`).replaceAll('\n','\r\n');
+  const result=parse(text);
+  const [scenario,diagram,calc,metric,chart]=result.document.panels[0].blocks;
+  assert.deepEqual(scenario.cases[0].set,[{input:'open',value:true},{input:'count',value:.2},{input:'shape',value:'flat'}]);
+  assert.equal(diagram.source,'existing.json');
+  assert.equal(diagram.spec,undefined);
+  assert.deepEqual(diagram.active,[{case:'warm',nodes:['a','b'],edges:[{from:'a',to:'b'},{id:'branch'}]}]);
+  assert.deepEqual(diagram.badges,[{edge:{from:'a',to:'b'},metric:'load'}]);
+  assert.deepEqual(Object.keys(calc),['type','id','inputs','derived','presets']);
+  assert.deepEqual(Object.keys(chart.computed),['calc','kind','ymin','ymax','labels','series']);
+  assert.equal(metric.thresholds[1].op,'le');
+  const exact={
+    '0/cases/0/set/0/value':'true',
+    '1/badges/0/metric':'load',
+    '2/derived/0/expr':'2 * count',
+    '2/presets/0/set/0/value':'.1',
+    '3/bind':'double * 2',
+    '3/thresholds/1/expr':'1',
+    '4/computed/series/0/values/1':'count',
+  };
+  for(const [pointer,cell] of Object.entries(exact)){
+    const {start,line,column}=result.sourceMap['/panels/0/blocks/'+pointer];
+    assert.equal(text.slice(start,start+cell.length),cell);
+    assert.equal(text.split('\r\n')[line-1].slice(column-1,column-1+cell.length),cell);
+  }
+  assert.equal(JSON.stringify(parse(JSON.stringify(result.document)).document),JSON.stringify(result.document));
+  assert.ok(validateExplainer(result.document).ok);
+  assert.equal(parseExplainer(draft('@calc id=reasoning')).document,null);
+});
+
+test('maintained v1 explainers still parse and validate without interactive additions',async()=>{
+  const fs=await import('node:fs');
+  for (const file of ['finalize-delivery','first-rental','narrative-refactor-demo','p99-tail-latency','tls-first-visit']) {
+    const input=fs.readFileSync(new URL(`../docs/cases/explainer/${file}.archify.md`,import.meta.url),'utf8');
+    const {document,sourceMap}=parse(input);
+    const validated=validateExplainer(document,{sourceMap});
+    assert.equal(validated.ok,true,file);
+    assert.equal(validated.grid,undefined,file);
+  }
+  const delivery=fs.readFileSync(new URL('../archify/examples/delivery.explainer.json',import.meta.url),'utf8');
+  assert.equal(validateExplainer(parse(delivery).document).ok,true);
+});
+
+test('scenario metadata coexists with native active and badge node IDs and edges',()=>{
+  const result=parse(draft(`@scenarios id=mode default=warm
+| case warm | Warm |
+
+@architecture id=graph scenarios=mode
+| active | Active | backend |
+| badge | Badge | backend |
+| db | Database | database |
+| active > db | Read |
+| badge > db | Write |
+| active   warm | active,badge | active~db,badge~db |
+| badge   node:badge | load |
+
+@calc id=model
+| let value | 2 |
+
+@metric id=load label=Load calc=model bind=value`));
+  const [,diagram]=result.document.panels[0].blocks;
+  assert.deepEqual(diagram.spec.components.map(node=>node.id),['active','badge','db']);
+  assert.deepEqual(diagram.spec.connections.map(edge=>[edge.from,edge.to]),[['active','db'],['badge','db']]);
+  assert.deepEqual(diagram.active,[{case:'warm',nodes:['active','badge'],edges:[{from:'active',to:'db'},{from:'badge',to:'db'}]}]);
+  assert.deepEqual(diagram.badges,[{node:'badge',metric:'load'}]);
+  assert.equal(validateExplainer(result.document).ok,true);
+});
+
+test('sequence messages keep active warm as an actor with forward-declared scenarios',()=>{
+  const result=parse(draft(`@sequence id=graph scenarios=mode
+| active warm | api | Request |
+| api | active | Reply |
+| active | api | Probe |
+| active cold | api | active-to-api-1 |
+| active warm | api | active-warm~api |
+
+@scenarios id=mode default=warm
+| case warm | Warm |
+| case cold | Cold |
+`));
+  assert.deepEqual(result.diagnostics,[]);
+  const diagram=result.document.panels[0].blocks[0];
+  assert.deepEqual(diagram.spec.participants.map(({id,label})=>[id,label]),[
+    ['active-warm','active warm'],['api','api'],['active','active'],
+  ]);
+  assert.deepEqual(diagram.spec.messages.map(({label})=>label),['Request','Reply','Probe']);
+  assert.deepEqual(diagram.active,[
+    {case:'cold',nodes:['api'],edges:[{id:'active-to-api-1'}]},
+    {case:'warm',nodes:['api'],edges:[{from:'active-warm',to:'api'}]},
+  ]);
+});
+
+for (const withBinding of [true,false]) {
+  test(`sequence keeps comma-separated message text with a forward-declared case (${withBinding ? 'with' : 'without'} a binding)`,()=>{
+    const result=parse(draft(`@sequence id=graph scenarios=mode
+| active warm | api | Read, retry |
+| active | api | Probe |
+${withBinding ? '| active warm | api | active~api |\n' : ''}
+@scenarios id=mode default=warm
+| case warm | Warm |
+`));
+    assert.deepEqual(result.diagnostics,[]);
+    const diagram=result.document.panels[0].blocks[0];
+    assert.deepEqual(diagram.spec.messages.map(({label})=>label),['Read, retry','Probe']);
+    assert.deepEqual(diagram.active,withBinding ? [{case:'warm',nodes:['api'],edges:[{from:'active',to:'api'}]}] : []);
+  });
+}
