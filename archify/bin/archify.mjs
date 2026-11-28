@@ -2214,11 +2214,11 @@ const COMMAND_USAGE = {
   ],
   render: '<type> <input.json> [output.html] [--quality standard|showcase] [--repo-root path]',
   compare: 'architecture <base.json> <head.json> [output.html] [--receipt path] [--json] [--quality standard|showcase] [--repo-root path]',
-  deliver: '<type> <input.json> [output.html] [--json] [--open] [--quality standard|showcase] [--repo-root path]',
+  deliver: '<type> <input.json> [output.html] [--json] [--open] [--no-update-notice] [--quality standard|showcase] [--repo-root path]',
   patch: 'explainer <artifact.html> <panel-id> <replacement-file> <output.html> [--json] [--quality standard|showcase] [--repo-root path]',
-  finalize: '<type> <input.json> <output.html> [--json] [--browser-check] [--receipt path] [--out-dir <dir>] [--quality standard|showcase] [--repo-root path] [--candidate-sha256 hex]',
+  finalize: '<type> <input.json> <output.html> [--json] [--browser-check] [--no-update-notice] [--receipt path] [--out-dir <dir>] [--quality standard|showcase] [--repo-root path] [--candidate-sha256 hex]',
   preview: '<type> <input.json> [output.html] [--no-open] [--quality standard|showcase] [--repo-root path]',
-  validate: '<type> <input.json> [--json] [--layout-json] [--quality standard|showcase] [--repo-root path]',
+  validate: '<type> <input.json> [--json [--with-layout]] [--layout-json] [--quality standard|showcase] [--repo-root path]',
   'export-svg': '<type> <input.json> <output.svg|stem> [--theme both|light|dark] [--preset name] [--animate-flow] [--json] [--quality standard|showcase] [--repo-root path]',
   pr: ['preflight [--repo-root path] [--base ref] [--head ref] [--init dir] [--mode ask|on-demand|proactive] [--target body|comment] [--global-rules path] [--json]', 'validate <manifest.json> [--repo-root path] [--json]', 'build <manifest.json> --out-dir <dir> [--repo-root path] [--platform github|gitlab|generic] [--no-html] [--animate-flow] [--quality standard|showcase] [--json]', 'attach <pr-number-or-url|gitlab-mr-url> --manifest <build-receipt.json> [--target body|comment] [--repo owner/name] [--allow-stale] [--dry-run] [--json]'],
   migrate: 'workflow <old.json> <new.json> --to-schema 2 [--output portable.html] [--json] [--repo-root path]',
@@ -4488,7 +4488,8 @@ async function commandDeliver(args) {
   repoArgs.rest = writingArgs.rest;
   const json = repoArgs.rest.includes('--json');
   const open = repoArgs.rest.includes('--open');
-  const knownOptions = new Set(['--json', '--open']);
+  const noUpdateNotice = repoArgs.rest.includes('--no-update-notice');
+  const knownOptions = new Set(['--json', '--open', '--no-update-notice']);
   const unknown = repoArgs.rest.filter((arg) => arg.startsWith('--') && !knownOptions.has(arg));
   if (unknown.length) rejectCliArgument(`Unknown deliver option "${unknown[0]}".`, {
     code: 'cli/unknown-option',
@@ -5006,6 +5007,31 @@ async function commandDeliver(args) {
     if (render.stderr) process.stderr.write(render.stderr);
     const localeWarnings = [...await specificationLocaleDiagnostics(type, specification), ...(explainerBundle?.diagnostics.filter(entry => entry.severity === 'warning') || [])];
     for (const warning of localeWarnings) process.stderr.write(`archify: ${warning.message}\n`);
+    // An outdated installation adds a small local notice to the page before
+    // the artifact check, so the check, receipt hash, and provenance all bind
+    // the bytes that are delivered. Any failure leaves the page unchanged.
+    let updateNotice = null;
+    const noticeCandidatePath = `${candidatePath}.update-notice`;
+    try {
+      const { injectUpdateNotice, resolveUpdateNotice } = await import('./update-notice.mjs');
+      const notice = await resolveUpdateNotice({ optOut: noUpdateNotice });
+      if (notice) {
+        const injected = injectUpdateNotice(fs.readFileSync(candidatePath, 'utf8'), notice);
+        if (injected.embedded) {
+          fs.writeFileSync(noticeCandidatePath, injected.html, { flag: 'wx' });
+          fs.renameSync(noticeCandidatePath, candidatePath);
+          updateNotice = {
+            embedded: true,
+            installedVersion: notice.installedVersion,
+            availableVersion: notice.availableVersion,
+          };
+        }
+      }
+    } catch {
+      // The notice is optional; the rendered candidate is still checked below.
+      updateNotice = null;
+      try { fs.rmSync(noticeCandidatePath, { force: true }); } catch {}
+    }
     try {
       const renderedCandidate = fs.readFileSync(candidatePath);
       if (preparedDeliveryTargets.artifact.mode !== null) {
@@ -5162,6 +5188,7 @@ async function commandDeliver(args) {
         },
       } : {}),
       ...(localeWarnings.length ? { diagnostics: localeWarnings } : {}),
+      ...(updateNotice ? { updateNotice } : {}),
     };
 
     const provenanceBytes = Buffer.from(`${JSON.stringify(deliverySuccessProvenance(receipt), null, 2)}\n`);
@@ -6023,7 +6050,7 @@ async function commandFinalize(rawArgs) {
   const writingArgs = extractExplainerWritingArgs(candidateArgs.rest);
   candidateArgs.rest = writingArgs.rest;
   const json = candidateArgs.rest.includes('--json');
-  const knownOptions = new Set(['--json','--browser-check']);
+  const knownOptions = new Set(['--json','--browser-check','--no-update-notice']);
   const unknown = candidateArgs.rest.filter((arg) => arg.startsWith('--') && !knownOptions.has(arg));
   if (unknown.length) rejectCliArgument(`Unknown finalize option "${unknown[0]}".`, {
     code: 'cli/unknown-option',
@@ -6068,6 +6095,7 @@ async function commandFinalize(rawArgs) {
       repoRoot: repoArgs.repoRoot,
       writingMode: writingArgs.writingMode,
       browserCheck: candidateArgs.rest.includes('--browser-check'),
+      updateNotice: !candidateArgs.rest.includes('--no-update-notice'),
       candidateSha256: candidateArgs.candidateSha256,
       outDir: outDirArgs.outDir,
       receiptPath: receiptArgs.receiptPath,
@@ -7110,6 +7138,7 @@ async function commandValidate(args, invocation = {}) {
   const quality = qualityArgs.quality;
   const repoRoot = repoArgs.repoRoot;
   const knownOptions = new Set(['--json', '--layout-json']);
+  if (invokingCommand === 'validate') knownOptions.add('--with-layout');
   const unknown = args.filter((arg) => arg.startsWith('--') && !knownOptions.has(arg));
   if (unknown.length) rejectCliArgument(`Unknown ${invokingCommand} option "${unknown[0]}".`, {
     code: 'cli/unknown-option',
@@ -7118,6 +7147,7 @@ async function commandValidate(args, invocation = {}) {
   });
   const json = args.includes('--json');
   const layoutJson = args.includes('--layout-json');
+  const withLayout = args.includes('--with-layout');
   const rest = args.filter((arg) => !knownOptions.has(arg));
   const [type, input] = rest;
   if (!type || !input || rest.length !== 2) rejectCliArgument(usage(), {
@@ -7125,6 +7155,25 @@ async function commandValidate(args, invocation = {}) {
     supportedFixes: [`use: archify ${invokingCommand} <type> <input.json> [options]`],
   });
   const renderer = rendererPath(type);
+  // --with-layout adds the --layout-json report to a passing --json verdict,
+  // so a caller that needs both pays for one render (#1420).
+  if (withLayout && (layoutJson || !json)) rejectCliArgument(
+    layoutJson
+      ? `--with-layout adds the layout to the --json verdict; it cannot be combined with --layout-json.`
+      : `--with-layout requires --json.`,
+    {
+      code: 'cli/unsupported-option',
+      subject: { command: invokingCommand, option: '--with-layout' },
+      supportedFixes: layoutJson
+        ? ['use --json --with-layout for the verdict and layout together', 'use --layout-json alone for the layout only']
+        : ['add --json'],
+    },
+  );
+  if (withLayout && type === 'explainer') rejectCliArgument('--with-layout is supported for native diagram types; explainer has no layout report.', {
+    code: 'cli/unsupported-option',
+    subject: { command: invokingCommand, option: '--with-layout', type },
+    supportedFixes: ['remove --with-layout for explainer documents'],
+  });
 
   const inputPath = path.resolve(input);
   let specification;
@@ -7194,6 +7243,7 @@ async function commandValidate(args, invocation = {}) {
   const temporary = createOwnedTempDirectory('archify-validate-');
   const tmp = temporary.path;
   const out = path.join(tmp, `${type}.html`);
+  const layoutReportPath = withLayout ? path.join(tmp, 'layout.json') : null;
   let exitCode = 0;
   let report = () => {};
 
@@ -7207,7 +7257,11 @@ async function commandValidate(args, invocation = {}) {
     }
     const render = runNode([renderer, snapshot, out], {
       stdio: 'pipe',
-      env: { ...rendererEnv(quality, repoRoot, true), ...(preparedBundlePath ? { ARCHIFY_EXPLAINER_PREPARED: preparedBundlePath, ARCHIFY_EXPLAINER_SNAPSHOT_INPUT: inputPath } : {}) },
+      env: {
+        ...rendererEnv(quality, repoRoot, true),
+        ...(preparedBundlePath ? { ARCHIFY_EXPLAINER_PREPARED: preparedBundlePath, ARCHIFY_EXPLAINER_SNAPSHOT_INPUT: inputPath } : {}),
+        ...(layoutReportPath ? { ARCHIFY_LAYOUT_REPORT_PATH: layoutReportPath } : {}),
+      },
     });
     if (render.status !== 0) {
       const failure = rendererFailure(render);
@@ -7265,7 +7319,37 @@ async function commandValidate(args, invocation = {}) {
       } else {
         const result = JSON.parse(check.stdout);
         const engineeringProfile = engineeringProfileFromArtifact(fs.readFileSync(out));
-        if (json) {
+        let layout;
+        if (layoutReportPath) {
+          try {
+            const recorded = JSON.parse(fs.readFileSync(layoutReportPath, 'utf8'));
+            if (recorded?.ok !== true || recorded.diagram_type !== type
+              || !Array.isArray(recorded.viewBox) || recorded.viewBox.length !== 2) {
+              throw new Error(`Expected a successful ${type} layout report with a viewBox.`);
+            }
+            layout = recorded;
+          } catch (error) {
+            exitCode = 1;
+            const message = `The renderer did not record a readable layout report: ${error.message}`;
+            report = () => reportFailure({
+              json,
+              stage: 'render',
+              type,
+              input: path.resolve(input),
+              error: message,
+              diagnostics: [{
+                code: 'validate/layout-report-unavailable',
+                severity: 'error',
+                message,
+                subject: { type },
+                evidence: { reason: error.code || error.name },
+                supportedFixes: ['run validate <type> <input.json> --layout-json for the layout alone', 'report the renderer failure'],
+              }],
+              status: 1,
+            });
+          }
+        }
+        if (exitCode === 0 && json) {
           const candidate = {
             path: path.resolve(input),
             ...artifactIdentity(specification),
@@ -7297,9 +7381,10 @@ async function commandValidate(args, invocation = {}) {
             composition: result.composition,
             ...(engineeringProfile ? { engineeringProfile } : {}),
             ...(localeWarnings.length ? { diagnostics: localeWarnings } : {}),
+            ...(withLayout ? { layout } : {}),
           };
           report = () => console.log(JSON.stringify(receipt, null, 2));
-        } else {
+        } else if (exitCode === 0) {
           const engineering = engineeringProfile
             ? `; engineering ${engineeringProfile}: pass`
             : '';
@@ -7333,6 +7418,12 @@ async function commandValidate(args, invocation = {}) {
 
   report();
   if (exitCode !== 0) process.exitCode = exitCode;
+}
+
+// Only validate --with-layout may supply this internal path to a renderer.
+// Strip inherited spellings before dispatch, including Windows case aliases.
+for (const name of Object.keys(process.env)) {
+  if (name.toUpperCase() === 'ARCHIFY_LAYOUT_REPORT_PATH') delete process.env[name];
 }
 
 const [command, ...args] = process.argv.slice(2);

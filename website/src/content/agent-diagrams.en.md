@@ -1,6 +1,6 @@
 # Create diagrams with your coding agent
 
-Archify is an open-source visual explanation skill for coding agents including Claude Code, Codex, Cursor, OpenCode, and GitHub Copilot. From a plain-language idea, an everyday plan, a complex topic, a Mermaid draft, or repository evidence, your agent writes typed JSON across **10 native diagram types** or an `.archify.md` **one-page explainer**; Archify renders a polished, standalone interactive HTML file and runs structure/layout validation (with default real-browser checks for native diagrams; opt-in via `--browser-check` for explainers).
+Archify is an open-source visual explanation skill for coding agents. Installation examples cover Claude Code, Codex, Cursor, OpenCode, and GitHub Copilot. From a plain-language idea, an everyday plan, a complex topic, a Mermaid draft, or repository evidence, your agent writes typed JSON for one of **10 native diagram types** or an `.archify.md` draft for a **one-page explainer**. Archify renders a standalone interactive HTML file and checks its structure and layout. Native diagrams get real-browser checks by default. For explainers, enable those checks with `--browser-check`.
 
 Use it to make anything complex easy to see and explore — travel schedules, apartment-renting checklists, monthly cashflows, science/protocol explainers, workflows, or production system architectures. Start fast in plain words with zero diagram syntax to learn; add repository evidence when you want code-backed diagrams, or ask your agent afterward to extend the standalone HTML.
 
@@ -28,10 +28,12 @@ Archify supports ten native diagram types. The agent picks the type that fits th
 - **dataflow** — sources, transforms, stores, and sinks.
 - **lifecycle** — states, transitions, and guards.
 - **erd** — entities, keys, and relationship cardinality.
-- **class** — types, fields, methods, inheritance and composition.
-- **tree** — file, organizational, or decision hierarchies.
-- **timeline** — dated or ordered events and their relationships.
-- **waterfall** — staged totals, contributions, and deltas.
+- **class** — types, fields, methods, inheritance and composition, as in the [payment module class diagram](https://archify.si/gallery/artifacts/payments.class).
+- **tree** — file, organizational, or decision hierarchies, as in the [payment platform capability tree](https://archify.si/gallery/artifacts/payment-platform.tree).
+- **timeline** — dated or ordered events and their relationships, as in the [payment incident timeline](https://archify.si/gallery/artifacts/payment-incident.timeline).
+- **waterfall** — timed spans, overlap, and nesting within a request or agent run, as in the [checkout request waterfall](https://archify.si/gallery/artifacts/checkout-request.waterfall).
+
+For new architecture diagrams, the Skill uses `layout.mode: "auto"` to place components from their relationships while preserving any positions and routes you supply. This setting applies only to architecture diagrams.
 
 Choose the type for the question, not the other way around. A “system overview” is often an architecture diagram; “what happens on a cache miss” is usually a sequence. The [scenario guide](guide.html) shows selected starting recipes and does not claim that every type supports every interaction or notation.
 
@@ -45,7 +47,7 @@ Open the [agent-aware quick start](start.html). Select the agent you actually us
 
 Use a coding-agent environment that can read and write files and execute commands with Node.js. “No repository required” means you can supply a natural-language description without existing source code; the agent still needs a workspace to write JSON and HTML and run the renderer and checks. Viewing the finished HTML only needs a browser.
 
-The [installation reference](https://github.com/tt-a1i/archify/blob/main/README.md#installation-options) distinguishes these surfaces. Claude Code and Codex CLI support the full renderer and validation workflow. Claude.ai depends on Node.js access in its sandbox; uploading a ZIP to Project Knowledge is a prompt-driven fallback, not the same execution environment. Other integrations have their own requirements.
+The [installation reference](https://github.com/tt-a1i/archify/blob/main/README.md#installation-options) distinguishes these surfaces. Claude Code and Codex CLI support the full renderer and validation workflow. Claude.ai depends on Node.js access in its sandbox. Uploading a ZIP to Project Knowledge is a prompt-driven fallback for architecture diagrams. OpenCode and the community integrations for Hermes Agent and DeepSeek Harness have their own installation instructions.
 
 <span id="setup-claude-code" class="section-anchor" aria-hidden="true"></span>
 
@@ -53,7 +55,7 @@ The [installation reference](https://github.com/tt-a1i/archify/blob/main/README.
 
 For a global copied installation, run this in the terminal of the environment where you use Claude Code:
 
-<pre><code>npx -y skills@latest add https://archify.si --skill archify --agent claude-code --global --copy --yes</code></pre>
+<pre><code>npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent claude-code --global --copy --yes</code></pre>
 
 Claude Code uses `~/.claude/skills/` for global skills or `.claude/skills/` in the project. For a project-scoped installation instead, choose [Claude Code in Start](start.html?agent=claude-code#install) and use “This repository only” from the intended project directory.
 
@@ -63,7 +65,7 @@ Claude Code uses `~/.claude/skills/` for global skills or `.claude/skills/` in t
 
 For a global copied installation, run this in the terminal of the environment where you use Codex CLI:
 
-<pre><code>npx -y skills@latest add https://archify.si --skill archify --agent codex --global --copy --yes</code></pre>
+<pre><code>npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent codex --global --copy --yes</code></pre>
 
 Codex CLI uses `~/.agents/skills/` for global skills or `.agents/skills/` in the project. For a project-scoped installation instead, choose [Codex in Start](start.html?agent=codex#install) and use “This repository only” from the intended project directory.
 
@@ -156,25 +158,25 @@ For an existing source-backed example, see the [MCO runtime architecture](https:
 
 ### Check the dependencies with Architecture Diagnosis
 
-A diagram shows the architecture you described; Architecture Diagnosis shows how the code actually depends on itself. It is built into the Skill. After a repository-backed architecture diagram passes its checks, the agent's summary ends with what Diagnosis can do, and it runs only if you say yes. You can also ask directly:
+Architecture Diagnosis is built into the Skill and examines dependencies in the local code. After a repository-backed architecture diagram passes its checks, the agent offers Diagnosis once per repository if it finds eligible source files. The offered analysis starts only after you agree. A standalone architecture diagram with repository metadata also has a Code Analysis button with a prompt you can copy. You can ask directly:
 
 > Use archify Code Analysis on this repository: show module coupling, dependency cycles and hotspots.
 
-The result is one offline HTML file: a dependency star map, a rotatable 3D model and ranked findings (cycles, coupling, complexity hotspots, layer-rule breaks), each linked to its source with a fix task you can hand back to the agent. Paired with your architecture diagram, every component shows its issue count, and imports the diagram does not show are flagged. JS/TS, Python, Java, Go, Rust, C and C++ are supported; Go, Rust and C/C++ need their own toolchains. Findings come from static analysis of one pinned revision, not from runtime traces. See the [Code Analysis guide](https://github.com/tt-a1i/archify/blob/main/archify/modules/code-analysis/docs/USAGE.md).
+The result is one offline HTML file with a dependency star map, a rotatable 3D model and ranked findings (cycles, coupling, complexity hotspots, layer-rule breaks). You can inspect captured source evidence and copy fix tasks for your agent. Paired with your architecture diagram, it shows issue counts on components and flags imports it can map unambiguously between components when the diagram omits them. Each run uses one language adapter: JS/TS, Python, Java, Go, Rust, C or C++. Go, Rust and C/C++ need their own tooling. A regular local analysis captures the working tree, including uncommitted code, and reports static evidence. For an offline review of changes, you can also compare two pinned local commits. See the [Code Analysis guide](https://github.com/tt-a1i/archify/blob/main/archify/modules/code-analysis/docs/USAGE.md).
 
 
 <span id="explainer" class="section-anchor" aria-hidden="true"></span>
 
 ## One diagram, or a one-page explainer?
 
-Use a diagram when the reader needs to see structure. Use a one-page explainer when the reader needs an argument: a conclusion, its reasons, and the evidence for each part. An explainer leads with the conclusion, then answers one sub-question per panel using prose, tables, steps, charts, code excerpts from a pinned commit, and validated diagrams. Claims cite numbered sources, and blank chart data is rejected rather than drawn as zero.
+Use a diagram when the reader needs to see structure. Use a one-page explainer when the reader needs a conclusion, its reasons, and the evidence for each part. An explainer leads with the conclusion, then answers one sub-question per panel using prose, tables, steps, charts, code excerpts from a pinned commit, and validated diagrams. Explainers support numbered source citations and reject blank chart data.
 
 Two recorded examples show the format without implying that they were generated for you:
 
 - [What happens on a first TLS visit](cases/explainer/tls-first-visit.html) walks through a protocol sequence panel by panel.
 - [Why P99 latency spikes](cases/explainer/p99-tail-latency.html) turns a routine performance question into a conclusion-first investigation.
 
-Explainer mode defaults to `proactive`: in addition to explicit page requests, the Skill can create a page unasked for a complex flow, diagnosis, trade-off comparison, or review report. Add `[archify explainer: on-demand]` to your agent rules file when you want pages created only on explicit request. The artifact is still a single HTML file; readers can switch among four presentation styles and export a long image or PDF where the environment supports it.
+Explainer mode defaults to `proactive`. In addition to explicit page requests, the Skill can make a page for a complex flow, diagnosis, comparison, test or review report, or plan that needs tables, steps, or several sections. In your agent's global rules file, `[archify explainer: on-demand]` limits pages to explicit requests, and `[archify explainer: always-on]` adds a compact page of up to four panels to eligible replies that reach a conclusion. Remove the rule to restore the default. A conversation instruction can override the mode. The single HTML file offers four presentation styles, long-image export as PNG, WebP, or JPG, and printing to PDF where supported.
 
 <span id="review-and-share" class="section-anchor" aria-hidden="true"></span>
 
@@ -184,7 +186,11 @@ Make focused revisions through your agent: explain a missing return, rename a co
 
 Open the HTML and review both its meaning and readability. Automated checks and a human visual inspection answer different questions. Do not treat one as a substitute for the other.
 
-Share the HTML when readers need its interactions. Use an image export when a document or slide needs a static view. Archify documents PNG, JPEG, WebP, SVG, and WebM exports, and a diagram with an attached story adds a 1080p Story video (WebM or MP4); availability depends on the format, browser, and local tooling. Inspect the actual artifact's export menu before committing to a delivery format. An exported image does not preserve the HTML's interactive controls.
+Share the HTML when readers need its interactions. Use a static image for a document or slide. The native diagram Viewer exports PNG, JPEG, WebP, SVG, and WebM. Availability depends on the format, browser, and local tooling, so check the artifact's Export menu before choosing a delivery format.
+
+Ask your agent to add a guided Story to any native diagram. Readers can scrub the timeline and read captions. **Export → Story video** records at 1080p and 60 fps as WebM or MP4. You can also ask for a single interactive stage or video that combines several diagrams.
+
+For a pull request or branch change, ask your agent for a walkthrough that marks changes on the diagram. The default installation includes `archify-pr`, which offers a diagram while you prepare a PR with material changes. Add `[archify pr: on-demand]` to your agent's global rules file to limit it to explicit requests. The agent can attach walkthroughs to GitHub PRs and static views to GitLab MRs, both in light and dark themes.
 
 Before sharing a repository-derived artifact, check its labels, cards, embedded source, and links for information that should not leave your team. A standalone file is portable, not automatically public-safe. The coding agent's own data handling remains separate from Archify's artifact format.
 
@@ -211,6 +217,10 @@ Yes. See [how to use Mermaid as agent input](#mermaid-input) for a small example
 ### Is a repository required?
 
 No. A clear description can be enough. A repository becomes useful when the diagram must explain real code and you want inspectable source evidence.
+
+### When should I use Architecture Diagnosis vs. PR walkthroughs?
+
+Use [Architecture Diagnosis](#repository-evidence) to run static Code Analysis on a repository and inspect dependencies, cycles, and hotspots. Use [PR walkthroughs](#review-and-share) with `archify-pr` to mark what changed on a diagram for a GitHub PR or GitLab MR.
 
 ### Is it free, and which Archify is this?
 

@@ -17,6 +17,8 @@ import {
   changeLegendEntries,
   changeNodeAttrs,
   changeReviewFor,
+  frameChangeBadgePos,
+  frameTitleBox,
   nodeChangeBadgePos,
   renderChangeBadge,
   renderChangeLegendSwatch,
@@ -482,7 +484,13 @@ function renderLanes() {
     const frame = laneFrameById.get(lane.id);
     const rect = { x: layout.margin - 8, y: lane.y, width: axisX1 - layout.margin + 8, height: lane.height };
     const frameAttrs = frame ? ` data-graph-role="structural-frame"${changeFrameAttrs(changeReview, frame)}` : '';
-    const badge = frame?.change ? `\n          ${renderChangeBadge(frame, nodeChangeBadgePos(rect, { rx: 10 }))}` : '';
+    const badgePos = lane.label
+      ? frameChangeBadgePos(frameTitleBox(layout.margin, lane.lineY + 4.5, 13, lane.label), {
+        maxRight: axisX0 - 2,
+        fallback: nodeChangeBadgePos(rect, { rx: 10 }),
+      })
+      : nodeChangeBadgePos(rect, { rx: 10 });
+    const badge = frame?.change ? `\n          ${renderChangeBadge(frame, badgePos)}` : '';
     return `        <g data-timeline-lane="${esc(lane.id)}">
           <rect x="${rect.x}" y="${rect.y}" width="${rect.width}" height="${rect.height}" rx="10" class="tl-lane${index % 2 ? ' tl-lane-alt' : ''}"${frameAttrs}/>
           <line x1="${axisX0 + 8}" y1="${lane.lineY}" x2="${axisX1 - 8}" y2="${lane.lineY}" class="tl-lane-line" stroke-width="1.5" stroke-linecap="round"/>
@@ -550,14 +558,14 @@ ${Object.values(KIND_TONE).map((tone) => `          svg[data-timeline-ui] .tl-ac
           svg[data-timeline-ui] .tl-stem-${tone} { stroke: color-mix(in srgb, var(--${tone}-stroke) 45%, var(--lane-stroke)); }
           svg[data-timeline-ui] .tl-pin-${tone} { fill: var(--${tone}-fill); stroke: color-mix(in srgb, var(--${tone}-stroke) 35%, transparent); stroke-width: 1; }`).join('\n')}
           svg[data-timeline-ui] .tl-tick, svg[data-timeline-ui] .tl-time { font-variant-numeric: tabular-nums; }${changeReview.active ? `
-          svg[data-timeline-ui] [data-node-id][data-change="added"] > .tl-card { stroke: var(--backend-stroke); stroke-opacity: 1; stroke-width: 2.4; }
-          svg[data-timeline-ui] [data-node-id][data-change="modified"] > .tl-card { stroke: var(--cloud-stroke); stroke-opacity: 1; stroke-width: 2.4; }
-          svg[data-timeline-ui] [data-node-id][data-change="removed"] > .tl-card { stroke: var(--security-stroke); stroke-opacity: 1; stroke-width: 1.6; stroke-dasharray: 5,4; }
-          svg[data-timeline-ui] [data-timeline-lane] > .tl-lane[data-change="added"] { opacity: 0.85; stroke: var(--backend-stroke); stroke-width: 2; }
-          svg[data-timeline-ui] [data-timeline-lane] > .tl-lane[data-change="modified"] { opacity: 0.85; stroke: var(--cloud-stroke); stroke-width: 2; }
-          svg[data-timeline-ui] [data-timeline-lane] > .tl-lane[data-change="removed"] { opacity: 0.62; stroke: var(--security-stroke); stroke-width: 1.4; stroke-dasharray: 5,4; }
+          svg[data-timeline-ui] [data-node-id][data-change="added"] > .tl-card { stroke: var(--backend-stroke); stroke-opacity: 1; stroke-width: 1.75; }
+          svg[data-timeline-ui] [data-node-id][data-change="modified"] > .tl-card { stroke: var(--cloud-stroke); stroke-opacity: 1; stroke-width: 1.75; }
+          svg[data-timeline-ui] [data-node-id][data-change="removed"] > .tl-card { stroke: var(--security-stroke); stroke-opacity: 1; stroke-width: 1.6; stroke-dasharray: 0.1,3.4; stroke-linecap: round; }
+          svg[data-timeline-ui] [data-timeline-lane] > .tl-lane[data-change="added"] { opacity: 0.85; stroke: var(--backend-stroke); stroke-width: 1.25; }
+          svg[data-timeline-ui] [data-timeline-lane] > .tl-lane[data-change="modified"] { opacity: 0.85; stroke: var(--cloud-stroke); stroke-width: 1.25; }
+          svg[data-timeline-ui] [data-timeline-lane] > .tl-lane[data-change="removed"] { opacity: 0.62; stroke: var(--security-stroke); stroke-width: 1.4; stroke-dasharray: 0.1,3.4; stroke-linecap: round; }
           svg[data-timeline-ui] [data-timeline-lane] > .tl-lane[data-change-context="subdued"]:not(.tl-lane-alt) { opacity: 0.36; }` : ''}
-          svg[data-timeline-ui] [data-node-id][data-emphasis] > .tl-card { stroke-opacity: 1; stroke-width: 3.2; }
+          svg[data-timeline-ui] [data-node-id][data-emphasis] > .tl-card { stroke-opacity: 1; stroke-width: 2.4; }
         </style>
 
         <!-- Background Grid -->
@@ -616,5 +624,6 @@ if (layoutJsonMode) {
     svg: renderSvg(),
     cards: tl.cards,
     sourceEvidence,
+    layoutReport: buildLayoutReport,
   });
 }

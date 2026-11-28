@@ -21,7 +21,7 @@ test('tracked scratch package runs public explainer without dependencies and mis
   fs.mkdirSync(outside);
   fs.cpSync(path.join(repository, 'archify'), path.join(source, 'archify'), { recursive: true, filter(file) {
     const relative = path.relative(path.join(repository, 'archify'), file);
-    return !relative.split(path.sep).some(segment => ['node_modules', 'test'].includes(segment) || segment.startsWith('.validator-check-'));
+    return !relative.split(path.sep).some(segment => ['node_modules', 'test'].includes(segment) || segment.startsWith('.validator-check-') || segment.startsWith('.package-negative-'));
   } });
   for (const name of ['THIRD_PARTY_NOTICES.md', 'LICENSE', 'LICENSE-MIT', 'NOTICE']) {
     fs.copyFileSync(path.join(repository, name), path.join(source, name));

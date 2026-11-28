@@ -1587,7 +1587,12 @@ ${svgAccessibleText(er.meta, 'erd')}
 ${renderDefinitions(renderCardinalityDefs())}
         <style>
 ${DOMAIN_HUES.map((hue) => `          svg[data-erd-ui="cards"] .er-hue-${hue} { --er-hue: var(--${hue}-stroke); --er-wash: var(--${hue}-fill); }`).join('\n')}
-          svg[data-erd-ui="cards"] .er-band { fill: color-mix(in srgb, var(--er-hue) 4%, transparent); stroke: color-mix(in srgb, var(--er-hue) 20%, transparent); stroke-dasharray: none; }
+${changeReview.active ? `          svg[data-erd-ui="cards"] [data-domain-band] { --er-hue: var(--text-dim); --er-wash: color-mix(in srgb, var(--text-dim) 10%, var(--mask)); }
+          svg[data-erd-ui="cards"] [data-node-id][data-change-context] { --er-hue: var(--text-dim); --er-wash: color-mix(in srgb, var(--text-dim) 8%, var(--mask)); }
+          svg[data-erd-ui="cards"] [data-node-id][data-change="added"] { --er-hue: var(--backend-stroke); --er-wash: color-mix(in srgb, var(--backend-stroke) 14%, var(--mask)); }
+          svg[data-erd-ui="cards"] [data-node-id][data-change="modified"] { --er-hue: var(--cloud-stroke); --er-wash: color-mix(in srgb, var(--cloud-stroke) 15%, var(--mask)); }
+          svg[data-erd-ui="cards"] [data-node-id][data-change="removed"] { --er-hue: var(--security-stroke); --er-wash: color-mix(in srgb, var(--security-stroke) 9%, var(--mask)); }
+` : ''}          svg[data-erd-ui="cards"] .er-band { fill: color-mix(in srgb, var(--er-hue) 4%, transparent); stroke: color-mix(in srgb, var(--er-hue) 20%, transparent); stroke-dasharray: none; }
           svg[data-erd-ui="cards"] .er-band-pill { fill: var(--er-wash); stroke: color-mix(in srgb, var(--er-hue) 30%, transparent); stroke-width: .8; }
           svg[data-erd-ui="cards"] .er-band-label { fill: var(--er-hue); letter-spacing: .08em; text-transform: uppercase; }
           svg[data-erd-ui="cards"] .er-table { fill: var(--mask); stroke: color-mix(in srgb, var(--er-hue) 34%, var(--lane-stroke)); }
@@ -1658,5 +1663,6 @@ if (layoutJsonMode) {
     svg: renderSvg(),
     cards: er.cards,
     sourceEvidence,
+    layoutReport: buildLayoutReport,
   });
 }
