@@ -1,0 +1,10 @@
+{
+  "templateVersion": 1,
+  "repository": "tt-a1i/archify",
+  "number": 1518,
+  "author": "tt-a1i",
+  "title": "feat(seo): refine GEO v6 comparison accuracy, ZH flowchart H1/link, and llms.txt pointer",
+  "mergedAt": "2026-11-28T03:27:44Z",
+  "mergeCommit": "b42e7d7fd769f47159b5894609b25201b4ce6064",
+  "url": "https://github.com/tt-a1i/archify/pull/1518"
+}
