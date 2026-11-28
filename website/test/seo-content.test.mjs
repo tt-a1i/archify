@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { parse } from 'parse5';
 import { CASES } from '../src/data/gallery-presentation.mjs';
 import { PUBLISHED_CASES } from '../src/data/published-cases.mjs';
+import { sitePages } from '../src/data/site-urls.mjs';
 import { publicGuideData, SCENARIO_RECIPES, startPromptsFor } from '../../archify/recipes/scenarios.mjs';
 
 const root = process.env.ARCHIFY_SITE_ROOT || fileURLToPath(new URL(process.env.ARCHIFY_SITE_TARGET === 'cloudflare' ? '../dist-cloudflare/' : '../dist/', import.meta.url));
@@ -90,6 +91,19 @@ test('initial homepage product facts explain identity, inputs, delivery, license
   assert.ok(hrefs.includes('https://github.com/tt-a1i/archify/blob/main/LICENSE'));
 });
 
+test('initial Chinese homepage links to the localized flowchart comparison', () => {
+  const page = read('index', 'zh');
+  const origin = cloudflare ? 'https://archify.si/' : 'https://tt-a1i.github.io/archify/';
+  const extension = cloudflare ? '' : '.html';
+  const base = new URL(attr(byTag(page, 'base'), 'href'), new URL(`zh${extension}`, origin));
+  const expected = new URL(`zh/compare${extension}`, origin);
+  const link = links(find(page, 'about-archify'))
+    .find(node => new URL(attr(node, 'href'), base).href === expected.href);
+  assert.ok(link, 'product facts link to the Chinese comparison page');
+  const label = text(link);
+  assert.ok(label.includes('draw.io') && label.includes('ProcessOn'), 'link names both flowchart tools');
+});
+
 for (const lang of ['en', 'zh']) {
   test(`initial ${lang} pages distinguish supported types from selected recipes and use the release channel`, () => {
     const release = JSON.parse(fs.readFileSync(new URL('../../archify/skill-release.json', import.meta.url)));
@@ -128,7 +142,7 @@ for (const lang of ['en', 'zh']) {
   });
 }
 
-test('Chinese page metadata descriptions stay descriptive enough for search snippets', () => {
+test('built metadata descriptions fit localized search snippets', () => {
   const findMetaDescription = node => {
     if (node.tagName === 'meta' && attr(node, 'name') === 'description') return attr(node, 'content') || '';
     for (const child of node.childNodes || []) {
@@ -137,13 +151,20 @@ test('Chinese page metadata descriptions stay descriptive enough for search snip
     }
     return null;
   };
-  for (const pageKey of ['index', 'start', 'guide', 'gallery', 'community', 'agent-diagrams', 'compare', 'cases/mco-runtime']) {
-    const desc = (findMetaDescription(read(pageKey, 'zh')) || '').trim();
-    assert.ok(desc.length >= 75, `built zh ${pageKey} meta description is too short (${desc.length})`);
+  const length = page => [...(findMetaDescription(byTag(page, 'head')) || '').trim()].length;
+  for (const page of sitePages) {
+    const en = length(read(page, 'en'));
+    const zh = length(read(page, 'zh'));
+    const [min, max] = page === 'community' ? [125, 160] : [135, 165];
+    assert.ok(en >= min && en <= max, `built en ${page} has ${en} description characters`);
+    assert.ok(zh >= 75, `built zh ${page} meta description is too short (${zh})`);
+    if (page !== 'index' && page !== 'agent-diagrams') {
+      assert.ok(zh >= 125 && zh <= 160, `built zh ${page} has ${zh} description characters`);
+    }
   }
   for (const entry of PUBLISHED_CASES) {
-    if (!entry.documentDescription && entry.language === 'zh-CN') {
-      assert.ok(entry.description.length >= 75, `published-cases ${entry.artifact} zh description is too short (${entry.description.length})`);
-    }
+    if (entry.documentDescription || entry.language !== 'zh-CN') continue;
+    const zh = length(parse(fs.readFileSync(path.join(root, entry.artifact), 'utf8')));
+    assert.ok(zh >= 125 && zh <= 160, `built zh ${entry.artifact} has ${zh} description characters`);
   }
 });

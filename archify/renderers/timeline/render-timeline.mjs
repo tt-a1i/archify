@@ -624,5 +624,6 @@ if (layoutJsonMode) {
     svg: renderSvg(),
     cards: tl.cards,
     sourceEvidence,
+    layoutReport: buildLayoutReport,
   });
 }

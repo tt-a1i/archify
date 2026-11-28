@@ -520,7 +520,7 @@ test('enrolling a catalog is a data-only change and works from an unrelated work
   const packageRoot = path.join(tmp, 'package-copy', 'archify');
   fs.cpSync(skillRoot, packageRoot, {
     recursive: true,
-    filter: (source) => !['node_modules', 'test'].includes(path.basename(source)) || path.dirname(source) !== skillRoot,
+    filter: (source) => { const relative = path.relative(skillRoot, source); return !relative.startsWith('.package-negative-') && !relative.split(path.sep).includes('node_modules') && (relative !== 'test' && !relative.startsWith(`test${path.sep}`)); },
   });
   const french = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/locales/fr.json'), 'utf8'));
   // Drop a known key so this fixture exercises partial-coverage disclosure

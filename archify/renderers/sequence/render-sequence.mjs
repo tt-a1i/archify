@@ -1209,17 +1209,19 @@ ${renderLegend()}
 }
 
 validateSequence();
+const svg = renderSvg();
 if (process.argv.includes('--layout-json')) {
-  console.log(JSON.stringify(layoutReportFromSvg(renderSvg(), 'sequence'), null, 2));
+  console.log(JSON.stringify(layoutReportFromSvg(svg, 'sequence'), null, 2));
 } else {
   writeDiagram({
     outPath,
     template,
     diagramType: 'sequence',
     meta: sequence.meta,
-    svg: renderSvg(),
+    svg,
     cards: sequence.cards,
     sourceEvidence,
     diagram: sequence,
+    layoutReport: () => layoutReportFromSvg(svg, 'sequence'),
   });
 }

@@ -24,5 +24,6 @@ if (process.argv.includes('--layout-json')) {
   console.log(JSON.stringify(layoutReportFromSvg(svg, 'dataflow'), null, 2));
 } else {
   writeDiagram({ outPath, template, diagramType: 'dataflow', meta: dataflow.meta,
-    svg, cards: dataflow.cards, sourceEvidence, diagram: dataflow });
+    svg, cards: dataflow.cards, sourceEvidence, diagram: dataflow,
+    layoutReport: () => layoutReportFromSvg(svg, 'dataflow') });
 }
