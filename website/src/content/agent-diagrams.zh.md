@@ -28,10 +28,10 @@ Archify 支持十种原生图型。Agent 先按问题选型，再编写对应的
 - **dataflow（数据流）**：数据源、转换、存储与去向。
 - **lifecycle（生命周期）**：状态、迁移与守卫条件。
 - **erd（实体关系图）**：实体、键与关系基数。
-- **class（类图）**：类型、字段、方法，以及继承与组合。
-- **tree（树图）**：文件、组织或决策层级。
-- **timeline（时间线）**：带日期或顺序的事件及其关系。
-- **waterfall（瀑布图）**：一次请求或 Agent 运行中各段的耗时、重叠和嵌套。
+- **class（类图）**：类型、字段、方法，以及继承与组合，见[支付模块类图](https://archify.si/gallery/artifacts/payments.class)。
+- **tree（树图）**：文件、组织或决策层级，见[支付平台能力树图](https://archify.si/gallery/artifacts/payment-platform.tree)。
+- **timeline（时间线）**：带日期或顺序的事件及其关系，见[支付故障时间线](https://archify.si/gallery/artifacts/payment-incident.timeline)。
+- **waterfall（瀑布图）**：一次请求或 Agent 运行中各段的耗时、重叠和嵌套，见[结账请求瀑布图](https://archify.si/gallery/artifacts/checkout-request.waterfall)。
 
 新建架构图时，Skill 使用 `layout.mode: "auto"` 根据组件关系自动摆放组件，并保留你指定的位置和连线路径。此设置仅适用于架构图。
 
@@ -217,6 +217,10 @@ Archify 支持架构图、工作流、时序图、数据流、生命周期、实
 ### 必须有代码仓库吗？
 
 不需要。足够清楚的文字描述即可作为起点。只有当图需要解释真实代码、并希望检查源码证据时，仓库才成为重要输入。
+
+### 检查仓库依赖和解释一次 PR，分别用哪个功能？
+
+用[架构诊断](#repository-evidence)对仓库运行静态 Code Analysis，检查模块依赖、循环依赖和热点。要解释一次 GitHub PR 或 GitLab MR，就用 [`archify-pr` 的变更讲解](#review-and-share)，在图上标记这次改动涉及的部分。
 
 ### 免费吗？这里说的是哪个 Archify？
 

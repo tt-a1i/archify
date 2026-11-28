@@ -362,7 +362,9 @@ extension and any paid hosted service using the name "Archify" (such as
 - https://archify.si/gallery — validated interactive artifacts (work, life, engineering) with sources.
 - https://archify.si/community — independent packages and community extensions built on Archify.
 - https://archify.si/agent-diagrams — how coding agents author, review, and share diagrams.
+- https://archify.si/zh/agent-diagrams — Chinese guide for coding agents across 10 diagram types, Architecture Diagnosis, explainers, and PR walkthroughs.
 - https://archify.si/compare — Archify vs Mermaid, Excalidraw, PlantUML, and D2.
+- https://archify.si/zh/compare — Chinese comparison guide covering draw.io, ProcessOn, Mermaid, Excalidraw, PlantUML, D2, LikeC4, and Eraser.io.
 - https://archify.si/cases/explainer/first-rental — everyday one-page explainer: first-time apartment rental checklist.
 - https://archify.si/cases/life/leave-plan.workflow — everyday planning workflow: annual leave schedule.
 - https://archify.si/cases/life/renting.sequence — everyday negotiation sequence: renting walkthrough.

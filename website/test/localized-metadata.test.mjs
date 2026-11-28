@@ -99,6 +99,12 @@ test('built pages contain localized HTML and reciprocal language metadata before
     assert.ok(title.startsWith('Archify'));
     assert.equal(attr(one('meta', 'property', 'og:title'), 'content'), title, file);
     assert.equal(attr(one('meta', 'name', 'twitter:title'), 'content'), title, file);
+    const description = attr(one('meta', 'name', 'description'), 'content');
+    assert.ok(description?.trim(), file);
+    assert.equal(attr(one('meta', 'property', 'og:description'), 'content'), description, file);
+    assert.equal(attr(one('meta', 'name', 'twitter:description'), 'content'), description, file);
+    const expectedType = ['agent-diagrams', 'compare', 'cases/mco-runtime'].includes(page) ? 'article' : 'website';
+    assert.equal(attr(one('meta', 'property', 'og:type'), 'content'), expectedType, file);
     assert.equal(attr(one('meta', 'property', 'og:url'), 'content'), canonicalUrl(page, lang), file);
     if (page === 'index') {
       for (const [id, expected] of Object.entries({
