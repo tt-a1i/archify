@@ -34,7 +34,8 @@ fs.cpSync(skillRoot, installedRoot, {
   recursive: true,
   filter(source) {
     const rel = path.relative(skillRoot, source);
-    return rel !== 'node_modules' && !rel.startsWith(`node_modules${path.sep}`)
+    return !rel.startsWith('.package-negative-')
+      && rel !== 'node_modules' && !rel.startsWith(`node_modules${path.sep}`)
       && rel !== 'test' && !rel.startsWith(`test${path.sep}`)
       // The validator freshness test creates and removes this fixture inside
       // skillRoot while the test runner executes files concurrently. Exclude

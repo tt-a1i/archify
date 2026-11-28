@@ -1115,17 +1115,22 @@ ${[...new Set(Object.values(KIND_TONE))].map((tone) => `          svg[data-class
           svg[data-class-ui] [data-legend-semantic-kind]:is(:hover, :focus-within) .cl-legend-hit { fill: var(--lane-fill); }
           svg[data-class-ui] [data-class-relationship] { transition: opacity .15s; }
 ${LEGEND_HOVER_RULES}${changeReview.active ? `
-          svg[data-class-ui] [data-node-id][data-class-kind][data-change="added"] > .cl-type { stroke: var(--backend-stroke); stroke-width: 2.4; }
-          svg[data-class-ui] [data-node-id][data-class-kind][data-change="modified"] > .cl-type { stroke: var(--cloud-stroke); stroke-width: 2.4; }
-          svg[data-class-ui] [data-node-id][data-class-kind][data-change="removed"] > .cl-type { stroke: var(--security-stroke); stroke-width: 1.6; stroke-dasharray: 5,4; }
-          svg[data-class-ui] path[data-edge-from][data-change="removed"] { stroke: var(--security-stroke); stroke-width: 1.6; stroke-dasharray: 5,4; }
+          svg[data-class-ui] [data-node-id][data-change-context] { --cl-hue: var(--text-dim); }
+          svg[data-class-ui] [data-node-id][data-change="added"] { --cl-hue: var(--backend-stroke); }
+          svg[data-class-ui] [data-node-id][data-change="modified"] { --cl-hue: var(--cloud-stroke); }
+          svg[data-class-ui] [data-node-id][data-change="removed"] { --cl-hue: var(--security-stroke); }
+          svg[data-class-ui] [data-node-id][data-class-kind][data-change] > .cl-type { fill: color-mix(in srgb, var(--cl-hue) 9%, var(--mask)); }
+          svg[data-class-ui] [data-node-id][data-class-kind][data-change="added"] > .cl-type { stroke: var(--backend-stroke); stroke-width: 1.75; }
+          svg[data-class-ui] [data-node-id][data-class-kind][data-change="modified"] > .cl-type { stroke: var(--cloud-stroke); stroke-width: 1.75; }
+          svg[data-class-ui] [data-node-id][data-class-kind][data-change="removed"] > .cl-type { stroke: var(--security-stroke); stroke-width: 1.6; stroke-dasharray: 0.1,3.4; stroke-linecap: round; }
+          svg[data-class-ui] path[data-edge-from][data-change="removed"] { stroke: var(--security-stroke); stroke-width: 1.6; stroke-dasharray: 0.1,3.4; stroke-linecap: round; }
           svg[data-class-ui] .cl-marker-added { stroke: var(--backend-stroke); }
           svg[data-class-ui] .cl-marker-added .cl-marker-filled { fill: var(--backend-stroke); }
           svg[data-class-ui] .cl-marker-modified { stroke: var(--cloud-stroke); }
           svg[data-class-ui] .cl-marker-modified .cl-marker-filled { fill: var(--cloud-stroke); }
           svg[data-class-ui] .cl-marker-removed { stroke: var(--security-stroke); }
           svg[data-class-ui] .cl-marker-removed .cl-marker-filled { fill: var(--security-stroke); }` : ''}
-          svg[data-class-ui] [data-node-id][data-class-kind][data-emphasis] > .cl-type { stroke-width: 3.2; }
+          svg[data-class-ui] [data-node-id][data-class-kind][data-emphasis] > .cl-type { stroke-width: 2.4; }
           @media (prefers-reduced-motion: reduce) { svg[data-class-ui] * { transition: none !important; } }
         </style>
 
@@ -1160,5 +1165,6 @@ if (layoutJsonMode) {
     svg: renderSvg(),
     cards: cd.cards,
     sourceEvidence,
+    layoutReport: buildLayoutReport,
   });
 }

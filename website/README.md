@@ -89,26 +89,30 @@ After publication, verify the actual Cloudflare response, including any managed 
 ## Lightweight Skill distribution
 
 The website build generates `/.well-known/agent-skills/index.json` and a
-content-addressed ZIP beside it. Both GitHub Pages (under `/archify`) and
-Cloudflare use relative archive URLs. The package comes from the same
-tracked-only `stage-clean-skill.mjs` selection used by the canonical ZIP and DSH;
-it contains `SKILL.md` at the archive root, as required by discovery schema 0.2.0.
-The original `archify.zip` format and GitHub installation source are unchanged.
+content-addressed ZIP for each published Skill beside it. Both GitHub Pages
+(under `/archify`) and Cloudflare use relative archive URLs. The core package
+comes from the same tracked-only `stage-clean-skill.mjs` selection used by the
+canonical ZIP and DSH; the `archify-pr` companion comes from
+`stage-clean-companion-skill.mjs`. Each archive contains `SKILL.md` at the root,
+as required by discovery schema 0.2.0. The original `archify.zip` format and
+GitHub installation source are unchanged.
 
 After deploying and verifying the endpoint, the lightweight source is:
 
 ```sh
 npx -y skills@latest add https://archify.si --list --full-depth
-npx -y skills@latest add https://archify.si --skill archify --agent codex --copy
+npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent codex --copy
 ```
 
-The second command selects a project installation; global installation requires
-an explicit `--global`. Skills CLI 1.7.4 is the validation baseline. It downloads
-the Skill archive instead of cloning the development repository, verifies its
-SHA-256 digest, and records the website source in its lock file. A project can
-apply subsequent updates with `npx -y skills@latest update archify --project`.
-An update replaces the installed Skill directory. Move any unmanaged files out
-of `.agents/skills/archify` before updating; this is not a read-only check.
+The second command selects a project installation of both `/archify` and
+`/archify-pr`; global installation requires an explicit `--global`. Skills CLI
+1.7.4 is the validation baseline. It downloads each Skill archive instead of
+cloning the development repository, verifies its SHA-256 digest, and records
+the website source in its lock file. A project can apply subsequent updates with
+`npx -y skills@latest update archify archify-pr --project`. An update replaces
+the installed Skill directory. Move any unmanaged files out of
+`.agents/skills/archify` and `.agents/skills/archify-pr` before updating; this
+is not a read-only check.
 Existing GitHub-source installations keep their original update source; a new
 website endpoint does not silently migrate them. Bare ZIP URLs are not a
 substitute for the discovery source because their update tracking differs.

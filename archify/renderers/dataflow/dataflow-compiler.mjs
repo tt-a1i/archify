@@ -5,7 +5,7 @@ import { resolveLegend, renderLegend as renderResolvedLegend, legendFootprint } 
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth, nodeLabelLayout } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMarkFor, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
-import { changeEdgeAttrs, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeNodeAttrs, changeReviewFor, nodeChangeBadgePos, renderChangeBadge, renderChangeEdgePrefix, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
+import { changeEdgeAttrs, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, changeNodeAttrs, changeReviewFor, reviewLegendEntries, nodeChangeBadgePos, renderChangeBadge, renderChangeEdgePrefix, renderChangeLegendSwatch } from '../shared/change-marks.mjs';
 import { DECLARED_WIDE_READER_RATIO, minimumReadableSourceTextPx, predictedFixedWidthOverflow } from '../shared/desktop-readability.mjs';
 import { placeAutomaticLabels } from '../shared/automatic-labels.mjs';
 import { shortestOrthogonalGridRoute } from '../shared/route-quality.mjs';
@@ -1474,7 +1474,7 @@ export function compileDataflow({ dataflow, sourceEvidence, qualityProfile: requ
       const routed = pathFor(flow);
       const strokeWidth = flowStrokeWidth(flow);
       const automatic = resolvedCrossoverFlows.has(flow);
-      const edge = `        <path ${focusEdgeAttrs(flow.from, flow.to, flow.label, index, flow.id)}${changeEdgeAttrs(changeReview, flow)} data-composition-points="${routePointsValue(routed.points)}"${automatic ? ' data-composition-crossover="halo"' : ''}${authoredStraightRouteAttrs(flow, routed.points)} d="${routed.d}" class="${cls}"${animateAttr(dataflow.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${changeMarkerFor(flow, marker)})"/>`;
+      const edge = `        <path ${focusEdgeAttrs(flow.from, flow.to, flow.label, index, flow.id)}${changeEdgeAttrs(changeReview, flow)} data-composition-points="${routePointsValue(routed.points)}"${automatic ? ' data-composition-crossover="halo"' : ''}${authoredStraightRouteAttrs(flow, routed.points)} d="${routed.d}" class="${cls}"${animateAttr(dataflow.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${changeMarkerFor(flow, marker, changeReview)})"/>`;
       if (!automatic) return edge;
       return `        <g data-graph-role="automatic-crossover" style="--step:${index}">
           <path data-graph-role="automatic-crossover-underlay" d="${routed.d}" fill="none" stroke="var(--mask)" stroke-width="${strokeWidth + 4}" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"/>
@@ -1518,7 +1518,7 @@ ${edge}
       const presentKinds = new Set(asArray(dataflow.flows).map((flow) => flow.variant || 'default'));
       if ([...nodes.values()].some((node) => node.type === 'database')) presentKinds.add('database');
       return [
-        ...resolveLegend(dataflow.meta?.legend, LEGEND_CATALOG, presentKinds),
+        ...reviewLegendEntries(changeReview, resolveLegend(dataflow.meta?.legend, LEGEND_CATALOG, presentKinds), dataflow.meta?.legend, ['database']),
         ...changeLegendEntries(changeReview, dataflow.meta?.legend, dataflow.meta.locale),
       ];
     }
@@ -1538,7 +1538,7 @@ ${edge}
         },
         renderSwatch: (entry) => renderChangeLegendSwatch(entry) || (entry.kind === 'database'
           ? `<rect x="${entry.x}" y="${entry.baseline - 8}" width="14" height="9" rx="2" class="c-database" stroke-width="1"/>`
-          : `<path d="M ${entry.x} ${entry.baseline - 3} L ${entry.x + 34} ${entry.baseline - 3}" class="${entry.className}" stroke-width="${entry.strokeWidth || 1.4}" marker-end="url(#${entry.marker})"/>`),
+          : `<path d="M ${entry.x} ${entry.baseline - 3} L ${entry.x + 34} ${entry.baseline - 3}" class="${entry.className}" stroke-width="${entry.strokeWidth || 1.4}"${entry.dash ? ` stroke-dasharray="${entry.dash}"` : ''} marker-end="url(#${entry.marker})"/>`),
       });
     }
 

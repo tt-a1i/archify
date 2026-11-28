@@ -93,7 +93,7 @@ test('Code Analysis marks baseline findings, re-analyzes without a restart, and 
   assert.equal(await run("document.querySelectorAll('#bauify-overview .bauify-item .n').length"), 0, 'accepted findings stay listed without taking open priority slots');
   assert.equal(await run("document.querySelector('#bauify-layer rect').getAttribute('class').split(' ')[0]"), 'red', 'an accepted cycle keeps its component red');
   assert.ok(fs.existsSync(path.join(out, 'analysis.previous', 'findings.json')), 'the replaced run is kept for comparison');
-  assert.deepEqual(fs.readdirSync(out).filter(name => name.startsWith('analysis.next-')), [], 'no half-written run is left behind');
+  assert.equal(fs.existsSync(path.join(out, '.archify-analysis.lock')), false, 'the completed run releases its staging directory');
   if (process.env.ARCHIFY_ANALYSIS_REVIEW_AFTER_SCREENSHOT) {
     const shot = await send('Page.captureScreenshot', { format: 'png' });
     fs.writeFileSync(process.env.ARCHIFY_ANALYSIS_REVIEW_AFTER_SCREENSHOT, Buffer.from(shot.data, 'base64'));

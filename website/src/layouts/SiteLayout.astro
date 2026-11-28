@@ -33,7 +33,7 @@ const resourceHead = head.replace(/<meta\b[^>]*>/gi, '').replace(/<title>[\s\S]*
   <link rel="alternate" hreflang="en" href={canonicalUrl(page, 'en')} />
   <link rel="alternate" hreflang="zh-Hans" href={canonicalUrl(page, 'zh')} />
   <link rel="alternate" hreflang="x-default" href={canonicalUrl(page, 'en')} />
-  <meta property="og:type" content="website" />
+  <meta property="og:type" content={metadata.ogType} />
   <meta property="og:site_name" content="Archify" />
   <meta property="og:title" content={metadata.title} />
   <meta property="og:description" content={metadata.description} />

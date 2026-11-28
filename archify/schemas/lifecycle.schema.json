@@ -80,7 +80,8 @@
                 "success": { "$ref": "common.schema.json#/$defs/legendEntry" },
                 "failure": { "$ref": "common.schema.json#/$defs/legendEntry" },
                 "neutral": { "$ref": "common.schema.json#/$defs/legendEntry" },
-                "external": { "$ref": "common.schema.json#/$defs/legendEntry" }
+                "external": { "$ref": "common.schema.json#/$defs/legendEntry" },
+                "final": { "$ref": "common.schema.json#/$defs/legendEntry" }
               }
             }
           }

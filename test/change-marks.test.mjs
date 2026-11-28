@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { changeReviewFor, changeLegendEntries, CHANGE_STATES } from '../archify/renderers/shared/change-marks.mjs';
+import { changeReviewFor, changeLegendEntries, changeMarkerDefinitions, changeMarkerFor, frameChangeBadgePos, nodeChangeBadgePos, reviewLegendEntries, CHANGE_STATES } from '../archify/renderers/shared/change-marks.mjs';
 import { createScratchDirectory } from './helpers/scratch-directory.mjs';
 import { extractSvgs, parseXml } from './helpers/xml.mjs';
 
@@ -276,3 +276,111 @@ for (const type of ['sequence', 'dataflow', 'lifecycle']) {
     assert.equal(run().stdout, first.stdout, 'layout evidence is deterministic');
   });
 }
+
+test('change and emphasis arrowheads keep a fixed size while CSS widens their strokes', () => {
+  const review = changeReviewFor({ nodes: [{ id: 'a' }, { id: 'b' }], edges: [{ from: 'a', to: 'b', change: 'added' }, { from: 'b', to: 'a', emphasis: true }] });
+  const definitions = changeMarkerDefinitions(review);
+  const markers = [...definitions.matchAll(/<marker id="([^"]+)"([^>]*)>/g)];
+  assert.ok(markers.some(([, id]) => id === 'arrowhead-change-added'));
+  assert.ok(markers.some(([, id]) => id === 'arrowhead-emphasis-fixed'), 'an emphasised, unmarked edge gets a fixed marker');
+  for (const [, id, attributes] of markers) assert.match(attributes, /markerUnits="userSpaceOnUse"/, `${id} does not scale with stroke width`);
+  assert.equal(changeMarkerFor({ change: 'added', emphasis: true }, 'arrowhead'), 'arrowhead-change-added');
+  assert.equal(changeMarkerFor({ emphasis: true }, 'arrowhead-security'), 'arrowhead-security-fixed');
+  assert.equal(changeMarkerFor({}, 'arrowhead-security'), 'arrowhead-security', 'plain edges keep the stroke-scaled marker');
+  assert.equal(changeMarkerDefinitions(changeReviewFor({ nodes: [{ id: 'a' }] })), '', 'an unmarked diagram defines nothing new');
+});
+
+test('node badges sit inside tall cards and frame badges follow their title', () => {
+  const card = { x: 100, y: 50, width: 160, height: 60 };
+  const inside = nodeChangeBadgePos(card, { avoid: [{ x: 140, y: 72, width: 80, height: 14 }] });
+  assert.ok(inside.x + 9 <= card.x + card.width - 5 && inside.y - 6.5 >= card.y + 5, 'the badge stays inside the card corner');
+  assert.equal(nodeChangeBadgePos(card, { avoid: [{ x: 110, y: 56, width: 145, height: 14 }] }).y, card.y, 'a title under the corner keeps the badge on the edge');
+  assert.equal(nodeChangeBadgePos(card).y, card.y, 'callers that cannot measure their text keep the edge badge');
+  const row = { x: 100, y: 50, width: 160, height: 20 };
+  assert.equal(nodeChangeBadgePos(row, { avoid: [] }).y, row.y, 'a short row keeps the badge on its top edge');
+
+  const title = { x: 60, y: 20, width: 80, height: 16 };
+  const after = frameChangeBadgePos(title, { maxRight: 400, fallback: { x: 390, y: 30 } });
+  assert.ok(after.x - 9 >= title.x + title.width, 'the badge starts after the title');
+  assert.equal(after.y, title.y + title.height / 2, 'the badge is centred on the title row');
+  assert.deepEqual(frameChangeBadgePos(title, { maxRight: 150, fallback: { x: 390, y: 30 } }), { x: 390, y: 30 }, 'no room after the title falls back to the corner');
+});
+
+test('sequence segment badges follow the segment title', () => {
+  const document = example('sequence');
+  document.segments = [{ from: 150, to: 260, label: 'Lookup', change: 'added' }];
+  const { svg } = render('sequence', document, 'sequence-segment-badge');
+  const label = svg.match(/data-graph-role="segment-label"[^>]*>\s*<rect x="([\d.]+)" y="([\d.-]+)" width="([\d.]+)" height="([\d.]+)"[\s\S]*?<g data-change-badge="added"[^>]*><rect x="([\d.]+)" y="([\d.-]+)"/);
+  assert.ok(label, svg.slice(0, 200));
+  const [labelX, labelY, labelWidth, labelHeight, badgeX, badgeY] = label.slice(1).map(Number);
+  assert.ok(badgeX >= labelX + labelWidth && badgeX <= labelX + labelWidth + 8, 'the badge sits right after the title tab');
+  assert.ok(badgeY >= labelY - 1 && badgeY <= labelY + labelHeight, 'the badge shares the title row');
+});
+
+test('in a change review colour means change: type swatches leave the legend and line types turn neutral', () => {
+  const review = changeReviewFor({ nodes: [{ id: 'a', change: 'added' }, { id: 'b' }] });
+  const entries = [
+    { kind: 'backend', label: 'Backend' },
+    { kind: 'security', className: 'a-security', marker: 'arrowhead-security', label: 'Security' },
+    { kind: 'return', className: 'a-default', marker: 'arrowhead', dash: '3,5', label: 'Return' },
+  ];
+  const reviewed = reviewLegendEntries(review, entries, undefined, ['backend']);
+  assert.deepEqual(reviewed.map((entry) => entry.kind), ['security', 'return'], 'node-type colours leave the legend');
+  assert.deepEqual(reviewed.map(({ className, marker, dash }) => ({ className, marker, dash })), [
+    { className: 'a-default', marker: 'arrowhead', dash: '5,5' },
+    { className: 'a-default', marker: 'arrowhead', dash: '3,5' },
+  ], 'line types keep their dash, not their colour');
+  assert.deepEqual(reviewLegendEntries(review, entries, { mode: 'all' }, ['backend']).map((entry) => entry.kind), ['backend', 'security', 'return']);
+  assert.deepEqual(reviewLegendEntries(review, entries, { entries: { backend: { visible: true } } }, ['backend']).map((entry) => entry.kind), ['backend', 'security', 'return']);
+  assert.equal(reviewLegendEntries(changeReviewFor({ nodes: [{ id: 'a' }] }), entries, undefined, ['backend']), entries, 'an unmarked diagram keeps its legend');
+
+  assert.equal(changeMarkerFor({}, 'arrowhead-security', review), 'arrowhead', 'an unchanged security edge takes the neutral arrowhead');
+  assert.equal(changeMarkerFor({ emphasis: true }, 'arrowhead-emphasis', review), 'arrowhead-fixed');
+  assert.equal(changeMarkerFor({ change: 'removed' }, 'arrowhead-security', review), 'arrowhead-change-removed');
+});
+
+for (const type of ['architecture', 'workflow', 'lifecycle']) {
+  test(`${type}: a change-marked diagram drops node-type legend swatches`, () => {
+    const plain = render(type, example(type), `${type}-type-legend-plain`).svg;
+    const marked = render(type, markedExample(type), `${type}-type-legend-marked`).svg;
+    const kinds = (svg) => [...svg.matchAll(/data-legend-semantic-kind="([^"]+)"/g)].map((match) => match[1]);
+    assert.ok(kinds(plain).some((kind) => !kind.startsWith('change-') && kind !== 'start' && kind !== 'final'), `${type} lists node types without marks`);
+    assert.deepEqual(kinds(marked).filter((kind) => !kind.startsWith('change-') && kind !== 'start' && kind !== 'final'), [], `${type} lists only change states once marked`);
+  });
+}
+
+test('sequence: activation bars stay neutral in a change review', () => {
+  const plain = render('sequence', example('sequence'), 'sequence-activation-plain').svg;
+  const marked = render('sequence', markedExample('sequence'), 'sequence-activation-marked').svg;
+  assert.doesNotMatch(plain, /c-activation-review/);
+  assert.match(marked, /<rect [^>]*width="10" [^>]*class="c-activation-review"/);
+  assert.doesNotMatch(marked, /<rect [^>]*width="10" [^>]*class="c-(?:frontend|backend|database|cloud|security|messagebus|external)" stroke-width="1"\/>/);
+});
+
+test('tree: a changed root uses readable theme text on its tinted fill', () => {
+  const document = example('tree');
+  document.nodes[0].change = 'modified';
+  const { svg } = render('tree', document, 'tree-changed-root');
+  assert.match(svg, /<g [^>]*data-node-id="platform"[^>]*data-change="modified"[^>]*data-tree-depth="0"/);
+  assert.match(svg, /\[data-tree-depth="0"\]\[data-change\] \.tree-label \{ fill: var\(--text\); \}/);
+  assert.match(svg, /\[data-tree-depth="0"\]\[data-change\] \.tree-sublabel \{ fill: var\(--text-muted\); opacity: 1; \}/);
+});
+
+test('lifecycle: terminal states retain their legend key when start and node types are hidden', () => {
+  const document = markedExample('lifecycle');
+  document.meta.legend = { entries: { start: { visible: false } } };
+  const { svg } = render('lifecycle', document, 'lifecycle-final-legend');
+  assert.deepEqual(
+    [...svg.matchAll(/data-legend-semantic-kind="([^"]+)"/g)].map((match) => match[1]),
+    ['final', ...CHANGE_STATES.map((state) => `change-${state}`)],
+  );
+
+  document.meta.legend.entries.final = { visible: false };
+  const hiddenFinal = render('lifecycle', document, 'lifecycle-final-hidden').svg;
+  assert.doesNotMatch(hiddenFinal, /data-legend-semantic-kind="final"/);
+  assert.match(hiddenFinal, /data-legend-semantic-kind="change-removed"/);
+
+  document.meta.legend = { mode: 'hidden' };
+  const hiddenLegend = render('lifecycle', document, 'lifecycle-legend-hidden').svg;
+  assert.doesNotMatch(hiddenLegend, /data-legend-semantic-kind=/);
+});

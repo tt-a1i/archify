@@ -33,7 +33,7 @@ test('llms-full.txt derives release identity from package metadata and covers ca
   for (const type of ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'class', 'tree', 'timeline', 'waterfall']) {
     assert.match(text, new RegExp(`\`${type}\``), `missing diagram type: ${type}`);
   }
-  for (const tool of ['Mermaid', 'Excalidraw', 'PlantUML', 'D2', 'LikeC4', 'Eraser.io']) assert.ok(text.includes(tool), tool);
+  for (const tool of ['Mermaid', 'draw.io', 'ProcessOn', 'Excalidraw', 'PlantUML', 'D2', 'LikeC4', 'Eraser.io']) assert.ok(text.includes(tool), tool);
   assert.match(text, /skills@latest add https:\/\/archify\.si/);
   assert.match(text, /482469\.html/);
   assert.match(text, /one-page (answer|explainer)/i);
@@ -59,6 +59,9 @@ test('every canonical site link in built llms-full.txt is extensionless HTML or 
   const text = fs.readFileSync(path.join(output, 'llms-full.txt'), 'utf8');
   const links = [...new Set([...text.matchAll(/https:\/\/archify\.si[^\s)`<>]*/g)].map(match => match[0]))];
   assert.ok(links.length >= 10, `expected a canonical link index, got ${links.length}`);
+  for (const url of ['https://archify.si/zh/compare', 'https://archify.si/zh/agent-diagrams']) {
+    assert.ok(links.includes(url), `missing Chinese canonical entrypoint: ${url}`);
+  }
   for (const link of links) {
     const url = new URL(link);
     assert.doesNotMatch(url.pathname, /\.html$/, `canonical link must omit .html: ${link}`);

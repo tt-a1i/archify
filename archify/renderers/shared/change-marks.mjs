@@ -1,4 +1,4 @@
-import { esc } from './utils.mjs';
+import { esc, textUnits } from './utils.mjs';
 import { translateMessage } from './i18n.mjs';
 
 export const CHANGE_STATES = Object.freeze(['added', 'modified', 'removed', 'unchanged']);
@@ -41,7 +41,10 @@ export function changeReviewFor({ nodes = [], edges = [], frames = [] } = {}) {
     if (!active || isMarked(frame)) return null;
     return membersOf(frame).some((id) => changedNodeIds.has(id)) ? 'neighbour' : 'subdued';
   };
-  return { active, nodeContext, edgeContext, frameContext };
+  // CSS widens emphasised edges; a stroke-scaled arrowhead would grow with
+  // them, so those edges switch to fixed-size markers.
+  const fixedEmphasisMarkers = edges.some((edge) => edge?.emphasis === true && !isMarked(edge));
+  return { active, fixedEmphasisMarkers, nodeContext, edgeContext, frameContext };
 }
 
 function attrs(item, context) {
@@ -90,19 +93,70 @@ export function renderChangeEdgePrefix(item) {
   return `<tspan class="t-change-badge-${item.change}" font-weight="700">${BADGE_GLYPH[item.change]} </tspan>`;
 }
 
-// Compute a top-edge center position for a node/container badge, clearing
-// rounded corners, right-side adornments (e.g. brand marks or toggles), and
-// the top edge of the viewport.
-export function nodeChangeBadgePos(rect, { rx = 8, rightInset = 0, minTop = 2 } = {}) {
+// Position for a node/container badge. By default the badge straddles the top
+// edge. A caller that passes the node's text boxes as `avoid` gets the badge
+// inside the top-right corner, clear of the border, when the card is tall
+// enough and the badge clears every box; otherwise it straddles as before.
+// Both clear rounded corners, right-side adornments (e.g. brand marks or
+// toggles), and the top edge of the viewport.
+export const CHANGE_BADGE_INSET = 5;
+const CHANGE_BADGE_TEXT_CLEARANCE = 2;
+
+export function nodeChangeBadgePos(rect, { rx = 8, rightInset = 0, minTop = 2, avoid = null } = {}) {
   const { width, height } = CHANGE_BADGE_SIZES.node;
   const halfW = width / 2;
   const halfH = height / 2;
-  const minCenterX = rect.x + Math.min(rect.width / 2, rx + 4 + halfW);
-  const maxCenterX = rect.x + rect.width - Math.max(rx + 4, rightInset) - halfW;
-  const x = Math.round(Math.max(minCenterX, maxCenterX) * 10) / 10;
-  const rawY = Number.isFinite(minTop) ? Math.max(rect.y, minTop + halfH) : rect.y;
-  const y = Math.round(rawY * 10) / 10;
-  return { x, y };
+  const round1 = (n) => Math.round(n * 10) / 10;
+  const place = (inset) => {
+    const minCenterX = rect.x + Math.min(rect.width / 2, (inset ? CHANGE_BADGE_INSET : rx + 4) + halfW);
+    const maxCenterX = rect.x + rect.width - Math.max(inset ? CHANGE_BADGE_INSET : rx + 4, rightInset) - halfW;
+    const x = Math.max(minCenterX, maxCenterX);
+    const top = inset ? rect.y + CHANGE_BADGE_INSET + halfH : rect.y;
+    const y = Number.isFinite(minTop) ? Math.max(top, minTop + halfH) : top;
+    return { x: round1(x), y: round1(y) };
+  };
+  if (Array.isArray(avoid) && rect.height >= height * 2 + CHANGE_BADGE_INSET * 2) {
+    const inside = place(true);
+    const pad = CHANGE_BADGE_TEXT_CLEARANCE;
+    const clear = avoid.every((box) => !box
+      || inside.x + halfW + pad <= box.x || box.x + box.width <= inside.x - halfW - pad
+      || inside.y + halfH + pad <= box.y || box.y + box.height <= inside.y - halfH - pad);
+    if (clear) return inside;
+  }
+  return place(false);
+}
+
+// Conservative box of a centred text line, for `avoid`: the 0.62em advance
+// matches the bundled monospace face (CJK counts two units).
+export function centredTextBox(cx, baseline, fontSize, text) {
+  const width = textUnits(String(text ?? '')) * fontSize * 0.62;
+  return { x: cx - width / 2, y: baseline - fontSize, width, height: fontSize * 1.3 };
+}
+
+export const CHANGE_FRAME_BADGE_GAP = 4;
+
+// Frames (boundaries, lanes, groups, segments) carry their badge directly
+// after the title, so the mark reads with the label instead of floating on a
+// far corner. `title` is the title's box ({ x, y, width, height }); callers
+// that render bare text pass its measured extent. `maxRight` keeps the badge
+// inside the frame: when the title leaves no room, the badge returns to the
+// frame's top-right corner (`fallback`).
+export function frameChangeBadgePos(title, { maxRight = Infinity, fallback = null } = {}) {
+  const { width } = CHANGE_BADGE_SIZES.node;
+  const round1 = (n) => Math.round(n * 10) / 10;
+  const left = title.x + title.width + CHANGE_FRAME_BADGE_GAP;
+  if (left + width > maxRight && fallback) return fallback;
+  return { x: round1(left + width / 2), y: round1(title.y + title.height / 2) };
+}
+
+// Measured box of a bare frame title rendered as text at (x, baseline); the
+// 0.62em advance matches the bundled monospace face (CJK counts two units).
+export function frameTitleBox(x, baseline, fontSize, text) {
+  return { x, y: baseline - fontSize, width: textUnits(text) * fontSize * 0.62, height: fontSize * 1.3 };
+}
+
+export function changeFrameBadgeWidth(item) {
+  return isMarked(item) ? CHANGE_FRAME_BADGE_GAP + CHANGE_BADGE_SIZES.node.width : 0;
 }
 
 // A compact [+] [~] [−] pill anchored at (x, y) as its centre, backed by an
@@ -138,21 +192,74 @@ export function changeLegendEntries(review, legendConfig, locale) {
   }));
 }
 
+// In an active review colour means change. Node-type entries describe a
+// colour the nodes no longer carry, so they leave the legend unless the
+// author keeps them (legend mode 'all' or an entry with visible: true); the
+// icons still name each node's type. Line-type swatches turn neutral and keep
+// their dash pattern and weight, matching the neutral unchanged edges.
+const LINE_TYPE_DASH = Object.freeze({ 'a-security': '5,5', 'a-dashed': '4,4' });
+
+export function reviewLegendEntries(review, entries, legendConfig, nodeKinds = []) {
+  if (!review.active) return entries;
+  const colourKinds = new Set(nodeKinds);
+  const overrides = legendConfig?.entries || {};
+  return entries.flatMap((entry) => {
+    if (colourKinds.has(entry.kind) && legendConfig?.mode !== 'all' && overrides[entry.kind]?.visible !== true) return [];
+    if (typeof entry.className !== 'string' || !entry.className.startsWith('a-')) return [entry];
+    const dash = entry.dash || LINE_TYPE_DASH[entry.className];
+    return [{ ...entry, className: 'a-default', marker: 'arrowhead', ...(dash ? { dash } : {}) }];
+  });
+}
+
 export function renderChangeLegendSwatch(entry) {
   if (!entry.change) return null;
   return `<rect x="${entry.x}" y="${entry.baseline - 9}" width="16" height="10" rx="2.5" class="c-change-swatch-${esc(entry.change)}" stroke-width="1.5"/>`;
 }
 
-export function changeMarkerDefinitions(review) {
-  if (!review.active) return '';
-  return ['added', 'modified', 'removed'].map((state) => `
-          <marker id="arrowhead-change-${state}" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-            <polygon points="0 0, 10 3.5, 0 7" class="m-change-${state}" />
-          </marker>`).join('');
+// Change and emphasis markers use user-space units: CSS widens these strokes,
+// and a stroke-scaled arrowhead would grow with them. The fixed size matches a
+// default arrowhead at the renderers' 1.4px default stroke.
+const FIXED_MARKER_WIDTH = 14;
+const FIXED_MARKER_HEIGHT = 9.8;
+const FIXED_FALLBACK_TONES = Object.freeze({
+  arrowhead: 'default',
+  'arrowhead-emphasis': 'emphasis',
+  'arrowhead-security': 'security',
+  'arrowhead-dashed': 'dashed',
+});
+
+function fixedMarker(id, tone) {
+  return `
+          <marker id="${id}" markerUnits="userSpaceOnUse" viewBox="0 0 10 7" markerWidth="${FIXED_MARKER_WIDTH}" markerHeight="${FIXED_MARKER_HEIGHT}" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-${tone}" />
+          </marker>`;
 }
 
-export function changeMarkerFor(item, fallback) {
-  return isMarked(item) ? `arrowhead-change-${item.change}` : fallback;
+export function changeMarkerDefinitions(review) {
+  const change = review.active
+    ? ['added', 'modified', 'removed'].map((state) => fixedMarker(`arrowhead-change-${state}`, `change-${state}`)).join('')
+    : '';
+  const emphasis = review.fixedEmphasisMarkers
+    ? Object.entries(FIXED_FALLBACK_TONES).map(([id, tone]) => fixedMarker(`${id}-fixed`, tone)).join('')
+    : '';
+  return change + emphasis;
+}
+
+// In an active review colour means change, so an unchanged edge drops its
+// line-type colour (its dash pattern and weight still tell the type) and
+// takes the neutral arrowhead.
+export function changeMarkerFor(item, fallback, review = null) {
+  if (isMarked(item)) return `arrowhead-change-${item.change}`;
+  const neutral = review?.active && Object.hasOwn(FIXED_FALLBACK_TONES, fallback) ? 'arrowhead' : fallback;
+  if (item?.emphasis === true && Object.hasOwn(FIXED_FALLBACK_TONES, neutral)) return `${neutral}-fixed`;
+  return neutral;
+}
+
+// The marker tone (`m-<tone>`) of any id changeMarkerFor returns.
+export function changeMarkerTone(marker) {
+  if (Object.hasOwn(FIXED_FALLBACK_TONES, marker)) return FIXED_FALLBACK_TONES[marker];
+  const base = marker.endsWith('-fixed') ? marker.slice(0, -'-fixed'.length) : marker;
+  return FIXED_FALLBACK_TONES[base] || base.slice('arrowhead-'.length);
 }
 
 export function changeStrokeVar(item) {

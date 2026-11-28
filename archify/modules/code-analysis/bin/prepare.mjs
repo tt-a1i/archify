@@ -1,17 +1,16 @@
 #!/usr/bin/env node
 // One-shot companion to serve: a portable analysis view with captured AI tasks.
 import path from 'node:path';
-import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { DiagnosticError, receipt } from '../core/index.mjs';
 import { prepareAnalysisSession, runSessionAnalysis } from './serve.mjs';
 
 export async function prepareAnalysisView(argv, dependencies = {}) {
-  const session = await prepareAnalysisSession(argv);
-  await runSessionAnalysis({ ...session, openAnalysis: true }, dependencies);
-  const overview = JSON.parse(fs.readFileSync(path.join(session.out, 'analysis', 'overview.json'), 'utf8'));
-  return receipt('ok', { command: 'prepare', summary: { counts: overview.counts, coverage: overview.coverage, leads: overview.investigation.leads }, diagram: session.delivered,
-    html: path.join(session.out, 'analysis', 'repo.analysis.html'), resume: session.resume });
+  return prepareAnalysisSession(argv, async (session, lock) => {
+    const { summary } = await runSessionAnalysis({ ...session, openAnalysis: true }, lock, dependencies);
+    return receipt('ok', { command: 'prepare', summary, diagram: session.delivered,
+      html: path.join(session.out, 'analysis', 'repo.analysis.html'), resume: session.resume });
+  });
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

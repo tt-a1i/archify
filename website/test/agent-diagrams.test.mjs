@@ -48,6 +48,39 @@ test('agent guide is readable without JavaScript, honest about examples, and lin
       const nextElement = siblings.slice(siblings.indexOf(boundary) + 1).find(node => node.tagName);
       assert.equal(nextElement?.tagName, 'h2', `${id}: anchor immediately precedes its section heading`);
       assert.equal(text(nextElement), text(link), `${id}: TOC label must identify the section it reaches, including after reordering`);
+      if (id === 'diagram-types') {
+        const list = siblings.slice(siblings.indexOf(nextElement) + 1).find(node => node.tagName === 'ul' || node.tagName === 'h2');
+        assert.equal(list?.tagName, 'ul', `${lang}: diagram types list`);
+        for (const [type, slug] of [
+          ['class', 'payments.class'],
+          ['tree', 'payment-platform.tree'],
+          ['timeline', 'payment-incident.timeline'],
+          ['waterfall', 'checkout-request.waterfall'],
+        ]) {
+          const item = list.childNodes.find(node => node.tagName === 'li' && text(node).startsWith(type));
+          assert.ok(item, `${lang}: ${type} list item`);
+          const url = `https://archify.si/gallery/artifacts/${slug}`;
+          const example = nodes(item).find(node => node.tagName === 'a' && attr(node, 'href') === url);
+          assert.ok(example && text(example).trim() && text(example) !== url, `${lang}: ${type} links to its example`);
+        }
+      }
+      if (id === 'questions') {
+        const question = lang === 'en'
+          ? 'When should I use Architecture Diagnosis vs. PR walkthroughs?'
+          : '检查仓库依赖和解释一次 PR，分别用哪个功能？';
+        const afterHeading = siblings.slice(siblings.indexOf(nextElement) + 1);
+        const end = afterHeading.findIndex(node => node.tagName === 'h2');
+        const questions = end === -1 ? afterHeading : afterHeading.slice(0, end);
+        const heading = questions.find(node => node.tagName === 'h3' && text(node) === question);
+        assert.ok(heading, `${lang}: Diagnosis and walkthroughs question in #questions`);
+        const answer = questions.slice(questions.indexOf(heading) + 1).find(node => node.tagName);
+        assert.equal(answer?.tagName, 'p');
+        assert.deepEqual(nodes(answer).filter(node => node.tagName === 'a')
+          .map(node => new URL(attr(node, 'href'), baseUri).href), [
+          `${documentUrl.href}#repository-evidence`,
+          `${documentUrl.href}#review-and-share`,
+        ]);
+      }
     }
     assert.doesNotMatch(visible, /editorial draft|publication checks|workspace\/shared|factcheck\.md/i);
     const homeFile = lang === 'zh' ? 'zh.html' : 'index.html';
@@ -182,7 +215,7 @@ test('setup answers are readable without scripts and distinguish prerequisites f
     const base = new URL(attr(page.find(node => node.tagName === 'base'), 'href'), origin + `${prefix}agent-diagrams.html`);
     for (const [agent, directory] of [['claude-code', '.claude'], ['codex', '.agents']]) {
       assert.equal(page.filter(node => attr(node, 'id') === `setup-${agent}`).length, 1);
-      const command = `npx -y skills@latest add https://archify.si --skill archify --agent ${agent} --global --copy --yes`;
+      const command = `npx -y skills@latest add https://archify.si --skill archify --skill archify-pr --agent ${agent} --global --copy --yes`;
       assert.ok(nodes(article).some(node => node.tagName === 'pre' && text(node).trim() === command), `${agent}: exact existing Start command is visible in SSR`);
       for (const location of [`~/${directory}/skills/`, `${directory}/skills/`]) assert.ok(visible.includes(location));
       const link = nodes(article).find(node => node.tagName === 'a' && attr(node, 'href')?.includes(`agent=${agent}#install`));
