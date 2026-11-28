@@ -258,14 +258,16 @@ export function writeDiagram({ outPath, template, diagramType, meta, svg, cards,
 
 // Publishes any text artifact (HTML, SVG, receipts) through the same
 // alias-safe staging and commit sequence the renderers use.
-export function publishOutputAtomically(outPath, content) {
+export function publishOutputAtomically(outPath, content, { replaceEntry = false } = {}) {
   const outputGuard = outputPathGuards.get(outPath);
   let candidatePath;
   let candidateIdentity;
   let candidateBinding;
   try {
     fs.mkdirSync(path.dirname(outPath), { recursive: true });
-    const outputCapture = captureAtomicOutput(outPath);
+    const outputCapture = captureAtomicOutput(outPath, {
+      requestedEntryPolicy: replaceEntry ? 'regular-or-absent' : 'followable-alias',
+    });
     if (outputCapture.status !== 'captured') throwAtomicOutputFailure(outputCapture, outPath);
     const beforeStage = verifyAtomicOutput(outputCapture.snapshot);
     if (beforeStage.status !== 'match') throwAtomicOutputFailure(beforeStage, outPath);
@@ -290,14 +292,22 @@ export function publishOutputAtomically(outPath, content) {
     candidateBinding = candidateCapture.binding;
     const beforeCommit = verifyAtomicOutput(outputCapture.snapshot);
     if (beforeCommit.status !== 'match') throwAtomicOutputFailure(beforeCommit, outPath);
-    const publication = publishRegularFileBinding(
-      candidateBinding,
-      candidatePath,
-      outputCapture.snapshot,
-      { subject: 'candidate' },
-    );
-    if (!['committed', 'committed-with-warning'].includes(publication.status)) {
-      throwAtomicOutputFailure(publication, outPath);
+    if (replaceEntry && outputCapture.snapshot.target.kind === 'file') {
+      // Rename replaces the directory entry itself without following a final
+      // symlink or exposing a gap between the old and new file.
+      fs.renameSync(candidatePath, outputCapture.commitPath);
+      candidatePath = undefined;
+      candidateIdentity = undefined;
+    } else {
+      const publication = publishRegularFileBinding(
+        candidateBinding,
+        candidatePath,
+        outputCapture.snapshot,
+        { subject: 'candidate' },
+      );
+      if (!['committed', 'committed-with-warning'].includes(publication.status)) {
+        throwAtomicOutputFailure(publication, outPath);
+      }
     }
     const releasedCandidate = releaseRegularFileBinding(candidateBinding);
     candidateBinding = undefined;

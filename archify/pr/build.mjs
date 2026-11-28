@@ -7,6 +7,8 @@ import { PACK_PLATFORMS, PrPackError, alignDiagramRevisions, loadPrPack, packDia
 import { PACK_END, PACK_START, packPlaceholderAssets, renderPackMarkdown, sha256 } from './markdown.mjs';
 import { compilePrStorySvg, upgradeSvgNodeBadges, validatePrStory } from './story-svg.mjs';
 
+import { loadLensEvidence } from './lens-evidence.mjs';
+
 export const RECEIPT_FILE = 'pr-pack.receipt.json';
 export const MARKDOWN_FILE = 'pr-pack.md';
 
@@ -22,10 +24,68 @@ function exportFailure(error, view) {
   return new PrPackError(`View "${view.id}": ${error.message}`, { code: diagnostics[0].code, stage: error.stage === 'arguments' ? 'views' : error.stage, diagnostics });
 }
 
+function walkthroughFailure(pack, error, stage) {
+  if (pack.manifest.walkthrough === undefined) return error;
+  const diagnostics = error.archifyDiagnostics;
+  const failure = error instanceof PrPackError ? error : new PrPackError(
+    diagnostics?.[0]?.message || 'Could not validate the walkthrough.',
+    { code: diagnostics?.[0]?.code || 'pr-pack/invalid-walkthrough', stage, diagnostics },
+  );
+  failure.reviewTextBoundary = true;
+  return failure;
+}
+
+export function packRevisions(pack, repoRoot) {
+  try {
+    return repoRoot ? verifyPackRevisions(pack, repoRoot) : {
+      baseSha: pack.manifest.baseSha ?? null, headSha: pack.manifest.headSha ?? null, mergeBase: null, verified: false,
+    };
+  } catch (error) {
+    throw walkthroughFailure(pack, error, 'revisions');
+  }
+}
+
+export function preparePackView(view, revisions, directory, { lens = false } = {}) {
+  const aligned = alignDiagramRevisions(view, revisions);
+  const snapshot = { ...aligned, meta: { ...(aligned.meta || {}), visual_preset: view.preset } };
+  // Lens uses the original payloads in its own evidence pane. Keep them out
+  // of the intermediate Viewer, which requires authored IDs for its payload index.
+  const payloadEdges = lens && { sequence: 'messages', dataflow: 'flows' }[view.type];
+  if (payloadEdges && snapshot[payloadEdges]) {
+    snapshot[payloadEdges] = snapshot[payloadEdges].map(({ payload, ...edge }) => edge);
+  }
+  const snapshotPath = path.join(directory, `${view.id}.json`);
+  const htmlPath = path.join(directory, `${view.id}.html`);
+  publishOutputAtomically(snapshotPath, `${JSON.stringify(snapshot, null, 2)}\n`);
+  return {
+    snapshot, snapshotPath, htmlPath,
+    render({ quality, repoRoot } = {}) {
+      const env = {
+        ...(quality ? { ARCHIFY_QUALITY_PROFILE: quality } : {}),
+        ...(repoRoot ? { ARCHIFY_REPO_ROOT: path.resolve(repoRoot) } : {}),
+        ARCHIFY_PR_LENS: lens ? '1' : '0',
+      };
+      try {
+        return renderDiagramHtml({ type: view.type, input: snapshotPath, out: htmlPath, env });
+      } catch (error) {
+        throw exportFailure(error, view);
+      }
+    },
+  };
+}
+
 // Validates the manifest and every view without writing anything.
 export function validatePrPack(manifestInput, { repoRoot } = {}) {
-  const pack = loadPrPack(manifestInput);
-  const revisions = repoRoot ? verifyPackRevisions(pack, repoRoot) : { baseSha: pack.manifest.baseSha ?? null, headSha: pack.manifest.headSha ?? null, mergeBase: null, verified: false };
+  const pack = loadPrPack(manifestInput, { validate: true });
+  try {
+    return validateLoadedPack(pack, repoRoot);
+  } catch (error) {
+    throw walkthroughFailure(pack, error, 'validation');
+  }
+}
+
+function validateLoadedPack(pack, repoRoot) {
+  const revisions = packRevisions(pack, repoRoot);
   const views = pack.views.map((view) => {
     alignDiagramRevisions(view, revisions);
     return {
@@ -40,6 +100,9 @@ export function validatePrPack(manifestInput, { repoRoot } = {}) {
       evidence: view.evidence,
     };
   });
+  if (repoRoot && pack.manifest.walkthrough?.slices) {
+    loadLensEvidence(pack, revisions);
+  }
   if (pack.story) validatePrStory(pack.story, pack, { revisions, manifestDir: pack.manifestDir });
   return {
     schemaVersion: 1,
@@ -70,16 +133,12 @@ export async function buildPrPack(manifestInput, { outDir, repoRoot, platform, h
   }
   const pack = loadPrPack(manifestInput);
   const resolvedPlatform = platform || pack.platform;
-  const revisions = repoRoot ? verifyPackRevisions(pack, repoRoot) : { baseSha: pack.manifest.baseSha ?? null, headSha: pack.manifest.headSha ?? null, mergeBase: null, verified: false };
+  const revisions = packRevisions(pack, repoRoot);
   if (pack.story) validatePrStory(pack.story, pack, { revisions, manifestDir: pack.manifestDir, requireDetailSource: true });
   const outputRoot = path.resolve(outDir);
   const viewsDir = path.join(outputRoot, 'views');
   fs.mkdirSync(viewsDir, { recursive: true });
   const styles = loadViewerStyles();
-  const env = {
-    ...(quality ? { ARCHIFY_QUALITY_PROFILE: quality } : {}),
-    ...(repoRoot ? { ARCHIFY_REPO_ROOT: path.resolve(repoRoot) } : {}),
-  };
   const storyThemeSelection = pack.story ? platformTheme(resolvedPlatform, pack.manifest.theme || 'both') : null;
   const storyThemesNeeded = storyThemeSelection ? themesFor(storyThemeSelection) : [];
   const staticBadgeMode = pack.manifest.nodeBadges || pack.story?.nodeBadges || 'labeled';
@@ -89,14 +148,7 @@ export async function buildPrPack(manifestInput, { outDir, repoRoot, platform, h
   const views = [];
   const viewAssets = [];
   for (const view of pack.views) {
-    const aligned = alignDiagramRevisions(view, revisions);
-    const snapshot = {
-      ...aligned,
-      meta: { ...(aligned.meta || {}), visual_preset: view.preset },
-    };
-    const snapshotPath = path.join(viewsDir, `${view.id}.json`);
-    publishOutputAtomically(snapshotPath, `${JSON.stringify(snapshot, null, 2)}\n`);
-    const htmlPath = path.join(viewsDir, `${view.id}.html`);
+    const { snapshot, snapshotPath, htmlPath, render } = preparePackView(view, revisions, viewsDir);
     const themeSelection = platformTheme(resolvedPlatform, view.theme);
     const viewThemes = themesFor(themeSelection);
     const bakeThemes = stagedViews.has(view.id)
@@ -106,7 +158,7 @@ export async function buildPrPack(manifestInput, { outDir, repoRoot, platform, h
     let rendered;
     let exported;
     try {
-      rendered = renderDiagramHtml({ type: view.type, input: snapshotPath, out: htmlPath, env });
+      rendered = render({ quality, repoRoot });
       exported = await exportSvgArtifacts({
         type: view.type,
         input: snapshotPath,
@@ -114,7 +166,6 @@ export async function buildPrPack(manifestInput, { outDir, repoRoot, platform, h
         theme: bakeSelection,
         preset: view.preset,
         animateFlow: animateFlow && ['sequence', 'dataflow'].includes(view.type),
-        env,
         styles,
         html: rendered,
       });

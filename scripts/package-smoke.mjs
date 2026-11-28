@@ -6,6 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
+import { sameEntry } from '../archify/renderers/shared/path-semantics.mjs';
 import { assertThirdPartyNotices } from './third-party-notices-contract.mjs';
 import { verifyPackagedUpdateChecker } from './package-update-smoke.mjs';
 
@@ -301,6 +302,19 @@ async function verifyPackage() {
   await verifyPackagedExplainer();
 
   verifyPackagedStory();
+
+  const lens = JSON.parse(run([
+    'pr', 'lens', path.join(skillRoot, 'examples', 'checkout-ledger.pr-pack.json'), '--out-dir', scratch, '--json',
+  ], { cwd: scratch, env: { ...process.env, NODE_PATH: '', ARCHIFY_UPDATE_CHECK_DISABLED: '1' } }));
+  const lensPath = path.join(scratch, 'pr-lens.html');
+  if (lens.kind !== 'pr-lens-result' || typeof lens.output?.path !== 'string'
+    || sameEntry(lens.output.path, lensPath).status !== 'match' || lens.viewCount !== 3
+    || lens.stepCount !== 3 || lens.revisions.verified || lens.verifiedHunkCount !== 0
+    || fs.statSync(lensPath).size !== lens.output.bytes) {
+    throw new Error('packaged PR Lens did not render the offline fallback example');
+  }
+  process.stdout.write('packaged PR Lens rendered the fallback example without dependencies\n');
+
 
   verifyPackagedCodeAnalysis();
 

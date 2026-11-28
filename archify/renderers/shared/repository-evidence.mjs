@@ -1,11 +1,16 @@
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { throwDiagnosticError, withDiagnosticRecordingSuppressed } from './diagnostics.mjs';
 import { sameEntry } from './path-semantics.mjs';
 import { parseRepositoryRemote, redactRepositoryRemote, repositorySourceHref, repositoryTreeHref } from './repository-location.mjs';
 
 export const FULL_SHA_RE = /^[a-f0-9]{40}$/i;
+const PINNED_CHANGE_DIFF_OPTIONS = [
+  '--no-ext-diff', '--no-textconv', '--no-relative', '--find-renames=50%',
+  '-l1000', '--diff-algorithm=myers', '--no-indent-heuristic', '--ignore-submodules=none',
+];
 const CONTROL_CHARACTER_RE = /[\u0000-\u001f\u007f]/;
 const MAX_SOURCE_BYTES = 16 * 1024 * 1024;
 
@@ -20,19 +25,49 @@ function evidenceFailure(code, message, { subject = {}, evidence = {}, supported
   }]);
 }
 
-export function runGit(repoRoot, args) {
-  // 固定 SHA 的来源必须读取原始对象，不能使用本地 replacement refs 的替换内容。
-  const result = spawnSync('git', ['--no-replace-objects', '-C', repoRoot, ...args], {
-    encoding: 'utf8',
-    maxBuffer: MAX_SOURCE_BYTES,
+function gitReadEnv(env = process.env) {
+  return {
+    ...env,
     // Older Git may ignore NO_LAZY_FETCH; no transport is needed for local reads.
-    env: { ...process.env, GIT_NO_LAZY_FETCH: '1', GIT_ALLOW_PROTOCOL: '' },
+    GIT_NO_LAZY_FETCH: '1', GIT_ALLOW_PROTOCOL: '',
+  };
+}
+
+export function runGit(repoRoot, args, { bytes = false, locale, env = process.env } = {}) {
+  const result = spawnSync('git', ['--no-replace-objects', '-C', repoRoot, ...args], {
+    encoding: bytes ? 'buffer' : 'utf8',
+    maxBuffer: MAX_SOURCE_BYTES,
+    env: gitReadEnv(locale ? { ...env, LC_ALL: locale } : env),
   });
   if (result.error) evidenceFailure('repository-evidence/git-unavailable', `Could not run Git: ${result.error.message}`, {
     evidence: { reason: result.error.message },
     supportedFixes: ['install Git and ensure it is available on PATH'],
   });
   return result;
+}
+
+// Diff in a bare repository that borrows only the object store. This leaves
+// the checkout, index, info/attributes and repository diff drivers out of all
+// three diff reads, including Git's binary detection and rename matching.
+export function runPinnedDiff(repoRoot, baseSha, headSha, options, { bytes = false, paths = [] } = {}) {
+  const objects = runGit(repoRoot, ['rev-parse', '--path-format=absolute', '--git-path', 'objects']);
+  if (objects.status !== 0) return objects;
+  const env = {
+    ...Object.fromEntries(Object.entries(process.env).filter(([name]) => !/^GIT_/i.test(name))),
+    GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: os.devNull, GIT_ATTR_NOSYSTEM: '1',
+  };
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-pinned-diff-'));
+  try {
+    const init = runGit(directory, ['init', '--bare', '--template=', '--quiet'], { env });
+    if (init.status !== 0) return init;
+    return runGit(directory, [
+      '--git-dir=.', '-c', `core.attributesFile=${os.devNull}`, '-c', 'core.quotePath=true',
+      '--literal-pathspecs', 'diff', '--no-color', ...PINNED_CHANGE_DIFF_OPTIONS,
+      ...options, baseSha, headSha, '--', ...paths,
+    ], { bytes, locale: 'C', env: { ...env, GIT_OBJECT_DIRECTORY: objects.stdout.replace(/\r?\n$/, '') } });
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
 }
 
 // Check types in one session, then read only blobs whose cited lines need
@@ -57,7 +92,7 @@ function readBatchObjects(repoRoot, objects, includeContent) {
   const result = spawnSync('git', ['--no-replace-objects', '-C', repoRoot, 'cat-file', mode], {
     input: objects.join('\n') + '\n',
     maxBuffer: 64 * 1024 * 1024,
-    env: { ...process.env, GIT_NO_LAZY_FETCH: '1', GIT_ALLOW_PROTOCOL: '' },
+    env: gitReadEnv(),
   });
   if (result.error || result.status !== 0 || !Buffer.isBuffer(result.stdout)) return null;
   const buffer = result.stdout;
@@ -174,7 +209,7 @@ export function verifyRepositorySourceAnchors(repoRoot, anchors) {
 // source evidence is authored on those nodes. One table keeps the verification
 // below identical for all five types instead of branching per type: the only
 // per-type fact is which array to read and which JSON pointer to quote back.
-const EVIDENCE_NODE_COLLECTIONS = {
+export const EVIDENCE_NODE_COLLECTIONS = {
   architecture: 'components',
   workflow: 'nodes',
   sequence: 'participants',

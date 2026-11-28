@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { FULL_SHA_RE, runGit } from '../renderers/shared/repository-evidence.mjs';
+import { FULL_SHA_RE, runGit, runPinnedDiff } from '../renderers/shared/repository-evidence.mjs';
 import { failPrPack as fail } from './errors.mjs';
 
 const MODES = ['ask', 'on-demand', 'proactive'];
@@ -42,8 +42,8 @@ export function classifyPrFile(file) {
   return 'code';
 }
 
-function changedFiles(root, baseSha, headSha) {
-  const result = runGit(root, ['diff', '--numstat', '-z', '--find-renames', baseSha, headSha, '--']);
+export function readPinnedNumstat(root, baseSha, headSha) {
+  const result = runPinnedDiff(root, baseSha, headSha, ['--numstat', '-z']);
   if (result.status !== 0) {
     fail('pr-preflight/diff-failed', 'preflight', 'Could not read the Git diff statistics.', {
       subject: { repoRoot: root }, supportedFixes: ['check that both revision objects are available locally'],
@@ -67,6 +67,14 @@ function changedFiles(root, baseSha, headSha) {
     files.push({ path: file, ...(basePath ? { basePath } : {}), additions: binary ? 0 : Number(added), deletions: binary ? 0 : Number(deleted), binary, category: classifyPrFile(file) });
   }
   return files;
+}
+
+export function summarizeNumstat(files) {
+  return files.reduce((stats, file) => ({
+    filesChanged: stats.filesChanged + 1,
+    additions: stats.additions + file.additions,
+    deletions: stats.deletions + file.deletions,
+  }), { filesChanged: 0, additions: 0, deletions: 0 });
 }
 
 export function assessPrMateriality(files, stats) {
@@ -209,8 +217,8 @@ export function preflightPrPack({ repoRoot = process.cwd(), base, head = 'HEAD',
   const merge = runGit(actualRoot, ['merge-base', baseTip, headSha]);
   const baseSha = merge.stdout.trim();
   if (merge.status !== 0 || !FULL_SHA_RE.test(baseSha)) fail('pr-preflight/merge-base-unavailable', 'preflight', `No merge-base between "${baseRef}" and "${headRef}".`, { supportedFixes: ['fetch enough history for both refs to share an ancestor'] });
-  const files = changedFiles(actualRoot, baseSha, headSha);
-  const stats = { filesChanged: files.length, additions: files.reduce((sum, file) => sum + file.additions, 0), deletions: files.reduce((sum, file) => sum + file.deletions, 0) };
+  const files = readPinnedNumstat(actualRoot, baseSha, headSha);
+  const stats = summarizeNumstat(files);
   const result = { schemaVersion: 1, ok: true, command: 'pr preflight', repoRoot: actualRoot, baseRef, headRef, baseSha, headSha, stats, files, materiality: assessPrMateriality(files, stats), policy: resolvePrPolicy({ repoRoot: actualRoot, mode, target, globalRulesFile }) };
   if (init) result.initialized = initialize(init, result);
   return result;

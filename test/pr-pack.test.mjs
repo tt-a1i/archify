@@ -189,6 +189,12 @@ test('pr build honours --no-html, --platform gitlab single images, and --animate
   const markdown = fs.readFileSync(receipt.markdown.path, 'utf8');
   assert.doesNotMatch(markdown, /<picture>/);
   assert.match(markdown, /^!\[Service topology \(architecture diagram\)\]\(\{\{archify:asset:topology-light\}\}\)$/m);
+  const files = [receipt.receipt, receipt.markdown.path, ...receipt.assets.map((asset) => asset.path)];
+  const beforeLens = files.map((file) => fs.readFileSync(file));
+  const lens = run(['pr', 'lens', file, '--out-dir', outDir, '--json']);
+  assert.equal(lens.status, 0, lens.stdout + lens.stderr);
+  assert.deepEqual(files.map((file) => fs.readFileSync(file)), beforeLens);
+  for (const view of receipt.views) assert.equal(fs.existsSync(path.join(outDir, 'views', `${view.id}.html`)), false);
 });
 
 test('pr build fails closed on schema errors, unknown change views, risk verdicts and argument mistakes', () => {
@@ -560,6 +566,13 @@ test('pr validate/build/attach support hero infinite story walkthroughs with sto
   assert.doesNotMatch(markdown, /before-light/);
   assert.match(markdown, /<details><summary><b>Async ledger topology<\/b><\/summary>/);
   assert.match(markdown, /\{\{archify:asset:after-light\}\}/);
+
+  const outputFiles = [receipt.receipt, receipt.markdown.path, ...receipt.assets.map((asset) => asset.path)];
+  const beforeLens = outputFiles.map((file) => fs.readFileSync(file));
+  const lens = run(['pr', 'lens', file, '--out-dir', outDir, '--repo-root', repo.root, '--json']);
+  assert.equal(lens.status, 0, lens.stdout + lens.stderr);
+  assert.deepEqual(outputFiles.map((file) => fs.readFileSync(file)), beforeLens);
+  assert.deepEqual(fs.readdirSync(outDir).sort(), ['pr-lens.html', 'pr-pack.md', 'pr-pack.receipt.json', 'views']);
 
   let prBody = 'Initial summary.';
   const uploadedUrls = {};

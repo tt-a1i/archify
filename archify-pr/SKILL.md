@@ -74,7 +74,7 @@ Use the user's current language and at most three short lines:
 2. State the concrete value: for example one looping story walkthrough plus collapsible static before/after diagrams, hosted through GitHub `user-attachments`. On GitLab, offer static diagrams in an MR comment.
 3. Say it is optional. If the user declines or ignores it, finish the text-only PR and do not ask again.
 
-## Build and attach
+## Build, review locally, and attach
 
 When the user agrees, or asks explicitly, read [PR workflow](references/pr-workflow.md) for the full manifest, change-mark, story, command and attach loop. It covers:
 
@@ -83,6 +83,7 @@ When the user agrees, or asks explicitly, read [PR workflow](references/pr-workf
 - the Story dynamic walkthrough with `storyOnly` helper views and `collapsed` static references;
 - `detail.mode: "diff"` excerpts from real Git revisions;
 - `pr validate`, `pr build`, `pr attach --dry-run`, then `pr attach`;
+- `pr lens` when asked for an offline review with diagram versions, a walkthrough, and pinned Git evidence;
 - diagnostic repair for `pr-pack/*`, `pr-story/*` and `pr-attach/*`.
 
 ## Missing core Skill

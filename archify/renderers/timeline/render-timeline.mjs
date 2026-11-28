@@ -479,6 +479,9 @@ function renderHeader() {
         <text data-timeline-axis-caption="" x="${layout.margin + evidenceW + 14}" y="29.5" class="t-muted" font-size="11.5">${esc(caption)}</text>`;
 }
 
+const lens = process.env.ARCHIFY_PR_LENS === '1';
+const eventOwner = (card) => lens ? ` data-lens-participant="${esc(card.id)}"` : '';
+
 function renderLanes() {
   return laneLayout.map((lane, index) => {
     const frame = laneFrameById.get(lane.id);
@@ -491,7 +494,7 @@ function renderLanes() {
       })
       : nodeChangeBadgePos(rect, { rx: 10 });
     const badge = frame?.change ? `\n          ${renderChangeBadge(frame, badgePos)}` : '';
-    return `        <g data-timeline-lane="${esc(lane.id)}">
+    return `        <g data-timeline-lane="${esc(lane.id)}"${lens && frame ? ` data-lens-lane="${esc(lane.id)}"` : ''}>
           <rect x="${rect.x}" y="${rect.y}" width="${rect.width}" height="${rect.height}" rx="10" class="tl-lane${index % 2 ? ' tl-lane-alt' : ''}"${frameAttrs}/>
           <line x1="${axisX0 + 8}" y1="${lane.lineY}" x2="${axisX1 - 8}" y2="${lane.lineY}" class="tl-lane-line" stroke-width="1.5" stroke-linecap="round"/>
           ${lane.label ? `<text x="${layout.margin}" y="${lane.lineY + 4.5}"${frame?.change === 'removed' ? ' data-change="removed"' : ''} class="t-primary" font-size="13" font-weight="700">${esc(lane.label)}</text>` : ''}${badge}
@@ -581,12 +584,12 @@ ${renderAxis()}
 
         <!-- Stems sit behind every card, so a stacked card is never crossed by
              another event's connector -->
-${cards.map((card) => `        <line data-detail="context" data-timeline-stem="${esc(card.id)}" x1="${card.x}" y1="${card.lineY}" x2="${card.x}" y2="${card.side === 'above' ? card.top + card.height : card.top}" class="tl-stem tl-stem-${KIND_TONE[kindOf(card)]}" stroke-width="1"/>`).join('\n')}
+${cards.map((card) => `        <line data-detail="context" data-timeline-stem="${esc(card.id)}"${eventOwner(card)} x1="${card.x}" y1="${card.lineY}" x2="${card.x}" y2="${card.side === 'above' ? card.top + card.height : card.top}" class="tl-stem tl-stem-${KIND_TONE[kindOf(card)]}" stroke-width="1"/>`).join('\n')}
 
         <!-- One halo layer under every dot, so events seconds apart merge into
              one outlined capsule instead of cutting crescents into each other -->
-${cards.map((card) => `        <circle data-detail="context" cx="${card.x}" cy="${card.lineY}" r="7.5" class="tl-halo"/>`).join('\n')}
-${cards.map((card) => `        <circle data-detail="context" cx="${card.x}" cy="${card.lineY}" r="6.5" class="tl-pin tl-pin-${KIND_TONE[kindOf(card)]}"/>`).join('\n')}
+${cards.map((card) => `        <circle data-detail="context"${eventOwner(card)} cx="${card.x}" cy="${card.lineY}" r="7.5" class="tl-halo"/>`).join('\n')}
+${cards.map((card) => `        <circle data-detail="context"${eventOwner(card)} cx="${card.x}" cy="${card.lineY}" r="6.5" class="tl-pin tl-pin-${KIND_TONE[kindOf(card)]}"/>`).join('\n')}
 
         <!-- Events in time order -->
 ${cards.map(renderEvent).join('\n')}
