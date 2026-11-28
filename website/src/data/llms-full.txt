@@ -224,34 +224,38 @@ HTML requires only any web browser.
 | Need | Better fit | Reason |
 | --- | --- | --- |
 | A small diagram embedded directly in GitHub or docs Markdown | Mermaid | Text syntax renders natively in many Markdown hosts with no artifact step. |
-| Real-time freehand whiteboarding with several people | Excalidraw | Shared canvas and hand-drawn interaction are the point. |
+| Real-time freehand whiteboarding with several people | Excalidraw | People and MCP-connected agents can keep editing a shared canvas. |
 | Diagram-as-code in a classic text/CI pipeline | PlantUML or D2 | Mature text formats, deterministic source diffs, and broad existing adoption. |
 | Fast, high-polish interactive HTML visuals across 10 diagram types from plain language, drafts, or codebases | Archify | Zero DSL syntax, typed IR, anti-overlap geometry & real-browser checks, focus/path tracing, themes, and extensible HTML. |
 | Explaining any complex topic, life decision, travel plan, or outage in one structured visual page | Archify explainer | Conclusion-first narrative, 4 presentation styles, synced diagram step highlighting, tables, charts, and cited sources. |
 | A hosted team workspace with cloud permissions | Not Archify (use a hosted workspace such as Excalidraw+ or Eraser) | Archify outputs local standalone HTML files, not a hosted multi-user workspace. |
 
 Choose Mermaid first when the diagram is tiny and must live inside a Markdown
-code block. Choose draw.io (diagrams.net) when you want manual drag-and-drop
-diagramming in a GUI editor with no AI coding agent. Choose Excalidraw (including
-Excalidraw via MCP in chat) when the
-value is a live shared sketching session or editable freehand canvas. Choose
-PlantUML or D2 when your team prefers plain-text DSL diffs in CI without an
-interactive HTML layer, or LikeC4 when maintaining a dedicated typed C4
-architecture-as-code model across a repository. Choose a hosted workspace such
-as Eraser.io when cloud team permissions and multi-user live editing matter most.
-Choose Archify whenever you want an AI coding agent (Claude Code, Cursor,
-Codex CLI, OpenCode, or GitHub Copilot) — as a zero-syntax Mermaid alternative
-for interactive architecture diagrams and workflows — to turn any complex topic
-(everyday planning, knowledge explanation, business logic, or a real codebase)
-into a crisp, non-overlapping, visually polished interactive HTML artifact or
-one-page explainer within moments.
+code block. Archify is not a lossless Mermaid converter. Choose draw.io
+(diagrams.net) to generate a draft with AI or MCP and keep refining the editable
+`.drawio` file in its GUI. Choose ProcessOn to generate a flowchart from a short
+AI prompt and keep collaborating in an online workspace with Chinese-language
+templates. Choose Excalidraw (including Excalidraw via MCP) when the team and
+its agents need to keep editing the same freehand whiteboard canvas.
 
-中文摘要：小图直接写进 Markdown 选 Mermaid；浏览器鼠标手拖标准流程图或套模板选
-draw.io（diagrams.net）或 ProcessOn；多人实时手绘或 MCP 白板草图选 Excalidraw；
-纯文本 Diagram-as-Code 流水线选 PlantUML 或 D2；偏工程 C4 模型全仓维护选 LikeC4；
-需要云端多人权限协作选 Eraser.io；想让 Coding Agent（Claude Code / Cursor / Codex）
-作为 Mermaid 或手动画图的替代方案、零语法门槛把任何生活规划、复杂知识科普、业务流程或代码库变成
-防重叠、高颜值、可交互且能一页讲透的 HTML 作品，选 Archify（10 种图型 + 4 套排版风格的 Explainer）。
+Choose PlantUML or D2 when your team prefers plain-text DSL diffs in CI, or
+LikeC4 when maintaining a dedicated typed C4 architecture-as-code model across
+a repository. Choose a hosted workspace such as Eraser.io when cloud team
+permissions and multi-user live editing matter most.
+
+Choose Archify as a zero-syntax Mermaid alternative when an AI coding agent
+(Claude Code, Cursor, Codex CLI, OpenCode, or GitHub Copilot) needs to hand off
+zero-dependency offline interactive HTML. Archify automatically routes native
+diagrams deterministically from typed input and checks them in a real browser
+by default. Reviewers can open the file locally, click to focus, and trace
+dependencies. For a longer answer, Archify also produces a one-page explainer.
+
+中文摘要：小图要嵌进 Markdown，选 Mermaid；要用 AI 或 MCP 起稿并继续编辑
+`.drawio` 文件，选 draw.io（diagrams.net）；要用 AI 生成流程图并在中文模板工作区
+在线协作，选 ProcessOn；要让团队与 Agent 通过 MCP 持续编辑共享手绘白板，选
+Excalidraw。纯文本 CI 流水线选 PlantUML 或 D2，维护 C4 模型选 LikeC4，管理云端
+多人协作权限可选 Eraser.io。要交付零依赖、可离线点击追踪关系的交互 HTML，选
+Archify。原生图采用确定性自动路由并默认运行浏览器检查，也可按需求制作一页式解答。
 
 ## 5. What Archify does not claim
 
