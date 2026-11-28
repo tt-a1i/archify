@@ -877,7 +877,9 @@ test('an authored viewBox that cannot hold the legend fails with a capacity diag
   const diagram = {
     schema_version: 1,
     diagram_type: 'erd',
-    meta: { title: 'Fixed area', locale: 'en', viewBox: [560, 240] },
+    // Wide enough to hold entity b (x 328..568) so the failure stays about the
+    // legend capacity and not the out-of-bounds entity containment check.
+    meta: { title: 'Fixed area', locale: 'en', viewBox: [640, 240] },
     layout: { mode: 'grid' },
     entities: [
       // Tall enough that the fixed area cannot also hold the band below it.

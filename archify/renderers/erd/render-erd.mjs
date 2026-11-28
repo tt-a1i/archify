@@ -12,6 +12,7 @@ import {
   writeDiagram,
 } from '../shared/cli.mjs';
 import { throwDiagnosticProblems } from '../shared/diagnostics.mjs';
+import { outOfBoundsEntry } from '../shared/component-bounds.mjs';
 import {
   legendFootprint,
   measureLegend,
@@ -1136,6 +1137,7 @@ function validateEr() {
   const headerDetails = [];
   const domainDetails = [];
   const attributeDetails = [];
+  const boundsDetails = [];
   for (const entity of entities.values()) {
     const header = entityHeader(entity);
     if (!header.problem) continue;
@@ -1245,6 +1247,17 @@ function validateEr() {
           supportedFixes,
         });
       }
+    }
+  }
+
+  // A table the canvas cannot hold is rendered clipped or missing with a clean
+  // receipt. Name it before the pairwise checks so the author fixes the
+  // placement instead of chasing an overlap that only follows from it.
+  for (const entity of entities.values()) {
+    const entry = outOfBoundsEntry(entity.id, 'entity', 'erd', 'entityId', entity, viewBox);
+    if (entry) {
+      problems.push(entry.message);
+      boundsDetails.push(entry);
     }
   }
 
@@ -1409,7 +1422,7 @@ function validateEr() {
     throwDiagnosticProblems('Entity-relationship layout validation failed', problems, {
       code: 'layout/constraint',
       subject: { diagramType: 'erd' },
-      diagnostics: [...headerDetails, ...domainDetails, ...portSpacingDetails, ...attributeDetails],
+      diagnostics: [...headerDetails, ...domainDetails, ...portSpacingDetails, ...attributeDetails, ...boundsDetails],
     });
   }
 }

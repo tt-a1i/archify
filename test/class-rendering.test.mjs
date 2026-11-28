@@ -210,6 +210,16 @@ test('class: an authored width too narrow for the title is reported, not clipped
   assert.match(stderr, /class\/title-text-capacity/);
 });
 
+// A type placed past the canvas edge used to pass silently — the rendered card
+// was clipped or absent and the receipt still read green. The validator names
+// the type and the overflow before any pairwise check.
+test('class: a type that falls outside the canvas fails with an out-of-bounds diagnostic', () => {
+  const stderr = failure((d) => { d.types.find((t) => t.id === 'order_service').pos = [-400, -400]; });
+  assert.match(stderr, /layout\/component-out-of-bounds/);
+  assert.match(stderr, /"order_service" falls outside the viewBox/);
+  assert.match(stderr, /move type "order_service" (right|down) by 400px/);
+});
+
 test('class: unknown endpoints and self-relationships are rejected', () => {
   assert.match(failure((d) => { d.relationships[0].to = 'missing'; }), /unknown type "missing"/);
   assert.match(failure((d) => { d.relationships[0].to = d.relationships[0].from; }), /to itself/);

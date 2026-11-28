@@ -12,6 +12,7 @@ import {
   writeDiagram,
 } from '../shared/cli.mjs';
 import { throwDiagnosticProblems } from '../shared/diagnostics.mjs';
+import { outOfBoundsEntry } from '../shared/component-bounds.mjs';
 import {
   legendFootprint,
   measureLegend,
@@ -731,6 +732,14 @@ function validateClassDiagram() {
         { label: type.label, width: placed.width, requiredWidth: needed },
         ['Remove the authored width so the type sizes itself.', `Set width to at least ${needed}.`, 'Shorten the type title.']));
     }
+  }
+
+  // A type the canvas cannot hold is rendered clipped or missing with a clean
+  // receipt. Name it before the pairwise checks so the author fixes the
+  // placement instead of chasing an overlap that only follows from it.
+  for (const type of types.values()) {
+    const entry = outOfBoundsEntry(type.id, 'type', 'class', 'typeId', type, viewBox);
+    if (entry) fail(entry);
   }
 
   for (const type of types.values()) {
