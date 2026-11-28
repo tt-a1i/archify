@@ -7,7 +7,7 @@ export const PUBLISHED_CASES = [
     artifact: 'cases/life/leave-plan.workflow.html',
     input: 'cases/life/leave-plan.workflow.json',
     title: '一年的年假怎么排',
-    description: '查看一份基于 Archify 生成的中文年假安排可交互工作流图：清晰串联全年休假节点、调休组合、剩余额度与规则提醒，支持节点聚焦与链路追踪。此为示例计划，不代表真实日历或公司的休假政策。',
+    description: '想把分散的年假和调休安排放到同一张图上？打开 Archify 中文交互工作流图，按时间查看各段休假、调休组合、规则提醒和剩余额度。点击节点追踪请假路径，再核对每段用掉的额度如何汇入全年合计，避免重复扣减。也可以对照结构化源文件查看图中的节点与连线。此为示例计划，不代表真实日历或公司的休假政策。',
     language: 'zh-CN',
   },
   {
@@ -28,7 +28,7 @@ export const PUBLISHED_CASES = [
     artifact: 'cases/life/renting.sequence.html',
     input: 'cases/life/renting.sequence.json',
     title: '租一套房，一来一回都在这里',
-    description: '用 Archify 中文可交互时序图完整梳理租客、中介与房东之间的看房、议价、合同核对、签约、付款与房屋交接全流程，支持点击聚焦单步交互与角色路径。金额和流程仅为示例。',
+    description: '第一次租房，想弄清每一步该和谁确认？打开 Archify 中文交互时序图，按时间查看租客、中介和房东在联系看房、议价、核对合同、签约付款和交接房屋时如何沟通。点击消息查看当时谁向谁提出要求，再沿角色路径查看下一步由谁接手，例如谁核对合同条款，谁在交接时确认房屋状况。金额和流程仅为示例。',
     language: 'zh-CN',
   },
   {
@@ -74,7 +74,7 @@ export const PUBLISHED_CASES = [
     artifact: 'cases/astron-agent-runtime.architecture.html',
     input: 'cases/astron-agent-runtime.architecture.json',
     title: 'Astron Agent 运行时架构',
-    description: '查看 Astron Agent 在固定提交 a77c92a 的源码实证运行时架构图：完整呈现入口层、核心服务职责、状态存储与模块调用边界，支持节点聚焦与链路追踪。此图依据源码编写对齐，非运行时 trace。',
+    description: '想了解 Astron Agent 如何组织运行时职责？打开固定提交 a77c92a 对应的 Archify 交互架构图，查看入口层、核心服务、状态存储和模块调用边界。点击组件聚焦其职责，沿连线查看上下游，再对照结构化源文件与固定版本代码。图中关系依据该提交的静态源码整理，非运行时 trace。',
     language: 'zh-CN',
   },
 ];

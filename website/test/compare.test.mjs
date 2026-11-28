@@ -21,6 +21,10 @@ for (const lang of ['en', 'zh']) {
     const file = `${prefix}compare.html`;
     const documentUrl = new URL(`${prefix}compare${extension}`, origin);
     const all = nodes(parse(fs.readFileSync(path.join(output, file), 'utf8')));
+    const title = text(all.find(node => node.tagName === 'title'));
+    for (const term of lang === 'en' ? ['Mermaid'] : ['draw.io', 'ProcessOn', 'Mermaid']) {
+      assert.ok(title.includes(term), `${lang}: compare title includes ${term}`);
+    }
     const base = new URL(attr(all.find(node => node.tagName === 'base'), 'href'), documentUrl);
     const article = all.find(node => node.tagName === 'article');
     assert.ok(article, file);
