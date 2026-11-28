@@ -28,10 +28,10 @@ Archify supports ten native diagram types. The agent picks the type that fits th
 - **dataflow** — sources, transforms, stores, and sinks.
 - **lifecycle** — states, transitions, and guards.
 - **erd** — entities, keys, and relationship cardinality.
-- **class** — types, fields, methods, inheritance and composition.
-- **tree** — file, organizational, or decision hierarchies.
-- **timeline** — dated or ordered events and their relationships.
-- **waterfall** — timed spans, overlap, and nesting within a request or agent run.
+- **class** — types, fields, methods, inheritance and composition, as in the [payment module class diagram](https://archify.si/gallery/artifacts/payments.class).
+- **tree** — file, organizational, or decision hierarchies, as in the [payment platform capability tree](https://archify.si/gallery/artifacts/payment-platform.tree).
+- **timeline** — dated or ordered events and their relationships, as in the [payment incident timeline](https://archify.si/gallery/artifacts/payment-incident.timeline).
+- **waterfall** — timed spans, overlap, and nesting within a request or agent run, as in the [checkout request waterfall](https://archify.si/gallery/artifacts/checkout-request.waterfall).
 
 For new architecture diagrams, the Skill uses `layout.mode: "auto"` to place components from their relationships while preserving any positions and routes you supply. This setting applies only to architecture diagrams.
 
@@ -217,6 +217,10 @@ Yes. See [how to use Mermaid as agent input](#mermaid-input) for a small example
 ### Is a repository required?
 
 No. A clear description can be enough. A repository becomes useful when the diagram must explain real code and you want inspectable source evidence.
+
+### When should I use Architecture Diagnosis vs. PR walkthroughs?
+
+Use [Architecture Diagnosis](#repository-evidence) to run static Code Analysis on a repository and inspect dependencies, cycles, and hotspots. Use [PR walkthroughs](#review-and-share) with `archify-pr` to mark what changed on a diagram for a GitHub PR or GitLab MR.
 
 ### Is it free, and which Archify is this?
 
